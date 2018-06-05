@@ -1,4 +1,4 @@
-![](images/logo.png)
+![](https://raw.githubusercontent.com/pubnub/chat-engine/master/images/logo.png)
 
 PubNub ChatEngine is an object oriented event emitter based framework for building chat applications in Objective-C. It reduces the time to build chat applications drastically and provides essential components like typing indicators, online presence monitoring and message history out of the box.
 
@@ -6,7 +6,7 @@ The real time server component is provided by PubNub. ChatEngine is designed to 
 
 # Docs
 
-You can find the full docs on [the full documentation website](https://github.com/pubnub/chat-engine-apple/wiki/get-started). Concepts are linked below for convenience.
+You can find the full docs on [the full documentation website](wiki/get-started). Concepts are linked below for convenience.
 
 # Concepts
 
