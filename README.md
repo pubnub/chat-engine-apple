@@ -6,7 +6,7 @@ The real time server component is provided by PubNub. ChatEngine is designed to 
 
 # Docs
 
-You can find the full docs on [the full documentation website](wiki/get-started). Concepts are linked below for convenience.
+You can find the full docs on [the full documentation website](https://github.com/pubnub/chat-engine-apple/wiki/get-started). Concepts are linked below for convenience.
 
 # Concepts
 
