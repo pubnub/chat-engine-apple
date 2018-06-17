@@ -49,6 +49,8 @@
         });
     });
     
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.f * NSEC_PER_SEC)));
+    
     CENChat *privateChat = client2.Chat().name(privateChatName).create();
     privateChat.on(@"$.connected", ^{
         privateChat.invite(client1.me);

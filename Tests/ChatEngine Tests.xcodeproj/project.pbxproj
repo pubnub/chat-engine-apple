@@ -94,9 +94,6 @@
 		79AC159020D10F00008827DC /* CENPushNotificationsPluginTest.m in Sources */ = {isa = PBXBuildFile; fileRef = 79AC158F20D10F00008827DC /* CENPushNotificationsPluginTest.m */; };
 		79AC159120D10F00008827DC /* CENPushNotificationsPluginTest.m in Sources */ = {isa = PBXBuildFile; fileRef = 79AC158F20D10F00008827DC /* CENPushNotificationsPluginTest.m */; };
 		79AC159220D10F00008827DC /* CENPushNotificationsPluginTest.m in Sources */ = {isa = PBXBuildFile; fileRef = 79AC158F20D10F00008827DC /* CENPushNotificationsPluginTest.m */; };
-		79AC159420D10F1F008827DC /* CENPushNotificationsExtensionTest.m in Sources */ = {isa = PBXBuildFile; fileRef = 79AC159320D10F1F008827DC /* CENPushNotificationsExtensionTest.m */; };
-		79AC159520D10F1F008827DC /* CENPushNotificationsExtensionTest.m in Sources */ = {isa = PBXBuildFile; fileRef = 79AC159320D10F1F008827DC /* CENPushNotificationsExtensionTest.m */; };
-		79AC159620D10F1F008827DC /* CENPushNotificationsExtensionTest.m in Sources */ = {isa = PBXBuildFile; fileRef = 79AC159320D10F1F008827DC /* CENPushNotificationsExtensionTest.m */; };
 		79B10EB520808A66003EAFAD /* CENEventTest.m in Sources */ = {isa = PBXBuildFile; fileRef = 79B10EB1208089AF003EAFAD /* CENEventTest.m */; };
 		79B10EB620808A66003EAFAD /* CEUserTest.m in Sources */ = {isa = PBXBuildFile; fileRef = 79B10EB320808A5C003EAFAD /* CEUserTest.m */; };
 		79B10EB820808A66003EAFAD /* CEUserTest.m in Sources */ = {isa = PBXBuildFile; fileRef = 79B10EB320808A5C003EAFAD /* CEUserTest.m */; };
@@ -250,7 +247,6 @@
 		79A964E720702DEF00323D2E /* CENUsersManagerTest.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = CENUsersManagerTest.m; sourceTree = "<group>"; };
 		79A964EA2070D19900323D2E /* CENPluginsManagerTest.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = CENPluginsManagerTest.m; sourceTree = "<group>"; };
 		79AC158F20D10F00008827DC /* CENPushNotificationsPluginTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CENPushNotificationsPluginTest.m; sourceTree = "<group>"; };
-		79AC159320D10F1F008827DC /* CENPushNotificationsExtensionTest.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = CENPushNotificationsExtensionTest.m; sourceTree = "<group>"; };
 		79B10EB1208089AF003EAFAD /* CENEventTest.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = CENEventTest.m; sourceTree = "<group>"; };
 		79B10EB320808A5C003EAFAD /* CEUserTest.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = CEUserTest.m; sourceTree = "<group>"; };
 		79B10EBB20808A9D003EAFAD /* CENSessionTest.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = CENSessionTest.m; sourceTree = "<group>"; };
@@ -618,7 +614,6 @@
 			isa = PBXGroup;
 			children = (
 				79AC158F20D10F00008827DC /* CENPushNotificationsPluginTest.m */,
-				79AC159320D10F1F008827DC /* CENPushNotificationsExtensionTest.m */,
 				79E23C3420D2543B00E91C04 /* CENPushNotificationsMiddlewareTest.m */,
 			);
 			path = CENPushNotifications;
@@ -1176,7 +1171,6 @@
 				79E23C3720D2543B00E91C04 /* CENPushNotificationsMiddlewareTest.m in Sources */,
 				79CA5E1520BC24FB00290354 /* CENChatEngineChatMetaIntegrationTest.m in Sources */,
 				79E834522085518600CE089B /* CENChatEngineSessionTest.m in Sources */,
-				79AC159620D10F1F008827DC /* CENPushNotificationsExtensionTest.m in Sources */,
 				79A1D2CC2073A9C100D97E64 /* CENChatEngineConnectionIntegrationTest.m in Sources */,
 				79A1D2B52073A99600D97E64 /* CENUsersManagerTest.m in Sources */,
 				79D63E5620C69C91008ECBC7 /* CENGravatarPluginIntegrationTest.m in Sources */,
@@ -1235,7 +1229,6 @@
 				79A964E820702DEF00323D2E /* CENUsersManagerTest.m in Sources */,
 				79B10EE7208424FB003EAFAD /* CENChatEnginePluginsTest.m in Sources */,
 				79E834482085350E00CE089B /* CENChatEnginePubNubTest.m in Sources */,
-				79AC159420D10F1F008827DC /* CENPushNotificationsExtensionTest.m in Sources */,
 				79B10EE320840EB4003EAFAD /* CENChatEngineEventEmitterTest.m in Sources */,
 				7945D5C620712B1F00FECBFB /* CEDummyEmitMiddleware.m in Sources */,
 				791553A320B4D30500BE7A83 /* CENChatEmitBuilderInterfaceTest.m in Sources */,
@@ -1282,7 +1275,6 @@
 				7945D5CD20712B1F00FECBFB /* CEDummyPlugin.m in Sources */,
 				79E834512085518600CE089B /* CENChatEngineSessionTest.m in Sources */,
 				79B10EDC2083AD6A003EAFAD /* CENChatEngineChatsTest.m in Sources */,
-				79AC159520D10F1F008827DC /* CENPushNotificationsExtensionTest.m in Sources */,
 				79A82612206D300600648EE5 /* CENTestCase.m in Sources */,
 				7945D5CB20712B1F00FECBFB /* CEDummyOnMiddleware.m in Sources */,
 				791553A420B4D30500BE7A83 /* CENChatEmitBuilderInterfaceTest.m in Sources */,

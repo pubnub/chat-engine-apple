@@ -55,9 +55,9 @@
     self.defaultClient = [self partialMockForObject:[self chatEngineWithConfiguration:configuration]];
     
     OCMStub([self.defaultClient createDirectChatForUser:[OCMArg any]])
-    .andReturn(self.defaultClient.Chat().name(@"user-direct").autoConnect(NO).create());
+        .andReturn(self.defaultClient.Chat().name(@"user-direct").autoConnect(NO).create());
     OCMStub([self.defaultClient createFeedChatForUser:[OCMArg any]])
-    .andReturn(self.defaultClient.Chat().name(@"user-feed").autoConnect(NO).create());
+        .andReturn(self.defaultClient.Chat().name(@"user-feed").autoConnect(NO).create());
     OCMStub([self.defaultClient me]).andReturn([CENMe userWithUUID:@"tester" state:@{} chatEngine:self.defaultClient]);
     
     OCMStub([self.defaultClient connectToChat:[OCMArg any] withCompletion:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
