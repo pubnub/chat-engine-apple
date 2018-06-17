@@ -263,8 +263,8 @@
     self.defaultClient.once(@"$.error.auth", ^(NSError *error) {
         handlerCalled = YES;
         
-        XCTAssertNotNil(error);
-        XCTAssertEqualObjects(error.userInfo[NSUnderlyingErrorKey], @"Unknown error");
+        XCTAssertNotNil(error.userInfo[NSUnderlyingErrorKey]);
+        XCTAssertEqualObjects(((NSError *)error.userInfo[NSUnderlyingErrorKey]).localizedDescription, @"Unknown error");
         dispatch_semaphore_signal(semaphore);
     });
     

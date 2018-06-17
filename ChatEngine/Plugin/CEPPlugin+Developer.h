@@ -1,12 +1,14 @@
 /**
  * @author Serhii Mamontov
- * @version 0.9.13
+ * @version 0.9.0
  * @copyright © 2009-2018 PubNub, Inc.
  */
 #import "CEPPlugin.h"
 #import <CENChatEngine/CEPStructures.h>
 #import <CENChatEngine/CENStructures.h>
+#import <CENChatEngine/CENErrorCodes.h>
 #import "CENObject+Plugins.h"
+#import "CENError.h"
 
 
 #pragma mark Class forward

@@ -14,7 +14,7 @@ NS_ASSUME_NONNULL_BEGIN
  * @discussion This instance can be used to reach remote user by sending him direct message or subscribe on his private feed.
  *
  * @author Serhii Mamontov
- * @version 0.9.13
+ * @version 0.9.0
  * @copyright © 2009-2018 PubNub, Inc.
  */
 @interface CENUser : CENObject

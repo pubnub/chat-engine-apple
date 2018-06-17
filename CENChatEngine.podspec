@@ -1,6 +1,6 @@
 Pod::Spec.new do |spec|
     spec.name     = 'CENChatEngine'
-    spec.version  = '0.9.13'
+    spec.version  = '0.9.0'
     spec.summary  = 'Framework for building chat applications.'
     spec.homepage = 'https://github.com/pubnub/chat-engine-apple'
 
@@ -25,7 +25,7 @@ Pod::Spec.new do |spec|
             'ChatEngine/Data/Managers/*.h',
             'ChatEngine/**/*Private.h',
             'ChatEngine/Misc/{CENConstants,CENPrivateStructures}.h',
-            'ChatEngine/Misc/Helpers/*.h',
+            'ChatEngine/Misc/Helpers/{CENDictionary}.h',
             'ChatEngine/Network/**/*.h',
             'ChatEngine/Plugin/CEPPrivateStructures.h'
         ]
@@ -78,6 +78,9 @@ Pod::Spec.new do |spec|
         plugin.subspec 'Markdown' do |markdown|
             markdown.dependency 'CENChatEngine/Plugin/Core'
             markdown.source_files = 'Plugins/CENMarkdown/**/*'
+            markdown.private_header_files = [
+                'Plugins/CENMarkdown/CENMarkdownParser+Private.h'
+            ]
         end
 
         plugin.subspec 'Gravatar' do |gravatar|
@@ -88,6 +91,11 @@ Pod::Spec.new do |spec|
         plugin.subspec 'OnlineUserSearch' do |onlineUserSearch|
             onlineUserSearch.dependency 'CENChatEngine/Plugin/Core'
             onlineUserSearch.source_files = 'Plugins/CENOnlineUserSearch/**/*'
+        end
+
+        plugin.subspec 'PushNotifications' do |pushNotifications|
+            pushNotifications.dependency 'CENChatEngine/Plugin/Core'
+            pushNotifications.source_files = 'Plugins/CENPushNotifications/**/*'
         end
 
         plugin.pod_target_xcconfig = { 'APPLICATION_EXTENSION_API_ONLY' => 'YES' }

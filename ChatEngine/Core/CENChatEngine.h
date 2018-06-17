@@ -14,7 +14,7 @@ NS_ASSUME_NONNULL_BEGIN
  *         application and provide responses back to completion block/delegates.
  *
  * @author Serhii Mamontov
- * @version 0.9.13
+ * @version 0.9.0
  * @copyright © 2009-2018 PubNub, Inc.
  */
 @interface CENChatEngine : CENEventEmitter

@@ -12,7 +12,7 @@ NS_ASSUME_NONNULL_BEGIN
  * @discussion Class describe interface which allow to connect \c local user to real-time service.
  *
  * @author Serhii Mamontov
- * @version 0.9.13
+ * @version 0.9.0
  * @copyright © 2009-2017 PubNub, Inc.
  */
 @interface CENUserConnectBuilderInterface : CENInterfaceBuilder

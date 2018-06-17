@@ -1,6 +1,6 @@
 /**
  * @author Serhii Mamontov
- * @version 0.9.13
+ * @version 0.9.0
  * @copyright © 2009-2018 PubNub, Inc.
  */
 #import "CENChatEngine+ChatPrivate.h"
@@ -24,6 +24,7 @@
 #import "CENUser+Private.h"
 #import "CENStructures.h"
 #import "CENErrorCodes.h"
+#import "CENError.h"
 #import "CENMe.h"
 
 
@@ -170,10 +171,8 @@ CENChatGroups CENChatGroup = { .system = @"system", .custom = @"custom" };
         __strong __typeof(weakSelf) strongSelf = weakSelf;
         
         if (!success) {
-            id errorInformation = responses.firstObject ?: @"Unknown error";
             NSString *description = @"Something went wrong while making a request to authentication server.";
-            NSDictionary *userInfo = @{ NSLocalizedDescriptionKey: description, NSUnderlyingErrorKey: errorInformation };
-            NSError *error = [NSError errorWithDomain:kCEPNFunctionErrorDomain code:kCEPNAuthorizationError userInfo:userInfo];
+            NSError *error = [CENError errorFromPubNubFunctionError:responses.firstObject withDescription:description];
             
             [strongSelf throwError:error forScope:@"chat" from:chat propagateFlow:CEExceptionPropagationFlow.middleware];
         }
@@ -244,10 +243,8 @@ CENChatGroups CENChatGroup = { .system = @"system", .custom = @"custom" };
             return;
         }
         
-        id errorInformation = responses.firstObject ?: @"Unknown error";
         NSString *description = @"Something went wrong while making a request to authentication server.";
-        NSDictionary *userInfo = @{ NSLocalizedDescriptionKey: description, NSUnderlyingErrorKey: errorInformation };
-        NSError *error = [NSError errorWithDomain:kCEPNFunctionErrorDomain code:kCEPNAuthorizationError userInfo:userInfo];
+        NSError *error = [CENError errorFromPubNubFunctionError:responses.firstObject withDescription:description];
         
         [strongSelf throwError:error forScope:@"auth" from:chat propagateFlow:CEExceptionPropagationFlow.middleware];
     }];
@@ -277,10 +274,8 @@ CENChatGroups CENChatGroup = { .system = @"system", .custom = @"custom" };
             return;
         }
         
-        id errorInformation = responses.firstObject ?: @"Unknown error";
         NSString *description = @"Something went wrong while making a request to chat server.";
-        NSDictionary *userInfo = @{ NSLocalizedDescriptionKey: description, NSUnderlyingErrorKey: errorInformation };
-        NSError *error = [NSError errorWithDomain:kCEPNFunctionErrorDomain code:kCEPNAPresenceLeaveError userInfo:userInfo];
+        NSError *error = [CENError errorFromPubNubFunctionError:responses.firstObject withDescription:description];
         
         [strongSelf throwError:error forScope:@"chat" from:chat propagateFlow:CEExceptionPropagationFlow.middleware];
     }];
@@ -312,8 +307,7 @@ CENChatGroups CENChatGroup = { .system = @"system", .custom = @"custom" };
             return;
         }
         
-        NSDictionary *errorInformation = @{ NSLocalizedDescriptionKey: status.errorData.information };
-        NSError *error = [NSError errorWithDomain:kCEPNErrorDomain code:kCEChannelPresenceAuditError userInfo:errorInformation];
+        NSError *error = [CENError errorFromPubNubStatus:status];
         
         [strongSelf throwError:error forScope:@"presence" from:chat propagateFlow:CEExceptionPropagationFlow.middleware];
     }];

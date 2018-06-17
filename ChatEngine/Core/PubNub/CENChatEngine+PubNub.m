@@ -1,6 +1,6 @@
 /**
  * @author Serhii Mamontov
- * @version 0.9.13
+ * @version 0.9.0
  * @copyright © 2009-2018 PubNub, Inc.
  */
 #import "CENChatEngine+PubNubPrivate.h"
@@ -147,17 +147,16 @@ NS_ASSUME_NONNULL_END
     if (![data isKindOfClass:[NSDictionary class]] || !data.count || ![channel isKindOfClass:[NSString class]] || !channel.length) {
         return;
     }
-    
     [self.pubnub publish:data toChannel:channel storeInHistory:shouldStoreInHisotry withCompletion:block];
 }
 
 
 #pragma mark - Stream controller
 
-- (void)channelsForGroup:(NSString *)group withCompletion:(void(^)(NSArray<NSString *> *chats, PNErrorData *errorData))block {
+- (void)channelsForGroup:(NSString *)group withCompletion:(void(^)(NSArray<NSString *> *chats, PNErrorStatus *status))block {
     
     [self.pubnub channelsForGroup:group withCompletion:^(PNChannelGroupChannelsResult * result, PNErrorStatus * status) {
-        block(result.data.channels, status.errorData);
+        block(result.data.channels, status);
     }];
 }
 

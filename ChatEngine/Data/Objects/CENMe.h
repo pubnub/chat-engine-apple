@@ -11,7 +11,7 @@
  * @discussion This model represent user for which \b ChatEngine has been configured.
  *
  * @author Serhii Mamontov
- * @version 0.9.13
+ * @version 0.9.0
  * @copyright © 2009-2018 PubNub, Inc.
  */
 @interface CENMe : CENUser

@@ -4,6 +4,7 @@
  * @copyright © 2009-2018 PubNub, Inc.
  */
 #import "CENMarkdownPlugin.h"
+#import <CENChatEngine/CEPMiddleware+Developer.h>
 #import <CENChatEngine/CEPPlugin+Developer.h>
 #import <CENChatEngine/CENChat.h>
 #import "CENMarkdownMiddleware.h"
@@ -45,16 +46,20 @@ CENMarkdownConfigurationKeys CENMarkdownConfiguration = { .events = @"ens", .mes
 - (void)onCreate {
     
     NSMutableDictionary *configuration = [NSMutableDictionary dictionaryWithDictionary:self.configuration];
+    NSMutableArray<NSString *> *events = [NSMutableArray arrayWithArray:configuration[CENMarkdownConfiguration.events]];
     
-    if (!((NSArray *)configuration[CENMarkdownConfiguration.events]).count) {
-        configuration[CENMarkdownConfiguration.events] = @[@"message"];
+    if (!events.count) {
+        [events addObject:@"message"];
     }
     
     if (!((NSString *)configuration[CENMarkdownConfiguration.messageKey]).length) {
         configuration[CENMarkdownConfiguration.messageKey] = @"text";
     }
     
+    configuration[CENMarkdownConfiguration.events] = events;
     self.configuration = configuration;
+    
+    [CENMarkdownMiddleware replaceEventsWith:self.configuration[CENMarkdownConfiguration.events]];
 }
 
 #pragma mark -

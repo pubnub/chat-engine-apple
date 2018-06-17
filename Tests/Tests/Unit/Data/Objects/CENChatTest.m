@@ -765,7 +765,7 @@
 
 - (void)testSearch_ShouldThrow_WhenNotConnected {
     
-    XCTAssertThrowsSpecificNamed(self.publicChat.search().event(@"test-event").create(), NSException, kCEErrorDomain);
+    XCTAssertThrowsSpecificNamed(self.publicChat.search().event(@"test-event").create(), NSException, kCENErrorDomain);
 }
 
 

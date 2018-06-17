@@ -16,7 +16,7 @@ NS_ASSUME_NONNULL_BEGIN
  * @version 1.0.0
  * @copyright © 2009-2018 PubNub, Inc.
  */
-@interface CENOnlineSearchExtension : CEPExtension
+@interface CENOnlineUserSearchExtension : CEPExtension
 
 
 #pragma mark - Search

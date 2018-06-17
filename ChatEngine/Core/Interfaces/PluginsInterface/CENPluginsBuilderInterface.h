@@ -11,7 +11,7 @@ NS_ASSUME_NONNULL_BEGIN
  *             Proto plugins automatically attached to each instance (of specific object \c type) during instantiation.
  *
  * @author Serhii Mamontov
- * @version 0.9.13
+ * @version 0.9.0
  * @copyright © 2009-2017 PubNub, Inc.
  */
 @interface CENPluginsBuilderInterface : CENInterfaceBuilder

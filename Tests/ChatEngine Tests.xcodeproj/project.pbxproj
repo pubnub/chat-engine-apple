@@ -42,6 +42,7 @@
 		7945D5CB20712B1F00FECBFB /* CEDummyOnMiddleware.m in Sources */ = {isa = PBXBuildFile; fileRef = 797ED06220596848007E15F5 /* CEDummyOnMiddleware.m */; };
 		7945D5CC20712B1F00FECBFB /* CEDummyExtension.m in Sources */ = {isa = PBXBuildFile; fileRef = 797ED05820595E50007E15F5 /* CEDummyExtension.m */; };
 		7945D5CD20712B1F00FECBFB /* CEDummyPlugin.m in Sources */ = {isa = PBXBuildFile; fileRef = 797ED05A20595E50007E15F5 /* CEDummyPlugin.m */; };
+		7957E32820CC0BE9005E76EE /* CENPushNotificationsPluginIntegrationTest.m in Sources */ = {isa = PBXBuildFile; fileRef = 7957E32720CC0BE9005E76EE /* CENPushNotificationsPluginIntegrationTest.m */; };
 		797ED0122057C6D2007E15F5 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 797ED0022057C6D2007E15F5 /* AppDelegate.m */; };
 		797ED0132057C6D2007E15F5 /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 797ED0042057C6D2007E15F5 /* ViewController.m */; };
 		797ED0142057C6D2007E15F5 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 797ED0072057C6D2007E15F5 /* main.m */; };
@@ -90,6 +91,12 @@
 		79A964E920702DEF00323D2E /* CENUsersManagerTest.m in Sources */ = {isa = PBXBuildFile; fileRef = 79A964E720702DEF00323D2E /* CENUsersManagerTest.m */; };
 		79A964EB2070D19900323D2E /* CENPluginsManagerTest.m in Sources */ = {isa = PBXBuildFile; fileRef = 79A964EA2070D19900323D2E /* CENPluginsManagerTest.m */; };
 		79A964EC2070D19900323D2E /* CENPluginsManagerTest.m in Sources */ = {isa = PBXBuildFile; fileRef = 79A964EA2070D19900323D2E /* CENPluginsManagerTest.m */; };
+		79AC159020D10F00008827DC /* CENPushNotificationsPluginTest.m in Sources */ = {isa = PBXBuildFile; fileRef = 79AC158F20D10F00008827DC /* CENPushNotificationsPluginTest.m */; };
+		79AC159120D10F00008827DC /* CENPushNotificationsPluginTest.m in Sources */ = {isa = PBXBuildFile; fileRef = 79AC158F20D10F00008827DC /* CENPushNotificationsPluginTest.m */; };
+		79AC159220D10F00008827DC /* CENPushNotificationsPluginTest.m in Sources */ = {isa = PBXBuildFile; fileRef = 79AC158F20D10F00008827DC /* CENPushNotificationsPluginTest.m */; };
+		79AC159420D10F1F008827DC /* CENPushNotificationsExtensionTest.m in Sources */ = {isa = PBXBuildFile; fileRef = 79AC159320D10F1F008827DC /* CENPushNotificationsExtensionTest.m */; };
+		79AC159520D10F1F008827DC /* CENPushNotificationsExtensionTest.m in Sources */ = {isa = PBXBuildFile; fileRef = 79AC159320D10F1F008827DC /* CENPushNotificationsExtensionTest.m */; };
+		79AC159620D10F1F008827DC /* CENPushNotificationsExtensionTest.m in Sources */ = {isa = PBXBuildFile; fileRef = 79AC159320D10F1F008827DC /* CENPushNotificationsExtensionTest.m */; };
 		79B10EB520808A66003EAFAD /* CENEventTest.m in Sources */ = {isa = PBXBuildFile; fileRef = 79B10EB1208089AF003EAFAD /* CENEventTest.m */; };
 		79B10EB620808A66003EAFAD /* CEUserTest.m in Sources */ = {isa = PBXBuildFile; fileRef = 79B10EB320808A5C003EAFAD /* CEUserTest.m */; };
 		79B10EB820808A66003EAFAD /* CEUserTest.m in Sources */ = {isa = PBXBuildFile; fileRef = 79B10EB320808A5C003EAFAD /* CEUserTest.m */; };
@@ -148,6 +155,9 @@
 		79D63E5620C69C91008ECBC7 /* CENGravatarPluginIntegrationTest.m in Sources */ = {isa = PBXBuildFile; fileRef = 79D63E5420C69C91008ECBC7 /* CENGravatarPluginIntegrationTest.m */; };
 		79D63E5820C69CEB008ECBC7 /* CENRandomUsernamePluginIntegrationTest.m in Sources */ = {isa = PBXBuildFile; fileRef = 79D63E5720C69CEB008ECBC7 /* CENRandomUsernamePluginIntegrationTest.m */; };
 		79D63E5920C69CEB008ECBC7 /* CENRandomUsernamePluginIntegrationTest.m in Sources */ = {isa = PBXBuildFile; fileRef = 79D63E5720C69CEB008ECBC7 /* CENRandomUsernamePluginIntegrationTest.m */; };
+		79E23C3520D2543B00E91C04 /* CENPushNotificationsMiddlewareTest.m in Sources */ = {isa = PBXBuildFile; fileRef = 79E23C3420D2543B00E91C04 /* CENPushNotificationsMiddlewareTest.m */; };
+		79E23C3620D2543B00E91C04 /* CENPushNotificationsMiddlewareTest.m in Sources */ = {isa = PBXBuildFile; fileRef = 79E23C3420D2543B00E91C04 /* CENPushNotificationsMiddlewareTest.m */; };
+		79E23C3720D2543B00E91C04 /* CENPushNotificationsMiddlewareTest.m in Sources */ = {isa = PBXBuildFile; fileRef = 79E23C3420D2543B00E91C04 /* CENPushNotificationsMiddlewareTest.m */; };
 		79E834442085153A00CE089B /* CENEventTest.m in Sources */ = {isa = PBXBuildFile; fileRef = 79B10EB1208089AF003EAFAD /* CENEventTest.m */; };
 		79E834482085350E00CE089B /* CENChatEnginePubNubTest.m in Sources */ = {isa = PBXBuildFile; fileRef = 79E834472085350E00CE089B /* CENChatEnginePubNubTest.m */; };
 		79E834492085350E00CE089B /* CENChatEnginePubNubTest.m in Sources */ = {isa = PBXBuildFile; fileRef = 79E834472085350E00CE089B /* CENChatEnginePubNubTest.m */; };
@@ -201,6 +211,7 @@
 		791553CC20B5944F00BE7A83 /* CENChatEngineRemoteChatsListIntegrationTest.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = CENChatEngineRemoteChatsListIntegrationTest.m; sourceTree = "<group>"; };
 		791553D220B6CF6500BE7A83 /* CENChatEngineUserStateIntegrationTest.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = CENChatEngineUserStateIntegrationTest.m; sourceTree = "<group>"; };
 		7953B4DB20768F5B00F14C3A /* CENTestCase+Private.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "CENTestCase+Private.h"; sourceTree = "<group>"; };
+		7957E32720CC0BE9005E76EE /* CENPushNotificationsPluginIntegrationTest.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = CENPushNotificationsPluginIntegrationTest.m; sourceTree = "<group>"; };
 		797ECFD62057C4D5007E15F5 /* iOS Host Application.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "iOS Host Application.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		797ED0012057C6D2007E15F5 /* AppDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
 		797ED0022057C6D2007E15F5 /* AppDelegate.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
@@ -238,6 +249,8 @@
 		79A8261C206E114300648EE5 /* CENChatTest.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = CENChatTest.m; sourceTree = "<group>"; };
 		79A964E720702DEF00323D2E /* CENUsersManagerTest.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = CENUsersManagerTest.m; sourceTree = "<group>"; };
 		79A964EA2070D19900323D2E /* CENPluginsManagerTest.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = CENPluginsManagerTest.m; sourceTree = "<group>"; };
+		79AC158F20D10F00008827DC /* CENPushNotificationsPluginTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CENPushNotificationsPluginTest.m; sourceTree = "<group>"; };
+		79AC159320D10F1F008827DC /* CENPushNotificationsExtensionTest.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = CENPushNotificationsExtensionTest.m; sourceTree = "<group>"; };
 		79B10EB1208089AF003EAFAD /* CENEventTest.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = CENEventTest.m; sourceTree = "<group>"; };
 		79B10EB320808A5C003EAFAD /* CEUserTest.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = CEUserTest.m; sourceTree = "<group>"; };
 		79B10EBB20808A9D003EAFAD /* CENSessionTest.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = CENSessionTest.m; sourceTree = "<group>"; };
@@ -261,6 +274,7 @@
 		79D63E5120C69BE5008ECBC7 /* CENOnlineSearchPluginIntegrationTest.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = CENOnlineSearchPluginIntegrationTest.m; sourceTree = "<group>"; };
 		79D63E5420C69C91008ECBC7 /* CENGravatarPluginIntegrationTest.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = CENGravatarPluginIntegrationTest.m; sourceTree = "<group>"; };
 		79D63E5720C69CEB008ECBC7 /* CENRandomUsernamePluginIntegrationTest.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = CENRandomUsernamePluginIntegrationTest.m; sourceTree = "<group>"; };
+		79E23C3420D2543B00E91C04 /* CENPushNotificationsMiddlewareTest.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = CENPushNotificationsMiddlewareTest.m; sourceTree = "<group>"; };
 		79E834422085113C00CE089B /* CEChatEngine.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = CEChatEngine.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		79E834472085350E00CE089B /* CENChatEnginePubNubTest.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = CENChatEnginePubNubTest.m; sourceTree = "<group>"; };
 		79E8344B20854FCA00CE089B /* CENChatEngineSearchTest.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = CENChatEngineSearchTest.m; sourceTree = "<group>"; };
@@ -600,6 +614,16 @@
 			path = Objects;
 			sourceTree = "<group>";
 		};
+		79AC158E20D10F00008827DC /* CENPushNotifications */ = {
+			isa = PBXGroup;
+			children = (
+				79AC158F20D10F00008827DC /* CENPushNotificationsPluginTest.m */,
+				79AC159320D10F1F008827DC /* CENPushNotificationsExtensionTest.m */,
+				79E23C3420D2543B00E91C04 /* CENPushNotificationsMiddlewareTest.m */,
+			);
+			path = CENPushNotifications;
+			sourceTree = "<group>";
+		};
 		79B10ED1208327D1003EAFAD /* Core */ = {
 			isa = PBXGroup;
 			children = (
@@ -638,6 +662,7 @@
 				79D63E5120C69BE5008ECBC7 /* CENOnlineSearchPluginIntegrationTest.m */,
 				79D63E5420C69C91008ECBC7 /* CENGravatarPluginIntegrationTest.m */,
 				79D63E5720C69CEB008ECBC7 /* CENRandomUsernamePluginIntegrationTest.m */,
+				7957E32720CC0BE9005E76EE /* CENPushNotificationsPluginIntegrationTest.m */,
 			);
 			path = Plugins;
 			sourceTree = "<group>";
@@ -645,6 +670,7 @@
 		79CA5E1C20BC4DD800290354 /* Plugins */ = {
 			isa = PBXGroup;
 			children = (
+				79AC158E20D10F00008827DC /* CENPushNotifications */,
 				79CA5E1D20BC4E2300290354 /* CENMarkdownPluginParserTest.m */,
 			);
 			path = Plugins;
@@ -1119,6 +1145,7 @@
 				79CA5E1420BC24FB00290354 /* CENChatEngineChatMetaIntegrationTest.m in Sources */,
 				791553CD20B5945000BE7A83 /* CENChatEngineRemoteChatsListIntegrationTest.m in Sources */,
 				79D63E5520C69C91008ECBC7 /* CENGravatarPluginIntegrationTest.m in Sources */,
+				7957E32820CC0BE9005E76EE /* CENPushNotificationsPluginIntegrationTest.m in Sources */,
 				79D63E5220C69BE5008ECBC7 /* CENOnlineSearchPluginIntegrationTest.m in Sources */,
 				797ED02E205880B9007E15F5 /* CENChatEngineConnectionIntegrationTest.m in Sources */,
 				797ED06520596848007E15F5 /* CEDummyEmitMiddleware.m in Sources */,
@@ -1146,8 +1173,10 @@
 				79A1D2B42073A99600D97E64 /* CENChatsManagerTest.m in Sources */,
 				791553CE20B5945000BE7A83 /* CENChatEngineRemoteChatsListIntegrationTest.m in Sources */,
 				791553C620B5895D00BE7A83 /* CENUserBuilderInterfaceTest.m in Sources */,
+				79E23C3720D2543B00E91C04 /* CENPushNotificationsMiddlewareTest.m in Sources */,
 				79CA5E1520BC24FB00290354 /* CENChatEngineChatMetaIntegrationTest.m in Sources */,
 				79E834522085518600CE089B /* CENChatEngineSessionTest.m in Sources */,
+				79AC159620D10F1F008827DC /* CENPushNotificationsExtensionTest.m in Sources */,
 				79A1D2CC2073A9C100D97E64 /* CENChatEngineConnectionIntegrationTest.m in Sources */,
 				79A1D2B52073A99600D97E64 /* CENUsersManagerTest.m in Sources */,
 				79D63E5620C69C91008ECBC7 /* CENGravatarPluginIntegrationTest.m in Sources */,
@@ -1160,6 +1189,7 @@
 				79B10ECA20808B27003EAFAD /* CENObjectTest.m in Sources */,
 				79A1D2B62073A99600D97E64 /* CEDummyPlugin.m in Sources */,
 				79B10EE9208424FB003EAFAD /* CENChatEnginePluginsTest.m in Sources */,
+				79AC159220D10F00008827DC /* CENPushNotificationsPluginTest.m in Sources */,
 				79E8345620855A6000CE089B /* CENChatEngineUserTest.m in Sources */,
 				791553C820B5896000BE7A83 /* CENInterfaceBuilderTest.m in Sources */,
 				79CA5E1720BC24FB00290354 /* CENChatEngineChatInviteIntegrationTest.m in Sources */,
@@ -1205,6 +1235,7 @@
 				79A964E820702DEF00323D2E /* CENUsersManagerTest.m in Sources */,
 				79B10EE7208424FB003EAFAD /* CENChatEnginePluginsTest.m in Sources */,
 				79E834482085350E00CE089B /* CENChatEnginePubNubTest.m in Sources */,
+				79AC159420D10F1F008827DC /* CENPushNotificationsExtensionTest.m in Sources */,
 				79B10EE320840EB4003EAFAD /* CENChatEngineEventEmitterTest.m in Sources */,
 				7945D5C620712B1F00FECBFB /* CEDummyEmitMiddleware.m in Sources */,
 				791553A320B4D30500BE7A83 /* CENChatEmitBuilderInterfaceTest.m in Sources */,
@@ -1217,10 +1248,12 @@
 				79E8344C20854FCA00CE089B /* CENChatEngineSearchTest.m in Sources */,
 				79A82614206D32A300648EE5 /* CENEventEmitterTest.m in Sources */,
 				79B10ED720836783003EAFAD /* CENChatEngineAuthorizationTest.m in Sources */,
+				79AC159020D10F00008827DC /* CENPushNotificationsPluginTest.m in Sources */,
 				79A964EB2070D19900323D2E /* CENPluginsManagerTest.m in Sources */,
 				7915539D20B4C0E300BE7A83 /* CENInterfaceBuilderTest.m in Sources */,
 				79B10ECC20808B5F003EAFAD /* CENMeTest.m in Sources */,
 				79B10EEB2084C71A003EAFAD /* CENChatEnginePublishTest.m in Sources */,
+				79E23C3520D2543B00E91C04 /* CENPushNotificationsMiddlewareTest.m in Sources */,
 				79B10EC820808B27003EAFAD /* CENObjectTest.m in Sources */,
 				79A82618206D98BB00648EE5 /* CENChatsManagerTest.m in Sources */,
 				79A8260F206CCF5C00648EE5 /* CENConfigurationTest.m in Sources */,
@@ -1249,6 +1282,7 @@
 				7945D5CD20712B1F00FECBFB /* CEDummyPlugin.m in Sources */,
 				79E834512085518600CE089B /* CENChatEngineSessionTest.m in Sources */,
 				79B10EDC2083AD6A003EAFAD /* CENChatEngineChatsTest.m in Sources */,
+				79AC159520D10F1F008827DC /* CENPushNotificationsExtensionTest.m in Sources */,
 				79A82612206D300600648EE5 /* CENTestCase.m in Sources */,
 				7945D5CB20712B1F00FECBFB /* CEDummyOnMiddleware.m in Sources */,
 				791553A420B4D30500BE7A83 /* CENChatEmitBuilderInterfaceTest.m in Sources */,
@@ -1261,10 +1295,12 @@
 				7945D5CC20712B1F00FECBFB /* CEDummyExtension.m in Sources */,
 				79B10EEC2084C71A003EAFAD /* CENChatEnginePublishTest.m in Sources */,
 				79B10EC520808B17003EAFAD /* CENObjectPluginsTest.m in Sources */,
+				79AC159120D10F00008827DC /* CENPushNotificationsPluginTest.m in Sources */,
 				79B10EB820808A66003EAFAD /* CEUserTest.m in Sources */,
 				7915539E20B4C0E300BE7A83 /* CENInterfaceBuilderTest.m in Sources */,
 				79A964EC2070D19900323D2E /* CENPluginsManagerTest.m in Sources */,
 				79B10ED4208327E8003EAFAD /* CENChatEngineTest.m in Sources */,
+				79E23C3620D2543B00E91C04 /* CENPushNotificationsMiddlewareTest.m in Sources */,
 				79E8345520855A6000CE089B /* CENChatEngineUserTest.m in Sources */,
 				79B10EE02083F5C4003EAFAD /* CENChatEngineConnectionTest.m in Sources */,
 				79A82615206D32A300648EE5 /* CENEventEmitterTest.m in Sources */,
@@ -1317,6 +1353,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
+				APPLICATION_EXTENSION_API_ONLY = NO;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
@@ -1372,6 +1409,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
+				APPLICATION_EXTENSION_API_ONLY = NO;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
@@ -1425,6 +1463,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = LJE3GJ53Z7;
 				INFOPLIST_FILE = "$(SRCROOT)/Host Applications/iOS Host Application/Resources/General/Info.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 8.4;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = com.pubnub.ChatEngineTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -1440,6 +1479,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = LJE3GJ53Z7;
 				INFOPLIST_FILE = "$(SRCROOT)/Host Applications/iOS Host Application/Resources/General/Info.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 8.4;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = com.pubnub.ChatEngineTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -1454,7 +1494,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = LJE3GJ53Z7;
 				INFOPLIST_FILE = "[Test] iOS Integration/Info.plist";
-				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 8.4;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = "com.pubnub.-Test--iOS-Integration";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -1469,7 +1509,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = LJE3GJ53Z7;
 				INFOPLIST_FILE = "[Test] iOS Integration/Info.plist";
-				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 8.4;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = "com.pubnub.-Test--iOS-Integration";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -1484,6 +1524,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = LJE3GJ53Z7;
 				INFOPLIST_FILE = "[Test] Code Coverage (Full)/Info.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 8.4;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = "com.chatengine.-Test--Code-Coverage";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -1499,6 +1540,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = LJE3GJ53Z7;
 				INFOPLIST_FILE = "[Test] Code Coverage (Full)/Info.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 8.4;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = "com.chatengine.-Test--Code-Coverage";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -1514,6 +1556,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = LJE3GJ53Z7;
 				INFOPLIST_FILE = "[Test] iOS Unit/Info.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 8.4;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = "com.chatengine.-Test--iOS-Unit";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -1528,6 +1571,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = LJE3GJ53Z7;
 				INFOPLIST_FILE = "[Test] iOS Unit/Info.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 8.4;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = "com.chatengine.-Test--iOS-Unit";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -1542,6 +1586,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = LJE3GJ53Z7;
 				INFOPLIST_FILE = "[Test] Code Coverage (Unit)/Info.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 8.4;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = "com.chatengine.-Test--Code-Coverage";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -1557,6 +1602,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = LJE3GJ53Z7;
 				INFOPLIST_FILE = "[Test] Code Coverage (Unit)/Info.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 8.4;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = "com.chatengine.-Test--Code-Coverage";
 				PRODUCT_NAME = "$(TARGET_NAME)";

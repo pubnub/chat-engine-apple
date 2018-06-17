@@ -1,5 +1,6 @@
 /**
  * @author Serhii Mamontov
+ * @version 1.0.0
  * @copyright © 2009-2018 PubNub, Inc.
  */
 #import "CENTypingIndicatorExtension.h"

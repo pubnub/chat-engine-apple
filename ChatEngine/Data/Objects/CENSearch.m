@@ -1,6 +1,6 @@
 /**
  *@author Serhii Mamontov
- * @version 0.9.13
+ * @version 0.9.0
  * @copyright © 2009-2018 PubNub, Inc.
  */
 #import "CENSearch+Private.h"
@@ -20,6 +20,7 @@
 #import "CENObject+Private.h"
 #import "CENErrorCodes.h"
 #import "CENLogMacro.h"
+#import "CENError.h"
 #import "CENChat.h"
 #import "CENUser.h"
 
@@ -294,10 +295,7 @@ NS_ASSUME_NONNULL_END
                 
                 block(messages, NO);
             } else {
-                NSDictionary *errorInformation = @{ NSLocalizedDescriptionKey: status.errorData.information };
-                NSError *error = [NSError errorWithDomain:kCEPNErrorDomain code:-1 userInfo:errorInformation];
-                
-                block(error, YES);
+                block([CENError errorFromPubNubStatus:status], YES);
             }
         }];
     }

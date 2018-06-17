@@ -458,7 +458,7 @@
         handlerBlock(nil, nil);
     });
     
-    [self.defaultClient channelsForGroup:expectedGroup withCompletion:^(NSArray<NSString *> *chats, PNErrorData *errorData) {
+    [self.defaultClient channelsForGroup:expectedGroup withCompletion:^(NSArray<NSString *> *chats, PNErrorStatus *errorStatus) {
         handlerCalled = YES;
         
         dispatch_semaphore_signal(semaphore);

@@ -14,7 +14,7 @@ NS_ASSUME_NONNULL_BEGIN
  *             from passed configuration.
  *
  * @author Serhii Mamontov
- * @version 0.9.13
+ * @version 0.9.0
  * @copyright © 2009-2017 PubNub, Inc.
  */
 @interface CENChatSearchBuilderInterface : CENInterfaceBuilder

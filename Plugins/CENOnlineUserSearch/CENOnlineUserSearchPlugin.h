@@ -6,7 +6,7 @@
 /**
  * @brief  Structure wich describe available configuration option key names.
  */
-typedef struct CENOnlineSearchConfigurationKeys {
+typedef struct CENOnlineUserSearchConfigurationKeys {
     
     /**
      * @brief      Stores reference on name of key under which stored name of property which should be used in search.
@@ -18,9 +18,9 @@ typedef struct CENOnlineSearchConfigurationKeys {
      * @brief  Stores reference on name of key under which stored whether case-sensitive search should be used or not.
      */
     __unsafe_unretained NSString *caseSensitive;
-} CENOnlineSearchConfigurationKeys;
+} CENOnlineUserSearchConfigurationKeys;
 
-extern CENOnlineSearchConfigurationKeys CENOnlineSearchConfiguration;
+extern CENOnlineUserSearchConfigurationKeys CENOnlineUserSearchConfiguration;
 
 
 #pragma mark - Class forward
@@ -36,15 +36,15 @@ extern CENOnlineSearchConfigurationKeys CENOnlineSearchConfiguration;
  * @code
  * CENConfiguration *configuration = [CENConfiguration configurationWithPublishKey:@"demo-36" subscribeKey:@"demo-36"];
  * self.client = [CENChatEngine clientWithConfiguration:configuration];
- * self.client.proto(@"Chat", [CENOnlineSearchPlugin class]).store();
+ * self.client.proto(@"Chat", [CENOnlineUserSearchPlugin class]).store();
  * @endcode
  *
  * @discussion Register plugin which has custom property name which should be used for search:
  * @code
  * CENConfiguration *configuration = [CENConfiguration configurationWithPublishKey:@"demo-36" subscribeKey:@"demo-36"];
  * self.client = [CENChatEngine clientWithConfiguration:configuration];
- * self.client.proto(@"Chat", [CENOnlineSearchPlugin class]).configuration(@{
- *     CENOnlineSearchConfiguration.propertyName = @"state.firstName"
+ * self.client.proto(@"Chat", [CENOnlineUserSearchPlugin class]).configuration(@{
+ *     CENOnlineUserSearchConfiguration.propertyName = @"state.firstName"
  * });
  * @endcode
  *
@@ -52,7 +52,7 @@ extern CENOnlineSearchConfigurationKeys CENOnlineSearchConfiguration;
  * @version 1.0.0
  * @copyright © 2009-2018 PubNub, Inc.
  */
-@interface CENOnlineSearchPlugin : CEPPlugin
+@interface CENOnlineUserSearchPlugin : CEPPlugin
 
 
 #pragma mark - Extension
@@ -63,12 +63,12 @@ extern CENOnlineSearchConfigurationKeys CENOnlineSearchConfiguration;
  *
  * @discussion \b Example:
  * @code
- * [CENOnlineSearchPlugin search:@"bob" inChat:chat withCompletion:^(NSArray<CENUser *> *users) {
+ * [CENOnlineUserSearchPlugin search:@"bob" inChat:chat withCompletion:^(NSArray<CENUser *> *users) {
  *     NSLog(@"Found %@ users which has 'bob' in their UUID", @(users.count));
  * }];
  * @endcode
  *
- * @param criteria Reference on string which should be checked in property specified under \c CENOnlineSearchConfiguration.propertyName key.
+ * @param criteria Reference on string which should be checked in property specified under \c CENOnlineUserSearchConfiguration.propertyName key.
  * @param chat     Reference on \c chat instance for which search should be done.
  * @param block    Reference on search completion block. Block pass only one argument - list of users which conform to search \c criteria.
  */

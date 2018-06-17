@@ -1,6 +1,6 @@
 /**
  * @author Serhii Mamontov
- * @version 0.9.13
+ * @version 0.9.0
  * @copyright © 2009-2018 PubNub, Inc.
  */
 #import "CENChatEngine+AuthorizationBuilderInterface.h"
@@ -13,6 +13,7 @@
 #import "CENChatEngine+Private.h"
 #import "CENErrorCodes.h"
 #import "CENStructures.h"
+#import "CENError.h"
 #import "CENChat.h"
 
 
@@ -79,11 +80,9 @@
             return;
         }
         
-        id errorInformation = responses.firstObject ?: @"Unknown error";
         NSString *description = [NSString stringWithFormat:@"There was a problem logging into the auth server (%@).",
                                  strongSelf.currentConfiguration.functionEndpoint];
-        NSDictionary *userInfo = @{ NSLocalizedDescriptionKey: description, NSUnderlyingErrorKey: errorInformation };
-        NSError *error = [NSError errorWithDomain:kCEPNFunctionErrorDomain code:kCEPNAuthorizationError userInfo:userInfo];
+        NSError *error = [CENError errorFromPubNubFunctionError:responses.firstObject withDescription:description];
         
         [strongSelf throwError:error forScope:@"auth" from:strongSelf propagateFlow:CEExceptionPropagationFlow.direct];
     }];
@@ -117,7 +116,7 @@
     
     NSString *description = @"You must call -[chatEngine connect] and wait for the $.ready event before creating new Chats.";
     NSDictionary *errorInformation = @{ NSLocalizedDescriptionKey: description };
-    NSError *error = [NSError errorWithDomain:kCEErrorDomain code:kCEClientNotConnectedError userInfo:errorInformation];
+    NSError *error = [NSError errorWithDomain:kCENErrorDomain code:kCENClientNotConnectedError userInfo:errorInformation];
     
     [self throwError:error forScope:@"auth" from:chat propagateFlow:CEExceptionPropagationFlow.middleware];
 }

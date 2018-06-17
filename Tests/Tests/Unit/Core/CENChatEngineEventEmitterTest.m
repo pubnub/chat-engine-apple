@@ -243,7 +243,7 @@
 
 - (void)testThrowError_ShouldEmitErrorByClient {
     
-    NSError *error = [NSError errorWithDomain:kCEErrorDomain code:0 userInfo:@{ NSLocalizedDescriptionKey: @"TestError" }];
+    NSError *error = [NSError errorWithDomain:kCENErrorDomain code:0 userInfo:@{ NSLocalizedDescriptionKey: @"TestError" }];
     
     OCMExpect([self.defaultClient emitEventLocally:@"$.error.test-error" withParameters:@[error]]);
     
@@ -254,7 +254,7 @@
 
 - (void)testThrowError_ShouldEmitErrorByObject_WhenDirectPropagationFlowUsed {
     
-    NSError *error = [NSError errorWithDomain:kCEErrorDomain code:0 userInfo:@{ NSLocalizedDescriptionKey: @"TestError" }];
+    NSError *error = [NSError errorWithDomain:kCENErrorDomain code:0 userInfo:@{ NSLocalizedDescriptionKey: @"TestError" }];
     CENUser *user = self.defaultClient.User(@"exception-tester").create();
     id userPartialMock = [self partialMockForObject:user];
     
@@ -267,7 +267,7 @@
 
 - (void)testThrowError_ShouldEmitErrorByObjectAndClient_WhenMiddlewarePropagationFlowUsed {
     
-    NSError *error = [NSError errorWithDomain:kCEErrorDomain code:0 userInfo:@{ NSLocalizedDescriptionKey: @"TestError" }];
+    NSError *error = [NSError errorWithDomain:kCENErrorDomain code:0 userInfo:@{ NSLocalizedDescriptionKey: @"TestError" }];
     CENUser *user = self.defaultClient.User(@"exception-tester").create();
     id userPartialMock = [self partialMockForObject:user];
     NSArray *clientExpectedParameters = @[user, error];
@@ -283,7 +283,7 @@
 
 - (void)testThrowError_ShouldThrow_WhenClientConfiguredForExpections {
     
-    NSError *error = [NSError errorWithDomain:kCEErrorDomain code:0 userInfo:@{ NSLocalizedDescriptionKey: @"TestError" }];
+    NSError *error = [NSError errorWithDomain:kCENErrorDomain code:0 userInfo:@{ NSLocalizedDescriptionKey: @"TestError" }];
     CENUser *user = self.defaultClient.User(@"exception-tester").create();
     
     XCTAssertThrowsSpecificNamed([self.throwableClient throwError:error forScope:@"test-error" from:user propagateFlow:CEExceptionPropagationFlow.direct],
