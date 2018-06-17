@@ -12,7 +12,7 @@ NS_ASSUME_NONNULL_BEGIN
  * @brief  \b CENObject interface for \c plugins management.
  *
  * @author Serhii Mamontov
- * @version 0.9.13
+ * @version 0.9.0
  * @copyright © 2009-2018 PubNub, Inc.
  */
 @interface CENObject (Plugins)

@@ -1,6 +1,6 @@
 /**
  * @author Serhii Mamontov
- * @version 0.9.13
+ * @version 0.9.0
  * @copyright © 2009-2018 PubNub, Inc.
  */
 #import "CENChatEngine+PubNub.h"
@@ -61,7 +61,7 @@ NS_ASSUME_NONNULL_BEGIN
 #pragma mark - Stream controller
 
 - (void)channelsForGroup:(NSString *)group
-          withCompletion:(void(^)(NSArray<NSString *> * __nullable chats, PNErrorData * __nullable errorData))block;
+          withCompletion:(void(^)(NSArray<NSString *> * __nullable chats, PNErrorStatus * __nullable status))block;
 
 
 #pragma mark - Clean up

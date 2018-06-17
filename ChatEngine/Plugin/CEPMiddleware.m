@@ -1,11 +1,12 @@
 /**
  * @author Serhii Mamontov
- * @version 0.9.13
+ * @version 0.9.0
  * @copyright © 2009-2018 PubNub, Inc.
  */
 #import "CEPMiddleware+Private.h"
 #import "CEPPlugablePropertyStorage+Private.h"
 #import "CEPStructures.h"
+#import <objc/runtime.h>
 #import "CENObject.h"
 
 
@@ -98,6 +99,18 @@ NS_ASSUME_NONNULL_END
     NSAssert(0, @"%s should be implemented by subclass", __PRETTY_FUNCTION__);
     
     return nil;
+}
+
++ (void)replaceEventsWith:(NSArray<NSString *> *)events {
+    
+    SEL eventsGetter = NSSelectorFromString(@"events");
+    IMP swizzledEventsGetter = imp_implementationWithBlock(^id (Class __unused _self) {
+        
+        return events;
+    });
+    
+    Method method = class_getClassMethod(self, eventsGetter);
+    method_setImplementation(method, swizzledEventsGetter);
 }
 
 

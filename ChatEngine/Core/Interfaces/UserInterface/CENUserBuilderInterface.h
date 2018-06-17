@@ -12,7 +12,7 @@ NS_ASSUME_NONNULL_BEGIN
  * @discussion Class describe interface which allow to create new \c CENUser instances or retrieve previously created.
  *
  * @author Serhii Mamontov
- * @version 0.9.13
+ * @version 0.9.0
  * @copyright © 2009-2017 PubNub, Inc.
  */
 @interface CENUserBuilderInterface : CENInterfaceBuilder

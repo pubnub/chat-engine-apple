@@ -10,6 +10,8 @@ abstract_target 'Tests' do
   pod "CENChatEngine/Plugin/OnlineUserSearch", :path => "../"
   pod "CENChatEngine/Plugin/RandomUsername", :path => "../"
   pod "CENChatEngine/Plugin/Gravatar", :path => "../"
+  pod "CENChatEngine/Plugin/PushNotifications", :path => "../"
+
   
   pod 'OCMock', '~> 3.4'
   target '[Test] iOS Unit'
@@ -37,6 +39,7 @@ post_install do |installer_representation|
             config.build_settings['CLANG_ENABLE_CODE_COVERAGE'] = target.name =~ /CENChatEngine/ ? 'YES' : 'NO' 
             config.build_settings['GCC_GENERATE_TEST_COVERAGE_FILES'] = target.name =~ /CENChatEngine/ ? 'YES' : 'NO' 
             config.build_settings['GCC_WARN_INHIBIT_ALL_WARNINGS'] = 'YES' unless target.name =~ /CENChatEngine/
+            config.build_settings['APPLICATION_EXTENSION_API_ONLY'] = target.name =~ /Tests/ ? 'YES' : 'NO' 
             if target.name =~ /CENChatEngine/ then
                 config.build_settings['CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING'] = 'YES_ERROR'
                 config.build_settings['CLANG_WARN_NON_LITERAL_NULL_CONVERSION'] = 'YES_ERROR'

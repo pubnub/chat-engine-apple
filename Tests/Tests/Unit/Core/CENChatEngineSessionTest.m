@@ -128,7 +128,7 @@
     __block BOOL handlerCalled = NO;
     
     OCMStub([self.defaultClient channelsForGroup:expectedGroup withCompletion:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
-        void(^handlerBlock)(NSArray<NSString *> *, PNErrorData *) = nil;
+        void(^handlerBlock)(NSArray<NSString *> *, PNErrorStatus *) = nil;
         
         [invocation getArgument:&handlerBlock atIndex:3];
         handlerBlock(expectedChats, nil);
@@ -152,10 +152,10 @@
     __block BOOL handlerCalled = NO;
     
     OCMExpect([self.defaultClient channelsForGroup:[OCMArg any] withCompletion:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
-        void(^handlerBlock)(NSArray<NSString *> *, PNErrorData *) = nil;
+        void(^handlerBlock)(NSArray<NSString *> *, PNErrorStatus *) = nil;
         
         [invocation getArgument:&handlerBlock atIndex:3];
-        handlerBlock(nil, [self streamAuditErrorStatus].errorData);
+        handlerBlock(nil, [self streamAuditErrorStatus]);
     });
     
     self.defaultClient.once(@"$.error.sync", ^(NSError *error) {

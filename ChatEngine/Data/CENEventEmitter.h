@@ -8,7 +8,7 @@ NS_ASSUME_NONNULL_BEGIN
  * @discussion This class provide interface to subscribe and emit events for it's subclasses.
  *
  * @author Serhii Mamontov
- * @version 0.9.13
+ * @version 0.9.0
  * @copyright © 2009-2018 PubNub, Inc.
  */
 @interface CENEventEmitter : NSObject

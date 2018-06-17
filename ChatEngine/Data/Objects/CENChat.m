@@ -1,6 +1,6 @@
 /**
  *@author Serhii Mamontov
- * @version 0.9.13
+ * @version 0.9.0
  * @copyright © 2009-2018 PubNub, Inc.
  */
 #import "CENChat+Private.h"
@@ -330,7 +330,7 @@ NS_ASSUME_NONNULL_END
         NSString *description = @"You must call -[chatEngine connect] and wait for the $.ready event before calling "
                                  "-[chat search].";
         NSDictionary *errorInformation = @{ NSLocalizedDescriptionKey: description };
-        NSError *error = [NSError errorWithDomain:kCEErrorDomain code:kCEClientNotConnectedError userInfo:errorInformation];
+        NSError *error = [NSError errorWithDomain:kCENErrorDomain code:kCENClientNotConnectedError userInfo:errorInformation];
         
         [self.chatEngine throwError:error forScope:@"search" from:self propagateFlow:CEExceptionPropagationFlow.middleware];
     }

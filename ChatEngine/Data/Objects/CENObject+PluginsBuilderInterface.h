@@ -1,8 +1,3 @@
-/**
- * @author Serhii Mamontov
- * @version 0.9.13
- * @copyright © 2009-2018 PubNub, Inc.
- */
 #import "CENObject.h"
 
 
@@ -18,7 +13,7 @@ NS_ASSUME_NONNULL_BEGIN
  * @discussion This is extended Objective-C interface to provide builder pattern for methods invocation.
  *
  * @author Serhii Mamontov
- * @version 0.9.13
+ * @version 0.9.0
  * @copyright © 2009-2018 PubNub, Inc.
  */
 @interface CENObject (PluginsBuilderInterface)

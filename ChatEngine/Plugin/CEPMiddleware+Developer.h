@@ -1,12 +1,14 @@
 /**
  * @author Serhii Mamontov
- * @version 0.9.13
+ * @version 0.9.0
  * @copyright © 2009-2018 PubNub, Inc.
  */
 #import "CEPMiddleware.h"
+#import <CENChatEngine/CENErrorCodes.h>
 #import "CENObject+PluginsDeveloper.h"
 #import "CEPStructures.h"
 #import "CENStructures.h"
+#import "CENError.h"
 
 
 #pragma mark Class forward
@@ -48,6 +50,14 @@ NS_ASSUME_NONNULL_BEGIN
  * @brief  Stores reference on unique identifier of plugin which instantiated this middleware.
  */
 @property (nonatomic, readonly, strong) NSString *identifier;
+
+/**
+ * @brief      Replace pre-defined by \c events class property list of events on which middleware should be used.
+ * @discussion This method is useful for cases, when plugin allow to configure list of events on which it should trigger middleware.
+ *
+ * @param events Reference on list of event names for which middleware should be used.
+ */
++ (void)replaceEventsWith:(NSArray<NSString *> *)events;
 
 
 #pragma mark - Call

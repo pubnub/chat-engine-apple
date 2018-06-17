@@ -12,7 +12,7 @@ NS_ASSUME_NONNULL_BEGIN
  * @brief  \b ChatEngine client interface for event publishing.
  *
  * @author Serhii Mamontov
- * @version 0.9.13
+ * @version 0.9.0
  * @copyright © 2009-2018 PubNub, Inc.
  */
 @interface CENChatEngine (Publish)

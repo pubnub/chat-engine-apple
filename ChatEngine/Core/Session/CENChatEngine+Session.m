@@ -1,6 +1,6 @@
 /**
  * @author Serhii Mamontov
- * @version 0.9.13
+ * @version 0.9.0
  * @copyright © 2009-2018 PubNub, Inc.
  */
 #import "CENChatEngine+Session.h"
@@ -13,6 +13,7 @@
 #import "CENObject+Private.h"
 #import "CENErrorCodes.h"
 #import "CENStructures.h"
+#import "CENError.h"
 #import "CENChat.h"
 #import "CENMe.h"
 
@@ -42,16 +43,15 @@
     for (NSString *group in @[CENChatGroup.custom, CENChatGroup.system]) {
         NSString *channelGroup = [@[chatsNamespace, self.me.uuid, group] componentsJoinedByString:@"#"];
         
-        [self channelsForGroup:channelGroup withCompletion:^(NSArray<NSString *> *chats, PNErrorData *errorData) {
-            if (!errorData) {
+        [self channelsForGroup:channelGroup withCompletion:^(NSArray<NSString *> *chats, PNErrorStatus *errorStatus) {
+            if (!errorStatus) {
                 block(group, chats);
                 
                 return;
             }
             
             NSString *description = @"There was a problem restoring your session from PubNub servers.";
-            NSDictionary *userInfo = @{ NSLocalizedDescriptionKey: description, NSUnderlyingErrorKey:errorData.information };
-            NSError *error = [NSError errorWithDomain:kCEPNErrorDomain code:kCEChannelGroupAuditError userInfo:userInfo];
+            NSError *error = [CENError errorFromPubNubStatus:errorStatus withDescription:description];
             
             [self throwError:error forScope:@"sync" from:self propagateFlow:CEExceptionPropagationFlow.direct];
         }];

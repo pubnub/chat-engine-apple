@@ -64,7 +64,6 @@
     #import "CENChat+Interface.h"
 
     #import "CENSearch+Interface.h"
-    #import "CENEventEmitter.h"
 
     #import "CENObject+Plugins.h"
     #import "CENMe+Interface.h"

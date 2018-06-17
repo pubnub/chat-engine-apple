@@ -3,20 +3,20 @@
  * @version 1.0.0
  * @copyright © 2009-2018 PubNub, Inc.
  */
-#import "CENOnlineSearchPlugin.h"
+#import "CENOnlineUserSearchPlugin.h"
 #import <CENChatEngine/CEPPlugin+Developer.h>
-#import "CENOnlineSearchExtension.h"
+#import "CENOnlineUserSearchExtension.h"
 #import <CENChatEngine/CENChat.h>
 
 
 #pragma mark Externs
 
-CENOnlineSearchConfigurationKeys CENOnlineSearchConfiguration = { .propertyName = @"pn", .caseSensitive = @"cs" };
+CENOnlineUserSearchConfigurationKeys CENOnlineUserSearchConfiguration = { .propertyName = @"pn", .caseSensitive = @"cs" };
 
 
 #pragma mark - Interface implementation
 
-@implementation CENOnlineSearchPlugin
+@implementation CENOnlineUserSearchPlugin
 
 
 #pragma mark - Information
@@ -34,7 +34,7 @@ CENOnlineSearchConfigurationKeys CENOnlineSearchConfiguration = { .propertyName 
     Class extensionClass = nil;
     
     if ([object isKindOfClass:[CENChat class]]) {
-        extensionClass = [CENOnlineSearchExtension class];
+        extensionClass = [CENOnlineUserSearchExtension class];
     }
     
     return extensionClass;
@@ -42,7 +42,7 @@ CENOnlineSearchConfigurationKeys CENOnlineSearchConfiguration = { .propertyName 
 
 + (void)search:(NSString *)criteria inChat:(CENChat *)chat withCompletion:(void(^)(NSArray<CENUser *> *))block {
     
-    [chat extensionWithIdentifier:[self identifier] context:^(CENOnlineSearchExtension *extension) {
+    [chat extensionWithIdentifier:[self identifier] context:^(CENOnlineUserSearchExtension *extension) {
         [extension searchFor:criteria withCompletion:block];
     }];
 }
@@ -54,12 +54,12 @@ CENOnlineSearchConfigurationKeys CENOnlineSearchConfiguration = { .propertyName 
     
     NSMutableDictionary *configuration = [NSMutableDictionary dictionaryWithDictionary:self.configuration];
     
-    if (!configuration[CENOnlineSearchConfiguration.propertyName]) {
-        configuration[CENOnlineSearchConfiguration.propertyName] = @"uuid";
+    if (!configuration[CENOnlineUserSearchConfiguration.propertyName]) {
+        configuration[CENOnlineUserSearchConfiguration.propertyName] = @"uuid";
     }
     
-    if (!configuration[CENOnlineSearchConfiguration.caseSensitive]) {
-        configuration[CENOnlineSearchConfiguration.caseSensitive] = @NO;
+    if (!configuration[CENOnlineUserSearchConfiguration.caseSensitive]) {
+        configuration[CENOnlineUserSearchConfiguration.caseSensitive] = @NO;
     }
     
     self.configuration = configuration;

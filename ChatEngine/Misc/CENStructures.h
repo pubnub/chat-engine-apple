@@ -2,7 +2,7 @@
  * @brief Set of types and structures which is used as part of API calls in \b ChatEngine client.
  *
  * @author Serhii Mamontov
- * @version 0.9.13
+ * @version 0.9.0
  * @copyright © 2009-2018 PubNub, Inc.
  */
 #ifndef CENStructures_h

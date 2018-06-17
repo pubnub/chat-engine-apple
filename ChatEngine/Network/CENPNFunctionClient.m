@@ -1,6 +1,6 @@
 /**
  * @author Serhii Mamontov
- * @version 0.9.13
+ * @version 0.9.0
  * @copyright © 2009-2018 PubNub, Inc.
  */
 #import "CENPNFunctionClient.h"
@@ -213,6 +213,9 @@ NS_ASSUME_NONNULL_END
                     kCEPNFunctionErrorResponseDataKey: responseData
                 };
                 NSInteger code = response.statusCode >= 500 ? NSURLErrorBadServerResponse : NSURLErrorBadURL;
+                if (response.statusCode == 403) {
+                    code = NSURLErrorUserAuthenticationRequired;
+                }
                 processedData = [NSError errorWithDomain:NSURLErrorDomain code:code userInfo:userInfo];
             }
             

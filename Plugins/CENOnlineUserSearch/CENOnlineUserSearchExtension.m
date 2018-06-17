@@ -3,23 +3,23 @@
  * @version 1.0.0
  * @copyright © 2009-2018 PubNub, Inc.
  */
-#import "CENOnlineSearchExtension.h"
+#import "CENOnlineUserSearchExtension.h"
 #import <CENChatEngine/CEPExtension+Developer.h>
-#import "CENOnlineSearchPlugin.h"
+#import "CENOnlineUserSearchPlugin.h"
 #import <CENChatEngine/CENChat.h>
 #import <CENChatEngine/CENUser.h>
 
 
 #pragma mark Interface implementation
 
-@implementation CENOnlineSearchExtension
+@implementation CENOnlineUserSearchExtension
 
 
 #pragma mark - Search
 
 - (void)searchFor:(NSString *)criteria withCompletion:(void(^)(NSArray<CENUser *> *users))block {
     
-    NSString *propertyName = self.configuration[CENOnlineSearchConfiguration.propertyName];
+    NSString *propertyName = self.configuration[CENOnlineUserSearchConfiguration.propertyName];
     BOOL isState = [[propertyName componentsSeparatedByString:@"."].firstObject isEqualToString:@"state"];
     NSDictionary<NSString *, CENUser *> *users = ((CENChat *)self.object).users;
     NSMutableArray<CENUser *> *filteredUsers = [NSMutableArray new];
@@ -28,7 +28,7 @@
         propertyName = [propertyName substringFromIndex:([propertyName rangeOfString:@"."].location + 1)];
     }
     
-    if (!((NSNumber *)self.configuration[CENOnlineSearchConfiguration.caseSensitive]).boolValue) {
+    if (!((NSNumber *)self.configuration[CENOnlineUserSearchConfiguration.caseSensitive]).boolValue) {
         criteria = criteria.lowercaseString;
     }
     
@@ -36,7 +36,7 @@
         CENUser *user = users[uuid];
         NSString *data = !isState ? [user valueForKey:propertyName] : [user.state valueForKeyPath:propertyName];
         
-        if (!((NSNumber *)self.configuration[CENOnlineSearchConfiguration.caseSensitive]).boolValue) {
+        if (!((NSNumber *)self.configuration[CENOnlineUserSearchConfiguration.caseSensitive]).boolValue) {
             data = data.lowercaseString;
         }
         

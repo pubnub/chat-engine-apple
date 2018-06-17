@@ -2,7 +2,7 @@
  * @brief Global client constants declared here.
  *
  * @author Serhii Mamontov
- * @version 0.9.13
+ * @version 0.9.0
  * @copyright © 2009-2018 PubNub, Inc.
  */
 #ifndef CENConstants_h
@@ -11,7 +11,7 @@
 #pragma mark General information constants
 
 // Stores client library version number
-static NSString * const kCELibraryVersion = @"0.9.13";
+static NSString * const kCELibraryVersion = @"0.9.0";
 
 // Stores information about SDK codebase
 static NSString * const kCECommit = @"initial";

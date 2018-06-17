@@ -1,6 +1,6 @@
 /**
  * @author Serhii Mamontov
- * @version 0.9.13
+ * @version 0.9.0
  * @copyright © 2009-2018 PubNub, Inc.
  */
 #import "CENChatEngine+Publish.h"
@@ -13,6 +13,7 @@
 #import "CENErrorCodes.h"
 #import "CENStructures.h"
 #import "CENConstants.h"
+#import "CENError.h"
 #import "CENChat.h"
 #import "CENMe.h"
 
@@ -26,7 +27,7 @@
     data = data ?: @{};
     if (![data isKindOfClass:[NSDictionary class]]) {
         NSDictionary *errorInformation = @{ NSLocalizedDescriptionKey: @"The payload should be instance of NSDictionary" };
-        NSError *error = [NSError errorWithDomain:kCEErrorDomain code:kCEMalformedPayloadError userInfo:errorInformation];
+        NSError *error = [NSError errorWithDomain:kCENErrorDomain code:kCENMalformedPayloadError userInfo:errorInformation];
         
         @throw [NSException exceptionWithName:@"ChatEngine Exception" reason:error.localizedDescription userInfo:@{ NSUnderlyingErrorKey: error }];
     }
@@ -60,8 +61,7 @@
     
     [self publishStorable:shouldStoreInHistory data:data toChannel:channel withCompletion:^(PNPublishStatus *status) {
         if (status.isError) {
-            NSDictionary *errorInformation = @{ NSLocalizedDescriptionKey: status.errorData.information };
-            NSError *error = [NSError errorWithDomain:kCEPNErrorDomain code:kCEPublishError userInfo:errorInformation];
+            NSError *error = [CENError errorFromPubNubStatus:status];
             
             [self throwError:error forScope:@"emitter" from:event propagateFlow:CEExceptionPropagationFlow.direct];
             

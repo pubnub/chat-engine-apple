@@ -73,7 +73,6 @@
 
 - (void)testStateEvent_ShouldNotReceiveStateWithGravatarURL_WhenEmailNotPassed {
     
-    NSString *expected = @"https:/www.gravatar.com/avatar/b02585c8494d87b9f634eb41b17fbd28";
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     CENChatEngine *client = [self chatEngineForUser:@"ian"];
     __block BOOL hanlderCalled = NO;

@@ -13,7 +13,7 @@ NS_ASSUME_NONNULL_BEGIN
  * @discussion Manager responsible for plugins instantiation and setup for objects for which they has been registered.
  *
  * @author Serhii Mamontov
- * @version 0.9.13
+ * @version 0.9.0
  * @copyright © 2009-2018 PubNub, Inc.
  */
 @interface CENPluginsManager : NSObject

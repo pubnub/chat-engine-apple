@@ -7,6 +7,7 @@
 #import <CENChatEngine/CEPMiddleware+Developer.h>
 #import <CENChatEngine/CENStructures.h>
 #import <CENChatEngine/CEPStructures.h>
+#import "CENMarkdownParser+Private.h"
 #import "CENMarkdownPlugin.h"
 
 
@@ -50,12 +51,11 @@ NS_ASSUME_NONNULL_END
 
 #pragma mark - Call
 
-- (void)runForEvent:(NSString *)event withData:(NSMutableDictionary *)data completion:(void (^)(BOOL rejected))block {
+- (void)runForEvent:(NSString *)__unused event withData:(NSMutableDictionary *)data completion:(void (^)(BOOL rejected))block {
     
     id markdownString = data[CENEventData.data][self.configuration[CENMarkdownConfiguration.messageKey]];
     
-    if (![(NSArray *)self.configuration[CENMarkdownConfiguration.events] containsObject:event] ||
-        ![markdownString isKindOfClass:[NSString class]]) {
+    if (![markdownString isKindOfClass:[NSString class]]) {
         
         block(NO);
         return;

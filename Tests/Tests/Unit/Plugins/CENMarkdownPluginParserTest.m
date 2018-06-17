@@ -3,7 +3,7 @@
  * @copyright © 2009-2018 PubNub, Inc.
  */
 #import <XCTest/XCTest.h>
-#import <CENChatEngine/CENMarkdownParser.h>
+#import <CENChatEngine/CENMarkdownParser+Private.h>
 
 
 @interface CENMarkdownPluginParserTest : XCTestCase
@@ -34,6 +34,7 @@
 #pragma mark -
 
 @end
+
 
 @implementation CENMarkdownPluginParserTest
 

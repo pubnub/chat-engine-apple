@@ -13,7 +13,7 @@ NS_ASSUME_NONNULL_BEGIN
  * @discussion This instance can be used to fetch older events for \c chat for which it has been created.
  *
  * @author Serhii Mamontov
- * @version 0.9.13
+ * @version 0.9.0
  * @copyright © 2009-2018 PubNub, Inc.
  */
 @interface CENSearch : CENObject
