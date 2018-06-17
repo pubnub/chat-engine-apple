@@ -51,6 +51,15 @@
     OCMStub([self.defaultClient me]).andReturn([CENMe userWithUUID:@"tester" state:@{} chatEngine:self.defaultClient]);
 }
 
+- (void)tearDown {
+    
+    [self.defaultClient destroy];
+    self.defaultClient = nil;
+    
+    [super tearDown];
+}
+
+
 #pragma mark - Tests :: Information
 
 - (void)testIdentifier_ShouldHavePropertIdentifier {

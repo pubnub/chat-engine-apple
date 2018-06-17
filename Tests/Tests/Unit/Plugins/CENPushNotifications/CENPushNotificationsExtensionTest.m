@@ -68,6 +68,14 @@
     });
 }
 
+- (void)tearDown {
+    
+    [self.defaultClient destroy];
+    self.defaultClient = nil;
+    
+    [super tearDown];
+}
+
 
 #pragma mark - Tests :: Enable push notifications
 
