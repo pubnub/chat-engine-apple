@@ -16,9 +16,10 @@
 + (NSString *)queryStringFrom:(NSDictionary *)dictionary {
     
     NSMutableString *query = [NSMutableString new];
+    NSCharacterSet *allowedCharacters = [NSCharacterSet URLQueryAllowedCharacterSet];
     
     for (NSString *queryKey in dictionary) {
-        NSString *encodedValue = [(NSString *)dictionary[queryKey] stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
+        NSString *encodedValue = [(NSString *)dictionary[queryKey] stringByAddingPercentEncodingWithAllowedCharacters:allowedCharacters];
         [query appendFormat:@"%@%@=%@", (query.length ? @"&" : @""), queryKey, encodedValue];
     }
     
