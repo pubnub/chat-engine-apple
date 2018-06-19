@@ -4,7 +4,7 @@ inhibit_all_warnings!
 use_frameworks!
 
 target '[iOS] Chat' do
-  platform :ios, '8.0'
+  platform :ios, '9.0'
   project 'demo/chat-engine'
   pod "CENChatEngine/BuilderInterfaceOn", :path => "."
   pod "CENChatEngine/Plugin/UnreadMessages", :path => "."
