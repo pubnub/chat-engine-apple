@@ -335,12 +335,21 @@ static NSString * const kCENMPDefaultFontName = @"HelveticaNeue";
         
         if (imageURL.length) {
             NSTextAttachment *attachment = [NSTextAttachment new];
-            
+
             if ([imageURL hasPrefix:@"http"]) {
                 NSData *imageData = [NSData dataWithContentsOfURL:[NSURL URLWithString:imageURL]];
+#if TARGET_OS_OSX
+                attachment.image = [[NSImage alloc] initWithData:imageData];
+#else
                 attachment.image = [UIImage imageWithData:imageData];
+#endif // TARGET_OS_OSX
+                
             } else {
+#if TARGET_OS_OSX
+                attachment.image = [[NSImage alloc] initWithContentsOfFile:imageURL];
+#else
                 attachment.image = [UIImage imageWithContentsOfFile:imageURL];
+#endif // TARGET_OS_OSX
             }
             
             NSAttributedString *attributedStringWithImage = [NSAttributedString attributedStringWithAttachment:attachment];
@@ -640,12 +649,14 @@ static NSString * const kCENMPDefaultFontName = @"HelveticaNeue";
     Class fontClass = nil;
 #if TARGET_OS_OSX
     fontClass = [NSFont class];
+    NSFontDescriptorSymbolicTraits fontDescriptorSymbolicTraits;
 #else
     fontClass = [UIFont class];
+    UIFontDescriptorSymbolicTraits fontDescriptorSymbolicTraits;
 #endif // TARGET_OS_OSX
     
     NSArray<NSString *> *boldItalicTraitNames = @[@"BoldItalic", @"BlackItalic", @"BoldOblique", @"BlackOblique"];
-    UIFontDescriptorSymbolicTraits fontDescriptorSymbolicTraits = [font fontDescriptor].symbolicTraits;
+    fontDescriptorSymbolicTraits = [font fontDescriptor].symbolicTraits;
     BOOL alreadyItalicFont = (fontDescriptorSymbolicTraits & CENMPFontDescriptorTraitItalic) != 0;
     BOOL alreadyBoldFont = (fontDescriptorSymbolicTraits & CENMPFontDescriptorTraitBold) != 0;
     NSArray<NSString *> *traitNames = @[@"Italic", @"Bold", @"Oblique", @"Black"];

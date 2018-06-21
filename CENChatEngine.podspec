@@ -13,8 +13,8 @@ Pod::Spec.new do |spec|
         :tag => "v#{spec.version}"
     }
 
-    spec.ios.deployment_target = '8.0'
-    spec.osx.deployment_target = '10.9'
+    spec.ios.deployment_target = '9.0'
+    spec.osx.deployment_target = '10.11'
     spec.tvos.deployment_target = '9.0'
     spec.requires_arc = true
 
@@ -29,14 +29,14 @@ Pod::Spec.new do |spec|
             'ChatEngine/Network/**/*.h',
             'ChatEngine/Plugin/CEPPrivateStructures.h'
         ]
-        core.pod_target_xcconfig = { 'APPLICATION_EXTENSION_API_ONLY' => 'YES' }
+        core.pod_target_xcconfig = { 'APPLICATION_EXTENSION_API_ONLY' => 'NO' }
     end
     
     spec.subspec 'BuilderInterfaceOn' do |bulderInterface|
         bulderInterface.dependency 'CENChatEngine/Core'
         bulderInterface.xcconfig = { 'GCC_PREPROCESSOR_DEFINITIONS' => 'CHATENGINE_USE_BUILDER_INTERFACE=1' }
         bulderInterface.pod_target_xcconfig = { 
-            'APPLICATION_EXTENSION_API_ONLY' => 'YES',
+            'APPLICATION_EXTENSION_API_ONLY' => 'NO',
             'GCC_PREPROCESSOR_DEFINITIONS' => 'CHATENGINE_USE_BUILDER_INTERFACE=1' 
         }
     end
@@ -46,37 +46,29 @@ Pod::Spec.new do |spec|
         bulderInterface.dependency 'CENChatEngine/Core'
         bulderInterface.xcconfig = { 'GCC_PREPROCESSOR_DEFINITIONS' => 'CHATENGINE_USE_BUILDER_INTERFACE=0' }
         bulderInterface.pod_target_xcconfig = { 
-            'APPLICATION_EXTENSION_API_ONLY' => 'YES',
+            'APPLICATION_EXTENSION_API_ONLY' => 'NO',
             'GCC_PREPROCESSOR_DEFINITIONS' => 'CHATENGINE_USE_BUILDER_INTERFACE=0' 
         }
     end
 
     spec.subspec 'Plugin' do |plugin|
-        plugin.subspec 'Core' do |core|
-            core.source_files = 'CENChatEngine/Plugin/**/*'
-            core.private_header_files = [
-                'ChatEngine/**/*Private.h',
-                'ChatEngine/Plugin/CEPPrivateStructures.h'
-            ]
-        end
-
         plugin.subspec 'TypingIndicator' do |typingIndicator|
-            typingIndicator.dependency 'CENChatEngine/Plugin/Core'
+            typingIndicator.dependency 'CENChatEngine/BuilderInterfaceOff'
             typingIndicator.source_files = 'Plugins/CENTypingIndicator/**/*'
         end
 
         plugin.subspec 'RandomUsername' do |randomUsername|
-            randomUsername.dependency 'CENChatEngine/Plugin/Core'
+            randomUsername.dependency 'CENChatEngine/BuilderInterfaceOff'
             randomUsername.source_files = 'Plugins/CENRandomUsername/**/*'
         end
 
         plugin.subspec 'UnreadMessages' do |unreadMessages|
-            unreadMessages.dependency 'CENChatEngine/Plugin/Core'
+            unreadMessages.dependency 'CENChatEngine/BuilderInterfaceOff'
             unreadMessages.source_files = 'Plugins/CENUnreadMessages/**/*'
         end
 
         plugin.subspec 'Markdown' do |markdown|
-            markdown.dependency 'CENChatEngine/Plugin/Core'
+            markdown.dependency 'CENChatEngine/BuilderInterfaceOff'
             markdown.source_files = 'Plugins/CENMarkdown/**/*'
             markdown.private_header_files = [
                 'Plugins/CENMarkdown/CENMarkdownParser+Private.h'
@@ -84,21 +76,21 @@ Pod::Spec.new do |spec|
         end
 
         plugin.subspec 'Gravatar' do |gravatar|
-            gravatar.dependency 'CENChatEngine/Plugin/Core'
+            gravatar.dependency 'CENChatEngine/BuilderInterfaceOff'
             gravatar.source_files = 'Plugins/CENGravatar/**/*'
         end
 
         plugin.subspec 'OnlineUserSearch' do |onlineUserSearch|
-            onlineUserSearch.dependency 'CENChatEngine/Plugin/Core'
+            onlineUserSearch.dependency 'CENChatEngine/BuilderInterfaceOff'
             onlineUserSearch.source_files = 'Plugins/CENOnlineUserSearch/**/*'
         end
 
         plugin.subspec 'PushNotifications' do |pushNotifications|
-            pushNotifications.dependency 'CENChatEngine/Plugin/Core'
+            pushNotifications.dependency 'CENChatEngine/BuilderInterfaceOff'
             pushNotifications.source_files = 'Plugins/CENPushNotifications/**/*'
         end
 
-        plugin.pod_target_xcconfig = { 'APPLICATION_EXTENSION_API_ONLY' => 'YES' }
+        plugin.pod_target_xcconfig = { 'APPLICATION_EXTENSION_API_ONLY' => 'NO' }
     end
 
     spec.dependency 'PubNub'

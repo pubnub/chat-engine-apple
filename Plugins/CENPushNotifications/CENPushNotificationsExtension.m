@@ -257,6 +257,8 @@ NS_ASSUME_NONNULL_END
     if (@available(iOS 10.0, watchOS 3.0, *)) {
         UNUserNotificationCenter *center = [UNUserNotificationCenter currentNotificationCenter];
         NSMutableArray<NSString *> *notificationIdentifiers = [NSMutableArray array];
+        
+    #if !TARGET_OS_WATCH
         UIBackgroundTaskIdentifier backgroundTaskIdentifier = 0;
         
         if ([UIApplication sharedApplication].applicationState != UIApplicationStateActive) {
@@ -264,6 +266,7 @@ NS_ASSUME_NONNULL_END
                 [[UIApplication sharedApplication] endBackgroundTask:backgroundTaskIdentifier];
             }];
         }
+    #endif
         
         [center getDeliveredNotificationsWithCompletionHandler:^(NSArray<UNNotification *> *notifications) {
             [notifications enumerateObjectsUsingBlock:^(UNNotification *notification, __unused NSUInteger objectIdx, BOOL *enumeratorStop) {
@@ -279,9 +282,11 @@ NS_ASSUME_NONNULL_END
                 [center removeDeliveredNotificationsWithIdentifiers:notificationIdentifiers];
             }
             
+    #if !TARGET_OS_WATCH
             if (backgroundTaskIdentifier) {
                 [[UIApplication sharedApplication] endBackgroundTask:backgroundTaskIdentifier];
             }
+    #endif
         }];
     }
 #endif
@@ -292,7 +297,9 @@ NS_ASSUME_NONNULL_END
 
 + (NSArray<NSArray *> *)channelSeriesFromChannels:(NSArray<NSString *> *)channels {
     
-    NSUInteger length = [[channels componentsJoinedByString:@","] stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding].length;
+    NSCharacterSet *allowedCharacters = [NSCharacterSet URLQueryAllowedCharacterSet];
+    NSUInteger length = [[channels componentsJoinedByString:@","] stringByAddingPercentEncodingWithAllowedCharacters:allowedCharacters].length;
+
     if (length < kCENPushNotificationMaximumChannelsLength) {
         return length == 0 ? @[] : @[channels];
     }
@@ -302,11 +309,12 @@ NS_ASSUME_NONNULL_END
     NSMutableString *queryString = [NSMutableString new];
     for (NSUInteger channelIdx = 0; channelIdx < channels.count; channelIdx++) {
         NSString *channel = channels[channelIdx];
+        NSString *percentEncodedChannel = [channel stringByAddingPercentEncodingWithAllowedCharacters:allowedCharacters];
         
         if (!queryString.length) {
-            [queryString setString:[channel stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding]];
+            [queryString setString:percentEncodedChannel];
         } else {
-            [queryString appendString:[@"," stringByAppendingString:[channel stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding]]];
+            [queryString appendString:[@"," stringByAppendingString:percentEncodedChannel]];
         }
         
         if (queryString.length < kCENPushNotificationMaximumChannelsLength) {
