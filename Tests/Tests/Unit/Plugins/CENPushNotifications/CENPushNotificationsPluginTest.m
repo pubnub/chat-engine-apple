@@ -103,27 +103,6 @@
     XCTAssertTrue([events containsObject:@"$notifications.seen"]);
 }
 
-- (void)testConfiguration_ShouldAddIgnoredChat_WhenNilConfigurationPassed {
-    
-    NSArray<NSString *> *ignoredChats = self.defaultPlugin.configuration[CENPushNotificationsConfiguration.ignoredChats];
-    
-    XCTAssertNotNil(ignoredChats);
-    XCTAssertTrue([ignoredChats containsObject:@"feed"]);
-}
-
-- (void)testConfiguration_ShouldAddIgnoredChat_WhenConfigurationWithEventsPassed {
-    
-    NSDictionary *configuration = @{ CENPushNotificationsConfiguration.ignoredChats: @[@"private-chat"] };
-    CENPushNotificationsPlugin *plugin = [CENPushNotificationsPlugin pluginWithIdentifier:@"test" configuration:configuration];
-    
-    NSArray<NSString *> *ignoredChats = plugin.configuration[CENPushNotificationsConfiguration.ignoredChats];
-    
-    XCTAssertNotNil(ignoredChats);
-    XCTAssertEqual(ignoredChats.count, 2);
-    XCTAssertTrue([ignoredChats containsObject:@"private-chat"]);
-    XCTAssertTrue([ignoredChats containsObject:@"feed"]);
-}
-
 
 #pragma mark - Tests :: Extension
 
