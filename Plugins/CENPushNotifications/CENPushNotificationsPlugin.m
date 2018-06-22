@@ -17,9 +17,7 @@
 
 NSString * const kCENNotificationsErrorChatsKey = @"CENNotificationsErrorChatsKey";
 
-CENPushNotificationsConfigurationKeys CENPushNotificationsConfiguration = { .events = @"e", .services = @"s", .ignoredChats = @"i",
-                                                                            .formatter = @"f" };
-
+CENPushNotificationsConfigurationKeys CENPushNotificationsConfiguration = { .events = @"e", .services = @"s", .formatter = @"f" };
 CENPushNotificationsServices CENPushNotificationsService = { .apns = @"apns", .fcm = @"gcm" };
 
 
@@ -159,18 +157,12 @@ NS_ASSUME_NONNULL_END
 - (void)onCreate {
     
     NSMutableDictionary *configuration = [NSMutableDictionary dictionaryWithDictionary:self.configuration];
-    NSMutableArray<NSString *> *ignoredChats = [NSMutableArray arrayWithArray:configuration[CENPushNotificationsConfiguration.ignoredChats]];
     NSMutableArray<NSString *> *events = [NSMutableArray arrayWithArray:configuration[CENPushNotificationsConfiguration.events]];
     
     if (![events containsObject:@"$notifications.seen"]) {
         [events addObject:@"$notifications.seen"];
     }
     
-    if (![ignoredChats containsObject:@"feed"]) {
-        [ignoredChats addObject:@"feed"];
-    }
-    
-    configuration[CENPushNotificationsConfiguration.ignoredChats] = ignoredChats;
     configuration[CENPushNotificationsConfiguration.events] = events;
     
     self.configuration = configuration;

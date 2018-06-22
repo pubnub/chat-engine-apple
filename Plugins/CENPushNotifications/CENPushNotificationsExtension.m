@@ -257,37 +257,38 @@ NS_ASSUME_NONNULL_END
     if (@available(iOS 10.0, watchOS 3.0, *)) {
         UNUserNotificationCenter *center = [UNUserNotificationCenter currentNotificationCenter];
         NSMutableArray<NSString *> *notificationIdentifiers = [NSMutableArray array];
-        
-    #if !TARGET_OS_WATCH
-        UIBackgroundTaskIdentifier backgroundTaskIdentifier = 0;
-        
-        if ([UIApplication sharedApplication].applicationState != UIApplicationStateActive) {
-            backgroundTaskIdentifier = [[UIApplication sharedApplication] beginBackgroundTaskWithExpirationHandler:^{
-                [[UIApplication sharedApplication] endBackgroundTask:backgroundTaskIdentifier];
-            }];
-        }
-    #endif
-        
-        [center getDeliveredNotificationsWithCompletionHandler:^(NSArray<UNNotification *> *notifications) {
-            [notifications enumerateObjectsUsingBlock:^(UNNotification *notification, __unused NSUInteger objectIdx, BOOL *enumeratorStop) {
-                NSString *eventID = ((UNNotificationContent *)notification.request.content).userInfo[@"cepayload"][CENEventData.eventID];
+        dispatch_async(dispatch_get_main_queue(), ^{
+#if !TARGET_OS_WATCH
+            UIBackgroundTaskIdentifier backgroundTaskIdentifier = 0;
+            
+            if ([UIApplication sharedApplication].applicationState != UIApplicationStateActive) {
+                backgroundTaskIdentifier = [[UIApplication sharedApplication] beginBackgroundTaskWithExpirationHandler:^{
+                    [[UIApplication sharedApplication] endBackgroundTask:backgroundTaskIdentifier];
+                }];
+            }
+#endif
+            
+            [center getDeliveredNotificationsWithCompletionHandler:^(NSArray<UNNotification *> *notifications) {
+                [notifications enumerateObjectsUsingBlock:^(UNNotification *notification, __unused NSUInteger objectIdx, BOOL *enumeratorStop) {
+                    NSString *eventID = ((UNNotificationContent *)notification.request.content).userInfo[@"cepayload"][CENEventData.eventID];
+                    
+                    if (eventID && ([eventID isEqualToString:seenEventID] || [seenEventID isEqualToString:kCENPushNotificationAllNotificationsID])) {
+                        [notificationIdentifiers addObject:notification.request.identifier];
+                        *enumeratorStop = [eventID isEqualToString:seenEventID];
+                    }
+                }];
                 
-                if (eventID && ([eventID isEqualToString:seenEventID] || [seenEventID isEqualToString:kCENPushNotificationAllNotificationsID])) {
-                    [notificationIdentifiers addObject:notification.request.identifier];
-                    *enumeratorStop = [eventID isEqualToString:seenEventID];
+                if (notificationIdentifiers.count) {
+                    [center removeDeliveredNotificationsWithIdentifiers:notificationIdentifiers];
                 }
+                
+#if !TARGET_OS_WATCH
+                if (backgroundTaskIdentifier) {
+                    [[UIApplication sharedApplication] endBackgroundTask:backgroundTaskIdentifier];
+                }
+#endif
             }];
-            
-            if (notificationIdentifiers.count) {
-                [center removeDeliveredNotificationsWithIdentifiers:notificationIdentifiers];
-            }
-            
-    #if !TARGET_OS_WATCH
-            if (backgroundTaskIdentifier) {
-                [[UIApplication sharedApplication] endBackgroundTask:backgroundTaskIdentifier];
-            }
-    #endif
-        }];
+        });
     }
 #endif
 }

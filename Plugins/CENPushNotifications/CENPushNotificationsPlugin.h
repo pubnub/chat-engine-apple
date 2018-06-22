@@ -28,11 +28,6 @@ typedef struct CENPushNotificationsConfigurationKeys {
     __unsafe_unretained NSString *services;
     
     /**
-     * @brief  Stores reference on name of key under which stored list of chat names for which plugin shouldn't be used.
-     */
-    __unsafe_unretained NSString *ignoredChats;
-    
-    /**
      * @brief      Stores reference on name of key under which stored GCD block which should be used to provide custom payload format.
      * @discussion In case if \c services specified, plugin should be able to generate minimum push notification for each of specified services.
      *             If custom payload required, formatter can be used to override notification payload.
