@@ -1,6 +1,6 @@
 Pod::Spec.new do |spec|
     spec.name     = 'CENChatEngine'
-    spec.version  = '0.9.0'
+    spec.version  = '0.9.1'
     spec.summary  = 'Framework for building chat applications.'
     spec.homepage = 'https://github.com/pubnub/chat-engine-apple'
 
@@ -53,22 +53,22 @@ Pod::Spec.new do |spec|
 
     spec.subspec 'Plugin' do |plugin|
         plugin.subspec 'TypingIndicator' do |typingIndicator|
-            typingIndicator.dependency 'CENChatEngine/BuilderInterfaceOff'
+            typingIndicator.dependency 'CENChatEngine/Core'
             typingIndicator.source_files = 'Plugins/CENTypingIndicator/**/*'
         end
 
         plugin.subspec 'RandomUsername' do |randomUsername|
-            randomUsername.dependency 'CENChatEngine/BuilderInterfaceOff'
+            randomUsername.dependency 'CENChatEngine/Core'
             randomUsername.source_files = 'Plugins/CENRandomUsername/**/*'
         end
 
         plugin.subspec 'UnreadMessages' do |unreadMessages|
-            unreadMessages.dependency 'CENChatEngine/BuilderInterfaceOff'
+            unreadMessages.dependency 'CENChatEngine/Core'
             unreadMessages.source_files = 'Plugins/CENUnreadMessages/**/*'
         end
 
         plugin.subspec 'Markdown' do |markdown|
-            markdown.dependency 'CENChatEngine/BuilderInterfaceOff'
+            markdown.dependency 'CENChatEngine/Core'
             markdown.source_files = 'Plugins/CENMarkdown/**/*'
             markdown.private_header_files = [
                 'Plugins/CENMarkdown/CENMarkdownParser+Private.h'
@@ -76,17 +76,17 @@ Pod::Spec.new do |spec|
         end
 
         plugin.subspec 'Gravatar' do |gravatar|
-            gravatar.dependency 'CENChatEngine/BuilderInterfaceOff'
+            gravatar.dependency 'CENChatEngine/Core'
             gravatar.source_files = 'Plugins/CENGravatar/**/*'
         end
 
         plugin.subspec 'OnlineUserSearch' do |onlineUserSearch|
-            onlineUserSearch.dependency 'CENChatEngine/BuilderInterfaceOff'
+            onlineUserSearch.dependency 'CENChatEngine/Core'
             onlineUserSearch.source_files = 'Plugins/CENOnlineUserSearch/**/*'
         end
 
         plugin.subspec 'PushNotifications' do |pushNotifications|
-            pushNotifications.dependency 'CENChatEngine/BuilderInterfaceOff'
+            pushNotifications.dependency 'CENChatEngine/Core'
             pushNotifications.source_files = 'Plugins/CENPushNotifications/**/*'
         end
 
