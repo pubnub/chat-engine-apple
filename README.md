@@ -40,6 +40,8 @@ You can find the full docs on [the full documentation website](https://github.co
 
 ## [Unread Messages](https://github.com/pubnub/chat-engine-apple/wiki/plugins-unread-messages)
 
+## [Push Notifications](https://github.com/pubnub/chat-engine-apple/wiki/plugins-push-notifications)
+
 ## [Gravatar Support](https://github.com/pubnub/chat-engine-apple/wiki/plugins-gravatar)
 
 Uses Gravatar service to create an avatar based on user state information.
