@@ -4,6 +4,7 @@
  */
 #import <XCTest/XCTest.h>
 #import <OCMock/OCMock.h>
+#import <CENChatEngine/CENChatEngine+ChatPrivate.h>
 #import <CENChatEngine/CENEventEmitter+Private.h>
 #import <CENChatEngine/CENChatEngine+Publish.h>
 #import <CENChatEngine/CENChat+Interface.h>
@@ -20,7 +21,9 @@
 
 #pragma mark - Information
 
-@property (nonatomic, nullable, weak) CENChatEngine *defaultClient;
+@property (nonatomic, nullable, weak) CENChatEngine *client;
+@property (nonatomic, nullable, weak) CENChatEngine *clientMock;
+
 @property (nonatomic, nullable, strong) CENEvent *event;
 @property (nonatomic, nullable, strong) CENChat *chat;
 
@@ -38,25 +41,28 @@
 
 #pragma mark - Setup / Tear down
 
+- (BOOL)shouldSetupVCR {
+    
+    return NO;
+}
+
 - (void)setUp {
     
     [super setUp];
     
-    CENChatEngine *client = [self chatEngineWithConfiguration:[CENConfiguration configurationWithPublishKey:@"test-36" subscribeKey:@"test-36"]];
-    CENMe *user = [CENMe userWithUUID:@"tester" state:@{} chatEngine:client];
-    self.chat = [CENChat chatWithName:@"test-chat" namespace:@"global-ns" group:CENChatGroup.custom private:NO metaData:@{} chatEngine:client];
-    self.defaultClient = [self partialMockForObject:client];
+    self.client = [self chatEngineWithConfiguration:[CENConfiguration configurationWithPublishKey:@"test-36" subscribeKey:@"test-36"]];
+    self.clientMock = [self partialMockForObject:self.client];
+    CENMe *user = [CENMe userWithUUID:@"tester" state:@{} chatEngine:self.client];
+    self.chat = [CENChat chatWithName:@"test-chat" namespace:@"global-ns" group:CENChatGroup.custom private:NO metaData:@{} chatEngine:self.client];
     
-    OCMStub([self.defaultClient me]).andReturn(user);
+    OCMStub([self.clientMock fetchParticipantsForChat:[OCMArg any]]).andDo(nil);
+    OCMStub([self.clientMock me]).andReturn(user);
     
-    self.event = [CENEvent eventWithName:@"test-event" chat:self.chat chatEngine:self.defaultClient];
+    self.event = [CENEvent eventWithName:@"test-event" chat:self.chat chatEngine:self.client];
 }
 
 - (void)tearDown {
-    
-    [self.defaultClient destroy];
-    self.defaultClient = nil;
-    
+
     [self.event destruct];
     self.event = nil;
     
@@ -84,7 +90,7 @@
     NSDictionary *dataForPublish = @{ @"test": @"data" };
     __block BOOL handlerCalled = NO;
     
-    OCMExpect([self.defaultClient publishStorable:YES event:self.event toChannel:self.event.channel withData:expectedData completion:[OCMArg any]])
+    OCMExpect([self.clientMock publishStorable:YES event:self.event toChannel:self.event.channel withData:expectedData completion:[OCMArg any]])
         .andDo(^(NSInvocation *invocation) {
             handlerCalled = YES;
             
@@ -93,8 +99,8 @@
     
     [self.event publish:[dataForPublish mutableCopy]];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
-    OCMVerifyAll((id)self.defaultClient);
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
+    OCMVerifyAll((id)self.clientMock);
     XCTAssertTrue(handlerCalled);
 }
 
@@ -103,10 +109,13 @@
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     NSMutableDictionary *dataForPublish = [NSMutableDictionary dictionaryWithDictionary:@{ @"test": @"data" }];
     NSNumber *expectedTimetoken = @1234567890;
+    __block BOOL handlerCalled = NO;
     
-    OCMStub([self.defaultClient publishStorable:YES event:[OCMArg any] toChannel:[OCMArg any] withData:[OCMArg any] completion:[OCMArg any]])
+    OCMStub([self.clientMock publishStorable:YES event:[OCMArg any] toChannel:[OCMArg any] withData:[OCMArg any] completion:[OCMArg any]])
         .andDo(^(NSInvocation *invocation) {
             void(^handlerBlock)(NSNumber *) = nil;
+            handlerCalled = YES;
+            
             [invocation getArgument:&handlerBlock atIndex:6];
 
             handlerBlock(expectedTimetoken);
@@ -118,18 +127,19 @@
     dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
     XCTAssertNotNil(dataForPublish[CENEventData.timetoken]);
     XCTAssertEqual([(NSNumber *)dataForPublish[CENEventData.timetoken] compare:expectedTimetoken], NSOrderedSame);
+    XCTAssertTrue(handlerCalled);
 }
 
 - (void)testPublish_ShouldPublishWithOutStoringInHistory_WhenSystemEventPublished {
     
-    CENEvent *systemEvent = [CENEvent eventWithName:@"$.system.something" chat:self.chat chatEngine:self.defaultClient];
+    CENEvent *systemEvent = [CENEvent eventWithName:@"$.system.something" chat:self.chat chatEngine:self.clientMock];
     NSMutableDictionary *dataForPublish = [NSMutableDictionary dictionaryWithDictionary:@{ @"test": @"data" }];
     
-    OCMExpect([self.defaultClient publishStorable:NO event:systemEvent toChannel:systemEvent.channel withData:[OCMArg any] completion:[OCMArg any]]);
+    OCMExpect([self.clientMock publishStorable:NO event:systemEvent toChannel:systemEvent.channel withData:[OCMArg any] completion:[OCMArg any]]);
     
     [systemEvent publish:dataForPublish];
     
-    OCMVerifyAll((id)self.defaultClient);
+    OCMVerifyAll((id)self.clientMock);
 }
 
 - (void)testPublish_ShouldEmitEvent_WhenPublishCompleted {
@@ -139,7 +149,7 @@
     NSNumber *expectedTimetoken = @1234567890;
     __block BOOL handlerCalled = NO;
     
-    OCMStub([self.defaultClient publishStorable:YES event:[OCMArg any] toChannel:[OCMArg any] withData:[OCMArg any] completion:[OCMArg any]])
+    OCMStub([self.clientMock publishStorable:YES event:[OCMArg any] toChannel:[OCMArg any] withData:[OCMArg any] completion:[OCMArg any]])
         .andDo(^(NSInvocation *invocation) {
             void(^handlerBlock)(NSNumber *) = nil;
             [invocation getArgument:&handlerBlock atIndex:6];
@@ -155,7 +165,7 @@
     
     [self.event publish:dataForPublish];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
     XCTAssertTrue(handlerCalled);
 }
 

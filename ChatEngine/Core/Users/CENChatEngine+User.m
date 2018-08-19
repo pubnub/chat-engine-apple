@@ -17,7 +17,9 @@
 #import "CENChat+Private.h"
 #import "CENUser+Private.h"
 #import "CENMe+Private.h"
+#import "CENLogMacro.h"
 #import "CENSession.h"
+#import "CENError.h"
 
 
 #pragma mark Interface implementation
@@ -75,6 +77,8 @@
 
 - (CENUser *)userWithUUID:(NSString *)uuid {
     
+    CELogAPICall(self.logger, @"<ChatEngine::API> Get '%@' user.", uuid);
+    
     return [self.usersManager userWithUUID:uuid];
 }
 
@@ -100,7 +104,10 @@
     __weak __typeof__(self) weakSelf = self;
     [self.functionsClient callRouteSeries:routeSeries withCompletion:^(BOOL success, NSArray *responses) {
         if (!success) {
-            [weakSelf throwError:responses.firstObject forScope:@"getState" from:user propagateFlow:CEExceptionPropagationFlow.middleware];
+            NSString *description = @"Something went wrong while making a request to chat server.";
+            NSError *error = [CENError errorFromPubNubFunctionError:responses withDescription:description];
+            
+            [weakSelf throwError:error forScope:@"getState" from:user propagateFlow:CEExceptionPropagationFlow.middleware];
             
             return;
         }

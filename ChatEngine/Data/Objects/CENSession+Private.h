@@ -26,6 +26,11 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)joinChat:(CENChat *)chat;
 - (void)leaveChat:(CENChat *)chat;
 
+
+#pragma mark - Misc
+
+- (BOOL)isSynchronizationChat:(CENChat *)chat;
+
 #pragma mark -
 
 

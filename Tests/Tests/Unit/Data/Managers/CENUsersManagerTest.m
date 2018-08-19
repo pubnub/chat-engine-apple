@@ -19,7 +19,8 @@
 
 #pragma mark - Information
 
-@property (nonatomic, nullable, weak) CENChatEngine *defaultClient;
+@property (nonatomic, nullable, weak) CENChatEngine *client;
+@property (nonatomic, nullable, weak) CENChatEngine *clientMock;
 @property (nonatomic, nullable, strong) CENUsersManager *manager;
 
 #pragma mark -
@@ -28,11 +29,15 @@
 @end
 
 
-
 @implementation CENUsersManagerTest
 
 
 #pragma mark - Setup / Tear down
+
+- (BOOL)shouldSetupVCR {
+    
+    return NO;
+}
 
 - (void)setUp {
     
@@ -40,16 +45,18 @@
     
     CENConfiguration *configuration = [CENConfiguration configurationWithPublishKey:@"test-36" subscribeKey:@"test-36"];
     configuration.throwExceptions = YES;
-    self.defaultClient = [self partialMockForObject:[self chatEngineWithConfiguration:configuration]];
+    self.client = [self chatEngineWithConfiguration:configuration];
+    self.clientMock = [self partialMockForObject:self.client];
     
-    OCMStub([self.defaultClient connectToChat:[OCMArg any] withCompletion:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
+    OCMStub([self.clientMock fetchParticipantsForChat:[OCMArg any]]).andDo(nil);
+    OCMStub([self.clientMock connectToChat:[OCMArg any] withCompletion:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
         void(^handleBlock)(NSDictionary *) = nil;
         
         [invocation getArgument:&handleBlock atIndex:3];
         handleBlock(nil);
     });
     
-    self.manager = [CENUsersManager managerForChatEngine:self.defaultClient];
+    self.manager = [CENUsersManager managerForChatEngine:self.client];
 }
 
 - (void)tearDown {
@@ -143,7 +150,7 @@
     NSString *expectedUUID = [[NSUUID UUID] UUIDString];
     
     
-    OCMExpect([self.defaultClient setupProtoPluginsForObject:[OCMArg any] withCompletion:[OCMArg any]]);
+    OCMExpect([self.clientMock setupProtoPluginsForObject:[OCMArg any] withCompletion:[OCMArg any]]);
     
     CENUser *user1 = [self.manager createUserWithUUID:expectedUUID state:expectedState];
     CENUser *user2 = [self.manager createUserWithUUID:expectedUUID state:nil];
@@ -153,16 +160,16 @@
     XCTAssertEqualObjects(user1.state, user2.state);
     XCTAssertEqualObjects(user2.state, expectedState);
     XCTAssertEqual(self.manager.users.count, expectedUsersCount);
-    OCMVerifyAll((id)self.defaultClient);
+    OCMVerifyAll((id)self.clientMock);
 }
 
 - (void)testCreateUserWithUUID_ShouldCreateLocalUser_WhenPassedNameAsProvidedForUUIDEngineConfiguration {
     
     NSString *expectedUUID = [[NSUUID UUID] UUIDString];
-    OCMStub([self.defaultClient pubNubUUID]).andReturn(expectedUUID);
-    OCMStub([self.defaultClient createDirectChatForUser:[OCMArg any]]).andReturn(nil);
-    OCMStub([self.defaultClient createFeedChatForUser:[OCMArg any]]).andReturn(nil);
-    OCMStub([self.defaultClient setupProtoPluginsForObject:[OCMArg any] withCompletion:[OCMArg any]]).andDo(nil);
+    OCMStub([self.clientMock pubNubUUID]).andReturn(expectedUUID);
+    OCMStub([self.clientMock createDirectChatForUser:[OCMArg any]]).andReturn(nil);
+    OCMStub([self.clientMock createFeedChatForUser:[OCMArg any]]).andReturn(nil);
+    OCMStub([self.clientMock setupProtoPluginsForObject:[OCMArg any] withCompletion:[OCMArg any]]).andDo(nil);
     
     [self.manager createUserWithUUID:expectedUUID state:nil];
     
@@ -202,7 +209,7 @@
 - (void)testUserWithUUID_ShouldReturnPreviouslyCreatedLocalUser {
     
     NSDictionary *expectedState = @{ @"test": @"state" };
-    NSString *expectedUUID =  [self.defaultClient pubNubUUID];
+    NSString *expectedUUID =  [self.client pubNubUUID];
     
     [self.manager createUserWithUUID:expectedUUID state:expectedState];
     CENUser *user = [self.manager userWithUUID:expectedUUID];

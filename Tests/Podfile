@@ -14,6 +14,7 @@ abstract_target 'Tests' do
 
   
   pod 'OCMock', '~> 3.4'
+  pod 'YAHTTPVCR'
   target '[Test] iOS Unit'
   target '[Test] iOS Integration'
   target '[Test] Code Coverage (Unit)'
@@ -40,7 +41,17 @@ post_install do |installer_representation|
             config.build_settings['GCC_GENERATE_TEST_COVERAGE_FILES'] = target.name =~ /CENChatEngine/ ? 'YES' : 'NO' 
             config.build_settings['GCC_WARN_INHIBIT_ALL_WARNINGS'] = 'YES' unless target.name =~ /CENChatEngine/
             config.build_settings['APPLICATION_EXTENSION_API_ONLY'] = target.name =~ /Tests/ ? 'YES' : 'NO' 
+            if target.name =~ /PubNub/ then
+                config.build_settings['GCC_GENERATE_TEST_COVERAGE_FILES'] = 'NO'
+                config.build_settings['GCC_INSTRUMENT_PROGRAM_FLOW_ARCS'] = 'NO'
+            end
+            if target.name =~ /YAHTTPVCR/ then
+                config.build_settings['GCC_GENERATE_TEST_COVERAGE_FILES'] = 'NO'
+                config.build_settings['GCC_INSTRUMENT_PROGRAM_FLOW_ARCS'] = 'NO'
+            end
             if target.name =~ /CENChatEngine/ then
+                config.build_settings['GCC_GENERATE_TEST_COVERAGE_FILES'] = 'NO'
+                config.build_settings['GCC_INSTRUMENT_PROGRAM_FLOW_ARCS'] = 'NO'
                 config.build_settings['CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING'] = 'YES_ERROR'
                 config.build_settings['CLANG_WARN_NON_LITERAL_NULL_CONVERSION'] = 'YES_ERROR'
                 config.build_settings['GCC_WARN_ABOUT_RETURN_TYPE'] = 'YES_ERROR'

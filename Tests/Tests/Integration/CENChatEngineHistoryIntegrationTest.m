@@ -33,10 +33,11 @@
 
 - (void)testSearch_ShouldFetch50SpecificEvents_WhenLimitAndEventNameIsSet {
     
-    NSUInteger expectedEventsCount = 50;
-    __block NSUInteger foundEventsCount = 0;
-    XCTestExpectation *expectation = [[XCTestExpectation alloc] initWithDescription:@"History should fetch 50 'tester' events."];
+    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     CENChatEngine *client = [self chatEngineForUser:@"stephen"];
+    __block NSUInteger foundEventsCount = 0;
+    NSUInteger expectedEventsCount = 50;
+    __block BOOL handlerCalled = NO;
     
     CENChat *chat = client.Chat().name(@"chat-history").create();
     chat.once(@"$.connected", ^{
@@ -50,23 +51,27 @@
         });
         
         search.once(@"$.search.finish", ^{
+            handlerCalled = YES;
+            
             XCTAssertFalse(search.hasMore);
-            XCTAssertEqual(foundEventsCount, expectedEventsCount);
-            [expectation fulfill];
+            dispatch_semaphore_signal(semaphore);
         });
         
         search.search();
     });
     
-    [self waitForExpectations:@[expectation] timeout:30.f];
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelayWithNestedSemaphores * NSEC_PER_SEC)));
+    XCTAssertEqual(foundEventsCount, expectedEventsCount);
+    XCTAssertTrue(handlerCalled);
 }
 
 - (void)testSearch_ShouldFetch200SpecificEvents_WhenLimitEventNameAndPagesIsSet {
     
-    NSUInteger expectedEventsCount = 200;
-    __block NSUInteger foundEventsCount = 0;
-    XCTestExpectation *expectation = [[XCTestExpectation alloc] initWithDescription:@"History should fetch 200 'tester' events."];
+    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     CENChatEngine *client = [self chatEngineForUser:@"stephen"];
+    __block NSUInteger foundEventsCount = 0;
+    NSUInteger expectedEventsCount = 200;
+    __block BOOL handlerCalled = NO;
     
     CENChat *chat = client.Chat().name(@"chat-history").create();
     chat.once(@"$.connected", ^{
@@ -77,22 +82,26 @@
         });
         
         search.once(@"$.search.finish", ^{
+            handlerCalled = YES;
+            
             XCTAssertFalse(search.hasMore);
-            XCTAssertEqual(foundEventsCount, expectedEventsCount);
-            [expectation fulfill];
+            dispatch_semaphore_signal(semaphore);
         });
         
         search.search();
     });
     
-    [self waitForExpectations:@[expectation] timeout:30.f];
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelayWithNestedSemaphores * NSEC_PER_SEC)));
+    XCTAssertEqual(foundEventsCount, expectedEventsCount);
+    XCTAssertTrue(handlerCalled);
 }
 
 - (void)testSearch_ShouldFetch10LatestEvents_WhenLimitAndPagesIsSet {
     
-    __block BOOL handlerCalledAtLeastOnce = NO;
-    XCTestExpectation *expectation = [[XCTestExpectation alloc] initWithDescription:@"History should fetch 200 'tester' evenys."];
+    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     CENChatEngine *client = [self chatEngineForUser:@"stephen"];
+    __block BOOL handlerCalledAtLeastOnce = NO;
+    __block BOOL handlerCalled = NO;
     
     CENChat *chat = client.Chat().name(@"chat-history").create();
     chat.once(@"$.connected", ^{
@@ -103,75 +112,111 @@
         });
         
         search.once(@"$.search.finish", ^{
+            handlerCalled = YES;
+            
             XCTAssertFalse(search.hasMore);
-            XCTAssertTrue(handlerCalledAtLeastOnce);
-            [expectation fulfill];
+            dispatch_semaphore_signal(semaphore);
         });
-         
+        
          search.search();
     });
     
-    [self waitForExpectations:@[expectation] timeout:30.f];
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelayWithNestedSemaphores * NSEC_PER_SEC)));
+    XCTAssertTrue(handlerCalledAtLeastOnce);
+    XCTAssertTrue(handlerCalled);
+}
+
+- (void)testSearch_ShouldNotFetchEvents_WhenUnknownSenderSpecified {
+    
+    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
+    CENChatEngine *client = [self chatEngineForUser:@"stephen"];
+    __block BOOL handlerCalledAtLeastOnce = NO;
+    __block BOOL handlerCalled = NO;
+    
+    CENChat *chat = client.Chat().name(@"chat-history").create();
+    chat.once(@"$.connected", ^{
+        CENSearch *search = chat.search().sender(client.me).limit(10).pages(1).create();
+        
+        search.once(@"tester",^(NSDictionary *payload) {
+            handlerCalledAtLeastOnce = YES;
+        });
+        
+        search.once(@"$.search.pause", ^{
+            handlerCalled = YES;
+            dispatch_semaphore_signal(semaphore);
+        });
+        
+         search.search();
+    });
+    
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelayWithNestedSemaphores * NSEC_PER_SEC)));
+    XCTAssertFalse(handlerCalledAtLeastOnce);
+    XCTAssertTrue(handlerCalled);
 }
 
 - (void)testSearch_ShouldEmitEventsInDesencdingOrder_WhenSearhingForEvents {
     
+    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     NSMutableArray<NSNumber *> *timetokens = [NSMutableArray new];
-    XCTestExpectation *expectation = [[XCTestExpectation alloc] initWithDescription:@"History should emit events in descending order."];
     CENChatEngine *client = [self chatEngineForUser:@"stephen"];
+    __block BOOL handlerCalled = NO;
     
     CENChat *chat = client.Chat().name(@"chat-history").create();
-    chat.on(@"$.connected", ^{
+    chat.once(@"$.connected", ^{
         CENSearch *search = chat.search().event(@"tester").limit(10).pages(13).create();
         
         search.on(@"tester",^(NSDictionary *payload) {
             [timetokens addObject:payload[CENEventData.timetoken]];
         });
          
-        search.on(@"$.search.finish", ^{
-            XCTAssertFalse(search.hasMore);
-            XCTAssertEqual([timetokens.firstObject compare:timetokens.lastObject], NSOrderedDescending);
+        search.once(@"$.search.finish", ^{
+            handlerCalled = YES;
             
-            [expectation fulfill];
+            XCTAssertFalse(search.hasMore);
+            dispatch_semaphore_signal(semaphore);
         });
-         
+        
         search.search();
     });
     
-    [self waitForExpectations:@[expectation] timeout:30.f];
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelayWithNestedSemaphores * NSEC_PER_SEC)));
+    XCTAssertEqual([timetokens.firstObject compare:timetokens.lastObject], NSOrderedDescending);
+    XCTAssertTrue(handlerCalled);
 }
 
 - (void)testSearch_ShouldFetchEventsIgnoringLimit_WhenSearhingForEventsBetweenDates {
     
+    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
+    NSMutableArray<NSDictionary *> *messages = [NSMutableArray new];
     NSMutableArray<NSNumber *> *timetokens = [NSMutableArray new];
-    XCTestExpectation *expectation = [[XCTestExpectation alloc] initWithDescription:@"History search should ignore limit."];
     CENChatEngine *client = [self chatEngineForUser:@"stephen"];
+    __block NSUInteger expectedMessagesCount = 0;
+    __block BOOL handlerCalled = NO;
     
     CENChat *chat = client.Chat().name(@"chat-history").create();
-    chat.on(@"$.connected", ^{
+    chat.once(@"$.connected", ^{
         CENSearch *search1 = chat.search().event(@"tester").limit(100).create();
         
         search1.on(@"tester",^(NSDictionary *payload) {
             [timetokens insertObject:payload[CENEventData.timetoken] atIndex:0];
         });
         
-        search1.on(@"$.search.finish", ^{
-            NSMutableArray<NSDictionary *> *messages = [NSMutableArray new];
+        search1.once(@"$.search.finish", ^{
             NSNumber *end = timetokens[timetokens.count - 10];
             NSNumber *start = timetokens[10];
             // -1 because start/end search exclude message at 'end' date.
-            NSUInteger expectedMessagesCount = [timetokens indexOfObject:end] - [timetokens indexOfObject:start] - 1;
+            expectedMessagesCount = [timetokens indexOfObject:end] - [timetokens indexOfObject:start] - 1;
             CENSearch *search2 = chat.search().event(@"tester").limit(10).pages(14).start(start).end(end).create();
             
             search2.on(@"tester",^(NSDictionary *payload) {
                 [messages insertObject:payload atIndex:0];
             });
             
-            search2.on(@"$.search.finish", ^{
-                XCTAssertFalse(search2.hasMore);
-                XCTAssertEqual(messages.count - 1, expectedMessagesCount);
+            search2.once(@"$.search.finish", ^{
+                handlerCalled = YES;
                 
-                [expectation fulfill];
+                XCTAssertFalse(search2.hasMore);
+                dispatch_semaphore_signal(semaphore);
             });
             
             search2.search();
@@ -180,32 +225,37 @@
         search1.search();
     });
     
-    [self waitForExpectations:@[expectation] timeout:30.f];
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelayWithNestedSemaphores * NSEC_PER_SEC)));
+    XCTAssertEqual(messages.count - 1, expectedMessagesCount);
+    XCTAssertTrue(handlerCalled);
 }
 
 - (void)testSearch_ShouldFetchEventsLimitedByPage_WhenSearhingForEventsBetweenDates {
     
+    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     NSMutableArray<NSNumber *> *timetokens = [NSMutableArray new];
-    XCTestExpectation *expectation = [[XCTestExpectation alloc] initWithDescription:@"History search should pause."];
     CENChatEngine *client = [self chatEngineForUser:@"stephen"];
+    __block BOOL handlerCalled = NO;
     
     
     CENChat *chat = client.Chat().name(@"chat-history").create();
-    chat.on(@"$.connected", ^{
+    chat.once(@"$.connected", ^{
         CENSearch *search1 = chat.search().event(@"tester").limit(100).create();
         
         search1.on(@"tester",^(NSDictionary *payload) {
             [timetokens insertObject:payload[CENEventData.timetoken] atIndex:0];
         });
         
-        search1.on(@"$.search.finish", ^{
+        search1.once(@"$.search.finish", ^{
             NSNumber *end = timetokens[timetokens.count - 10];
             NSNumber *start = timetokens[10];
             CENSearch *search2 = chat.search().event(@"tester").limit(0).pages(1).count(10).start(start).end(end).create();
             
-            search2.on(@"$.search.pause", ^{
+            search2.once(@"$.search.pause", ^{
+                handlerCalled = YES;
+                
                 XCTAssertTrue(search2.hasMore);
-                [expectation fulfill];
+                dispatch_semaphore_signal(semaphore);
             });
             
             search2.search();
@@ -214,7 +264,8 @@
         search1.search();
     });
     
-    [self waitForExpectations:@[expectation] timeout:30.f];
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelayWithNestedSemaphores * NSEC_PER_SEC)));
+    XCTAssertTrue(handlerCalled);
 }
 
 #pragma mark -

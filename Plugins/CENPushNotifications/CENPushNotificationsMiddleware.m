@@ -38,11 +38,27 @@ NS_ASSUME_NONNULL_BEGIN
  */
 - (NSDictionary *)seenNotificationPayloadFrom:(NSDictionary *)cePayload;
 
+/**
+ * @brief      Complete notification payload configuraiton.
+ * @discussion Ensure what event information is included as part of notification payload.
+ *
+ * @param payload Reference on current message payload which may contain notification payloads.
+ * @param ceEvent Reference on name of event for which data has been emitted.
+ *
+ * @return Reference on same or normalized dictionary with all information which is required to handle notification.
+ */
 - (NSDictionary *)normalizedNotificationPayload:(NSDictionary *)payload forEvent:(NSDictionary *)ceEvent;
 
 
 #pragma mark - Misc
 
+/**
+ * @brief  Compose name of notification category basing on ChatEngine event.
+ *
+ * @param event Reference on name of event for which category should be created.
+ *
+ * @return Reference on name of category which is unique for this plugin.
+ */
 - (NSString *)notificationCategoryFromEvent:(NSString *)event;
 
 #pragma mark -

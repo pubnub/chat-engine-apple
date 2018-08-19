@@ -17,7 +17,8 @@
 
 #pragma mark - Information
 
-@property (nonatomic, nullable, weak) CENChatEngine *defaultClient;
+@property (nonatomic, nullable, weak) CENChatEngine *client;
+@property (nonatomic, nullable, weak) CENChatEngine *clientMock;
 
 #pragma mark -
 
@@ -32,20 +33,27 @@
 
 #pragma mark - Setup / Tear down
 
+- (BOOL)shouldSetupVCR {
+    
+    return NO;
+}
+
 - (void)setUp {
     
     [super setUp];
     
     CENConfiguration *configuration = [CENConfiguration configurationWithPublishKey:@"test-36" subscribeKey:@"test-36"];
-    self.defaultClient = [self partialMockForObject:[self chatEngineWithConfiguration:configuration]];
+    self.client = [self chatEngineWithConfiguration:configuration];
+    self.clientMock = [self partialMockForObject:self.client];
     
-    OCMStub([self.defaultClient createDirectChatForUser:[OCMArg any]])
-        .andReturn(self.defaultClient.Chat().name(@"user-direct").autoConnect(NO).create());
-    OCMStub([self.defaultClient createFeedChatForUser:[OCMArg any]])
-        .andReturn(self.defaultClient.Chat().name(@"user-feed").autoConnect(NO).create());
-    OCMStub([self.defaultClient me]).andReturn([CENMe userWithUUID:@"tester" state:@{} chatEngine:self.defaultClient]);
+    OCMStub([self.clientMock fetchParticipantsForChat:[OCMArg any]]).andDo(nil);
+    OCMStub([self.clientMock createDirectChatForUser:[OCMArg any]])
+        .andReturn(self.clientMock.Chat().name(@"chat-engine#user#tester#write.#direct").autoConnect(NO).create());
+    OCMStub([self.clientMock createFeedChatForUser:[OCMArg any]])
+        .andReturn(self.clientMock.Chat().name(@"chat-engine#user#tester#read.#feed").autoConnect(NO).create());
+    OCMStub([self.clientMock me]).andReturn([CENMe userWithUUID:@"tester" state:@{} chatEngine:self.clientMock]);
     
-    OCMStub([self.defaultClient connectToChat:[OCMArg any] withCompletion:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
+    OCMStub([self.clientMock connectToChat:[OCMArg any] withCompletion:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
         void(^handleBlock)(NSDictionary *) = nil;
         
         [invocation getArgument:&handleBlock atIndex:3];
@@ -53,26 +61,18 @@
     });
 }
 
-- (void)tearDown {
-    
-    [self.defaultClient destroy];
-    self.defaultClient = nil;
-    
-    [super tearDown];
-}
-
 
 #pragma mark - Tests :: searchEventsInChat
 
 - (void)testSearchEventsInChat_ShouldReturnSearcherInstance {
     
-    CENChat *chat = self.defaultClient.Chat().autoConnect(NO).create();
+    CENChat *chat = self.clientMock.Chat().autoConnect(NO).create();
     
-    OCMExpect([self.defaultClient storeTemporaryObject:[OCMArg any]]);
+    OCMExpect([self.clientMock storeTemporaryObject:[OCMArg any]]);
     
-    CENSearch *search = [self.defaultClient searchEventsInChat:chat sentBy:nil withName:nil limit:0 pages:0 count:0 start:nil end:nil];
+    CENSearch *search = [self.clientMock searchEventsInChat:chat sentBy:nil withName:nil limit:0 pages:0 count:0 start:nil end:nil];
     
-    OCMVerifyAll((id)self.defaultClient);
+    OCMVerifyAll((id)self.clientMock);
     XCTAssertNotNil(search);
 }
 
@@ -80,7 +80,7 @@
     
     CENChat *chat = (id)@2010;
     
-    XCTAssertNil([self.defaultClient searchEventsInChat:chat sentBy:nil withName:nil limit:0 pages:0 count:0 start:nil end:nil]);
+    XCTAssertNil([self.client searchEventsInChat:chat sentBy:nil withName:nil limit:0 pages:0 count:0 start:nil end:nil]);
 }
 
 #pragma mark -

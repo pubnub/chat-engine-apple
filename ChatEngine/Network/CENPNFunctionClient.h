@@ -1,6 +1,6 @@
 #import <Foundation/Foundation.h>
 
-@class CENChatEngine;
+@class CENChatEngine, PNLLogger;
 
 
 NS_ASSUME_NONNULL_BEGIN
@@ -29,10 +29,11 @@ NS_ASSUME_NONNULL_BEGIN
  * @discussion Client allow to perform series of requests on \b PubNub Function and gather responses.
  *
  * @param endpoint Reference on endpoint which is used to access various \b PubNub Functions in configured account scope.
+ * @param logger   Reference on ChatEngine instance logger which should be used to output debug information.
  *
  * @return Configured and ready to use \b PubNub Functions client.
  */
-+ (instancetype)clientWithEndpoint:(NSString *)endpoint;
++ (instancetype)clientWithEndpoint:(NSString *)endpoint logger:(PNLLogger *)logger;
 
 /**
  * @brief  Instantiation should be done using class method \c +clientWithEndpoint:.

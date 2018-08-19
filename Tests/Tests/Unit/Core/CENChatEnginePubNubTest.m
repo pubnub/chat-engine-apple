@@ -22,7 +22,9 @@
 
 #pragma mark - Information
 
-@property (nonatomic, nullable, weak) CENChatEngine<PNObjectEventListener> *defaultClient;
+
+@property (nonatomic, nullable, weak) CENChatEngine<PNObjectEventListener> *client;
+@property (nonatomic, nullable, weak) CENChatEngine<PNObjectEventListener> *clientMock;
 @property (nonatomic, nullable, strong) NSString *defaultAuthKey;
 
 
@@ -45,6 +47,11 @@
 
 #pragma mark - Setup / Tear down
 
+- (BOOL)shouldSetupVCR {
+    
+    return NO;
+}
+
 - (void)setUp {
     
     [super setUp];
@@ -52,15 +59,17 @@
     self.defaultAuthKey = @"secret-key";
     
     CENConfiguration *configuration = [CENConfiguration configurationWithPublishKey:@"test-36" subscribeKey:@"test-36"];
-    self.defaultClient = [self partialMockForObject:[self chatEngineWithConfiguration:configuration]];
+    self.client = (CENChatEngine<PNObjectEventListener> *)[self chatEngineWithConfiguration:configuration];
+    self.clientMock = [self partialMockForObject:self.client];
     
-    OCMStub([self.defaultClient createDirectChatForUser:[OCMArg any]])
-        .andReturn(self.defaultClient.Chat().name(@"user-direct").autoConnect(NO).create());
-    OCMStub([self.defaultClient createFeedChatForUser:[OCMArg any]])
-        .andReturn(self.defaultClient.Chat().name(@"user-feed").autoConnect(NO).create());
-    OCMStub([self.defaultClient me]).andReturn([CENMe userWithUUID:@"tester" state:@{} chatEngine:self.defaultClient]);
+    OCMStub([self.clientMock fetchParticipantsForChat:[OCMArg any]]).andDo(nil);
+    OCMStub([self.clientMock createDirectChatForUser:[OCMArg any]])
+        .andReturn(self.clientMock.Chat().name(@"chat-engine#user#tester#write.#direct").autoConnect(NO).create());
+    OCMStub([self.clientMock createFeedChatForUser:[OCMArg any]])
+        .andReturn(self.clientMock.Chat().name(@"chat-engine#user#tester#read.#feed").autoConnect(NO).create());
+    OCMStub([self.clientMock me]).andReturn([CENMe userWithUUID:@"tester" state:@{} chatEngine:self.clientMock]);
     
-    OCMStub([self.defaultClient connectToChat:[OCMArg any] withCompletion:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
+    OCMStub([self.clientMock connectToChat:[OCMArg any] withCompletion:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
         void(^handleBlock)(NSDictionary *) = nil;
         
         [invocation getArgument:&handleBlock atIndex:3];
@@ -68,16 +77,8 @@
     });
     
     if ([self.name rangeOfString:@"testSetupPubNubForUserWithUUID"].location == NSNotFound) {
-        [self.defaultClient setupPubNubForUserWithUUID:self.defaultClient.me.uuid authorizationKey:self.defaultAuthKey];
+        [self.client setupPubNubForUserWithUUID:self.client.me.uuid authorizationKey:self.defaultAuthKey];
     }
-}
-
-- (void)tearDown {
-    
-    [self.defaultClient destroy];
-    self.defaultClient = nil;
-    
-    [super tearDown];
 }
 
 
@@ -87,34 +88,34 @@
     
     NSString *expectedAuthKey = (id)@2010;
     
-    [self.defaultClient setupPubNubForUserWithUUID:self.defaultClient.me.uuid authorizationKey:expectedAuthKey];
+    [self.client setupPubNubForUserWithUUID:self.client.me.uuid authorizationKey:expectedAuthKey];
     
-    XCTAssertNotNil(self.defaultClient.pubnub);
-    XCTAssertEqualObjects(self.defaultClient.pubnub.currentConfiguration.uuid, self.defaultClient.me.uuid);
-    XCTAssertNotNil(self.defaultClient.pubnub.currentConfiguration.authKey);
-    XCTAssertNotEqualObjects(self.defaultClient.pubnub.currentConfiguration.authKey, expectedAuthKey);
-    XCTAssertGreaterThan(self.defaultClient.pubnub.currentConfiguration.authKey.length, 0);
+    XCTAssertNotNil(self.client.pubnub);
+    XCTAssertEqualObjects(self.client.pubnub.currentConfiguration.uuid, self.client.me.uuid);
+    XCTAssertNotNil(self.client.pubnub.currentConfiguration.authKey);
+    XCTAssertNotEqualObjects(self.client.pubnub.currentConfiguration.authKey, expectedAuthKey);
+    XCTAssertGreaterThan(self.client.pubnub.currentConfiguration.authKey.length, 0);
 }
 
 - (void)testSetupPubNubForUserWithUUID_ShouldCreateAndConfigurePubNubClientWithRandomAuthKey_WhenEmptyAuthKeyPassed {
     
     NSString *expectedAuthKey = nil;
     
-    [self.defaultClient setupPubNubForUserWithUUID:self.defaultClient.me.uuid authorizationKey:expectedAuthKey];
+    [self.client setupPubNubForUserWithUUID:self.client.me.uuid authorizationKey:expectedAuthKey];
     
-    XCTAssertNotNil(self.defaultClient.pubnub);
-    XCTAssertEqualObjects(self.defaultClient.pubnub.currentConfiguration.uuid, self.defaultClient.me.uuid);
-    XCTAssertNotNil(self.defaultClient.pubnub.currentConfiguration.authKey);
-    XCTAssertGreaterThan(self.defaultClient.pubnub.currentConfiguration.authKey.length, 0);
+    XCTAssertNotNil(self.client.pubnub);
+    XCTAssertEqualObjects(self.client.pubnub.currentConfiguration.uuid, self.client.me.uuid);
+    XCTAssertNotNil(self.client.pubnub.currentConfiguration.authKey);
+    XCTAssertGreaterThan(self.client.pubnub.currentConfiguration.authKey.length, 0);
 }
 
 - (void)testSetupPubNubForUserWithUUID_ShouldCreateAndConfigurePubNubClientWithCustomAuthKey {
     
-    [self.defaultClient setupPubNubForUserWithUUID:self.defaultClient.me.uuid authorizationKey:self.defaultAuthKey];
+    [self.client setupPubNubForUserWithUUID:self.client.me.uuid authorizationKey:self.defaultAuthKey];
     
-    XCTAssertNotNil(self.defaultClient.pubnub);
-    XCTAssertEqualObjects(self.defaultClient.pubnub.currentConfiguration.uuid, self.defaultClient.me.uuid);
-    XCTAssertEqualObjects(self.defaultClient.pubnub.currentConfiguration.authKey, self.defaultAuthKey);
+    XCTAssertNotNil(self.client.pubnub);
+    XCTAssertEqualObjects(self.client.pubnub.currentConfiguration.uuid, self.client.me.uuid);
+    XCTAssertEqualObjects(self.client.pubnub.currentConfiguration.authKey, self.defaultAuthKey);
 }
 
 
@@ -123,21 +124,21 @@
 - (void)testChangePubNubAuthorizationKey_ShouldModifyPubNubInstanCENConfiguration {
     
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    PubNub *existingPubNubClient = self.defaultClient.pubnub;
+    PubNub *existingPubNubClient = self.client.pubnub;
     NSString *expectedAuthKey = @"new-secret-key";
     __block BOOL handlerCalled = NO;
     
-    [self.defaultClient changePubNubAuthorizationKey:expectedAuthKey withCompletion:^{
+    [self.client changePubNubAuthorizationKey:expectedAuthKey withCompletion:^{
         handlerCalled = YES;
         
-        XCTAssertNotEqual(self.defaultClient.pubnub, existingPubNubClient);
-        XCTAssertNotEqualObjects(self.defaultClient.pubnub.currentConfiguration.authKey, existingPubNubClient.currentConfiguration.authKey);
-        XCTAssertEqualObjects(self.defaultClient.pubnub.currentConfiguration.authKey, expectedAuthKey);
+        XCTAssertNotEqual(self.client.pubnub, existingPubNubClient);
+        XCTAssertNotEqualObjects(self.client.pubnub.currentConfiguration.authKey, existingPubNubClient.currentConfiguration.authKey);
+        XCTAssertEqualObjects(self.client.pubnub.currentConfiguration.authKey, expectedAuthKey);
         
         dispatch_semaphore_signal(semaphore);
     }];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
     XCTAssertTrue(handlerCalled);
 }
 
@@ -146,20 +147,20 @@
 
 - (void)testConnectToPubNub_ShouldSubscribeOnRequiredSetOfGroups {
     
-    NSString *globalChat = self.defaultClient.currentConfiguration.globalChannel;
-    NSString *uuid = self.defaultClient.pubnub.currentConfiguration.uuid;
+    NSString *globalChat = self.client.currentConfiguration.globalChannel;
+    NSString *uuid = self.client.pubnub.currentConfiguration.uuid;
     NSArray<NSString *> *expectedGroups = @[
         [@[globalChat, uuid, @"rooms"] componentsJoinedByString:@"#"],
         [@[globalChat, uuid, @"system"] componentsJoinedByString:@"#"],
         [@[globalChat, uuid, @"custom"] componentsJoinedByString:@"#"]
     ];
-    id pubNubPartialMock = [self partialMockForObject:self.defaultClient.pubnub];
+    id pubNubPartialMock = [self partialMockForObject:self.client.pubnub];
     
     OCMExpect([pubNubPartialMock removeListener:[OCMArg any]]);
     OCMExpect([pubNubPartialMock addListener:[OCMArg any]]);
     OCMExpect([pubNubPartialMock subscribeToChannelGroups:expectedGroups withPresence:YES]);
     
-    [self.defaultClient connectToPubNub];
+    [self.client connectToPubNub];
     
     OCMVerifyAll(pubNubPartialMock);
 }
@@ -169,11 +170,11 @@
 
 - (void)testDisconnectFromPubNub_ShouldStopListeningForRealTimeUpdates {
     
-    id pubNubPartialMock = [self partialMockForObject:self.defaultClient.pubnub];
+    id pubNubPartialMock = [self partialMockForObject:self.client.pubnub];
     
     OCMExpect([pubNubPartialMock unsubscribeFromAll]);
     
-    [self.defaultClient disconnectFromPubNub];
+    [self.client disconnectFromPubNub];
     
     OCMVerifyAll(pubNubPartialMock);
 }
@@ -183,23 +184,23 @@
 
 - (void)testSearchMessagesIn_ShouldRequestHistoryUsingPubNubClient {
     
-    id pubNubPartialMock = [self partialMockForObject:self.defaultClient.pubnub];
-    NSString *expectedChat = self.defaultClient.me.direct.channel;
+    id pubNubPartialMock = [self partialMockForObject:self.client.pubnub];
+    NSString *expectedChat = self.client.me.direct.channel;
     NSNumber *expectedStart = @12345678900;
     NSUInteger expectedLimit = 26;
     
     OCMExpect([pubNubPartialMock historyForChannel:expectedChat start:expectedStart end:nil limit:expectedLimit reverse:NO includeTimeToken:YES
                                     withCompletion:[OCMArg any]]);
     
-    [self.defaultClient searchMessagesIn:expectedChat withStart:expectedStart limit:expectedLimit
-                              completion:^(PNHistoryResult *result, PNErrorStatus *status) {}];
+    [self.client searchMessagesIn:expectedChat withStart:expectedStart limit:expectedLimit
+                       completion:^(PNHistoryResult *result, PNErrorStatus *status) {}];
     
     OCMVerifyAll(pubNubPartialMock);
 }
 
 - (void)testSearchMessagesIn_ShouldNotRequestHistoryUsingPubNubClient_WhenNonNSStringChatPassed {
     
-    id pubNubPartialMock = [self partialMockForObject:self.defaultClient.pubnub];
+    id pubNubPartialMock = [self partialMockForObject:self.client.pubnub];
     NSNumber *expectedStart = @12345678900;
     NSString *expectedChat = (id)@2010;
     NSUInteger expectedLimit = 26;
@@ -207,15 +208,15 @@
     OCMExpect([[pubNubPartialMock reject] historyForChannel:[OCMArg any] start:[OCMArg any] end:nil limit:expectedLimit reverse:NO
                                            includeTimeToken:YES withCompletion:[OCMArg any]]);
     
-    [self.defaultClient searchMessagesIn:expectedChat withStart:expectedStart limit:expectedLimit
-                              completion:^(PNHistoryResult *result, PNErrorStatus *status) {}];
+    [self.client searchMessagesIn:expectedChat withStart:expectedStart limit:expectedLimit
+                       completion:^(PNHistoryResult *result, PNErrorStatus *status) {}];
     
     OCMVerifyAll(pubNubPartialMock);
 }
 
 - (void)testSearchMessagesIn_ShouldNotRequestHistoryUsingPubNubClient_WhenNEmptyChatPassed {
     
-    id pubNubPartialMock = [self partialMockForObject:self.defaultClient.pubnub];
+    id pubNubPartialMock = [self partialMockForObject:self.client.pubnub];
     NSNumber *expectedStart = @12345678900;
     NSUInteger expectedLimit = 26;
     NSString *expectedChat = @"";
@@ -223,8 +224,8 @@
     OCMExpect([[pubNubPartialMock reject] historyForChannel:[OCMArg any] start:[OCMArg any] end:nil limit:expectedLimit reverse:NO
                                            includeTimeToken:YES withCompletion:[OCMArg any]]);
     
-    [self.defaultClient searchMessagesIn:expectedChat withStart:expectedStart limit:expectedLimit
-                              completion:^(PNHistoryResult *result, PNErrorStatus *status) {}];
+    [self.client searchMessagesIn:expectedChat withStart:expectedStart limit:expectedLimit
+                       completion:^(PNHistoryResult *result, PNErrorStatus *status) {}];
     
     OCMVerifyAll(pubNubPartialMock);
 }
@@ -234,56 +235,56 @@
 
 - (void)testFetchParticipantsForChannel_ShouldRequestListOfChatParticipantsWithStateUsingPubNubClient {
     
-    id pubNubPartialMock = [self partialMockForObject:self.defaultClient.pubnub];
-    NSString *expectedChat = self.defaultClient.me.direct.channel;
+    id pubNubPartialMock = [self partialMockForObject:self.client.pubnub];
+    NSString *expectedChat = self.client.me.direct.channel;
     BOOL expectedStateFetch = YES;
     
     OCMExpect([pubNubPartialMock hereNowForChannel:expectedChat withVerbosity:PNHereNowState completion:[OCMArg any]]);
     
-    [self.defaultClient fetchParticipantsForChannel:expectedChat withState:expectedStateFetch
-                                         completion:^(PNPresenceChannelHereNowResult *result, PNErrorStatus *status) { }];
+    [self.client fetchParticipantsForChannel:expectedChat withState:expectedStateFetch
+                                  completion:^(PNPresenceChannelHereNowResult *result, PNErrorStatus *status) { }];
     
     OCMVerifyAll(pubNubPartialMock);
 }
 
 - (void)testFetchParticipantsForChannel_ShouldRequestListOfChatParticipantsWithOutStateUsingPubNubClient {
     
-    id pubNubPartialMock = [self partialMockForObject:self.defaultClient.pubnub];
-    NSString *expectedChat = self.defaultClient.me.direct.channel;
+    id pubNubPartialMock = [self partialMockForObject:self.client.pubnub];
+    NSString *expectedChat = self.client.me.direct.channel;
     BOOL expectedStateFetch = NO;
     
     OCMExpect([pubNubPartialMock hereNowForChannel:expectedChat withVerbosity:PNHereNowUUID completion:[OCMArg any]]);
     
-    [self.defaultClient fetchParticipantsForChannel:expectedChat withState:expectedStateFetch
-                                         completion:^(PNPresenceChannelHereNowResult *result, PNErrorStatus *status) { }];
+    [self.client fetchParticipantsForChannel:expectedChat withState:expectedStateFetch
+                                  completion:^(PNPresenceChannelHereNowResult *result, PNErrorStatus *status) { }];
     
     OCMVerifyAll(pubNubPartialMock);
 }
 
 - (void)testFetchParticipantsForChannel_ShouldNotRequestListOfChatParticipantsWithStateUsingPubNubClient_WhenNonNSStringChatPassed {
     
-    id pubNubPartialMock = [self partialMockForObject:self.defaultClient.pubnub];
+    id pubNubPartialMock = [self partialMockForObject:self.client.pubnub];
     NSString *expectedChat = (id)@2010;
     BOOL expectedStateFetch = YES;
     
     OCMExpect([[pubNubPartialMock reject] hereNowForChannel:[OCMArg any] withVerbosity:PNHereNowState completion:[OCMArg any]]);
     
-    [self.defaultClient fetchParticipantsForChannel:expectedChat withState:expectedStateFetch
-                                         completion:^(PNPresenceChannelHereNowResult *result, PNErrorStatus *status) { }];
+    [self.client fetchParticipantsForChannel:expectedChat withState:expectedStateFetch
+                                  completion:^(PNPresenceChannelHereNowResult *result, PNErrorStatus *status) { }];
     
     OCMVerifyAll(pubNubPartialMock);
 }
 
 - (void)testFetchParticipantsForChannel_ShouldNotRequestListOfChatParticipantsWithStateUsingPubNubClient_WhenEmptyChatPassed {
     
-    id pubNubPartialMock = [self partialMockForObject:self.defaultClient.pubnub];
+    id pubNubPartialMock = [self partialMockForObject:self.client.pubnub];
     BOOL expectedStateFetch = YES;
     NSString *expectedChat = @"";
     
     OCMExpect([[pubNubPartialMock reject] hereNowForChannel:[OCMArg any] withVerbosity:PNHereNowState completion:[OCMArg any]]);
     
-    [self.defaultClient fetchParticipantsForChannel:expectedChat withState:expectedStateFetch
-                                         completion:^(PNPresenceChannelHereNowResult *result, PNErrorStatus *status) { }];
+    [self.client fetchParticipantsForChannel:expectedChat withState:expectedStateFetch
+                                  completion:^(PNPresenceChannelHereNowResult *result, PNErrorStatus *status) { }];
     
     OCMVerifyAll(pubNubPartialMock);
 }
@@ -293,53 +294,53 @@
 
 - (void)testSetClientState_ShouldRequestChatStateUpdateUsingPubNubClient {
     
-    id pubNubPartialMock = [self partialMockForObject:self.defaultClient.pubnub];
+    id pubNubPartialMock = [self partialMockForObject:self.client.pubnub];
     NSDictionary *expectedState = @{ @"updated": @[@"chat", @"state"] };
-    NSString *expectedChat = self.defaultClient.me.direct.channel;
-    NSString *expectedUUID = [self.defaultClient pubNubUUID];
+    NSString *expectedChat = self.client.me.direct.channel;
+    NSString *expectedUUID = [self.client pubNubUUID];
 
     OCMExpect([pubNubPartialMock setState:expectedState forUUID:expectedUUID onChannel:expectedChat withCompletion:[OCMArg any]]);
     
-    [self.defaultClient setClientState:expectedState forChannel:expectedChat withCompletion:^(PNClientStateUpdateStatus *status) { }];
+    [self.client setClientState:expectedState forChannel:expectedChat withCompletion:^(PNClientStateUpdateStatus *status) { }];
     
     OCMVerifyAll(pubNubPartialMock);
 }
 
 - (void)testSetClientState_ShouldNotRequestChatStateUpdateUsingPubNubClient_WhenNonNSDictionaryStatePassed {
     
-    id pubNubPartialMock = [self partialMockForObject:self.defaultClient.pubnub];
-    NSString *expectedChat = self.defaultClient.me.direct.channel;
+    id pubNubPartialMock = [self partialMockForObject:self.client.pubnub];
+    NSString *expectedChat = self.client.me.direct.channel;
     NSDictionary *expectedState = (id)@2010;
     
     OCMExpect([[pubNubPartialMock reject] setState:[OCMArg any] forUUID:[OCMArg any] onChannel:[OCMArg any] withCompletion:[OCMArg any]]);
     
-    [self.defaultClient setClientState:expectedState forChannel:expectedChat withCompletion:^(PNClientStateUpdateStatus *status) { }];
+    [self.client setClientState:expectedState forChannel:expectedChat withCompletion:^(PNClientStateUpdateStatus *status) { }];
     
     OCMVerifyAll(pubNubPartialMock);
 }
 
 - (void)testSetClientState_ShouldNotRequestChatStateUpdateUsingPubNubClient_WhenNonNSStringChatPassed {
     
-    id pubNubPartialMock = [self partialMockForObject:self.defaultClient.pubnub];
+    id pubNubPartialMock = [self partialMockForObject:self.client.pubnub];
     NSDictionary *expectedState = @{ @"updated": @[@"chat", @"state"] };
     NSString *expectedChat = (id)@2010;
     
     OCMExpect([[pubNubPartialMock reject] setState:[OCMArg any] forUUID:[OCMArg any] onChannel:[OCMArg any] withCompletion:[OCMArg any]]);
     
-    [self.defaultClient setClientState:expectedState forChannel:expectedChat withCompletion:^(PNClientStateUpdateStatus *status) { }];
+    [self.client setClientState:expectedState forChannel:expectedChat withCompletion:^(PNClientStateUpdateStatus *status) { }];
     
     OCMVerifyAll(pubNubPartialMock);
 }
 
 - (void)testSetClientState_ShouldNotRequestChatStateUpdateUsingPubNubClient_WhenEmptyChatPassed {
     
-    id pubNubPartialMock = [self partialMockForObject:self.defaultClient.pubnub];
+    id pubNubPartialMock = [self partialMockForObject:self.client.pubnub];
     NSDictionary *expectedState = @{ @"updated": @[@"chat", @"state"] };
     NSString *expectedChat = @"";
     
     OCMExpect([[pubNubPartialMock reject] setState:[OCMArg any] forUUID:[OCMArg any] onChannel:[OCMArg any] withCompletion:[OCMArg any]]);
     
-    [self.defaultClient setClientState:expectedState forChannel:expectedChat withCompletion:^(PNClientStateUpdateStatus *status) { }];
+    [self.client setClientState:expectedState forChannel:expectedChat withCompletion:^(PNClientStateUpdateStatus *status) { }];
     
     OCMVerifyAll(pubNubPartialMock);
 }
@@ -349,12 +350,12 @@
 
 - (void)testUnsubscribeFromChannels_ShouldRequestUnsubscriptionFromSetOfChatsUsinPubNubClient {
     
-    id pubNubPartialMock = [self partialMockForObject:self.defaultClient.pubnub];
+    id pubNubPartialMock = [self partialMockForObject:self.client.pubnub];
     NSArray<NSString *> *expectedChats = @[@"Chat1", @"Chat2", @"Chat3"];
     
     OCMExpect([pubNubPartialMock unsubscribeFromChannels:expectedChats withPresence:YES]);
     
-    [self.defaultClient unsubscribeFromChannels:expectedChats];
+    [self.client unsubscribeFromChannels:expectedChats];
     
     OCMVerifyAll(pubNubPartialMock);
 }
@@ -364,54 +365,54 @@
 
 - (void)testPublishStorable_ShouldRequestDataPublishUsingPubNubClient {
     
-    id pubNubPartialMock = [self partialMockForObject:self.defaultClient.pubnub];
+    id pubNubPartialMock = [self partialMockForObject:self.client.pubnub];
     NSDictionary *expectedData = @{ @"data": @[@"for", @"publish"] };
-    NSString *expectedChat = self.defaultClient.me.direct.channel;
+    NSString *expectedChat = self.client.me.direct.channel;
     BOOL expectedStoreInHistory = YES;
     
     OCMExpect([pubNubPartialMock publish:[OCMArg any] toChannel:[OCMArg any] storeInHistory:expectedStoreInHistory withCompletion:[OCMArg any]]);
     
-    [self.defaultClient publishStorable:expectedStoreInHistory data:expectedData toChannel:expectedChat
-                         withCompletion:^(PNPublishStatus *status) { }];
+    [self.client publishStorable:expectedStoreInHistory data:expectedData toChannel:expectedChat
+                  withCompletion:^(PNPublishStatus *status) { }];
     
     OCMVerifyAll(pubNubPartialMock);
 }
 
 - (void)testPublishStorable_ShouldNotRequestDataPublishUsingPubNubClient_WhenNonNSDictionaryDataPassed {
     
-    id pubNubPartialMock = [self partialMockForObject:self.defaultClient.pubnub];
-    NSString *expectedChat = self.defaultClient.me.direct.channel;
+    id pubNubPartialMock = [self partialMockForObject:self.client.pubnub];
+    NSString *expectedChat = self.client.me.direct.channel;
     NSDictionary *expectedData = (id)@2010;
     BOOL expectedStoreInHistory = YES;
     
     OCMExpect([[pubNubPartialMock reject] publish:[OCMArg any] toChannel:[OCMArg any] storeInHistory:expectedStoreInHistory
                                    withCompletion:[OCMArg any]]);
     
-    [self.defaultClient publishStorable:expectedStoreInHistory data:expectedData toChannel:expectedChat
-                         withCompletion:^(PNPublishStatus *status) { }];
+    [self.client publishStorable:expectedStoreInHistory data:expectedData toChannel:expectedChat
+                  withCompletion:^(PNPublishStatus *status) { }];
     
     OCMVerifyAll(pubNubPartialMock);
 }
 
 - (void)testPublishStorable_ShouldNotRequestDataPublishUsingPubNubClient_WhenEmptyDataPassed {
     
-    id pubNubPartialMock = [self partialMockForObject:self.defaultClient.pubnub];
-    NSString *expectedChat = self.defaultClient.me.direct.channel;
+    id pubNubPartialMock = [self partialMockForObject:self.client.pubnub];
+    NSString *expectedChat = self.client.me.direct.channel;
     BOOL expectedStoreInHistory = YES;
     NSDictionary *expectedData = @{};
     
     OCMExpect([[pubNubPartialMock reject] publish:[OCMArg any] toChannel:[OCMArg any] storeInHistory:expectedStoreInHistory
                                    withCompletion:[OCMArg any]]);
     
-    [self.defaultClient publishStorable:expectedStoreInHistory data:expectedData toChannel:expectedChat
-                         withCompletion:^(PNPublishStatus *status) { }];
+    [self.client publishStorable:expectedStoreInHistory data:expectedData toChannel:expectedChat
+                  withCompletion:^(PNPublishStatus *status) { }];
     
     OCMVerifyAll(pubNubPartialMock);
 }
 
 - (void)testPublishStorable_ShouldNotRequestDataPublishUsingPubNubClient_WhenNonNSStringChatPassed {
     
-    id pubNubPartialMock = [self partialMockForObject:self.defaultClient.pubnub];
+    id pubNubPartialMock = [self partialMockForObject:self.client.pubnub];
     NSDictionary *expectedData = @{ @"data": @[@"for", @"publish"] };
     NSString *expectedChat = (id)@2010;
     BOOL expectedStoreInHistory = YES;
@@ -419,15 +420,15 @@
     OCMExpect([[pubNubPartialMock reject] publish:[OCMArg any] toChannel:[OCMArg any] storeInHistory:expectedStoreInHistory
                                    withCompletion:[OCMArg any]]);
     
-    [self.defaultClient publishStorable:expectedStoreInHistory data:expectedData toChannel:expectedChat
-                         withCompletion:^(PNPublishStatus *status) { }];
+    [self.client publishStorable:expectedStoreInHistory data:expectedData toChannel:expectedChat
+                  withCompletion:^(PNPublishStatus *status) { }];
     
     OCMVerifyAll(pubNubPartialMock);
 }
 
 - (void)testPublishStorable_ShouldNotRequestDataPublishUsingPubNubClient_WhenEmptyChatPassed {
     
-    id pubNubPartialMock = [self partialMockForObject:self.defaultClient.pubnub];
+    id pubNubPartialMock = [self partialMockForObject:self.client.pubnub];
     NSDictionary *expectedData = @{ @"data": @[@"for", @"publish"] };
     BOOL expectedStoreInHistory = YES;
     NSString *expectedChat = @"";
@@ -435,8 +436,8 @@
     OCMExpect([[pubNubPartialMock reject] publish:[OCMArg any] toChannel:[OCMArg any] storeInHistory:expectedStoreInHistory
                                    withCompletion:[OCMArg any]]);
     
-    [self.defaultClient publishStorable:expectedStoreInHistory data:expectedData toChannel:expectedChat
-                         withCompletion:^(PNPublishStatus *status) { }];
+    [self.client publishStorable:expectedStoreInHistory data:expectedData toChannel:expectedChat
+                  withCompletion:^(PNPublishStatus *status) { }];
     
     OCMVerifyAll(pubNubPartialMock);
 }
@@ -446,7 +447,7 @@
 
 - (void)testChannelsForGroup_ShouldRequestGroupChatsListUsingPubNubClient {
     
-    id pubNubPartialMock = [self partialMockForObject:self.defaultClient.pubnub];
+    id pubNubPartialMock = [self partialMockForObject:self.client.pubnub];
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     NSString *expectedGroup = @"chats-group";
     __block BOOL handlerCalled = NO;
@@ -458,13 +459,13 @@
         handlerBlock(nil, nil);
     });
     
-    [self.defaultClient channelsForGroup:expectedGroup withCompletion:^(NSArray<NSString *> *chats, PNErrorStatus *errorStatus) {
+    [self.client channelsForGroup:expectedGroup withCompletion:^(NSArray<NSString *> *chats, PNErrorStatus *errorStatus) {
         handlerCalled = YES;
         
         dispatch_semaphore_signal(semaphore);
     }];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
     OCMVerifyAll(pubNubPartialMock);
     XCTAssertTrue(handlerCalled);
 }
@@ -478,16 +479,16 @@
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     __block BOOL handlerCalled = NO;
     
-    self.defaultClient.once(@"$.network.down.offline", ^(id status) {
+    self.client.once(@"$.network.down.offline", ^(id status) {
         handlerCalled = YES;
         
         dispatch_semaphore_signal(semaphore);
     });
     
-    [self.defaultClient client:self.defaultClient.pubnub didReceiveStatus:expectedStatus];
+    [self.client client:self.client.pubnub didReceiveStatus:expectedStatus];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
-    XCTAssertFalse(self.defaultClient.connectedToPubNub);
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
+    XCTAssertFalse(self.client.connectedToPubNub);
     XCTAssertTrue(handlerCalled);
 }
 
@@ -497,16 +498,16 @@
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     __block BOOL handlerCalled = NO;
     
-    self.defaultClient.once(@"$.network.down.issue", ^(id status) {
+    self.client.once(@"$.network.down.issue", ^(id status) {
         handlerCalled = YES;
         
         dispatch_semaphore_signal(semaphore);
     });
     
-    [self.defaultClient client:self.defaultClient.pubnub didReceiveStatus:expectedStatus];
+    [self.client client:self.client.pubnub didReceiveStatus:expectedStatus];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
-    XCTAssertFalse(self.defaultClient.connectedToPubNub);
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
+    XCTAssertFalse(self.client.connectedToPubNub);
     XCTAssertTrue(handlerCalled);
 }
 
@@ -516,16 +517,16 @@
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     __block BOOL handlerCalled = NO;
     
-    self.defaultClient.once(@"$.network.down.denied", ^(id status) {
+    self.client.once(@"$.network.down.denied", ^(id status) {
         handlerCalled = YES;
         
         dispatch_semaphore_signal(semaphore);
     });
     
-    [self.defaultClient client:self.defaultClient.pubnub didReceiveStatus:expectedStatus];
+    [self.client client:self.client.pubnub didReceiveStatus:expectedStatus];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
-    XCTAssertFalse(self.defaultClient.connectedToPubNub);
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
+    XCTAssertFalse(self.client.connectedToPubNub);
     XCTAssertTrue(handlerCalled);
 }
 
@@ -535,16 +536,16 @@
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     __block BOOL handlerCalled = NO;
     
-    self.defaultClient.once(@"$.network.down.tlsuntrusted", ^(id status) {
+    self.client.once(@"$.network.down.tlsuntrusted", ^(id status) {
         handlerCalled = YES;
         
         dispatch_semaphore_signal(semaphore);
     });
     
-    [self.defaultClient client:self.defaultClient.pubnub didReceiveStatus:expectedStatus];
+    [self.client client:self.client.pubnub didReceiveStatus:expectedStatus];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
-    XCTAssertFalse(self.defaultClient.connectedToPubNub);
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
+    XCTAssertFalse(self.client.connectedToPubNub);
     XCTAssertTrue(handlerCalled);
 }
 
@@ -554,16 +555,16 @@
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     __block BOOL handlerCalled = NO;
     
-    self.defaultClient.once(@"$.network.down.badrequest", ^(id status) {
+    self.client.once(@"$.network.down.badrequest", ^(id status) {
         handlerCalled = YES;
         
         dispatch_semaphore_signal(semaphore);
     });
     
-    [self.defaultClient client:self.defaultClient.pubnub didReceiveStatus:expectedStatus];
+    [self.client client:self.client.pubnub didReceiveStatus:expectedStatus];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
-    XCTAssertFalse(self.defaultClient.connectedToPubNub);
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
+    XCTAssertFalse(self.client.connectedToPubNub);
     XCTAssertTrue(handlerCalled);
 }
 
@@ -573,16 +574,16 @@
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     __block BOOL handlerCalled = NO;
     
-    self.defaultClient.once(@"$.network.up.connected", ^(id status) {
+    self.client.once(@"$.network.up.connected", ^(id status) {
         handlerCalled = YES;
         
         dispatch_semaphore_signal(semaphore);
     });
     
-    [self.defaultClient client:self.defaultClient.pubnub didReceiveStatus:expectedStatus];
+    [self.client client:self.client.pubnub didReceiveStatus:expectedStatus];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
-    XCTAssertTrue(self.defaultClient.connectedToPubNub);
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
+    XCTAssertTrue(self.client.connectedToPubNub);
     XCTAssertTrue(handlerCalled);
 }
 
@@ -592,16 +593,16 @@
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     __block BOOL handlerCalled = NO;
     
-    self.defaultClient.once(@"$.network.up.reconnected", ^(id status) {
+    self.client.once(@"$.network.up.reconnected", ^(id status) {
         handlerCalled = YES;
         
         dispatch_semaphore_signal(semaphore);
     });
     
-    [self.defaultClient client:self.defaultClient.pubnub didReceiveStatus:expectedStatus];
+    [self.client client:self.client.pubnub didReceiveStatus:expectedStatus];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
-    XCTAssertTrue(self.defaultClient.connectedToPubNub);
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
+    XCTAssertTrue(self.client.connectedToPubNub);
     XCTAssertTrue(handlerCalled);
 }
 
@@ -609,12 +610,12 @@
     
     PNSubscribeStatus *expectedStatus = [self statusWithOperation:PNSubscribeOperation category:PNConnectedCategory];
     
-    OCMExpect([[(id)self.defaultClient reject] emitEventLocally:[OCMArg any] withParameters:[OCMArg any]]);
+    OCMExpect([[(id)self.clientMock reject] emitEventLocally:[OCMArg any] withParameters:[OCMArg any]]);
     
-    OCMStub([self.defaultClient connectedToPubNub]).andReturn(YES);
-    [self.defaultClient client:self.defaultClient.pubnub didReceiveStatus:expectedStatus];
+    OCMStub([self.clientMock connectedToPubNub]).andReturn(YES);
+    [self.clientMock client:self.clientMock.pubnub didReceiveStatus:expectedStatus];
     
-    OCMVerifyAll((id)self.defaultClient);
+    OCMVerifyAll((id)self.clientMock);
 }
 
 - (void)testClientDidReceiveStatus_ShouldEmitEventOnDisconnection_WhenPubNubClientNotSubscribedToAnyObjects {
@@ -623,15 +624,15 @@
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     __block BOOL handlerCalled = NO;
 
-    self.defaultClient.once(@"$.network.down.disconnected", ^(id status) {
+    self.client.once(@"$.network.down.disconnected", ^(id status) {
         handlerCalled = YES;
         
         dispatch_semaphore_signal(semaphore);
     });
     
-    [self.defaultClient client:self.defaultClient.pubnub didReceiveStatus:expectedStatus];
+    [self.client client:self.client.pubnub didReceiveStatus:expectedStatus];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
     XCTAssertTrue(handlerCalled);
 }
 
@@ -639,56 +640,56 @@
     
     PNSubscribeStatus *expectedStatus = [self statusWithOperation:PNUnsubscribeOperation category:PNDisconnectedCategory];
     NSArray<NSString *> *expectedObjects = @[@"Channel1", @"Channel2", @"Channel3"];
-    id pubNubPartialMock = [self partialMockForObject:self.defaultClient.pubnub];
+    id pubNubPartialMock = [self partialMockForObject:self.clientMock.pubnub];
     
     OCMStub([pubNubPartialMock channels]).andReturn(expectedObjects);
     
-    OCMExpect([[(id)self.defaultClient reject] emitEventLocally:[OCMArg any] withParameters:[OCMArg any]]);
+    OCMExpect([[(id)self.clientMock reject] emitEventLocally:[OCMArg any] withParameters:[OCMArg any]]);
     
-    [self.defaultClient client:self.defaultClient.pubnub didReceiveStatus:expectedStatus];
+    [self.clientMock client:self.clientMock.pubnub didReceiveStatus:expectedStatus];
     
-    OCMVerifyAll((id)self.defaultClient);
+    OCMVerifyAll((id)self.clientMock);
 }
 
 - (void)testClientDidReceiveStatus_ShouldNotEmitEventOnDisconnection_WhenPubNubClientSubscribedToRresenceChannels {
     
     PNSubscribeStatus *expectedStatus = [self statusWithOperation:PNUnsubscribeOperation category:PNDisconnectedCategory];
     NSArray<NSString *> *expectedObjects = @[@"Object1-pnpres", @"Object2-pnpres", @"Object3-pnpres"];
-    id pubNubPartialMock = [self partialMockForObject:self.defaultClient.pubnub];
+    id pubNubPartialMock = [self partialMockForObject:self.clientMock.pubnub];
     
     OCMStub([pubNubPartialMock presenceChannels]).andReturn(expectedObjects);
     
-    OCMExpect([[(id)self.defaultClient reject] emitEventLocally:[OCMArg any] withParameters:[OCMArg any]]);
+    OCMExpect([[(id)self.clientMock reject] emitEventLocally:[OCMArg any] withParameters:[OCMArg any]]);
     
-    [self.defaultClient client:self.defaultClient.pubnub didReceiveStatus:expectedStatus];
+    [self.clientMock client:self.clientMock.pubnub didReceiveStatus:expectedStatus];
     
-    OCMVerifyAll((id)self.defaultClient);
+    OCMVerifyAll((id)self.clientMock);
 }
 
 - (void)testClientDidReceiveStatus_ShouldNotEmitEventOnDisconnection_WhenPubNubClientSubscribedToChannelGroups {
     
     PNSubscribeStatus *expectedStatus = [self statusWithOperation:PNUnsubscribeOperation category:PNDisconnectedCategory];
-    id pubNubPartialMock = [self partialMockForObject:self.defaultClient.pubnub];
+    id pubNubPartialMock = [self partialMockForObject:self.clientMock.pubnub];
     NSArray<NSString *> *expectedObjects = @[@"Group1", @"Group2", @"Group3"];
     
     OCMStub([pubNubPartialMock channelGroups]).andReturn(expectedObjects);
     
-    OCMExpect([[(id)self.defaultClient reject] emitEventLocally:[OCMArg any] withParameters:[OCMArg any]]);
+    OCMExpect([[(id)self.clientMock reject] emitEventLocally:[OCMArg any] withParameters:[OCMArg any]]);
     
-    [self.defaultClient client:self.defaultClient.pubnub didReceiveStatus:expectedStatus];
+    [self.clientMock client:self.clientMock.pubnub didReceiveStatus:expectedStatus];
     
-    OCMVerifyAll((id)self.defaultClient);
+    OCMVerifyAll((id)self.clientMock);
 }
 
 - (void)testClientDidReceiveStatus_ShouldNotEmitEventOnBadRequest_WhenUnsupportedStatusPassed {
     
     PNSubscribeStatus *expectedStatus = [self statusWithOperation:PNSubscribeOperation category:PNTimeoutCategory];
     
-    OCMExpect([[(id)self.defaultClient reject] emitEventLocally:[OCMArg any] withParameters:[OCMArg any]]);
+    OCMExpect([[(id)self.clientMock reject] emitEventLocally:[OCMArg any] withParameters:[OCMArg any]]);
     
-    [self.defaultClient client:self.defaultClient.pubnub didReceiveStatus:expectedStatus];
+    [self.clientMock client:self.clientMock.pubnub didReceiveStatus:expectedStatus];
     
-    OCMVerifyAll((id)self.defaultClient);
+    OCMVerifyAll((id)self.clientMock);
 }
 
 
@@ -696,15 +697,15 @@
 
 - (void)testClientDidReceiveMessage_ShouldForwardToTargetChat {
     
-    id chatsManagerPartialMock = [self partialMockForObject:self.defaultClient.chatsManager];
-    CENChat *expectedChat = self.defaultClient.me.direct;
+    id chatsManagerPartialMock = [self partialMockForObject:self.client.chatsManager];
+    CENChat *expectedChat = self.client.me.direct;
     NSDictionary *receivedData = @{ @"received": @"data" };
     NSDictionary *expectedData = @{ @"received": @"data", @"timetoken": @123456 };
     PNMessageResult *result = [self messageResultForChat:expectedChat withData:receivedData];
     
     OCMExpect([chatsManagerPartialMock handleChat:expectedChat message:expectedData]);
     
-    [self.defaultClient client:self.defaultClient.pubnub didReceiveMessage:result];
+    [self.client client:self.client.pubnub didReceiveMessage:result];
     
     OCMVerifyAll(chatsManagerPartialMock);
 }
@@ -714,13 +715,13 @@
 
 - (void)testClientDidReceivePresenCENEvent_ShouldForwardToTargetChat {
     
-    id chatsManagerPartialMock = [self partialMockForObject:self.defaultClient.chatsManager];
-    CENChat *expectedChat = self.defaultClient.me.direct;
+    id chatsManagerPartialMock = [self partialMockForObject:self.client.chatsManager];
+    CENChat *expectedChat = self.client.me.direct;
     PNPresenceEventResult *result = [self presenceResultForChat:expectedChat];
     
     OCMExpect([chatsManagerPartialMock handleChat:expectedChat presenceEvent:result.data]);
     
-    [self.defaultClient client:self.defaultClient.pubnub didReceivePresenceEvent:result];
+    [self.client client:self.client.pubnub didReceivePresenceEvent:result];
     
     OCMVerifyAll(chatsManagerPartialMock);
 }
@@ -730,15 +731,15 @@
 
 - (void)testDestroyPubNub_ShouldStopRealTimeUpdatesListening {
     
-    id pubNubPartialMock = [self partialMockForObject:self.defaultClient.pubnub];
+    id pubNubPartialMock = [self partialMockForObject:self.clientMock.pubnub];
     
     OCMExpect([pubNubPartialMock removeListener:[OCMArg any]]);
-    OCMExpect([self.defaultClient disconnectFromPubNub]);
+    OCMExpect([self.clientMock disconnectFromPubNub]);
     
-    [self.defaultClient destroyPubNub];
+    [self.clientMock destroyPubNub];
     
     OCMVerifyAll(pubNubPartialMock);
-    OCMVerifyAll((id)self.defaultClient);
+    OCMVerifyAll((id)self.clientMock);
 }
 
 
@@ -746,8 +747,8 @@
 
 - (void)testPubNubUUID_ShouldRetruenUUIDUsedForConfiguration {
     
-    XCTAssertNotNil([self.defaultClient pubNubUUID]);
-    XCTAssertEqualObjects([self.defaultClient pubNubUUID], self.defaultClient.me.uuid);
+    XCTAssertNotNil([self.client pubNubUUID]);
+    XCTAssertEqualObjects([self.client pubNubUUID], self.client.me.uuid);
 }
 
 
@@ -755,8 +756,8 @@
 
 - (void)testPubNubAuthKey_ShouldRetruenUUIDUsedForConfiguration {
     
-    XCTAssertNotNil([self.defaultClient pubNubAuthKey]);
-    XCTAssertEqualObjects([self.defaultClient pubNubAuthKey], self.defaultAuthKey);
+    XCTAssertNotNil([self.client pubNubAuthKey]);
+    XCTAssertEqualObjects([self.client pubNubAuthKey], self.defaultAuthKey);
 }
 
 

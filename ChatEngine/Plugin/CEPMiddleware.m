@@ -38,8 +38,6 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, strong) NSMutableArray<NSString *> *checkedEvents;
 
 @property (nonatomic, assign, getter=shouldHandleAllEvents) BOOL handleAllEvents;
-@property (nonatomic, assign) BOOL hasSingleWildcardEvents;
-@property (nonatomic, assign) BOOL hasDoubleWildcardEvents;
 
 /**
  * @brief  Stores reference on unique identifier of plugin which instantiated this middleware.
@@ -105,7 +103,6 @@ NS_ASSUME_NONNULL_END
     
     SEL eventsGetter = NSSelectorFromString(@"events");
     IMP swizzledEventsGetter = imp_implementationWithBlock(^id (Class __unused _self) {
-        
         return events;
     });
     
@@ -122,11 +119,11 @@ NS_ASSUME_NONNULL_END
         return nil;
     }
     
-    if (configuration && ![configuration isKindOfClass:[NSDictionary class]]) {
+    if (!configuration || ![configuration isKindOfClass:[NSDictionary class]]) {
         configuration = @{};
     }
     
-    return [[self alloc] initWithIdentifier:identifier configuration:(configuration ?: @{})];
+    return [[self alloc] initWithIdentifier:identifier configuration:configuration];
 }
 
 - (instancetype)initWithIdentifier:(NSString *)identifier configuration:(NSDictionary *)configuration {
@@ -138,13 +135,6 @@ NS_ASSUME_NONNULL_END
         _identifier = identifier;
         
         _handleAllEvents = [[[self class] events] containsObject:@"*"];
-        for (NSString *event in [[self class] events]) {
-            if ([event rangeOfString:@".**"].location != NSNotFound) {
-                _hasDoubleWildcardEvents = YES;
-            } else if ([event rangeOfString:@".*"].location != NSNotFound) {
-                _hasSingleWildcardEvents = YES;
-            }
-        }
     }
     
     return self;
@@ -168,7 +158,7 @@ NS_ASSUME_NONNULL_END
     NSArray<NSString *> *events = [[self class] events];
     BOOL registeredForEvent = NO;
     
-    if (self.checkedEvents) {
+    if ([self.checkedEvents containsObject:event]) {
         registeredForEvent = ![self.ignoredEvents containsObject:event];
     } else if (self.shouldHandleAllEvents) {
         registeredForEvent = YES;
@@ -208,11 +198,13 @@ NS_ASSUME_NONNULL_END
     __block BOOL partlyMatch = YES;
     
     [tEvent enumerateObjectsUsingBlock:^(NSString *eventComponent, NSUInteger componentIdx, BOOL *stop) {
-        if (![eventComponent isEqualToString:rEvent[componentIdx]]) {
-            if ([rEvent[componentIdx] isEqualToString:@"*"]) {
+        NSString *registeredEventComponent = componentIdx < rEvent.count ? rEvent[componentIdx] : rEvent.lastObject;
+        
+        if (![eventComponent isEqualToString:registeredEventComponent]) {
+            if ([registeredEventComponent isEqualToString:@"*"]) {
                 partlyMatch = (tEvent.count - rEvent.count) == 0;
             } else {
-                partlyMatch = [rEvent[componentIdx] isEqualToString:@"**"];
+                partlyMatch = [registeredEventComponent isEqualToString:@"**"];
             }
         }
         
@@ -245,9 +237,7 @@ NS_ASSUME_NONNULL_END
         @"identifier",
         @"ignoredEvents",
         @"checkedEvents",
-        @"handleAllEvents",
-        @"hasSingleWildcardEvents",
-        @"hasDoubleWildcardEvents"
+        @"handleAllEvents"
     ];
 }
 

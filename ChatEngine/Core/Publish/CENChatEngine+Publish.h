@@ -26,9 +26,9 @@ NS_ASSUME_NONNULL_BEGIN
  *                  chat).
  * @param data      Reference on object which should be sent along with event.
  *
- * @return Configured and ready to use event emittin instance.
+ * @return Configured and ready to use event emittin instance or \c nil in case if critical internal data missing.
  */
-- (CENEvent *)publishToChat:(CENChat *)chat eventWithName:(NSString *)eventName data:(NSDictionary *)data;
+- (nullable CENEvent *)publishToChat:(CENChat *)chat eventWithName:(NSString *)eventName data:(NSDictionary *)data;
 
 /**
  * @brief  Perform actual data push using underlying \b PubNub client.

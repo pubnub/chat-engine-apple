@@ -31,7 +31,12 @@
     NSDictionary *configuration = nil;
     NSArray<NSString *> *eventNames = nil;
     NSString *global = [@[@"test", [NSUUID UUID].UUIDString] componentsJoinedByString:@"-"];
+    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
+    
     [self setupChatEngineWithGlobal:global forUser:@"ian" synchronization:NO meta:NO state:@{ @"works": @YES }];
+    
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.delayBetweenActions * NSEC_PER_SEC)));
+        
     [self setupChatEngineWithGlobal:global forUser:@"stephen" synchronization:NO meta:NO state:@{ @"works": @YES }];
     
     if ([self.name rangeOfString:@"testConstructor_ShouldEmitUnreadEvent_WhenPluginRegisteredOnEvent"].location != NSNotFound ||
@@ -45,6 +50,9 @@
     
     [self chatEngineForUser:@"ian"].global.plugin([CENUnreadMessagesPlugin class]).configuration(configuration).store();
     [self chatEngineForUser:@"stephen"].global.plugin([CENUnreadMessagesPlugin class]).configuration(configuration).store();
+    
+    // Give some time to connect both users.
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.delayBetweenActions * NSEC_PER_SEC)));
 }
 
 - (void)testConstructor_ShouldEmitUnreadEventForMessageEvent_WhenNoConfigurationPassed {
@@ -54,17 +62,16 @@
     CENChatEngine *client2 = [self chatEngineForUser:@"stephen"];
     __block BOOL handlerCalled = NO;
     
-    client2.global.on(@"$unread", ^(NSDictionary *payload) {
+    client2.global.once(@"$unread", ^(NSDictionary *payload) {
         handlerCalled = YES;
         
         XCTAssertNotNil(payload);
         dispatch_semaphore_signal(semaphore);
     });
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.f * NSEC_PER_SEC)));
     client1.global.emit(@"message").data(@{ @"text": @"Hi!" }).perform();
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(4.f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
     XCTAssertTrue(handlerCalled);
 }
 
@@ -75,17 +82,16 @@
     CENChatEngine *client2 = [self chatEngineForUser:@"stephen"];
     __block BOOL handlerCalled = NO;
     
-    client2.global.on(@"$unread", ^(NSDictionary *payload) {
+    client2.global.once(@"$unread", ^(NSDictionary *payload) {
         handlerCalled = YES;
         
         XCTAssertNotNil(payload);
         dispatch_semaphore_signal(semaphore);
     });
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(3.f * NSEC_PER_SEC)));
     client1.global.emit(@"ping").data(@{ @"text": @"Hi!" }).perform();
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(6.f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
     XCTAssertTrue(handlerCalled);
 }
 
@@ -96,16 +102,15 @@
     CENChatEngine *client2 = [self chatEngineForUser:@"stephen"];
     __block BOOL handlerCalled = NO;
     
-    client2.global.on(@"$unread", ^(NSDictionary *payload) {
+    client2.global.once(@"$unread", ^(NSDictionary *payload) {
         handlerCalled = YES;
         
         dispatch_semaphore_signal(semaphore);
     });
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.f * NSEC_PER_SEC)));
     client1.global.emit(@"pong").data(@{ @"text": @"Hi!" }).perform();
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(4.f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.falseTestCompletionDelay * NSEC_PER_SEC)));
     XCTAssertFalse(handlerCalled);
 }
 
@@ -116,7 +121,7 @@
     CENChatEngine *client2 = [self chatEngineForUser:@"stephen"];
     __block BOOL handlerCalled = NO;
     
-    client2.global.on(@"$unread", ^(NSDictionary *payload) {
+    client2.global.once(@"$unread", ^(NSDictionary *payload) {
         NSNumber *count = payload[CENUnreadMessagesEvent.count];
         handlerCalled = YES;
         
@@ -125,10 +130,9 @@
         dispatch_semaphore_signal(semaphore);
     });
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.f * NSEC_PER_SEC)));
     client1.global.emit(@"message").data(@{ @"text": @"Hi!" }).perform();
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(4.f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
     XCTAssertTrue(handlerCalled);
 }
 
@@ -139,18 +143,16 @@
     CENChatEngine *client2 = [self chatEngineForUser:@"stephen"];
     __block BOOL handlerCalled = NO;
     
-    client2.global.on(@"$unread", ^(NSDictionary *payload) {
+    client2.global.once(@"$unread", ^(NSDictionary *payload) {
         handlerCalled = YES;
         
         dispatch_semaphore_signal(semaphore);
     });
     
     [CENUnreadMessagesPlugin setChat:client2.global active:YES];
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.f * NSEC_PER_SEC)));
     client1.global.emit(@"message").data(@{ @"text": @"Hi!" }).perform();
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(4.f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.falseTestCompletionDelay * NSEC_PER_SEC)));
     XCTAssertFalse(handlerCalled);
 }
 
@@ -169,19 +171,21 @@
             dispatch_semaphore_signal(semaphore);
         }
         
+        if (!handlerCalledOnce) {
+        }
+        
         handlerCalledOnce = YES;
     });
     
     [CENUnreadMessagesPlugin setChat:client2.global active:YES];
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.f * NSEC_PER_SEC)));
     client1.global.emit(@"message").data(@{ @"text": @"Hi!" }).perform();
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(4.f * NSEC_PER_SEC)));
-    [CENUnreadMessagesPlugin setChat:client2.global active:NO];
-    client1.global.emit(@"message").data(@{ @"text": @"Hi!" }).perform();
+    client2.global.once(@"message", ^(NSDictionary *payload) {
+        [CENUnreadMessagesPlugin setChat:client2.global active:NO];
+        client1.global.emit(@"message").data(@{ @"text": @"Hi there!" }).perform();
+    });
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(4.f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.falseTestCompletionDelay * NSEC_PER_SEC)));
     XCTAssertTrue(handlerCalledOnce);
     XCTAssertFalse(handlerCalledTwice);
 }
@@ -193,22 +197,29 @@
     CENChatEngine *client1 = [self chatEngineForUser:@"ian"];
     CENChatEngine *client2 = [self chatEngineForUser:@"stephen"];
     __block BOOL handlerCalled = NO;
+
+    void(^countVerifyBlock)(NSDictionary *) = ^(NSDictionary *payload) {
+        [CENUnreadMessagesPlugin fetchUnreadCountForChat:client2.global withCompletion:^(NSUInteger unreadCount) {
+            handlerCalled = YES;
+            
+            XCTAssertGreaterThan(unreadCount, 0);
+            dispatch_semaphore_signal(semaphore);
+        }];
+    };
+    
+    if (YHVVCR.cassette.isNewCassette) {
+        client2.global.once(@"message", countVerifyBlock);
+    }
     
     [CENUnreadMessagesPlugin setChat:client2.global active:NO];
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.f * NSEC_PER_SEC)));
     client1.global.emit(@"message").data(@{ @"text": @"Hi!" }).perform();
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(4.f * NSEC_PER_SEC)));
+    if (!YHVVCR.cassette.isNewCassette) {
+        dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.delayedCheck * NSEC_PER_SEC)));
+        countVerifyBlock(nil);
+    }
     
-    [CENUnreadMessagesPlugin fetchUnreadCountForChat:client2.global withCompletion:^(NSUInteger unreadCount) {
-        handlerCalled = YES;
-        
-        XCTAssertGreaterThan(unreadCount, 0);
-        dispatch_semaphore_signal(semaphore);
-    }];
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(10.f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
     XCTAssertTrue(handlerCalled);
 }
 
@@ -218,23 +229,33 @@
     CENChatEngine *client1 = [self chatEngineForUser:@"ian"];
     CENChatEngine *client2 = [self chatEngineForUser:@"stephen"];
     __block BOOL handlerCalled = NO;
+   
+    void(^countVerifyBlock)(NSDictionary *) = ^(NSDictionary *payload) {
+        [CENUnreadMessagesPlugin fetchUnreadCountForChat:client2.global withCompletion:^(NSUInteger unreadCount) {
+            handlerCalled = YES;
+            
+            XCTAssertEqual(unreadCount, 0);
+            dispatch_semaphore_signal(semaphore);
+        }];
+    };
+    
+    if (YHVVCR.cassette.isNewCassette) {
+        client2.global.once(@"message", countVerifyBlock);
+    }
     
     [CENUnreadMessagesPlugin setChat:client2.global active:YES];
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.f * NSEC_PER_SEC)));
     client1.global.emit(@"message").data(@{ @"text": @"Hi!" }).perform();
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(4.f * NSEC_PER_SEC)));
+    if (!YHVVCR.cassette.isNewCassette) {
+        dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.delayedCheck * NSEC_PER_SEC)));
+        countVerifyBlock(nil);
+    }
     
-    [CENUnreadMessagesPlugin fetchUnreadCountForChat:client2.global withCompletion:^(NSUInteger unreadCount) {
-        handlerCalled = YES;
-        
-        XCTAssertEqual(unreadCount, 0);
-        dispatch_semaphore_signal(semaphore);
-    }];
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(10.f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
     XCTAssertTrue(handlerCalled);
 }
+
+#pragma mark -
+
 
 @end

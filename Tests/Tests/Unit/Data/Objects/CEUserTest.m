@@ -18,9 +18,11 @@
 
 #pragma mark - Information
 
+@property (nonatomic, nullable, weak) CENChatEngine *client;
+@property (nonatomic, nullable, weak) CENChatEngine *clientMock;
+
 @property (nonatomic, nullable, strong) NSDictionary *defaultState;
 @property (nonatomic, nullable, strong) NSDictionary *changedState;
-@property (nonatomic, nullable, weak) CENChatEngine *defaultClient;
 @property (nonatomic, nullable, strong) NSString *defaultUUID;
 @property (nonatomic, nullable, strong) CENUser *user;
 
@@ -37,29 +39,32 @@
 
 #pragma mark - Setup / Tear down
 
+- (BOOL)shouldSetupVCR {
+    
+    return NO;
+}
+
 - (void)setUp {
     
     [super setUp];
     
-    CENChatEngine *client = [self chatEngineWithConfiguration:[CENConfiguration configurationWithPublishKey:@"test-36" subscribeKey:@"test-36"]];
-    self.defaultClient = [self partialMockForObject:client];
-    
-    OCMStub([self.defaultClient createDirectChatForUser:[OCMArg any]])
-        .andReturn(self.defaultClient.Chat().name(@"user-direct").autoConnect(NO).create());
-    OCMStub([self.defaultClient createFeedChatForUser:[OCMArg any]])
-        .andReturn(self.defaultClient.Chat().name(@"user-feed").autoConnect(NO).create());
+    self.client = [self chatEngineWithConfiguration:[CENConfiguration configurationWithPublishKey:@"test-36" subscribeKey:@"test-36"]];
+    self.clientMock = [self partialMockForObject:self.client];
+
+    OCMStub([self.clientMock fetchParticipantsForChat:[OCMArg any]]).andDo(nil);
+    OCMStub([self.clientMock createDirectChatForUser:[OCMArg any]])
+        .andReturn(self.clientMock.Chat().name(@"chat-engine#user#tester#write.#direct").autoConnect(NO).create());
+    OCMStub([self.clientMock createFeedChatForUser:[OCMArg any]])
+        .andReturn(self.clientMock.Chat().name(@"chat-engine#user#tester#read.#feed").autoConnect(NO).create());
     
     self.changedState = @{ @"changed": @"state" };
     self.defaultState = @{ @"test": @"state" };
     self.defaultUUID = @"tester";
-    self.user = [CENUser userWithUUID:self.defaultUUID state:self.defaultState chatEngine:self.defaultClient];
+    self.user = [CENUser userWithUUID:self.defaultUUID state:self.defaultState chatEngine:self.client];
 }
 
 - (void)tearDown {
-    
-    [self.defaultClient destroy];
-    self.defaultClient = nil;
-    
+
     [self.user destruct];
     self.user = nil;
     
@@ -74,24 +79,24 @@
     XCTAssertNotNil(self.user);
     XCTAssertNotNil(self.user.direct);
     XCTAssertNotNil(self.user.feed);
-    XCTAssertEqual(self.user.chatEngine, self.defaultClient);
+    XCTAssertEqual(self.user.chatEngine, self.client);
 }
 
 - (void)testConstructor_ShouldNotCreateInstance_WhenNonNSStringUUIDPassed {
     
-    XCTAssertNil([CENUser userWithUUID:(id)@2010 state:self.defaultState chatEngine:self.defaultClient]);
+    XCTAssertNil([CENUser userWithUUID:(id)@2010 state:self.defaultState chatEngine:self.client]);
 }
 
 - (void)testConstructor_ShouldNotCreateInstance_WhenNilUUIDPassed {
     
     NSString *uuid = nil;
     
-    XCTAssertNil([CENUser userWithUUID:uuid state:self.defaultState chatEngine:self.defaultClient]);
+    XCTAssertNil([CENUser userWithUUID:uuid state:self.defaultState chatEngine:self.client]);
 }
 
 - (void)testConstructor_ShouldNotCreateInstance_WhenEmptyUUIDPassed {
     
-    XCTAssertNil([CENUser userWithUUID:@"" state:self.defaultState chatEngine:self.defaultClient]);
+    XCTAssertNil([CENUser userWithUUID:@"" state:self.defaultState chatEngine:self.client]);
 }
 
 
@@ -102,13 +107,19 @@
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     id userPartialMock = [self partialMockForObject:self.user];
     NSDictionary *state = @{ @"some": @[@"test", @"state"] };
+    __block BOOL handlerCalled = NO;
     
-    OCMExpect([userPartialMock updateState:state]).andForwardToRealObject();
+    OCMExpect([userPartialMock updateState:state]).andDo(^(NSInvocation *invocation) {
+        handlerCalled = YES;
+        
+        dispatch_semaphore_signal(semaphore);
+    });
     
     [self.user assignState:state];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
     OCMVerifyAll(userPartialMock);
+    XCTAssertTrue(handlerCalled);
 }
 
 
@@ -118,12 +129,10 @@
     
     NSMutableDictionary *expectedState = [self.defaultState mutableCopy];
     [expectedState addEntriesFromDictionary:@{ @"some": @[@"test", @"state"] }];
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     NSDictionary *state = @{ @"some": @[@"test", @"state"] };
     
     [self.user updateState:state];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
     XCTAssertEqualObjects(self.user.state, expectedState);
 }
 
@@ -133,7 +142,7 @@
     NSDictionary *state = @{ @"some": @[@"test", @"state"] };
     __block BOOL handlerCalled = NO;
     
-    [self.defaultClient handleEvent:@"$.state" withHandlerBlock:^(CENUser *user) {
+    [self.client handleEvent:@"$.state" withHandlerBlock:^(CENUser *user) {
         handlerCalled = YES;
         
         dispatch_semaphore_signal(semaphore);
@@ -141,7 +150,7 @@
     
     [self.user updateState:state];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
     XCTAssertTrue(handlerCalled);
 }
 
@@ -150,13 +159,13 @@
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     __block BOOL handlerCalled = NO;
     
-    [self.defaultClient handleEvent:@"$.state" withHandlerBlock:^(CENUser *user) {
+    [self.client handleEvent:@"$.state" withHandlerBlock:^(CENUser *user) {
         handlerCalled = YES;
     }];
     
     [self.user updateState:self.defaultState];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.falseTestCompletionDelay * NSEC_PER_SEC)));
     XCTAssertFalse(handlerCalled);
 }
 
@@ -166,10 +175,11 @@
 - (void)testFetchStoredStateWithCompletion_ShouldRequestState_WhenInitialStateNotProvided {
     
     NSDictionary *nilState = nil;
-    CENUser *user = [CENUser userWithUUID:@"stateTester" state:nilState chatEngine:self.defaultClient];
+    CENUser *user = [CENUser userWithUUID:@"stateTester" state:nilState chatEngine:self.clientMock];
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
+    __block BOOL handlerCalled = NO;
     
-    OCMExpect([self.defaultClient fetchUserState:user withCompletion:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
+    OCMExpect([self.clientMock fetchUserState:user withCompletion:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
         void(^handlerBlock)(NSDictionary *) = nil;
         
         [invocation getArgument:&handlerBlock atIndex:3];
@@ -177,29 +187,34 @@
     });
     
     [user fetchStoredStateWithCompletion:^(NSDictionary *state) {
-        XCTAssertEqualObjects(state, self.defaultState);
+        handlerCalled = YES;
         
+        XCTAssertEqualObjects(state, self.defaultState);
         dispatch_semaphore_signal(semaphore);
     }];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
-    OCMVerifyAll((id)self.defaultClient);
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
+    OCMVerifyAll((id)self.clientMock);
+    XCTAssertTrue(handlerCalled);
 }
 
 - (void)testFetchStoredStateWithCompletion_ShouldNotRequestState_WhenInitialStateProvided {
     
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
+    __block BOOL handlerCalled = NO;
     
-    OCMExpect([[(id)self.defaultClient reject] fetchUserState:self.user withCompletion:[OCMArg any]]).andDo(nil);
+    OCMExpect([[(id)self.clientMock reject] fetchUserState:self.user withCompletion:[OCMArg any]]).andDo(nil);
     
     [self.user fetchStoredStateWithCompletion:^(NSDictionary *state) {
-        XCTAssertEqualObjects(state, self.defaultState);
+        handlerCalled = YES;
         
+        XCTAssertEqualObjects(state, self.defaultState);
         dispatch_semaphore_signal(semaphore);
     }];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
-    OCMVerifyAll((id)self.defaultClient);
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
+    OCMVerifyAll((id)self.clientMock);
+    XCTAssertTrue(handlerCalled);
 }
 
 
@@ -216,7 +231,7 @@
 - (void)testState_ShouldBeEmpty_WhenModelCreatedWithNilState {
     
     NSDictionary *nilState = nil;
-    CENUser *user = [CENUser userWithUUID:@"stateTester" state:nilState chatEngine:self.defaultClient];
+    CENUser *user = [CENUser userWithUUID:@"stateTester" state:nilState chatEngine:self.client];
     NSDictionary *expectedState = @{};
     
     XCTAssertNotNil(user.state);
@@ -243,7 +258,7 @@
     __block NSString *description = nil;
     __block BOOL handlerCalled = NO;
     
-    self.defaultClient.once(@"$.state", ^(CENUser *user) {
+    self.client.once(@"$.state", ^(CENUser *user) {
         handlerCalled = YES;
         
         description = [self.user description];
@@ -252,7 +267,7 @@
     
     [self.user updateState:self.changedState];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
     XCTAssertNotNil(description);
     XCTAssertGreaterThan(description.length, 0);
     XCTAssertNotEqual([description rangeOfString:@"state set: YES"].location, NSNotFound);
@@ -262,7 +277,7 @@
 - (void)testDescription_ShouldProvideInstanceDescription_WhenStateIsNil {
     
     NSDictionary *nilState = nil;
-    CENUser *user = [CENUser userWithUUID:@"stateTester" state:nilState chatEngine:self.defaultClient];
+    CENUser *user = [CENUser userWithUUID:@"stateTester" state:nilState chatEngine:self.client];
     NSString *description = [user description];
     
     XCTAssertNotNil(description);

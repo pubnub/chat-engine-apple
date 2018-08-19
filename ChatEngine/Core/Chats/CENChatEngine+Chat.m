@@ -19,11 +19,13 @@
 #import "CENEventEmitter+Interface.h"
 #import "CENChatEngine+Session.h"
 #import "CENChatEngine+Private.h"
+#import "CENSession+Private.h"
 #import "CENChat+Interface.h"
 #import "CENChat+Private.h"
 #import "CENUser+Private.h"
 #import "CENStructures.h"
 #import "CENErrorCodes.h"
+#import "CENLogMacro.h"
 #import "CENError.h"
 #import "CENMe.h"
 
@@ -90,11 +92,13 @@ CENChatGroups CENChatGroup = { .system = @"system", .custom = @"custom" };
                        private:(BOOL)isPrivate
                    autoConnect:(BOOL)shouldAutoConnect
                       metaData:(NSDictionary *)meta {
-    
+
     return [self.chatsManager createChatWithName:name group:group private:isPrivate autoConnect:shouldAutoConnect metaData:meta];
 }
 
 - (CENChat *)chatWithName:(NSString *)name private:(BOOL)isPrivate {
+    
+    CELogAPICall(self.logger, @"<ChatEngine::API> Get '%@' %@ chat.", name, isPrivate ? @"private" : @"public");
     
     return [self.chatsManager chatWithName:name private:isPrivate];
 }
@@ -112,8 +116,7 @@ CENChatGroups CENChatGroup = { .system = @"system", .custom = @"custom" };
     NSString *globalChannel = self.configuration.globalChannel;
     NSString *chatName = [@[globalChannel, @"user", user.uuid, @"write.", @"direct"] componentsJoinedByString:@"#"];
     
-    
-    return [self createChatWithName:chatName group:CENChatGroup.system private:NO autoConnect:[user isKindOfClass:[CENMe class]] metaData:nil];
+    return [self createChatWithName:chatName group:CENChatGroup.system private:NO autoConnect:NO metaData:nil];
 }
 
 - (CENChat *)createFeedChatForUser:(CENUser *)user {
@@ -121,7 +124,7 @@ CENChatGroups CENChatGroup = { .system = @"system", .custom = @"custom" };
     NSString *globalChannel = self.configuration.globalChannel;
     NSString *chatName = [@[globalChannel, @"user", user.uuid, @"read.", @"feed"] componentsJoinedByString:@"#"];
     
-    return [self createChatWithName:chatName group:CENChatGroup.system private:NO autoConnect:[user isKindOfClass:[CENMe class]] metaData:nil];
+    return [self createChatWithName:chatName group:CENChatGroup.system private:NO autoConnect:NO metaData:nil];
 }
 
 - (void)removeChat:(CENChat *)chat {
@@ -172,7 +175,7 @@ CENChatGroups CENChatGroup = { .system = @"system", .custom = @"custom" };
         
         if (!success) {
             NSString *description = @"Something went wrong while making a request to authentication server.";
-            NSError *error = [CENError errorFromPubNubFunctionError:responses.firstObject withDescription:description];
+            NSError *error = [CENError errorFromPubNubFunctionError:responses withDescription:description];
             
             [strongSelf throwError:error forScope:@"chat" from:chat propagateFlow:CEExceptionPropagationFlow.middleware];
         }
@@ -191,23 +194,34 @@ CENChatGroups CENChatGroup = { .system = @"system", .custom = @"custom" };
         
         block(meta);
         
-        [self synchronizeSessionChatJoin:chat];
+        void (^handshakeCompletionOnConnect)(CENMe *) = ^(CENMe *me){
+            [chat handleRemoteUsersJoin:@[me]];
+            
+            BOOL isSynchronizationChat = [self.synchronizationSession isSynchronizationChat:chat];
+            if (![chat isEqual:self.global] && ![chat isEqual:me.direct] && ![chat isEqual:me.feed] && !isSynchronizationChat) {
+                [self synchronizeSessionChatJoin:chat];
+            }
+            
+            if ([chat isEqual:me.direct] || [chat isEqual:me.feed] || isSynchronizationChat) {
+                return;
+            }
+            
+            if ([chat.group isEqualToString:CENChatGroup.custom]) {
+                dispatch_queue_t delayQueue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
+                dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.f * NSEC_PER_SEC)), delayQueue, ^{
+                    if (self.chats.count) {
+                        [chat fetchParticipants];
+                    }
+                });
+            }
+        };
         
         if(self.isReady && self.me) {
-            [chat handleRemoteUsersJoin:@[self.me]];
+            handshakeCompletionOnConnect(self.me);
         } else {
             [self handleEventOnce:@"$.ready" withHandlerBlock:^(CENMe *me) {
-                [chat handleRemoteUsersJoin:@[me]];
+                handshakeCompletionOnConnect(me);
             }];
-        }
-        
-        if ([chat.group isEqualToString:CENChatGroup.custom] && ![chat.channel isEqualToString:self.configuration.globalChannel]) {
-            [chat fetchParticipants];
-            
-            // We may miss updates, so call this again 5 seconds later.
-            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-                [chat fetchParticipants];
-            });
         }
     }];
 }
@@ -244,7 +258,7 @@ CENChatGroups CENChatGroup = { .system = @"system", .custom = @"custom" };
         }
         
         NSString *description = @"Something went wrong while making a request to authentication server.";
-        NSError *error = [CENError errorFromPubNubFunctionError:responses.firstObject withDescription:description];
+        NSError *error = [CENError errorFromPubNubFunctionError:responses withDescription:description];
         
         [strongSelf throwError:error forScope:@"auth" from:chat propagateFlow:CEExceptionPropagationFlow.middleware];
     }];
@@ -275,7 +289,7 @@ CENChatGroups CENChatGroup = { .system = @"system", .custom = @"custom" };
         }
         
         NSString *description = @"Something went wrong while making a request to chat server.";
-        NSError *error = [CENError errorFromPubNubFunctionError:responses.firstObject withDescription:description];
+        NSError *error = [CENError errorFromPubNubFunctionError:responses withDescription:description];
         
         [strongSelf throwError:error forScope:@"chat" from:chat propagateFlow:CEExceptionPropagationFlow.middleware];
     }];

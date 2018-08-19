@@ -1,5 +1,6 @@
 #import <XCTest/XCTest.h>
 #import <CENChatEngine/ChatEngine.h>
+#import <YAHTTPVCR/YAHTTPVCR.h>
 
 
 NS_ASSUME_NONNULL_BEGIN
@@ -10,12 +11,56 @@ NS_ASSUME_NONNULL_BEGIN
  * @author Serhii Mamontov
  * @copyright © 2009-2018 PubNub, Inc.
  */
-@interface CENTestCase : XCTestCase
+@interface CENTestCase : YHVTestCase
 
 
-///------------------------------------------------
-/// @name Client configuration
-///------------------------------------------------
+#pragma mark Information
+
+/**
+ * @brief      Stores number of seconds which test should wait till async operation completion.
+ * @discussion Used for tests which contain handlers with nested semaphores.
+ */
+@property (nonatomic, readonly, assign) NSTimeInterval testCompletionDelayWithNestedSemaphores;
+
+/**
+ * @brief  Stores number of seconds which should be waited before performing next action.
+ */
+@property (nonatomic, readonly, assign) NSTimeInterval delayBetweenActions;
+
+/**
+ * @brief  Stores number of seconds which should be waited before performing in-test verifications.
+ */
+@property (nonatomic, readonly, assign) NSTimeInterval delayedCheck;
+
+/**
+ * @brief Stores number of seconds which positive test should wait till async operation completion.
+ */
+@property (nonatomic, readonly, assign) NSTimeInterval testCompletionDelay;
+
+/**
+ * @brief Stores number of seconds which negative test should wait till async operation completion.
+ */
+@property (nonatomic, readonly, assign) NSTimeInterval falseTestCompletionDelay;
+
+
+#pragma mark - VCR filter
+
+/**
+ * @brief  Filter sensitive data from published payload.
+ *
+ * @param message Reference on payload which is about to be stored.
+ *
+ * @return Reference on filtered PubNub message payload.
+ */
+- (NSString *)filteredPublishMessageFrom:(NSString *)message;
+
+
+#pragma mark - Client configuration
+
+/**
+ * @brief  Retrieve reference on default configuration which applied by helper to all created instances.
+ */
+- (CENConfiguration *)defaultConfiguration;
 
 /**
  * @brief      Configure \b ChatEngine instance with data required for test case.
@@ -28,34 +73,40 @@ NS_ASSUME_NONNULL_BEGIN
 
 /**
  * @brief      Configure \b ChatEngine instance with data required for test case.
- * @discussion It is possible to configure multiple \b ChatEngine instances per single test case. If
- *             another setup request for \b ChatEngine for same user will be sent, clone will be
- *             created in separate storage and can be retrieved with special method:
+ * @discussion It is possible to configure multiple \b ChatEngine instances per single test case. If another setup request for \b ChatEngine for
+ *             same user will be sent, clone will be created in separate storage and can be retrieved with special method:
  *             \c -chatEngineCloneForUser:.
  *
- * @param user               Reference on unique user identifier for which \b ChatEngine instance
- *                           should be created and connected.
+ * @param configuration Reference on \b ChatEngine configuration object.
+ * @param user          Reference on unique user identifier for which \b ChatEngine instance should be created and connected.
+ * @param state         Reference on dictionary with information which should be bound to \c user.
+ */
+- (void)setupChatEngineWithConfiguration:(CENConfiguration *)configuration forUser:(NSString *)user withState:(NSDictionary *)state;
+
+/**
+ * @brief      Configure \b ChatEngine instance with data required for test case.
+ * @discussion It is possible to configure multiple \b ChatEngine instances per single test case. If another setup request for \b ChatEngine for
+ *             same user will be sent, clone will be created in separate storage and can be retrieved with special method:
+ *             \c -chatEngineCloneForUser:.
+ *
+ * @param user               Reference on unique user identifier for which \b ChatEngine instance should be created and connected.
  * @param synchronizeSession Whether synchronization session should be enabled or not.
  * @param synchronizeMeta    Whether chat information should be synchronized on connection or not.
- * @param state              Reference on dictionary with information which should be bound to
- *                           \c user.
+ * @param state              Reference on dictionary with information which should be bound to \c user.
  */
 - (void)setupChatEngineForUser:(NSString *)user withSynchronization:(BOOL)synchronizeSession meta:(BOOL)synchronizeMeta state:(NSDictionary *)state;
 
 /**
  * @brief      Configure \b ChatEngine instance with data required for test case.
- * @discussion It is possible to configure multiple \b ChatEngine instances per single test case. If
- *             another setup request for \b ChatEngine for same user will be sent, clone will be
- *             created in separate storage and can be retrieved with special method:
+ * @discussion It is possible to configure multiple \b ChatEngine instances per single test case. If another setup request for \b ChatEngine for
+ *             same user will be sent, clone will be created in separate storage and can be retrieved with special method:
  *             \c -chatEngineCloneForUser:.
  *
  * @param globalChannel      Reference on name of global chat (namespace).
- * @param user               Reference on unique user identifier for which \b ChatEngine instance
- *                           should be created and connected.
+ * @param user               Reference on unique user identifier for which \b ChatEngine instance should be created and connected.
  * @param synchronizeSession Whether synchronization session should be enabled or not.
  * @param synchronizeMeta    Whether chat information should be synchronized on connection or not.
- * @param state              Reference on dictionary with information which should be bound to
- *                           \c user.
+ * @param state              Reference on dictionary with information which should be bound to \c user.
  */
 - (void)setupChatEngineWithGlobal:(nullable NSString *)globalChannel
                           forUser:(NSString *)user
@@ -84,9 +135,46 @@ NS_ASSUME_NONNULL_BEGIN
 - (CENChatEngine *)chatEngineCloneForUser:(NSString *)user;
 
 
-///------------------------------------------------
-/// @name Mocking
-///------------------------------------------------
+#pragma mark - Connection
+
+/**
+ * @brief      Connect \c user to ChatEngine network using provided \c client.
+ * @discussion Method can be used to wait for connection completion in tests.
+ *
+ * @param uuid    Reference on unique user identifier for which \b ChatEngine instance should be created and connected.
+ * @param authKey Reference on user's secret combination (password).
+ * @param state   Reference on dictionary with information which should be bound to \c user.
+ * @param client  Reference on \b ChatEngine instance which should be used to connect \c user to real-time network.
+ */
+- (void)connectUser:(NSString *)uuid withAuthKey:(NSString *)authKey state:(NSDictionary *)state usingClient:(CENChatEngine *)client;
+
+/**
+ * @brief  Disconnect currently connected user from real-time network.
+ *
+ * @param client Reference on \b ChatEngine instance which should disconnect user.
+ */
+- (void)disconnectUserUsingClient:(CENChatEngine *)client;
+
+/**
+ * @brief  Connect disconnected user back to real-time network.
+ *
+ * @param client Reference on \b ChatEngine instance which should reconnect user.
+ */
+- (void)reconnectUserUsingClient:(CENChatEngine *)client;
+
+
+#pragma mark - State
+
+/**
+ * @brief  Update local user \c state and wait till operation completion.
+ *
+ * @param me    Reference on local user instance for which state should be changed.
+ * @param state Reference on new set of data which should be associated with local user.
+ */
+- (void)updateState:(NSDictionary *)state forUser:(CENMe *)me;
+
+
+#pragma mark - Mocking
 
 /**
  * @brief      Create mock object for class.
@@ -109,9 +197,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (id)partialMockForObject:(id)object;
 
 
-///------------------------------------------------
-/// @name Chat mocking
-///------------------------------------------------
+#pragma mark - Chat mocking
 
 /**
  * @brief  Create and configure \c chat instance with random parameters, which can be used for real
@@ -145,9 +231,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (id)createPrivateChat:(BOOL)isPrivate invocationForClassMock:(id)mock;
 
 
-///------------------------------------------------
-/// @name Handlers
-///------------------------------------------------
+#pragma mark - Handlers
 
 /**
  * @brief      Pause test execution to wait for asynchronous task to complete.
@@ -157,8 +241,10 @@ NS_ASSUME_NONNULL_BEGIN
  * @param taskName Name of task for which we are waiting to complete.
  * @param seconds  Number of seconds for which test execution will be postponed to give tested code
  *                 time to perform asynchronous actions.
+ *
+ * @return Reference on expectation object which can be used for fullfilment.
  */
-- (void)waitTask:(NSString *)taskName completionFor:(NSTimeInterval)seconds;
+- (XCTestExpectation *)waitTask:(NSString *)taskName completionFor:(NSTimeInterval)seconds;
 
 #pragma mark -
 

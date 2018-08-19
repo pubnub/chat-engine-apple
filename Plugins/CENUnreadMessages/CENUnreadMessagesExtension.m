@@ -95,8 +95,6 @@ NS_ASSUME_NONNULL_END
     for (NSString *event in self.configuration[CENUnreadMessagesConfiguration.events]) {
         [self.object handleEvent:event withHandlerBlock:self.eventHandlerBlock];
     }
-    
-    self.eventHandlerBlock = nil;
 }
 
 - (void)onDestruct {

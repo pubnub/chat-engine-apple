@@ -12,7 +12,7 @@
 /**
  @brief  Stores reference on key under which back storage hold reference on object which is able to store weak references.
  */
-static NSString * const kCEBSWeakStorageKey = @"cebs_weak_storage";
+static NSString * const kCEBSWeakStorageKey = @"cenbs_weak_storage";
 
 
 NS_ASSUME_NONNULL_BEGIN
@@ -292,6 +292,14 @@ NS_ASSUME_NONNULL_END
         getterImplementation = imp_implementationWithBlock(^const char * (CEPPlugablePropertyStorage *_self) {
             return [(NSString *)_self.storage[property] cStringUsingEncoding:NSUTF8StringEncoding];
         });
+    } else if (type == 'f') {
+        getterImplementation = imp_implementationWithBlock(^float (CEPPlugablePropertyStorage *_self) {
+            return ((NSNumber *)_self.storage[property]).floatValue;
+        });
+    } else if (type == 'd') {
+        getterImplementation = imp_implementationWithBlock(^double (CEPPlugablePropertyStorage *_self) {
+            return ((NSNumber *)_self.storage[property]).doubleValue;
+        });
     } else {
         getterImplementation = imp_implementationWithBlock(^void * (CEPPlugablePropertyStorage *_self) {
             return [[_self class] primitiveOfType:type fromNumber:_self.storage[property]];
@@ -320,7 +328,11 @@ NS_ASSUME_NONNULL_END
         });
     } else if (type == '*') {
         setterImplementation = imp_implementationWithBlock(^(CEPPlugablePropertyStorage *_self, char *value) {
-            _self.storage[property] = [NSString stringWithCString:(value ?: "") encoding:NSUTF8StringEncoding];
+            if (value) {
+                _self.storage[property] = [NSString stringWithCString:value encoding:NSUTF8StringEncoding];
+            } else {
+                [_self.storage removeObjectForKey:property];
+            }
         });
     } else if (type == 'f') {
         setterImplementation = imp_implementationWithBlock(^(CEPPlugablePropertyStorage *_self, float value) {
@@ -433,12 +445,6 @@ NS_ASSUME_NONNULL_END
             break;
         case 'Q':
             return (void *)(size_t)number.unsignedLongLongValue;
-            break;
-        case 'f':
-            return (void *)(size_t)number.floatValue;
-            break;
-        case 'd':
-            return (void *)(size_t)number.doubleValue;
             break;
     }
     
