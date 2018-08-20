@@ -11,7 +11,7 @@
 #import <OCMock/OCMock.h>
 
 
-#define WRITTING_CASSETTES 1
+#define WRITTING_CASSETTES 0
 
 
 #pragma mark Protected interface declaration
