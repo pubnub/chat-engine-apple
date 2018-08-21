@@ -117,6 +117,7 @@
     NSDictionary *expectedState = @{ @"fromRemote": @YES, @"success": @YES };
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     NSDictionary *state = @{ @"success": @YES };
+    CENMe *expectedUser = self.meWithOutState;
     __block BOOL handlerCalled = NO;
     
     OCMStub([self.clientMock fetchUserState:self.meWithOutState withCompletion:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
@@ -129,7 +130,7 @@
     [self.clientMock handleEvent:@"$.state" withHandlerBlock:^(CENMe *me) {
         handlerCalled = YES;
         
-        XCTAssertEqual(me, self.meWithOutState);
+        XCTAssertEqual(me, expectedUser);
         dispatch_semaphore_signal(semaphore);
     }];
     
