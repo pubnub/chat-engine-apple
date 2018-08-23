@@ -13,6 +13,7 @@
 #import "CENChatEngine+Private.h"
 #import "CENErrorCodes.h"
 #import "CENStructures.h"
+#import "CENLogMacro.h"
 #import "CENError.h"
 #import "CENChat.h"
 
@@ -38,6 +39,8 @@
 #endif // CHATENGINE_USE_BUILDER_INTERFACE
 
 - (void)reauthorizeUserWithKey:(NSString *)authKey {
+    
+    CELogAPICall(self.logger, @"<ChatEngine::API> Re-authorize with key: %@", authKey);
     
     [self.global handleEventOnce:@"$.disconnected" withHandlerBlock:^{
         [self changePubNubAuthorizationKey:authKey withCompletion:^{
@@ -82,7 +85,7 @@
         
         NSString *description = [NSString stringWithFormat:@"There was a problem logging into the auth server (%@).",
                                  strongSelf.currentConfiguration.functionEndpoint];
-        NSError *error = [CENError errorFromPubNubFunctionError:responses.firstObject withDescription:description];
+        NSError *error = [CENError errorFromPubNubFunctionError:responses withDescription:description];
         
         [strongSelf throwError:error forScope:@"auth" from:strongSelf propagateFlow:CEExceptionPropagationFlow.direct];
     }];

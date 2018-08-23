@@ -140,8 +140,14 @@ NS_ASSUME_NONNULL_END
 
 - (void)joinChat:(CENChat *)chat {
     
+    __block BOOL alreadySynchronized = NO;
+    
+    dispatch_sync(self.resourceAccessQueue, ^{
+        alreadySynchronized = [self.groupsToChatsMap[chat.group] objectForKey:chat.channel] != nil;
+    });
+    
     dispatch_async(self.sessionAccessQueue, ^{
-        if (![self.groupsToChatsMap[chat.group] objectForKey:chat.channel]) {
+        if (!alreadySynchronized) {
             [self.sync emitEvent:@"$.session.notify.chat.join" withData:@{ @"subject": [chat dictionaryRepresentation] }];
         }
     });
@@ -200,6 +206,11 @@ NS_ASSUME_NONNULL_END
 
 
 #pragma mark - Misc
+
+- (BOOL)isSynchronizationChat:(CENChat *)chat {
+    
+    return self.sync ? [self.sync isEqual:chat] : NO;
+}
 
 - (NSString *)description {
     

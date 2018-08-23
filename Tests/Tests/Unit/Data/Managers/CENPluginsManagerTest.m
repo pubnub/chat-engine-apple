@@ -3,8 +3,9 @@
  * @copyright © 2009-2018 PubNub, Inc.
  */
 #import <XCTest/XCTest.h>
-#import <CENChatEngine/CEPMiddleware+Developer.h>
+#import <CENChatEngine/CENChatEngine+ChatPrivate.h>
 #import <CENChatEngine/CENObject+PluginsPrivate.h>
+#import <CENChatEngine/CEPMiddleware+Developer.h>
 #import <CENChatEngine/CEPPlugin+Developer.h>
 #import <CENChatEngine/CENPluginsManager.h>
 #import <CENChatEngine/CENChat+Private.h>
@@ -154,7 +155,8 @@ withRegistrationGroup:(dispatch_group_t)group;
 
 #pragma mark - Information
 
-@property (nonatomic, nullable, weak) CENChatEngine *defaultClient;
+@property (nonatomic, nullable, weak) CENChatEngine *client;
+@property (nonatomic, nullable, weak) CENChatEngine *clientMock;
 @property (nonatomic, nullable, strong) CENPluginsManager *manager;
 
 
@@ -180,15 +182,23 @@ withRegistrationGroup:(dispatch_group_t)group;
 
 #pragma mark - Setup / Tear down
 
+- (BOOL)shouldSetupVCR {
+    
+    return NO;
+}
+
 - (void)setUp {
     
     [super setUp];
     
     CENConfiguration *configuration = [CENConfiguration configurationWithPublishKey:@"test-36" subscribeKey:@"test-36"];
     configuration.throwExceptions = YES;
-    self.defaultClient = [self chatEngineWithConfiguration:configuration];
+    self.client = [self chatEngineWithConfiguration:configuration];
+    self.clientMock = [self partialMockForObject:self.client];
     
-    self.manager = [CENPluginsManager managerForChatEngine:self.defaultClient];
+    self.manager = [CENPluginsManager managerForChatEngine:self.client];
+    
+    OCMStub([self.clientMock fetchParticipantsForChat:[OCMArg any]]).andDo(nil);
 }
 
 - (void)tearDown {
@@ -228,7 +238,7 @@ withRegistrationGroup:(dispatch_group_t)group;
         dispatch_semaphore_signal(semaphore);
     }];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
     
     XCTAssertTrue(checkHasBeenDone, @"It took too long to access manager's data and proper check not completed.");
 }
@@ -345,7 +355,7 @@ withRegistrationGroup:(dispatch_group_t)group;
     __block BOOL extensionRequested = NO;
     
     [self.manager registerProtoPlugin:[CEDummyPlugin class] withIdentifier:identifier configuration:nil forObjectType:@"Chat"];
-    CENChat *chat = [CENChat chatWithName:@"test" namespace:@"test" group:CENChatGroup.custom private:NO metaData:@{} chatEngine:self.defaultClient];
+    CENChat *chat = [CENChat chatWithName:@"test" namespace:@"test" group:CENChatGroup.custom private:NO metaData:@{} chatEngine:self.client];
     
     [self.manager setupProtoPluginsForObject:chat withCompletion:^{
         [self threadSafeManagerDataAccessWith:^{
@@ -356,7 +366,7 @@ withRegistrationGroup:(dispatch_group_t)group;
         }];
     }];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
     XCTAssertTrue(extensionRequested, @"It took too long to get execution context for extension.");
 }
 
@@ -368,7 +378,7 @@ withRegistrationGroup:(dispatch_group_t)group;
     __block BOOL extensionRequested = NO;
     
     [self.manager registerProtoPlugin:[CEDummyPlugin class] withIdentifier:identifier configuration:nil forObjectType:@"User"];
-    CENChat *chat = [CENChat chatWithName:@"test" namespace:@"test" group:CENChatGroup.custom private:NO metaData:@{} chatEngine:self.defaultClient];
+    CENChat *chat = [CENChat chatWithName:@"test" namespace:@"test" group:CENChatGroup.custom private:NO metaData:@{} chatEngine:self.client];
     
     [self.manager setupProtoPluginsForObject:chat withCompletion:^{
         [self threadSafeManagerDataAccessWith:^{
@@ -379,7 +389,7 @@ withRegistrationGroup:(dispatch_group_t)group;
         }];
     }];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
     XCTAssertTrue(extensionRequested, @"It took too long to get execution context for extension.");
 }
 
@@ -397,7 +407,7 @@ withRegistrationGroup:(dispatch_group_t)group;
     __block BOOL middlewareRequested = NO;
     
     [self.manager registerProtoPlugin:[CEDummyPlugin class] withIdentifier:identifier configuration:nil forObjectType:@"Chat"];
-    CENChat *chat = [CENChat chatWithName:@"test" namespace:@"test" group:CENChatGroup.custom private:NO metaData:@{} chatEngine:self.defaultClient];
+    CENChat *chat = [CENChat chatWithName:@"test" namespace:@"test" group:CENChatGroup.custom private:NO metaData:@{} chatEngine:self.client];
     
     [self.manager setupProtoPluginsForObject:chat withCompletion:^{
         [self threadSafeManagerDataAccessWith:^{
@@ -408,7 +418,7 @@ withRegistrationGroup:(dispatch_group_t)group;
         }];
     }];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
     XCTAssertTrue(middlewareRequested, @"It took too long to get execution context for extension.");
 }
 
@@ -420,7 +430,7 @@ withRegistrationGroup:(dispatch_group_t)group;
     __block BOOL middlewareRequested = NO;
     
     [self.manager registerProtoPlugin:[CEDummyPlugin class] withIdentifier:identifier configuration:nil forObjectType:@"User"];
-    CENChat *chat = [CENChat chatWithName:@"test" namespace:@"test" group:CENChatGroup.custom private:NO metaData:@{} chatEngine:self.defaultClient];
+    CENChat *chat = [CENChat chatWithName:@"test" namespace:@"test" group:CENChatGroup.custom private:NO metaData:@{} chatEngine:self.client];
     
     [self.manager setupProtoPluginsForObject:chat withCompletion:^{
         [self threadSafeManagerDataAccessWith:^{
@@ -431,7 +441,7 @@ withRegistrationGroup:(dispatch_group_t)group;
         }];
     }];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
     XCTAssertTrue(middlewareRequested, @"It took too long to get execution context for extension.");
 }
 
@@ -455,7 +465,7 @@ withRegistrationGroup:(dispatch_group_t)group;
         dispatch_semaphore_signal(semaphore);
     }];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
     XCTAssertTrue(unregisterRequest, @"It took too long to unregister proto plugin.");
 }
 
@@ -468,7 +478,7 @@ withRegistrationGroup:(dispatch_group_t)group;
     __block BOOL unregisterRequest = NO;
     
     [self.manager registerProtoPlugin:[CEDummyPlugin class] withIdentifier:identifier configuration:nil forObjectType:@"Chat"];
-    CENChat *chat = [CENChat chatWithName:@"test" namespace:@"test" group:CENChatGroup.custom private:NO metaData:@{} chatEngine:self.defaultClient];
+    CENChat *chat = [CENChat chatWithName:@"test" namespace:@"test" group:CENChatGroup.custom private:NO metaData:@{} chatEngine:self.client];
     
     [self.manager setupProtoPluginsForObject:chat withCompletion:^{
         [self.manager unregisterProtoPluginWithIdentifier:identifier forObjectType:@"Chat"];
@@ -481,7 +491,7 @@ withRegistrationGroup:(dispatch_group_t)group;
         }];
     }];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
     XCTAssertTrue(unregisterRequest, @"It took too long to unregister proto plugin.");
 }
 
@@ -527,8 +537,8 @@ withRegistrationGroup:(dispatch_group_t)group;
     
     [self.manager registerProtoPlugin:[CEDummyPlugin class] withIdentifier:identifier configuration:nil forObjectType:@"Chat"];
     [self.manager registerProtoPlugin:[CEDummyPlugin class] withIdentifier:identifier configuration:nil forObjectType:@"User"];
-    CENChat *chat = [CENChat chatWithName:@"test" namespace:@"test" group:CENChatGroup.custom private:NO metaData:@{} chatEngine:self.defaultClient];
-    CENUser *user = [CENUser userWithUUID:@"test" state:@{} chatEngine:self.defaultClient];
+    CENChat *chat = [CENChat chatWithName:@"test" namespace:@"test" group:CENChatGroup.custom private:NO metaData:@{} chatEngine:self.client];
+    CENUser *user = [CENUser userWithUUID:@"test" state:@{} chatEngine:self.client];
     
     [self.manager setupProtoPluginsForObject:chat withCompletion:^{
         [self.manager setupProtoPluginsForObject:user withCompletion:^{
@@ -543,7 +553,7 @@ withRegistrationGroup:(dispatch_group_t)group;
         }];
     }];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
     XCTAssertTrue(unregisterRequest, @"It took too long to unregister proto plugin.");
 }
 
@@ -551,7 +561,7 @@ withRegistrationGroup:(dispatch_group_t)group;
 
 - (void)testRegisterPlugin_ShouldRegisterPlugin_WhenNoProtoPluginAvailable {
     
-    CENChat *chat = [CENChat chatWithName:@"test" namespace:@"test" group:CENChatGroup.custom private:NO metaData:@{} chatEngine:self.defaultClient];
+    CENChat *chat = [CENChat chatWithName:@"test" namespace:@"test" group:CENChatGroup.custom private:NO metaData:@{} chatEngine:self.client];
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     CEDummyPlugin.classesWithExtensions = @[[CENChat class]];
     NSString *identifier = CEDummyPlugin.identifier;
@@ -568,8 +578,7 @@ withRegistrationGroup:(dispatch_group_t)group;
         dispatch_semaphore_signal(semaphore);
     }];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
-    
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
     XCTAssertTrue(registered);
     OCMVerifyAll(managerPartialMock);
     XCTAssertTrue(registerRequested, @"It took too long to register plugin for object.");
@@ -577,7 +586,7 @@ withRegistrationGroup:(dispatch_group_t)group;
 
 - (void)testRegisterPlugin_ShouldRegisterUsingProtoPlugin_WhenProtoPluginAvailable {
     
-    CENChat *chat = [CENChat chatWithName:@"test" namespace:@"test" group:CENChatGroup.custom private:NO metaData:@{} chatEngine:self.defaultClient];
+    CENChat *chat = [CENChat chatWithName:@"test" namespace:@"test" group:CENChatGroup.custom private:NO metaData:@{} chatEngine:self.client];
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     CEDummyPlugin.classesWithExtensions = @[[CENChat class]];
     NSString *identifier = CEDummyPlugin.identifier;
@@ -596,8 +605,7 @@ withRegistrationGroup:(dispatch_group_t)group;
         dispatch_semaphore_signal(semaphore);
     }];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
-    
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
     XCTAssertTrue(registered);
     OCMVerifyAll(managerPartialMock);
     XCTAssertTrue(registerRequested, @"It took too long to register plugin for object.");
@@ -605,7 +613,7 @@ withRegistrationGroup:(dispatch_group_t)group;
 
 - (void)testRegisterPlugin_ShouldRegisterPlugin_WhenProtoPluginHasDifferentConfiguration {
     
-    CENChat *chat = [CENChat chatWithName:@"test" namespace:@"test" group:CENChatGroup.custom private:NO metaData:@{} chatEngine:self.defaultClient];
+    CENChat *chat = [CENChat chatWithName:@"test" namespace:@"test" group:CENChatGroup.custom private:NO metaData:@{} chatEngine:self.client];
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     CEDummyPlugin.classesWithExtensions = @[[CENChat class]];
     NSString *identifier = CEDummyPlugin.identifier;
@@ -624,8 +632,7 @@ withRegistrationGroup:(dispatch_group_t)group;
         dispatch_semaphore_signal(semaphore);
     }];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
-    
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
     XCTAssertTrue(registered);
     OCMVerifyAll(managerPartialMock);
     XCTAssertTrue(registerRequested, @"It took too long to register plugin for object.");
@@ -633,8 +640,8 @@ withRegistrationGroup:(dispatch_group_t)group;
 
 - (void)testRegisterPlugin_ShouldRegisterExtensionForAnotherObject_WhenPluginHasBeenRegisteredWithObject {
     
-    CENChat *chat1 = [CENChat chatWithName:@"test1" namespace:@"test" group:CENChatGroup.custom private:NO metaData:@{} chatEngine:self.defaultClient];
-    CENChat *chat2 = [CENChat chatWithName:@"test2" namespace:@"test" group:CENChatGroup.custom private:NO metaData:@{} chatEngine:self.defaultClient];
+    CENChat *chat1 = [CENChat chatWithName:@"test1" namespace:@"test" group:CENChatGroup.custom private:NO metaData:@{} chatEngine:self.client];
+    CENChat *chat2 = [CENChat chatWithName:@"test2" namespace:@"test" group:CENChatGroup.custom private:NO metaData:@{} chatEngine:self.client];
     NSDictionary *configuration = @{ @"instance": @"configuration" };
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     CEDummyPlugin.classesWithExtensions = @[[CENChat class]];
@@ -654,8 +661,7 @@ withRegistrationGroup:(dispatch_group_t)group;
         dispatch_semaphore_signal(semaphore);
     }];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
-    
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
     XCTAssertTrue(registered);
     OCMVerifyAll(managerPartialMock);
     XCTAssertTrue(registerRequested, @"It took too long to register plugin for object.");
@@ -663,8 +669,8 @@ withRegistrationGroup:(dispatch_group_t)group;
 
 - (void)testRegisterPlugin_ShouldRegisterMiddlewaresForAnotherObject_WhenPluginHasBeenRegisteredWithObject {
     
-    CENChat *chat1 = [CENChat chatWithName:@"test1" namespace:@"test" group:CENChatGroup.custom private:NO metaData:@{} chatEngine:self.defaultClient];
-    CENChat *chat2 = [CENChat chatWithName:@"test2" namespace:@"test" group:CENChatGroup.custom private:NO metaData:@{} chatEngine:self.defaultClient];
+    CENChat *chat1 = [CENChat chatWithName:@"test1" namespace:@"test" group:CENChatGroup.custom private:NO metaData:@{} chatEngine:self.client];
+    CENChat *chat2 = [CENChat chatWithName:@"test2" namespace:@"test" group:CENChatGroup.custom private:NO metaData:@{} chatEngine:self.client];
     CEDummyPlugin.middlewareLocationClasses = @{ CEPMiddlewareLocation.on: @[[CENChat class], [CENUser class]] };
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     NSString *identifier = CEDummyPlugin.identifier;
@@ -684,8 +690,7 @@ withRegistrationGroup:(dispatch_group_t)group;
         dispatch_semaphore_signal(semaphore);
     }];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
-    
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
     XCTAssertTrue(registered);
     OCMVerifyAll(managerPartialMock);
     XCTAssertTrue(registerRequested, @"It took too long to register plugin for object.");
@@ -693,7 +698,7 @@ withRegistrationGroup:(dispatch_group_t)group;
 
 - (void)testRegisterPlugin_ShouldNotRegisterExstencions_WhenObjectAlreadyHasSamePluginWithDifferentConfiguration {
     
-    CENChat *chat = [CENChat chatWithName:@"test" namespace:@"test" group:CENChatGroup.custom private:NO metaData:@{} chatEngine:self.defaultClient];
+    CENChat *chat = [CENChat chatWithName:@"test" namespace:@"test" group:CENChatGroup.custom private:NO metaData:@{} chatEngine:self.client];
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     CEDummyPlugin.classesWithExtensions = @[[CENChat class]];
     NSString *identifier = CEDummyPlugin.identifier;
@@ -708,8 +713,7 @@ withRegistrationGroup:(dispatch_group_t)group;
         dispatch_semaphore_signal(semaphore);
     }];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
-    
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
     XCTAssertTrue(registeredFirstTime);
     XCTAssertFalse(registeredSecondTime);
     XCTAssertTrue(registerRequested, @"It took too long to register plugin for object.");
@@ -717,7 +721,7 @@ withRegistrationGroup:(dispatch_group_t)group;
 
 - (void)testRegisterPlugin_ShouldNotRegisterMiddlewares_WhenObjectAlreadyHasSamePluginWithSameConfiguration {
     
-    CENChat *chat = [CENChat chatWithName:@"test" namespace:@"test" group:CENChatGroup.custom private:NO metaData:@{} chatEngine:self.defaultClient];
+    CENChat *chat = [CENChat chatWithName:@"test" namespace:@"test" group:CENChatGroup.custom private:NO metaData:@{} chatEngine:self.client];
     CEDummyPlugin.middlewareLocationClasses = @{ CEPMiddlewareLocation.on: @[[CENChat class], [CENUser class]] };
     NSDictionary *configuration = @{ @"instance": @"configuration" };
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
@@ -732,9 +736,8 @@ withRegistrationGroup:(dispatch_group_t)group;
         registerRequested = YES;
         dispatch_semaphore_signal(semaphore);
     }];
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
-
     
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
     XCTAssertTrue(registeredFirstTime);
     XCTAssertFalse(registeredSecondTime);
     XCTAssertTrue(registerRequested, @"It took too long to register plugin for object.");
@@ -742,7 +745,7 @@ withRegistrationGroup:(dispatch_group_t)group;
 
 - (void)testRegisterPlugin_ShouldNotRegisterMiddlewares_WhenObjectAlreadyHasSamePluginWithDifferentConfiguration {
     
-    CENChat *chat = [CENChat chatWithName:@"test" namespace:@"test" group:CENChatGroup.custom private:NO metaData:@{} chatEngine:self.defaultClient];
+    CENChat *chat = [CENChat chatWithName:@"test" namespace:@"test" group:CENChatGroup.custom private:NO metaData:@{} chatEngine:self.client];
     CEDummyPlugin.middlewareLocationClasses = @{ CEPMiddlewareLocation.on: @[[CENChat class], [CENUser class]] };
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     NSString *identifier = CEDummyPlugin.identifier;
@@ -757,7 +760,7 @@ withRegistrationGroup:(dispatch_group_t)group;
         dispatch_semaphore_signal(semaphore);
     }];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
     
     XCTAssertTrue(registeredFirstTime);
     XCTAssertFalse(registeredSecondTime);
@@ -766,7 +769,7 @@ withRegistrationGroup:(dispatch_group_t)group;
 
 - (void)testRegisterPlugin_ShouldThrowException_WhenNonPluginSubclassPassed {
     
-    CENChat *chat = [CENChat chatWithName:@"test" namespace:@"test" group:CENChatGroup.custom private:NO metaData:@{} chatEngine:self.defaultClient];
+    CENChat *chat = [CENChat chatWithName:@"test" namespace:@"test" group:CENChatGroup.custom private:NO metaData:@{} chatEngine:self.client];
     NSString *identifier = CEDummyPlugin.identifier;
     
     XCTAssertThrowsSpecificNamed([self.manager registerPlugin:[NSArray class] withIdentifier:identifier configuration:nil forObject:chat
@@ -784,7 +787,7 @@ withRegistrationGroup:(dispatch_group_t)group;
 
 - (void)testRegisterPlugin_ShouldThrowException_WhenNonNSStringIdentifierPassed {
     
-    CENChat *chat = [CENChat chatWithName:@"test" namespace:@"test" group:CENChatGroup.custom private:NO metaData:@{} chatEngine:self.defaultClient];
+    CENChat *chat = [CENChat chatWithName:@"test" namespace:@"test" group:CENChatGroup.custom private:NO metaData:@{} chatEngine:self.client];
     NSString *identifier = (id)@2010;
     
     XCTAssertThrowsSpecificNamed([self.manager registerPlugin:[CEDummyPlugin class] withIdentifier:identifier configuration:nil forObject:chat
@@ -794,7 +797,7 @@ withRegistrationGroup:(dispatch_group_t)group;
 
 - (void)testRegisterPlugin_ShouldThrowException_WhenNilIdentifierPassed {
     
-    CENChat *chat = [CENChat chatWithName:@"test" namespace:@"test" group:CENChatGroup.custom private:NO metaData:@{} chatEngine:self.defaultClient];
+    CENChat *chat = [CENChat chatWithName:@"test" namespace:@"test" group:CENChatGroup.custom private:NO metaData:@{} chatEngine:self.client];
     NSString *identifier = nil;
     
     XCTAssertThrowsSpecificNamed([self.manager registerPlugin:[CEDummyPlugin class] withIdentifier:identifier configuration:nil forObject:chat
@@ -804,7 +807,7 @@ withRegistrationGroup:(dispatch_group_t)group;
 
 - (void)testRegisterPlugin_ShouldThrowException_WhenEmptyIdentifierPassed {
     
-    CENChat *chat = [CENChat chatWithName:@"test" namespace:@"test" group:CENChatGroup.custom private:NO metaData:@{} chatEngine:self.defaultClient];
+    CENChat *chat = [CENChat chatWithName:@"test" namespace:@"test" group:CENChatGroup.custom private:NO metaData:@{} chatEngine:self.client];
     NSString *identifier = @"";
     
     XCTAssertThrowsSpecificNamed([self.manager registerPlugin:[CEDummyPlugin class] withIdentifier:identifier configuration:nil forObject:chat
@@ -814,7 +817,7 @@ withRegistrationGroup:(dispatch_group_t)group;
 
 - (void)testRegisterPlugin_ShouldThrowException_WhenNonNSdictionaryConfigurationPassed {
     
-    CENChat *chat = [CENChat chatWithName:@"test" namespace:@"test" group:CENChatGroup.custom private:NO metaData:@{} chatEngine:self.defaultClient];
+    CENChat *chat = [CENChat chatWithName:@"test" namespace:@"test" group:CENChatGroup.custom private:NO metaData:@{} chatEngine:self.client];
     NSString *identifier = CEDummyPlugin.identifier;
     
     XCTAssertThrowsSpecificNamed([self.manager registerPlugin:[CEDummyPlugin class] withIdentifier:identifier configuration:(id)[NSNumber class]
@@ -827,7 +830,7 @@ withRegistrationGroup:(dispatch_group_t)group;
 
 - (void)testHasPluginWithIdentifier_ShouldReturnTrue_WhenProtoWithSpecifiedIdentifierRegistered {
     
-    CENChat *chat = [CENChat chatWithName:@"test" namespace:@"test" group:CENChatGroup.custom private:NO metaData:@{} chatEngine:self.defaultClient];
+    CENChat *chat = [CENChat chatWithName:@"test" namespace:@"test" group:CENChatGroup.custom private:NO metaData:@{} chatEngine:self.client];
     CEDummyPlugin.middlewareLocationClasses = @{ CEPMiddlewareLocation.on: @[[CENChat class], [CENUser class]] };
     NSString *identifier = CEDummyPlugin.identifier;
     
@@ -838,7 +841,7 @@ withRegistrationGroup:(dispatch_group_t)group;
 
 - (void)testHasPluginWithIdentifier_ShouldReturnFalse_WhenProtoWithSpecifiedIdentifierNotRegistered {
     
-    CENChat *chat = [CENChat chatWithName:@"test" namespace:@"test" group:CENChatGroup.custom private:NO metaData:@{} chatEngine:self.defaultClient];
+    CENChat *chat = [CENChat chatWithName:@"test" namespace:@"test" group:CENChatGroup.custom private:NO metaData:@{} chatEngine:self.client];
     CEDummyPlugin.middlewareLocationClasses = @{ CEPMiddlewareLocation.on: @[[CENChat class], [CENUser class]] };
     NSString *identifier = CEDummyPlugin.identifier;
     
@@ -849,7 +852,7 @@ withRegistrationGroup:(dispatch_group_t)group;
 
 - (void)testHasPluginWithIdentifier_ShouldThrowException_WhenNonNSStringNilIdentifierPassed {
     
-    CENChat *chat = [CENChat chatWithName:@"test" namespace:@"test" group:CENChatGroup.custom private:NO metaData:@{} chatEngine:self.defaultClient];
+    CENChat *chat = [CENChat chatWithName:@"test" namespace:@"test" group:CENChatGroup.custom private:NO metaData:@{} chatEngine:self.client];
     NSString *searchIdentifier = (id)@2010;
     
     XCTAssertThrowsSpecificNamed([self.manager hasPluginWithIdentifier:searchIdentifier forObject:chat],
@@ -858,7 +861,7 @@ withRegistrationGroup:(dispatch_group_t)group;
 
 - (void)testHasPluginWithIdentifier_ShouldReturnFalse_WhenNilIdentifierPassed {
     
-    CENChat *chat = [CENChat chatWithName:@"test" namespace:@"test" group:CENChatGroup.custom private:NO metaData:@{} chatEngine:self.defaultClient];
+    CENChat *chat = [CENChat chatWithName:@"test" namespace:@"test" group:CENChatGroup.custom private:NO metaData:@{} chatEngine:self.client];
     NSString *searchIdentifier = nil;
     
     XCTAssertThrowsSpecificNamed([self.manager hasPluginWithIdentifier:searchIdentifier forObject:chat],
@@ -867,7 +870,7 @@ withRegistrationGroup:(dispatch_group_t)group;
 
 - (void)testHasPluginWithIdentifier_ShouldReturnFalse_WhenEmptyIdentifierPassed {
     
-    CENChat *chat = [CENChat chatWithName:@"test" namespace:@"test" group:CENChatGroup.custom private:NO metaData:@{} chatEngine:self.defaultClient];
+    CENChat *chat = [CENChat chatWithName:@"test" namespace:@"test" group:CENChatGroup.custom private:NO metaData:@{} chatEngine:self.client];
     NSString *searchIdentifier = @"";
     
     XCTAssertThrowsSpecificNamed([self.manager hasPluginWithIdentifier:searchIdentifier forObject:chat],
@@ -887,7 +890,7 @@ withRegistrationGroup:(dispatch_group_t)group;
 
 - (void)testUnregisterObjects_ShouldRemovedPlugin_WhenPluginWithIdentifierRegistered {
     
-    CENChat *chat = [CENChat chatWithName:@"test" namespace:@"test" group:CENChatGroup.custom private:NO metaData:@{} chatEngine:self.defaultClient];
+    CENChat *chat = [CENChat chatWithName:@"test" namespace:@"test" group:CENChatGroup.custom private:NO metaData:@{} chatEngine:self.client];
     CEDummyPlugin.middlewareLocationClasses = @{ CEPMiddlewareLocation.on: @[[CENChat class], [CENUser class]] };
     NSString *identifier = CEDummyPlugin.identifier;
     
@@ -900,7 +903,7 @@ withRegistrationGroup:(dispatch_group_t)group;
 
 - (void)testUnregisterObjects_ShouldRemovedPlugin_WhenProvidedByProtoPlugin {
     
-    CENChat *chat = [CENChat chatWithName:@"test" namespace:@"test" group:CENChatGroup.custom private:NO metaData:@{} chatEngine:self.defaultClient];
+    CENChat *chat = [CENChat chatWithName:@"test" namespace:@"test" group:CENChatGroup.custom private:NO metaData:@{} chatEngine:self.client];
     CEDummyPlugin.middlewareLocationClasses = @{ CEPMiddlewareLocation.on: @[[CENChat class], [CENUser class]] };
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     NSString *identifier = CEDummyPlugin.identifier;
@@ -919,8 +922,8 @@ withRegistrationGroup:(dispatch_group_t)group;
 
 - (void)testUnregisterObjects_ShouldNotRemovedPlugin_WhenRegisteredWithDifferentIdentifiers {
     
-    CENChat *chat1 = [CENChat chatWithName:@"test1" namespace:@"test" group:CENChatGroup.custom private:NO metaData:@{} chatEngine:self.defaultClient];
-    CENChat *chat2 = [CENChat chatWithName:@"test2" namespace:@"test" group:CENChatGroup.custom private:NO metaData:@{} chatEngine:self.defaultClient];
+    CENChat *chat1 = [CENChat chatWithName:@"test1" namespace:@"test" group:CENChatGroup.custom private:NO metaData:@{} chatEngine:self.client];
+    CENChat *chat2 = [CENChat chatWithName:@"test2" namespace:@"test" group:CENChatGroup.custom private:NO metaData:@{} chatEngine:self.client];
     CEDummyPlugin.middlewareLocationClasses = @{ CEPMiddlewareLocation.on: @[[CENChat class], [CENUser class]] };
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     NSString *identifier1 = CEDummyPlugin.identifier;
@@ -949,7 +952,7 @@ withRegistrationGroup:(dispatch_group_t)group;
 
 - (void)testUnregisterObjects_ShouldThrowException_WhenNonNSStringIdentifierPassed {
     
-    CENChat *chat = [CENChat chatWithName:@"test" namespace:@"test" group:CENChatGroup.custom private:NO metaData:@{} chatEngine:self.defaultClient];
+    CENChat *chat = [CENChat chatWithName:@"test" namespace:@"test" group:CENChatGroup.custom private:NO metaData:@{} chatEngine:self.client];
     NSString *searchIdentifier = (id)@2010;
     
     XCTAssertThrowsSpecificNamed([self.manager unregisterObjects:chat pluginWithIdentifier:searchIdentifier],
@@ -958,7 +961,7 @@ withRegistrationGroup:(dispatch_group_t)group;
 
 - (void)testUnregisterObjects_ShouldReturnFalse_WhenNilIdentifierPassed {
     
-    CENChat *chat = [CENChat chatWithName:@"test" namespace:@"test" group:CENChatGroup.custom private:NO metaData:@{} chatEngine:self.defaultClient];
+    CENChat *chat = [CENChat chatWithName:@"test" namespace:@"test" group:CENChatGroup.custom private:NO metaData:@{} chatEngine:self.client];
     NSString *searchIdentifier = nil;
     
     XCTAssertThrowsSpecificNamed([self.manager unregisterObjects:chat pluginWithIdentifier:searchIdentifier],
@@ -967,7 +970,7 @@ withRegistrationGroup:(dispatch_group_t)group;
 
 - (void)testUnregisterObjects_ShouldReturnFalse_WhenEmptyIdentifierPassed {
     
-    CENChat *chat = [CENChat chatWithName:@"test" namespace:@"test" group:CENChatGroup.custom private:NO metaData:@{} chatEngine:self.defaultClient];
+    CENChat *chat = [CENChat chatWithName:@"test" namespace:@"test" group:CENChatGroup.custom private:NO metaData:@{} chatEngine:self.client];
     NSString *searchIdentifier = @"";
     
     XCTAssertThrowsSpecificNamed([self.manager unregisterObjects:chat pluginWithIdentifier:searchIdentifier],
@@ -987,7 +990,7 @@ withRegistrationGroup:(dispatch_group_t)group;
 
 - (void)testUnregisterAllFromObjects_ShouldRemovedPlugin_WhenPluginWithIdentifierRegistered {
     
-    CENChat *chat = [CENChat chatWithName:@"test" namespace:@"test" group:CENChatGroup.custom private:NO metaData:@{} chatEngine:self.defaultClient];
+    CENChat *chat = [CENChat chatWithName:@"test" namespace:@"test" group:CENChatGroup.custom private:NO metaData:@{} chatEngine:self.client];
     CEDummyPlugin.middlewareLocationClasses = @{ CEPMiddlewareLocation.on: @[[CENChat class], [CENUser class]] };
     CEDummyPlugin.classesWithExtensions = @[[CENChat class]];
     NSString *identifier = CEDummyPlugin.identifier;
@@ -1009,7 +1012,7 @@ withRegistrationGroup:(dispatch_group_t)group;
 
 - (void)testExtensionForObject_ShouldReceiveExtensionExecutionContext_WhenPluginRegisteredForObject {
     
-    CENChat *chat = [CENChat chatWithName:@"test" namespace:@"test" group:CENChatGroup.custom private:NO metaData:@{} chatEngine:self.defaultClient];
+    CENChat *chat = [CENChat chatWithName:@"test" namespace:@"test" group:CENChatGroup.custom private:NO metaData:@{} chatEngine:self.client];
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     CEDummyPlugin.classesWithExtensions = @[[CENChat class]];
     NSString *identifier = CEDummyPlugin.identifier;
@@ -1023,13 +1026,13 @@ withRegistrationGroup:(dispatch_group_t)group;
         dispatch_semaphore_signal(semaphore);
     }];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
     XCTAssertTrue(extensionRequest, @"It took too long to get execution context for extension.");
 }
 
 - (void)testExtensionForObject_ShouldNotReceiveExtensionExecutionContext_WhenUsedNotRegisteredPluginIdentifier {
     
-    CENChat *chat = [CENChat chatWithName:@"test" namespace:@"test" group:CENChatGroup.custom private:NO metaData:@{} chatEngine:self.defaultClient];
+    CENChat *chat = [CENChat chatWithName:@"test" namespace:@"test" group:CENChatGroup.custom private:NO metaData:@{} chatEngine:self.client];
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     CEDummyPlugin.classesWithExtensions = @[[CENChat class]];
     NSString *identifier = CEDummyPlugin.identifier;
@@ -1043,14 +1046,14 @@ withRegistrationGroup:(dispatch_group_t)group;
         dispatch_semaphore_signal(semaphore);
     }];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
     XCTAssertTrue(extensionRequest, @"It took too long to get execution context for extension.");
 }
 
 - (void)testExtensionForObject_ShouldContextPreserveData_WhenPluginRegisteredForFewObject {
     
-    CENChat *chat1 = [CENChat chatWithName:@"test1" namespace:@"test" group:CENChatGroup.custom private:NO metaData:@{} chatEngine:self.defaultClient];
-    CENChat *chat2 = [CENChat chatWithName:@"test2" namespace:@"test" group:CENChatGroup.custom private:NO metaData:@{} chatEngine:self.defaultClient];
+    CENChat *chat1 = [CENChat chatWithName:@"test1" namespace:@"test" group:CENChatGroup.custom private:NO metaData:@{} chatEngine:self.client];
+    CENChat *chat2 = [CENChat chatWithName:@"test2" namespace:@"test" group:CENChatGroup.custom private:NO metaData:@{} chatEngine:self.client];
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     CEDummyPlugin.classesWithExtensions = @[[CENChat class]];
     NSString *identifier = CEDummyPlugin.identifier;
@@ -1065,7 +1068,7 @@ withRegistrationGroup:(dispatch_group_t)group;
         dispatch_semaphore_signal(semaphore);
     }];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
     
     [self.manager extensionForObject:chat2 withIdentifier:identifier context:^(CEPExtension *extension) {
         extensionRequest = YES;
@@ -1074,13 +1077,13 @@ withRegistrationGroup:(dispatch_group_t)group;
         dispatch_semaphore_signal(semaphore);
     }];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
     XCTAssertTrue(extensionRequest, @"It took too long to get execution context for extension.");
 }
 
 - (void)testExtensionForObject_ShouldThrowException_WhenNonNSStringNilIdentifierPassed {
     
-    CENChat *chat = [CENChat chatWithName:@"test" namespace:@"test" group:CENChatGroup.custom private:NO metaData:@{} chatEngine:self.defaultClient];
+    CENChat *chat = [CENChat chatWithName:@"test" namespace:@"test" group:CENChatGroup.custom private:NO metaData:@{} chatEngine:self.client];
     NSString *identifier = (id)@2010;
     
     XCTAssertThrowsSpecificNamed([self.manager extensionForObject:chat withIdentifier:identifier context:^(CEPExtension *extension) {}],
@@ -1089,7 +1092,7 @@ withRegistrationGroup:(dispatch_group_t)group;
 
 - (void)testExtensionForObject_ShouldThrowException_WhenNilIdentifierPassed {
     
-    CENChat *chat = [CENChat chatWithName:@"test" namespace:@"test" group:CENChatGroup.custom private:NO metaData:@{} chatEngine:self.defaultClient];
+    CENChat *chat = [CENChat chatWithName:@"test" namespace:@"test" group:CENChatGroup.custom private:NO metaData:@{} chatEngine:self.client];
     NSString *identifier = nil;
     
     XCTAssertThrowsSpecificNamed([self.manager extensionForObject:chat withIdentifier:identifier context:^(CEPExtension *extension) {}],
@@ -1098,7 +1101,7 @@ withRegistrationGroup:(dispatch_group_t)group;
 
 - (void)testExtensionForObject_ShouldThrowException_WhenEmptyIdentifierPassed {
     
-    CENChat *chat = [CENChat chatWithName:@"test" namespace:@"test" group:CENChatGroup.custom private:NO metaData:@{} chatEngine:self.defaultClient];
+    CENChat *chat = [CENChat chatWithName:@"test" namespace:@"test" group:CENChatGroup.custom private:NO metaData:@{} chatEngine:self.client];
     NSString *identifier = @"";
     
     XCTAssertThrowsSpecificNamed([self.manager extensionForObject:chat withIdentifier:identifier context:^(CEPExtension *extension) {}],
@@ -1115,7 +1118,7 @@ withRegistrationGroup:(dispatch_group_t)group;
 
 - (void)testExtensionForObject_ShouldThrowException_WhenNilBlockPassed {
     
-    CENChat *chat = [CENChat chatWithName:@"test" namespace:@"test" group:CENChatGroup.custom private:NO metaData:@{} chatEngine:self.defaultClient];
+    CENChat *chat = [CENChat chatWithName:@"test" namespace:@"test" group:CENChatGroup.custom private:NO metaData:@{} chatEngine:self.client];
     void(^handleBlock)(CEPExtension *) = nil;
     NSString *identifier = @"";
     
@@ -1128,7 +1131,7 @@ withRegistrationGroup:(dispatch_group_t)group;
 
 - (void)testRunMiddlewaresAtLocation_ShouldRunMiddleware_WhenRegisteredPluginWithMiddlewares {
     
-    CENChat *chat = [CENChat chatWithName:@"test" namespace:@"test" group:CENChatGroup.custom private:NO metaData:@{} chatEngine:self.defaultClient];
+    CENChat *chat = [CENChat chatWithName:@"test" namespace:@"test" group:CENChatGroup.custom private:NO metaData:@{} chatEngine:self.client];
     NSMutableDictionary *payload = [NSMutableDictionary dictionaryWithDictionary:@{ @"test": @"payload" }];
     CEDummyPlugin.middlewareLocationClasses = @{ CEPMiddlewareLocation.on: @[[CENChat class]] };
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
@@ -1149,13 +1152,13 @@ withRegistrationGroup:(dispatch_group_t)group;
         dispatch_semaphore_signal(semaphore);
     }];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
     XCTAssertTrue(middlewareRequest, @"It took too long to get execution context for middleware.");
 }
 
 - (void)testRunMiddlewaresAtLocation_ShouldThrowException_WhenNonNSStringEventPassed {
     
-    CENChat *chat = [CENChat chatWithName:@"test" namespace:@"test" group:CENChatGroup.custom private:NO metaData:@{} chatEngine:self.defaultClient];
+    CENChat *chat = [CENChat chatWithName:@"test" namespace:@"test" group:CENChatGroup.custom private:NO metaData:@{} chatEngine:self.client];
     NSMutableDictionary *payload = [NSMutableDictionary new];
     NSString *event = (id)@2010;
     
@@ -1169,7 +1172,7 @@ withRegistrationGroup:(dispatch_group_t)group;
 
 - (void)testRunMiddlewaresAtLocation_ShouldThrowException_WhenNilEventPassed {
     
-    CENChat *chat = [CENChat chatWithName:@"test" namespace:@"test" group:CENChatGroup.custom private:NO metaData:@{} chatEngine:self.defaultClient];
+    CENChat *chat = [CENChat chatWithName:@"test" namespace:@"test" group:CENChatGroup.custom private:NO metaData:@{} chatEngine:self.client];
     NSMutableDictionary *payload = [NSMutableDictionary new];
     NSString *event = nil;
     
@@ -1183,7 +1186,7 @@ withRegistrationGroup:(dispatch_group_t)group;
 
 - (void)testRunMiddlewaresAtLocation_ShouldNotThrowException_WhenNilPayloadPassed {
     
-    CENChat *chat = [CENChat chatWithName:@"test" namespace:@"test" group:CENChatGroup.custom private:NO metaData:@{} chatEngine:self.defaultClient];
+    CENChat *chat = [CENChat chatWithName:@"test" namespace:@"test" group:CENChatGroup.custom private:NO metaData:@{} chatEngine:self.client];
     NSMutableDictionary *payload = nil;
     
     XCTAssertNoThrow([self.manager runMiddlewaresAtLocation:CEPMiddlewareLocation.on
@@ -1195,7 +1198,7 @@ withRegistrationGroup:(dispatch_group_t)group;
 
 - (void)testRunMiddlewaresAtLocation_ShouldThrowException_WhenEmptyEventPassed {
     
-    CENChat *chat = [CENChat chatWithName:@"test" namespace:@"test" group:CENChatGroup.custom private:NO metaData:@{} chatEngine:self.defaultClient];
+    CENChat *chat = [CENChat chatWithName:@"test" namespace:@"test" group:CENChatGroup.custom private:NO metaData:@{} chatEngine:self.client];
     NSMutableDictionary *payload = [NSMutableDictionary new];
     NSString *event = @"";
     
@@ -1209,7 +1212,7 @@ withRegistrationGroup:(dispatch_group_t)group;
 
 - (void)testRunMiddlewaresAtLocation_ShouldThrowException_WhenNilLocationPassed {
     
-    CENChat *chat = [CENChat chatWithName:@"test" namespace:@"test" group:CENChatGroup.custom private:NO metaData:@{} chatEngine:self.defaultClient];
+    CENChat *chat = [CENChat chatWithName:@"test" namespace:@"test" group:CENChatGroup.custom private:NO metaData:@{} chatEngine:self.client];
     NSMutableDictionary *payload = [NSMutableDictionary new];
     NSString *location = nil;
     
@@ -1223,7 +1226,7 @@ withRegistrationGroup:(dispatch_group_t)group;
 
 - (void)testRunMiddlewaresAtLocation_ShouldThrowException_WhenUnknownLocationPassed {
     
-    CENChat *chat = [CENChat chatWithName:@"test" namespace:@"test" group:CENChatGroup.custom private:NO metaData:@{} chatEngine:self.defaultClient];
+    CENChat *chat = [CENChat chatWithName:@"test" namespace:@"test" group:CENChatGroup.custom private:NO metaData:@{} chatEngine:self.client];
     NSMutableDictionary *payload = [NSMutableDictionary new];
     NSString *location = @"PubNub";
     
@@ -1249,7 +1252,7 @@ withRegistrationGroup:(dispatch_group_t)group;
 
 - (void)testRunMiddlewaresAtLocation_ShouldThrowException_WhenNilBlockPassed {
     
-    CENChat *chat = [CENChat chatWithName:@"test" namespace:@"test" group:CENChatGroup.custom private:NO metaData:@{} chatEngine:self.defaultClient];
+    CENChat *chat = [CENChat chatWithName:@"test" namespace:@"test" group:CENChatGroup.custom private:NO metaData:@{} chatEngine:self.client];
     NSMutableDictionary *payload = [NSMutableDictionary new];
     void(^handleBlock)(BOOL, id) = nil;
     
@@ -1266,9 +1269,9 @@ withRegistrationGroup:(dispatch_group_t)group;
 
 - (void)testDestroy_ShouldUnregisterPluginForObject {
     
-    CENChat *chat = [CENChat chatWithName:@"test" namespace:@"test" group:CENChatGroup.custom private:NO metaData:@{} chatEngine:self.defaultClient];
+    CENChat *chat = [CENChat chatWithName:@"test" namespace:@"test" group:CENChatGroup.custom private:NO metaData:@{} chatEngine:self.client];
     CEDummyPlugin.middlewareLocationClasses = @{ CEPMiddlewareLocation.on: @[[CENChat class]] };
-    CENPluginsManager *manager = [CENPluginsManager managerForChatEngine:self.defaultClient];
+    CENPluginsManager *manager = [CENPluginsManager managerForChatEngine:self.client];
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     CEDummyPlugin.classesWithExtensions = @[[CENChat class]];
     NSString *identifier = CEDummyPlugin.identifier;

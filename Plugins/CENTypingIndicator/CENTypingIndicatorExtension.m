@@ -107,8 +107,8 @@ NS_ASSUME_NONNULL_END
     
     CENChat *chat = timer.userInfo[kCENTIObjectKey];
     
-    [chat extensionWithIdentifier:self.identifier context:^(__unused CENTypingIndicatorExtension *extension) {
-        [self stopTyping];
+    [chat extensionWithIdentifier:self.identifier context:^(CENTypingIndicatorExtension *extension) {
+        [extension stopTyping];
     }];
 }
 
@@ -117,15 +117,15 @@ NS_ASSUME_NONNULL_END
 
 - (void)startIdleTimer {
     
-    NSNumber *timeout = self.configuration[CENTypingIndicatorConfiguration.timeout];
-    
     [self stopIdleTimer];
+    
+    NSNumber *timeout = self.configuration[CENTypingIndicatorConfiguration.timeout];
     self.idleTimer = [NSTimer scheduledTimerWithTimeInterval:timeout.doubleValue
                                                       target:self
                                                     selector:@selector(handleTypingIdleTimer:)
                                                     userInfo:@{ kCENTIObjectKey: self.object }
                                                      repeats:NO];
-    [[NSRunLoop currentRunLoop] addTimer:self.idleTimer forMode:NSDefaultRunLoopMode];
+    [[NSRunLoop currentRunLoop] addTimer:self.idleTimer forMode:NSRunLoopCommonModes];
 }
 
 - (void)stopIdleTimer {

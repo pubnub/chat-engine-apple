@@ -243,8 +243,12 @@ NS_ASSUME_NONNULL_END
                                              withData:@{ CENEventData.eventID: kCENPushNotificationAllNotificationsID }];
     
     if (block) {
-        [event handleEvent:@"$.emitted" withHandlerBlock:^(NSDictionary *__unused payload) {
+        [event handleEventOnce:@"$.emitted" withHandlerBlock:^(NSDictionary *__unused payload) {
             block(nil);
+        }];
+        
+        [event handleEventOnce:@"$.error.emitter" withHandlerBlock:^(NSError *error) {
+            block(error);
         }];
     }
     

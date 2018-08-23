@@ -2,12 +2,13 @@
  * @author Serhii Mamontov
  * @copyright © 2009-2018 PubNub, Inc.
  */
-#import <OCMock/OCMock.h>
 #import <CENChatEngine/CENPushNotificationsMiddleware.h>
 #import <CENChatEngine/CENPushNotificationsPlugin.h>
+#import <CENChatEngine/CENChatEngine+ChatPrivate.h>
 #import <CENChatEngine/CEPMiddleware+Developer.h>
 #import <CENChatEngine/CEPPlugin+Private.h>
 #import <CENChatEngine/CENChat+Private.h>
+#import <OCMock/OCMock.h>
 #import "CENTestCase.h"
 
 
@@ -16,7 +17,9 @@
 
 #pragma mark - Information
 
-@property (nonatomic, nullable, weak) CENChatEngine<PNObjectEventListener> *defaultClient;
+@property (nonatomic, nullable, weak) CENChatEngine<PNObjectEventListener> *client;
+@property (nonatomic, nullable, weak) CENChatEngine *clientMock;
+
 @property (nonatomic, nullable, strong) CENPushNotificationsMiddleware *defaultMiddleware;
 @property (nonatomic, nullable, strong) NSMutableDictionary *preFormattedLeavePayload;
 @property (nonatomic, nullable, strong) NSMutableDictionary *preFormattedSeenPayload;
@@ -51,6 +54,11 @@
 
 #pragma mark - Setup / Tear down
 
+- (BOOL)shouldSetupVCR {
+    
+    return NO;
+}
+
 - (void)setUp {
     
     [super setUp];
@@ -74,14 +82,16 @@
     }
     
     CENConfiguration *chatEngineConfiguration = [CENConfiguration configurationWithPublishKey:@"test-36" subscribeKey:@"test-36"];
-    CENChatEngine *chatEngine = [self chatEngineWithConfiguration:chatEngineConfiguration];
-    self.defaultClient = [self partialMockForObject:chatEngine];
+    self.client = (CENChatEngine<PNObjectEventListener> *)[self chatEngineWithConfiguration:chatEngineConfiguration];
+    self.clientMock = [self partialMockForObject:self.client];
     
-    self.defaultChat = [CENChat chatWithName:@"test" namespace:@"test" group:CENChatGroup.custom private:NO metaData:@{} chatEngine:chatEngine];
+    self.defaultChat = [CENChat chatWithName:@"test" namespace:@"test" group:CENChatGroup.custom private:NO metaData:@{} chatEngine:self.client];
     
     self.defaultMiddleware = [CENPushNotificationsMiddleware new];
     id defaultMiddlewareMock = [self partialMockForObject:self.defaultMiddleware];
     OCMStub([defaultMiddlewareMock configuration]).andReturn(middlewareConfiguration);
+    
+    OCMStub([self.clientMock fetchParticipantsForChat:[OCMArg any]]).andDo(nil);
     
     [self prepareMessagePayload];
     [self prepareInvitePayload];
@@ -91,14 +101,6 @@
     [self preparePluginPayload];
     [self prepareSeenPayload];
     [self prepareUserPayload];
-}
-
-- (void)tearDown {
-    
-    [self.defaultClient destroy];
-    self.defaultClient = nil;
-    
-    [super tearDown];
 }
 
 
@@ -132,7 +134,7 @@
         dispatch_semaphore_signal(semaphore);
     }];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
     XCTAssertTrue(handlerCalled);
 }
 
@@ -156,7 +158,7 @@
         dispatch_semaphore_signal(semaphore);
     }];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
     XCTAssertTrue(handlerCalled);
 }
 
@@ -180,7 +182,7 @@
         dispatch_semaphore_signal(semaphore);
     }];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
     XCTAssertTrue(handlerCalled);
 }
 
@@ -203,7 +205,7 @@
         dispatch_semaphore_signal(semaphore);
     }];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
     XCTAssertTrue(handlerCalled);
 }
 
@@ -231,7 +233,7 @@
         dispatch_semaphore_signal(semaphore);
     }];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
     XCTAssertTrue(handlerCalled);
 }
 
@@ -251,7 +253,7 @@
         dispatch_semaphore_signal(semaphore);
     }];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
     XCTAssertTrue(handlerCalled);
 }
 
@@ -271,7 +273,7 @@
         dispatch_semaphore_signal(semaphore);
     }];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
     XCTAssertTrue(handlerCalled);
 }
 
@@ -291,7 +293,7 @@
         dispatch_semaphore_signal(semaphore);
     }];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
     XCTAssertTrue(handlerCalled);
 }
 
@@ -311,13 +313,9 @@
         dispatch_semaphore_signal(semaphore);
     }];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
     XCTAssertTrue(handlerCalled);
 }
-
-
-
-
 
 
 #pragma mark - Misc

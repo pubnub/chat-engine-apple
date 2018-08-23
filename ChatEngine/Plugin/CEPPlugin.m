@@ -73,7 +73,7 @@ NS_ASSUME_NONNULL_END
 
 + (instancetype)pluginWithIdentifier:(NSString *)identifier configuration:(NSDictionary *)configuration {
     
-    if (configuration && ![configuration isKindOfClass:[NSDictionary class]]) {
+    if (!configuration || ![configuration isKindOfClass:[NSDictionary class]]) {
         configuration = @{};
     }
     
@@ -118,7 +118,6 @@ NS_ASSUME_NONNULL_END
 
 
 #pragma mark - Misc
-
 
 + (BOOL)isValidIdentifier:(NSString *)identifier {
     

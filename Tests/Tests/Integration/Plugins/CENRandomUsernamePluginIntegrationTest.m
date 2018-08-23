@@ -24,6 +24,28 @@
 
 #pragma mark - Setup / Tear down
 
+- (void)updateVCRConfigurationFromDefaultConfiguration:(YHVConfiguration *)configuration {
+    
+    [super updateVCRConfigurationFromDefaultConfiguration:configuration];
+    
+    YHVQueryParametersFilterBlock queryParametersFilter = configuration.queryParametersFilter;
+    configuration.queryParametersFilter = ^(NSURLRequest *request, NSMutableDictionary *queryParameters) {
+        queryParametersFilter(request, queryParameters);
+        
+        if ([queryParameters[@"state"] isKindOfClass:[NSDictionary class]] &&
+            (queryParameters[@"state"][@"username"] || queryParameters[@"state"][@"innerAnimal"])) {
+            NSMutableDictionary *state = [queryParameters[@"state"] mutableCopy];
+            if (state[@"username"]) {
+                state[@"username"] = @"ChatEngine";
+            } else {
+                state[@"innerAnimal"] = @"ChatEngine";
+            }
+            queryParameters[@"state"] = state;
+        }
+    };
+    
+}
+
 - (void)setUp {
     
     [super setUp];
@@ -49,14 +71,14 @@
     CENChatEngine *client = [self chatEngineForUser:@"ian"];
     __block BOOL hanlderCalled = NO;
     
-    client.on(@"$.state", ^(CENUser *user) {
+    client.once(@"$.state", ^(CENUser *user) {
         hanlderCalled = YES;
         
         XCTAssertNotNil(user.state[@"username"]);
         dispatch_semaphore_signal(semaphore);
     });
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(10.f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
     XCTAssertTrue(hanlderCalled);
 }
 
@@ -66,14 +88,14 @@
     CENChatEngine *client = [self chatEngineForUser:@"ian"];
     __block BOOL hanlderCalled = NO;
     
-    client.on(@"$.state", ^(CENUser *user) {
+    client.once(@"$.state", ^(CENUser *user) {
         hanlderCalled = YES;
         
         XCTAssertNotNil(user.state[@"innerAnimal"]);
         dispatch_semaphore_signal(semaphore);
     });
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(10.f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
     XCTAssertTrue(hanlderCalled);
 }
 

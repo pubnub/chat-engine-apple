@@ -26,7 +26,7 @@ struct CETemporaryObjectDataKeys {
     __unsafe_unretained NSString *object;
 } CETemporaryObjectData = {
     .cleanUpDate = @"cd",
-    .object = @""
+    .object = @"o"
 };
 
 
@@ -125,7 +125,10 @@ NS_ASSUME_NONNULL_END
     }
     
     self.cleanUpTimer = nil;
-    [self.temporaryObjects removeAllObjects];
+    
+    dispatch_async(self.resourceAccessQueue, ^{
+        [self.temporaryObjects removeAllObjects];
+    });
 }
 
 #pragma mark -

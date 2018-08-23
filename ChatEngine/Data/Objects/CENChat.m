@@ -31,6 +31,7 @@
 #import "CENConstants.h"
 #import "CENLogMacro.h"
 #import "CENSession.h"
+#import "CENUser.h"
 
 
 #pragma mark Externs
@@ -202,6 +203,8 @@ NS_ASSUME_NONNULL_END
 
 - (void)connectChat {
     
+    CELogAPICall(self.chatEngine.logger, @"<ChatEngine::API> Connect to '%@' chat.", self.name);
+    
     [self.chatEngine connectToChat:self withCompletion:^(__unused NSDictionary *meta) {
         [self handleReadyForConnection];
     }];
@@ -220,6 +223,8 @@ NS_ASSUME_NONNULL_END
 }
 
 - (void)updateMeta:(NSDictionary *)meta {
+    
+    CELogAPICall(self.chatEngine.logger, @"<ChatEngine::API> Update '%@' chat meta with: %@", self.name, meta);
     
     dispatch_async(self.resourceAccessQueue, ^{
         NSMutableDictionary *updatedState = [NSMutableDictionary dictionaryWithDictionary:self->_meta];
@@ -257,6 +262,8 @@ NS_ASSUME_NONNULL_END
 
 - (void)inviteUser:(CENUser *)user {
     
+    CELogAPICall(self.chatEngine.logger, @"<ChatEngine::API> Invite '%@' to '%@' chat.", user.uuid, self.name);
+    
     [self.chatEngine inviteToChat:self user:user];
 }
 
@@ -273,6 +280,8 @@ NS_ASSUME_NONNULL_END
 #endif // CHATENGINE_USE_BUILDER_INTERFACE
 
 - (void)leaveChat {
+    
+    CELogAPICall(self.chatEngine.logger, @"<ChatEngine::API> Leave '%@' chat.", self.name);
     
     [self.chatEngine leaveChat:self];
 }
@@ -335,6 +344,15 @@ NS_ASSUME_NONNULL_END
         [self.chatEngine throwError:error forScope:@"search" from:self propagateFlow:CEExceptionPropagationFlow.middleware];
     }
     
+    CELogAPICall(self.chatEngine.logger, @"<ChatEngine::API> Search for%@%@ events%@ in '%@' chat%@%@.%@%@",
+                 limit > 0 ? [@[@" ", @(limit)] componentsJoinedByString:@""] : @"",
+                 event.length ? [@[@" '", event, @"'"] componentsJoinedByString:@""] : @"",
+                 sender ? [@[@" from '", sender.uuid, @"'"] componentsJoinedByString:@""] : @"", self.name,
+                 start ? [@[@" starting from ", start] componentsJoinedByString:@""] : @"",
+                 end ? [@[@" till ", end] componentsJoinedByString:@""] : @"",
+                 pages > 0 ? [@[@" Maximum ", @(pages), @" requests."] componentsJoinedByString:@""] : @"",
+                 count > 0 ? [@[@" Batch ", @(count), @" per page."] componentsJoinedByString:@""]: @"");
+    
     return [self.chatEngine searchEventsInChat:self sentBy:sender withName:event limit:limit pages:pages count:count start:start end:end];
 }
 
@@ -356,16 +374,18 @@ NS_ASSUME_NONNULL_END
     
     dispatch_async(self.resourceAccessQueue, ^{
         if (self.asleep) {
-            [self.chatEngine handshakeChatAccess:self withCompletion:^(BOOL isError, __unused NSDictionary *meta) {
-                if (isError) {
-                    return;
+            void(^handshakeCompletionBlock)(BOOL, NSDictionary *) = ^(BOOL isError, __unused NSDictionary *meta) {
+                if (!isError) {
+                    dispatch_async(self.resourceAccessQueue, ^{
+                        self.asleep = NO;
+                        [self handleConnection];
+                    });
                 }
-                
-                dispatch_async(self.resourceAccessQueue, ^{
-                    self.asleep = NO;
-                    [self handleConnection];
-                });
-            }];
+            };
+            
+            dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+                [self.chatEngine handshakeChatAccess:self withCompletion:handshakeCompletionBlock];
+            });
         }
     });
 }
@@ -496,6 +516,9 @@ NS_ASSUME_NONNULL_END
 #endif // CHATENGINE_USE_BUILDER_INTERFACE
 
 - (CENEvent *)emitEvent:(NSString *)event withData:(NSDictionary *)data {
+    
+    CELogAPICall(self.chatEngine.logger, @"<ChatEngine::API> Emit '%@' event to '%@' chat%@", event, self.name,
+                 data.count ? [@[@" with data: ", data] componentsJoinedByString:@""] : @".");
     
     return [self.chatEngine publishToChat:self eventWithName:event data:data];
 }

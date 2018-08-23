@@ -147,6 +147,7 @@ NS_ASSUME_NONNULL_END
     if (![data isKindOfClass:[NSDictionary class]] || !data.count || ![channel isKindOfClass:[NSString class]] || !channel.length) {
         return;
     }
+    
     [self.pubnub publish:data toChannel:channel storeInHistory:shouldStoreInHisotry withCompletion:block];
 }
 

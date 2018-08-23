@@ -134,6 +134,9 @@ NS_ASSUME_NONNULL_END
     group = [(group ?: CENChatGroup.custom) componentsSeparatedByString:@"#"].lastObject;
     meta = meta ?: @{};
     
+    CELogAPICall(self.chatEngine.logger, @"<ChatEngine::API> Create '%@' %@ chat in '%@' group%@.%@", name, isPrivate ? @"private" : @"public",
+                 group, shouldAutoConnect ? @" and connect" : @"", meta.count ? [@[@" Meta: ", meta] componentsJoinedByString:@""] : @"");
+    
     dispatch_barrier_sync(self.resourceAccessQueue, ^{
         chat = isGlobal ? self->_global : [self.chatsMap objectForKey:internalName];
         

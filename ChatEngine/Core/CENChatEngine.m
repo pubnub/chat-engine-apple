@@ -7,6 +7,7 @@
 #import "CENChatEngine+ConnectionInterface.h"
 #import "CENChatEngine+PluginsPrivate.h"
 #import "CENChatEngine+PubNubPrivate.h"
+#import "CENEventEmitter+Interface.h"
 #import "CENChatEngine+ChatPrivate.h"
 #import "CENChatEngine+UserPrivate.h"
 #import "CENConfiguration+Private.h"
@@ -57,6 +58,17 @@ NS_ASSUME_NONNULL_BEGIN
 
 #pragma mark - Misc
 
+/**
+ * @brief      Setup events debugger if required.
+ * @discussion Configure 'any' events handler to print out them to IDE console.
+ *
+ * @since 0.9.2
+ */
+- (void)setupDebugger;
+
+/**
+ * @brief  Complete logger instance configuration for this client.
+ */
 - (void)setupClientLogger;
 - (void)printLogVerbosityInformation;
 
@@ -114,12 +126,9 @@ NS_ASSUME_NONNULL_END
     if ((self = [super init])) {
         [self setupClientLogger];
         
-        CELogClientInfo(self.logger, @"<ChatEngine> ChatEngine SDK %@ (%@)", kCELibraryVersion, kCECommit);
-        CELogResourceAllocation(self.logger, @"<ChatEngine::%@> %p instance allocation", NSStringFromClass([self class]), self);
-        
         _configuration = [configuration copy];
         _pubNubConfiguration = [_configuration pubNubConfiguration];
-        _functionsClient = [CENPNFunctionClient clientWithEndpoint:configuration.functionEndpoint];
+        _functionsClient = [CENPNFunctionClient clientWithEndpoint:configuration.functionEndpoint logger:self.logger];
         _pluginsManager = [CENPluginsManager managerForChatEngine:self];
         _temporaryObjectsManager = [CENTemporaryObjectsManager new];
         _usersManager = [CENUsersManager managerForChatEngine:self];
@@ -131,6 +140,8 @@ NS_ASSUME_NONNULL_END
         _pubNubResourceAccessQueue = dispatch_queue_create("com.chatengine.core.pubnub", DISPATCH_QUEUE_CONCURRENT);
         _pubNubCallbackQueue = dispatch_queue_create("com.chatengine.pubnub", DISPATCH_QUEUE_SERIAL);
         _resourceAccessQueue = dispatch_queue_create("com.chatengine.core", DISPATCH_QUEUE_SERIAL);
+        
+        [self setupDebugger];
     }
     
     return self;
@@ -170,6 +181,18 @@ NS_ASSUME_NONNULL_END
 
 #pragma mark - Misc
 
+- (void)setupDebugger {
+    
+    if (!self.configuration.shouldDebugEvents) {
+        return;
+    }
+    
+    [self handleEvent:@"*" withHandlerBlock:^(NSString *event, id emittedBy, id parameters) {
+        NSLog(@"<ChatEngine::Debug> %@ ▸ %@%@", event, emittedBy,
+              parameters ? [@[@"\nEvent payload: ", parameters] componentsJoinedByString:@""] : @".");
+    }];
+}
+
 - (void)setupClientLogger {
     
 #if TARGET_OS_TV && !TARGET_OS_SIMULATOR
@@ -186,10 +209,18 @@ NS_ASSUME_NONNULL_END
     logsPath = [logsPath stringByAppendingPathComponent:@"Logs"];
     self.logger = [PNLLogger loggerWithIdentifier:@"com.chatengine.client" directory:logsPath logExtension:@"log"];
     
+#if DEBUG
+    self.logger.enabled = YES;
+#else
     self.logger.enabled = NO;
+#endif
     self.logger.writeToConsole = YES;
     self.logger.writeToFile = YES;
-    [self.logger setLogLevel:(CENInfoLogLevel | CENExceptionsLogLevel | CENEventEmitLogLevel)];
+#if DEBUG
+    [self.logger setLogLevel:CENVerboseLogLevel];
+#else
+    [self.logger setLogLevel:CENSilentLogLevel];
+#endif
     self.logger.logFilesDiskQuota = (50 * 1024 * 1024);
     self.logger.maximumLogFileSize = (5 * 1024 * 1024);
     self.logger.maximumNumberOfLogFiles = 5;
@@ -199,6 +230,8 @@ NS_ASSUME_NONNULL_END
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Warc-repeated-use-of-weak"
         weakSelf.logger.logLevelChangeHandler = ^{
+            CELogClientInfo(self.logger, @"<ChatEngine> ChatEngine SDK %@ (%@)", kCELibraryVersion, kCECommit);
+            CELogResourceAllocation(self.logger, @"<ChatEngine::%@> %p instance allocation", NSStringFromClass([self class]), self);
             [weakSelf printLogVerbosityInformation];
         };
         [weakSelf printLogVerbosityInformation];
@@ -219,12 +252,28 @@ NS_ASSUME_NONNULL_END
         [enabledFlags addObject:@"Exceptions"];
     }
     
+    if (verbosityFlags & CENRequestLogLevel) {
+        [enabledFlags addObject:@"Requests"];
+    }
+    
+    if (verbosityFlags & CENRequestErrorLogLevel) {
+        [enabledFlags addObject:@"Request errors"];
+    }
+    
+    if (verbosityFlags & CENResponseLogLevel) {
+        [enabledFlags addObject:@"Responses"];
+    }
+    
     if (verbosityFlags & CENEventEmitLogLevel) {
         [enabledFlags addObject:@"Emited events"];
     }
     
     if (verbosityFlags & CENResourcesAllocationLogLevel) {
         [enabledFlags addObject:@"Resources allocation"];
+    }
+    
+    if (verbosityFlags & CENAPICallLogLevel) {
+        [enabledFlags addObject:@"API calls"];
     }
     
     CELogClientInfo(self.logger, @"<ChatEngine::Logger> Enabled verbosity level flags: %@", [enabledFlags componentsJoinedByString:@", "]);

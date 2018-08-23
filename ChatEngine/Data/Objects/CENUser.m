@@ -10,8 +10,9 @@
 #import "CENEventEmitter+Private.h"
 #import "CENChatEngine+Private.h"
 #import "CENObject+Private.h"
+#import "CENChat+Interface.h"
 #import "CENLogMacro.h"
-#import "CENChat.h"
+#import "CENMe.h"
 
 
 NS_ASSUME_NONNULL_BEGIN
@@ -30,6 +31,14 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, copy) NSString *uuid;
 @property (nonatomic, strong) CENChat *feed;
 
+
+#pragma mark - Connection
+
+/**
+ * @brief      Connect to \c feed and \c direct chats if it is required.
+ * @discussion This method should be used by \c CENMe instances to complete connection to personal chats.
+ */
+- (void)connectToPersonalChatsIfRequired;
 
 #pragma mark -
 
@@ -88,6 +97,8 @@ NS_ASSUME_NONNULL_END
         _direct = [self.chatEngine createDirectChatForUser:self];
         _feed = [self.chatEngine createFeedChatForUser:self];
         
+        [self connectToPersonalChatsIfRequired];
+        
         _userState = [state copy];
         if (state.count) {
             [self assignState:state];
@@ -116,6 +127,7 @@ NS_ASSUME_NONNULL_END
         
         self.stateIsSet = YES;
         self.userState = updatedState;
+        
         if (![updatedState isEqualToDictionary:currentState]) {
             [self.chatEngine emitEventLocally:@"$.state", self, nil];
         }
@@ -140,11 +152,33 @@ NS_ASSUME_NONNULL_END
 }
 
 
+#pragma mark - Connection
+
+- (void)connectToPersonalChatsIfRequired {
+    
+    if (![self isKindOfClass:[CENMe class]]) {
+        return;
+    }
+    
+    [self.direct handleEventOnce:@"$.connected" withHandlerBlock:^{
+        [self.feed connectChat];
+    }];
+    
+    [self.direct connectChat];
+}
+
+
 #pragma mark - Misc
 
 - (NSString *)description {
     
-    return [NSString stringWithFormat:@"<CENUser:%p uuid: '%@'; state set: %@>", self, self.uuid, self.stateIsSet ? @"YES" : @"NO"];
+    __block NSString *description = nil;
+    
+    dispatch_sync(self.resourceAccessQueue, ^{
+        description = [NSString stringWithFormat:@"<CENUser:%p uuid: '%@'; state set: %@>", self, self.uuid, self.stateIsSet ? @"YES" : @"NO"];
+    });
+    
+    return description;
 }
 
 #pragma mark -

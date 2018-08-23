@@ -115,6 +115,9 @@ NS_ASSUME_NONNULL_END
         user = isLocalUser ? self->_me : [self.usersMap objectForKey:uuid];
 
         if (!user && self.chatEngine) {
+            CELogAPICall(self.chatEngine.logger, @"<ChatEngine::API> Create '%@' user%@", uuid,
+                         state.count ? [@[@" with state: ", state] componentsJoinedByString:@""] : @".");
+            
             userCreated = YES;
             user = [(isLocalUser ? [CENMe class] : [CENUser class]) userWithUUID:uuid state:state chatEngine:self.chatEngine];
             

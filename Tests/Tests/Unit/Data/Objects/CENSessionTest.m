@@ -5,6 +5,7 @@
 #import <XCTest/XCTest.h>
 #import <OCMock/OCMock.h>
 #import <CENChatEngine/CENChatEngine+ChatInterface.h>
+#import <CENChatEngine/CENChatEngine+ChatPrivate.h>
 #import <CENChatEngine/CENEventEmitter+Private.h>
 #import <CENChatEngine/CENChatEngine+Publish.h>
 #import <CENChatEngine/CENChatEngine+Session.h>
@@ -22,7 +23,9 @@
 
 #pragma mark - Information
 
-@property (nonatomic, nullable, weak) CENChatEngine *defaultClient;
+@property (nonatomic, nullable, weak) CENChatEngine *client;
+@property (nonatomic, nullable, weak) CENChatEngine *clientMock;
+
 @property (nonatomic, nullable, strong) CENSession *session;
 
 
@@ -43,24 +46,28 @@
 
 #pragma mark - Setup / Tear down
 
+- (BOOL)shouldSetupVCR {
+    
+    return NO;
+}
+
 - (void)setUp {
     
     [super setUp];
     
-    CENChatEngine *client = [self chatEngineWithConfiguration:[CENConfiguration configurationWithPublishKey:@"test-36" subscribeKey:@"test-36"]];
-    CENMe *user = [CENMe userWithUUID:@"tester" state:@{} chatEngine:client];
-    self.defaultClient = [self partialMockForObject:client];
+    self.client = [self chatEngineWithConfiguration:[CENConfiguration configurationWithPublishKey:@"test-36" subscribeKey:@"test-36"]];
+    self.clientMock = [self partialMockForObject:self.client];
     
-    OCMStub([self.defaultClient me]).andReturn(user);
+    CENMe *user = [CENMe userWithUUID:@"tester" state:@{} chatEngine:self.client];
     
-    self.session = [CENSession sessionWithChatEngine:self.defaultClient];
+    OCMStub([self.clientMock fetchParticipantsForChat:[OCMArg any]]).andDo(nil);
+    OCMStub([self.clientMock me]).andReturn(user);
+    
+    self.session = [CENSession sessionWithChatEngine:self.client];
 }
 
 - (void)tearDown {
-    
-    [self.defaultClient destroy];
-    self.defaultClient = nil;
-    
+
     [self.session destruct];
     self.session = nil;
     
@@ -72,15 +79,15 @@
 
 - (void)testConstructor_ShouldCreate {
     
-    CENSession *session = [CENSession sessionWithChatEngine:self.defaultClient];
+    CENSession *session = [CENSession sessionWithChatEngine:self.client];
     
     XCTAssertNotNil(session);
-    XCTAssertEqual(session.chatEngine, self.defaultClient);
+    XCTAssertEqual(session.chatEngine, self.client);
 }
 
 - (void)testConstructor_ShouldHaveNilChatsList_WhenSynchronizationNotPerformed {
     
-    XCTAssertNil([CENSession sessionWithChatEngine:self.defaultClient].chats);
+    XCTAssertNil([CENSession sessionWithChatEngine:self.client].chats);
 }
 
 
@@ -88,20 +95,20 @@
 
 - (void)testListenEvents_ShouldRequestSynchronizationChat {
     
-    OCMStub([self.defaultClient createChatWithName:[OCMArg any] group:[OCMArg any] private:NO autoConnect:YES metaData:[OCMArg any]])
+    OCMStub([self.clientMock createChatWithName:[OCMArg any] group:[OCMArg any] private:NO autoConnect:YES metaData:[OCMArg any]])
         .andReturn(nil);
-    OCMExpect([self.defaultClient synchronizationChat]);
+    OCMExpect([self.clientMock synchronizationChat]);
     
     [self.session listenEvents];
     
-    OCMVerifyAll((id)self.defaultClient);
+    OCMVerifyAll((id)self.clientMock);
 }
 
 - (void)testListenEvents_ShouldListenSynchronizationEvens {
     
-    CENChat *syncChat = [self.defaultClient createChatWithName:@"test-sync" group:CENChatGroup.system private:NO autoConnect:NO metaData:nil];
+    CENChat *syncChat = [self.clientMock createChatWithName:@"test-sync" group:CENChatGroup.system private:NO autoConnect:NO metaData:nil];
     
-    OCMStub([self.defaultClient synchronizationChat]).andReturn(syncChat);
+    OCMStub([self.clientMock synchronizationChat]).andReturn(syncChat);
     
     [self.session listenEvents];
     
@@ -112,13 +119,13 @@
 - (void)testListenEvents_ShouldNotifyAboutJoinToChat_WhenSynchronizationEventReceived {
     
     NSDictionary *joinPayload = [self synchronizationEventFor:@"test-chat" isPrivate:NO];
-    CENChat *syncChat = [self.defaultClient createChatWithName:@"test-sync" group:CENChatGroup.system private:NO autoConnect:NO metaData:nil];
+    CENChat *syncChat = [self.clientMock createChatWithName:@"test-sync" group:CENChatGroup.system private:NO autoConnect:NO metaData:nil];
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     __block BOOL handlerCalled = NO;
     
-    OCMStub([self.defaultClient synchronizationChat]).andReturn(syncChat);
+    OCMStub([self.clientMock synchronizationChat]).andReturn(syncChat);
     
-    [self.defaultClient handleEventOnce:@"$.chat.join" withHandlerBlock:^(CENSession *session, CENChat *chat) {
+    [self.clientMock handleEventOnce:@"$.chat.join" withHandlerBlock:^(CENSession *session, CENChat *chat) {
         handlerCalled = YES;
         
         XCTAssertNotNil(chat);
@@ -128,21 +135,21 @@
     [self.session listenEvents];
     [syncChat emitEventLocally:@"$.session.notify.chat.join", joinPayload, nil];
 
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
     XCTAssertTrue(handlerCalled);
 }
 
 - (void)testListenEvents_ShouldNotifyAboutJoinToChat_WhenSameSynchronizationEventReceived {
     
     NSDictionary *joinPayload = [self synchronizationEventFor:@"test-chat" isPrivate:NO];
-    CENChat *syncChat = [self.defaultClient createChatWithName:@"test-sync" group:CENChatGroup.system private:NO autoConnect:NO metaData:nil];
+    CENChat *syncChat = [self.clientMock createChatWithName:@"test-sync" group:CENChatGroup.system private:NO autoConnect:NO metaData:nil];
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     __block BOOL handlerCalledTwice = NO;
     __block BOOL handlerCalledOnce = NO;
     
-    OCMStub([self.defaultClient synchronizationChat]).andReturn(syncChat);
+    OCMStub([self.clientMock synchronizationChat]).andReturn(syncChat);
     
-    [self.defaultClient handleEvent:@"$.chat.join" withHandlerBlock:^(CENSession *session, CENChat *chat) {
+    [self.clientMock handleEvent:@"$.chat.join" withHandlerBlock:^(CENSession *session, CENChat *chat) {
         if (handlerCalledOnce) {
             handlerCalledTwice = YES;
             dispatch_semaphore_signal(semaphore);
@@ -154,22 +161,22 @@
     [syncChat emitEventLocally:@"$.session.notify.chat.join", joinPayload, nil];
     [syncChat emitEventLocally:@"$.session.notify.chat.join", joinPayload, nil];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.falseTestCompletionDelay * NSEC_PER_SEC)));
     XCTAssertTrue(handlerCalledOnce);
     XCTAssertFalse(handlerCalledTwice);
 }
 
 - (void)testListenEvents_ShouldNotNotifyAboutJoinToChat_WhenSynchronizationEventReceivedForAlreadyExistingChat {
     
-    self.defaultClient.Chat().name(@"test-chat").autoConnect(NO).create();
+    self.clientMock.Chat().name(@"test-chat").autoConnect(NO).create();
     NSDictionary *joinPayload = [self synchronizationEventFor:@"test-chat" isPrivate:NO];
-    CENChat *syncChat = [self.defaultClient createChatWithName:@"test-sync" group:CENChatGroup.system private:NO autoConnect:NO metaData:nil];
+    CENChat *syncChat = [self.clientMock createChatWithName:@"test-sync" group:CENChatGroup.system private:NO autoConnect:NO metaData:nil];
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     __block BOOL handlerCalled = NO;
     
-    OCMStub([self.defaultClient synchronizationChat]).andReturn(syncChat);
+    OCMStub([self.clientMock synchronizationChat]).andReturn(syncChat);
     
-    [self.defaultClient handleEventOnce:@"$.chat.join" withHandlerBlock:^(CENSession *session, CENChat *chat) {
+    [self.clientMock handleEventOnce:@"$.chat.join" withHandlerBlock:^(CENSession *session, CENChat *chat) {
         handlerCalled = YES;
         
         XCTAssertNotNil(chat);
@@ -179,7 +186,7 @@
     [self.session listenEvents];
     [syncChat emitEventLocally:@"$.session.notify.chat.join", joinPayload, nil];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.falseTestCompletionDelay * NSEC_PER_SEC)));
     XCTAssertFalse(handlerCalled);
 }
 
@@ -187,13 +194,13 @@
     
     NSDictionary *joinPayload = [self synchronizationEventFor:@"test-chat" isPrivate:NO];
     NSDictionary *leavePayload = [self synchronizationEventFor:@"test-chat" isPrivate:NO];
-    CENChat *syncChat = [self.defaultClient createChatWithName:@"test-sync" group:CENChatGroup.system private:NO autoConnect:NO metaData:nil];
+    CENChat *syncChat = [self.clientMock createChatWithName:@"test-sync" group:CENChatGroup.system private:NO autoConnect:NO metaData:nil];
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     __block BOOL handlerCalled = NO;
     
-    OCMStub([self.defaultClient synchronizationChat]).andReturn(syncChat);
+    OCMStub([self.clientMock synchronizationChat]).andReturn(syncChat);
     
-    [self.defaultClient handleEventOnce:@"$.chat.leave" withHandlerBlock:^(CENSession *session, CENChat *chat) {
+    [self.clientMock handleEventOnce:@"$.chat.leave" withHandlerBlock:^(CENSession *session, CENChat *chat) {
         handlerCalled = YES;
         
         XCTAssertNotNil(chat);
@@ -204,20 +211,20 @@
     [syncChat emitEventLocally:@"$.session.notify.chat.join", joinPayload, nil];
     [syncChat emitEventLocally:@"$.session.notify.chat.leave", leavePayload, nil];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
     XCTAssertTrue(handlerCalled);
 }
 
 - (void)testListenEvents_ShouldNotNotifyAboutLeaveFromChat_WhenSynchronizationEventReceivedForUnknownChat {
     
     NSDictionary *leavePayload = [self synchronizationEventFor:@"test-chat" isPrivate:NO];
-    CENChat *syncChat = [self.defaultClient createChatWithName:@"test-sync" group:CENChatGroup.system private:NO autoConnect:NO metaData:nil];
+    CENChat *syncChat = [self.clientMock createChatWithName:@"test-sync" group:CENChatGroup.system private:NO autoConnect:NO metaData:nil];
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     __block BOOL handlerCalled = NO;
     
-    OCMStub([self.defaultClient synchronizationChat]).andReturn(syncChat);
+    OCMStub([self.clientMock synchronizationChat]).andReturn(syncChat);
     
-    [self.defaultClient handleEventOnce:@"$.chat.leave" withHandlerBlock:^(CENSession *session, CENChat *chat) {
+    [self.clientMock handleEventOnce:@"$.chat.leave" withHandlerBlock:^(CENSession *session, CENChat *chat) {
         handlerCalled = YES;
         
         XCTAssertNotNil(chat);
@@ -227,7 +234,7 @@
     [self.session listenEvents];
     [syncChat emitEventLocally:@"$.session.notify.chat.leave", leavePayload, nil];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.falseTestCompletionDelay * NSEC_PER_SEC)));
     XCTAssertFalse(handlerCalled);
 }
 
@@ -235,14 +242,14 @@
     
     NSDictionary *joinPayload = [self synchronizationEventFor:@"test-chat" isPrivate:NO];
     NSDictionary *leavePayload = [self synchronizationEventFor:@"test-chat" isPrivate:NO];
-    CENChat *syncChat = [self.defaultClient createChatWithName:@"test-sync" group:CENChatGroup.system private:NO autoConnect:NO metaData:nil];
+    CENChat *syncChat = [self.clientMock createChatWithName:@"test-sync" group:CENChatGroup.system private:NO autoConnect:NO metaData:nil];
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     __block BOOL handlerCalledTwice = NO;
     __block BOOL handlerCalledOnce = NO;
     
-    OCMStub([self.defaultClient synchronizationChat]).andReturn(syncChat);
+    OCMStub([self.clientMock synchronizationChat]).andReturn(syncChat);
     
-    [self.defaultClient handleEvent:@"$.chat.leave" withHandlerBlock:^(CENSession *session, CENChat *chat) {
+    [self.clientMock handleEvent:@"$.chat.leave" withHandlerBlock:^(CENSession *session, CENChat *chat) {
         if (handlerCalledOnce) {
             handlerCalledTwice = YES;
             dispatch_semaphore_signal(semaphore);
@@ -255,7 +262,7 @@
     [syncChat emitEventLocally:@"$.session.notify.chat.leave", leavePayload, nil];
     [syncChat emitEventLocally:@"$.session.notify.chat.leave", leavePayload, nil];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.falseTestCompletionDelay * NSEC_PER_SEC)));
     XCTAssertTrue(handlerCalledOnce);
     XCTAssertFalse(handlerCalledTwice);
 }
@@ -265,11 +272,11 @@
 
 - (void)testRestore_ShouldRequestChatsForGroups {
     
-    OCMExpect([self.defaultClient synchronizeSessionChatsWithCompletion:[OCMArg any]]);
+    OCMExpect([self.clientMock synchronizeSessionChatsWithCompletion:[OCMArg any]]);
     
     [self.session restore];
     
-    OCMVerifyAll((id)self.defaultClient);
+    OCMVerifyAll((id)self.clientMock);
 }
 
 - (void)testRestore_ShouldNotifyJoinEvent_WhenReceivedChat {
@@ -278,14 +285,14 @@
     NSString *expectedChatName = @"test-chat";
     __block BOOL handlerCalled = NO;
     
-    OCMStub([self.defaultClient synchronizeSessionChatsWithCompletion:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
+    OCMStub([self.clientMock synchronizeSessionChatsWithCompletion:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
         void(^handlerBlock)(NSString *, NSArray<NSString *> *) = nil;
         
         [invocation getArgument:&handlerBlock atIndex:2];
         handlerBlock(CENChatGroup.custom, @[expectedChatName]);
     });
     
-    [self.defaultClient handleEventOnce:@"$.chat.join" withHandlerBlock:^(CENSession *session, CENChat *chat) {
+    [self.clientMock handleEventOnce:@"$.chat.join" withHandlerBlock:^(CENSession *session, CENChat *chat) {
         handlerCalled = YES;
         
         XCTAssertEqualObjects(chat.name, expectedChatName);
@@ -294,7 +301,7 @@
     
     [self.session restore];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
     XCTAssertTrue(expectedChatName);
 }
 
@@ -303,44 +310,44 @@
 
 -(void)testJoinChat_ShouldEmitSynchronizationEvent_WhenPassedChatIsNotInSynchronizedChatsList {
     
-    CENChat *syncChat = [self.defaultClient createChatWithName:@"test-sync" group:CENChatGroup.system private:NO autoConnect:NO metaData:nil];
-    CENChat *chat = [CENChat chatWithName:@"test-chat" namespace:self.defaultClient.currentConfiguration.globalChannel group:CENChatGroup.custom
-                                private:NO metaData:@{} chatEngine:self.defaultClient];
+    CENChat *syncChat = [self.clientMock createChatWithName:@"test-sync" group:CENChatGroup.system private:NO autoConnect:NO metaData:nil];
+    CENChat *chat = [CENChat chatWithName:@"test-chat" namespace:self.clientMock.currentConfiguration.globalChannel group:CENChatGroup.custom
+                                private:NO metaData:@{} chatEngine:self.clientMock];
     NSDictionary *expectedData = @{ @"subject": [chat dictionaryRepresentation] };
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     id chatPartialMock = [self partialMockForObject:syncChat];
     
-    OCMStub([self.defaultClient synchronizationChat]).andReturn(syncChat);
+    OCMStub([self.clientMock synchronizationChat]).andReturn(syncChat);
     OCMExpect([chatPartialMock emitEvent:@"$.session.notify.chat.join" withData:expectedData]).andDo(^(NSInvocation *invocation) {
         dispatch_semaphore_signal(semaphore);
     });
     
     [self.session listenEvents];
     [self.session joinChat:chat];
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
     OCMVerifyAll(chatPartialMock);
 }
 
 -(void)testJoinChat_ShouldNotEmitSynchronizationEvent_WhenPassedChatAlreadyInSynchronizedChatsList {
     
-    CENChat *syncChat = [self.defaultClient createChatWithName:@"test-sync" group:CENChatGroup.system private:NO autoConnect:NO metaData:nil];
-    CENChat *chat = [CENChat chatWithName:@"test-chat" namespace:self.defaultClient.currentConfiguration.globalChannel group:CENChatGroup.custom
-                                private:NO metaData:@{} chatEngine:self.defaultClient];
+    CENChat *syncChat = [self.clientMock createChatWithName:@"test-sync" group:CENChatGroup.system private:NO autoConnect:NO metaData:nil];
+    CENChat *chat = [CENChat chatWithName:@"test-chat" namespace:self.clientMock.currentConfiguration.globalChannel group:CENChatGroup.custom
+                                private:NO metaData:@{} chatEngine:self.clientMock];
     NSDictionary *joinPayload = [self synchronizationEventFor:@"test-chat" isPrivate:NO];
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     id chatPartialMock = [self partialMockForObject:syncChat];
     
-    OCMStub([self.defaultClient synchronizationChat]).andReturn(syncChat);
+    OCMStub([self.clientMock synchronizationChat]).andReturn(syncChat);
     OCMExpect([[chatPartialMock reject] emitEvent:@"$.session.notify.chat.join" withData:[OCMArg any]]);
     
-    [self.defaultClient handleEventOnce:@"$.chat.join" withHandlerBlock:^(CENSession *session, CENChat *chatJoined) {
+    [self.clientMock handleEventOnce:@"$.chat.join" withHandlerBlock:^(CENSession *session, CENChat *chatJoined) {
         [self.session joinChat:chat];
     }];
     
     [self.session listenEvents];
     [syncChat emitEventLocally:@"$.session.notify.chat.join", joinPayload, nil];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.falseTestCompletionDelay * NSEC_PER_SEC)));
     OCMVerifyAll(chatPartialMock);
 }
 
@@ -349,20 +356,20 @@
 
 -(void)testLeaveChat_ShouldEmitSynchronizationEvent_WhenPassedChatInSynchronizedChatsList {
     
-    CENChat *syncChat = [self.defaultClient createChatWithName:@"test-sync" group:CENChatGroup.system private:NO autoConnect:NO metaData:nil];
-    CENChat *chat = [CENChat chatWithName:@"test-chat" namespace:self.defaultClient.currentConfiguration.globalChannel group:CENChatGroup.custom
-                                private:NO metaData:@{} chatEngine:self.defaultClient];
+    CENChat *syncChat = [self.clientMock createChatWithName:@"test-sync" group:CENChatGroup.system private:NO autoConnect:NO metaData:nil];
+    CENChat *chat = [CENChat chatWithName:@"test-chat" namespace:self.clientMock.currentConfiguration.globalChannel group:CENChatGroup.custom
+                                private:NO metaData:@{} chatEngine:self.clientMock];
     NSDictionary *joinPayload = [self synchronizationEventFor:@"test-chat" isPrivate:NO];
     NSDictionary *expectedData = @{ @"subject": [chat dictionaryRepresentation] };
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     id chatPartialMock = [self partialMockForObject:syncChat];
     
-    OCMStub([self.defaultClient synchronizationChat]).andReturn(syncChat);
+    OCMStub([self.clientMock synchronizationChat]).andReturn(syncChat);
     OCMExpect([chatPartialMock emitEvent:@"$.session.notify.chat.leave" withData:expectedData]).andDo(^(NSInvocation *invocation) {
         dispatch_semaphore_signal(semaphore);
     });
     
-    [self.defaultClient handleEventOnce:@"$.chat.join" withHandlerBlock:^(CENSession *session, CENChat *chatJoined) {
+    [self.clientMock handleEventOnce:@"$.chat.join" withHandlerBlock:^(CENSession *session, CENChat *chatJoined) {
         [self.session leaveChat:chat];
     }];
     
@@ -370,20 +377,20 @@
     [syncChat emitEventLocally:@"$.session.notify.chat.join", joinPayload, nil];
     
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
     OCMVerifyAll(chatPartialMock);
 }
 
 -(void)testLeaveChat_ShouldEmitSynchronizationEvent_WhenPassedChatNotInSynchronizedChatsList {
     
-    CENChat *syncChat = [self.defaultClient createChatWithName:@"test-sync" group:CENChatGroup.system private:NO autoConnect:NO metaData:nil];
-    CENChat *chat = [CENChat chatWithName:@"test-chat" namespace:self.defaultClient.currentConfiguration.globalChannel group:CENChatGroup.custom
-                                private:NO metaData:@{} chatEngine:self.defaultClient];
+    CENChat *syncChat = [self.clientMock createChatWithName:@"test-sync" group:CENChatGroup.system private:NO autoConnect:NO metaData:nil];
+    CENChat *chat = [CENChat chatWithName:@"test-chat" namespace:self.clientMock.currentConfiguration.globalChannel group:CENChatGroup.custom
+                                private:NO metaData:@{} chatEngine:self.clientMock];
     NSDictionary *expectedData = @{ @"subject": [chat dictionaryRepresentation] };
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     id chatPartialMock = [self partialMockForObject:syncChat];
     
-    OCMStub([self.defaultClient synchronizationChat]).andReturn(syncChat);
+    OCMStub([self.clientMock synchronizationChat]).andReturn(syncChat);
     OCMExpect([chatPartialMock emitEvent:@"$.session.notify.chat.leave" withData:expectedData]).andDo(^(NSInvocation *invocation) {
         dispatch_semaphore_signal(semaphore);
     });
@@ -391,7 +398,7 @@
     [self.session listenEvents];
     [self.session leaveChat:chat];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
     OCMVerifyAll(chatPartialMock);
 }
 
@@ -405,14 +412,14 @@
 
 - (void)testChats_ShouldContainChats_WhenSynchronizationEventReceived {
     
-    CENChat *syncChat = [self.defaultClient createChatWithName:@"test-sync" group:CENChatGroup.system private:NO autoConnect:NO metaData:nil];
+    CENChat *syncChat = [self.clientMock createChatWithName:@"test-sync" group:CENChatGroup.system private:NO autoConnect:NO metaData:nil];
     NSDictionary *joinPayload = [self synchronizationEventFor:@"test-chat" isPrivate:NO];
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     __block BOOL handlerCalled = NO;
     
-    OCMStub([self.defaultClient synchronizationChat]).andReturn(syncChat);
+    OCMStub([self.clientMock synchronizationChat]).andReturn(syncChat);
     
-    [self.defaultClient handleEventOnce:@"$.chat.join" withHandlerBlock:^(CENSession *session, CENChat *chatJoined) {
+    [self.clientMock handleEventOnce:@"$.chat.join" withHandlerBlock:^(CENSession *session, CENChat *chatJoined) {
         handlerCalled = YES;
         
         XCTAssertEqual(session.chats.count, 1);
@@ -422,7 +429,7 @@
     [self.session listenEvents];
     [syncChat emitEventLocally:@"$.session.notify.chat.join", joinPayload, nil];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
     XCTAssertTrue(handlerCalled);
 }
 
@@ -439,7 +446,7 @@
 
 - (void)testDescription_ShouldIncludeChatsAndGroupInformation {
     
-    OCMStub([self.defaultClient synchronizeSessionChatsWithCompletion:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
+    OCMStub([self.clientMock synchronizeSessionChatsWithCompletion:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
         void(^handlerBlock)(NSString *, NSArray<NSString *> *) = nil;
         
         [invocation getArgument:&handlerBlock atIndex:2];

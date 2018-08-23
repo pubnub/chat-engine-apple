@@ -52,12 +52,13 @@ NS_ASSUME_NONNULL_BEGIN
 /**
  * @brief  Construct \a NSError instance from \b PubNub error status object.
  *
- * @param functionError Reference on \c error instance which has been created using \b PubNub Function response.
- * @param description   Reference on string which will be used as localized error description.
+ * @param functionResponses Reference on set of responses where one of them should be \c error instance which has been created using \b PubNub
+ *                          Function response.
+ * @param description       Reference on string which will be used as localized error description.
  *
  * @return Reference on initialized error.
  */
-+ (NSError *)errorFromPubNubFunctionError:(nullable NSError *)functionError withDescription:(NSString *)description;
++ (NSError *)errorFromPubNubFunctionError:(nullable id)functionResponses withDescription:(NSString *)description;
 
 #pragma mark -
 

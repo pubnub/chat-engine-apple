@@ -15,6 +15,7 @@
 #import "CENPrivateStructures.h"
 #import "CEPPlugin+Private.h"
 #import "CENObject+Private.h"
+#import "CENLogMacro.h"
 
 
 #pragma mark Interface implementation
@@ -129,6 +130,8 @@
         return NO;
     }
     
+    CELogAPICall(self.logger, @"<ChatEngine::API> Check has '%@' proto plugin for %@.", identifier, type);
+    
     return [self.pluginsManager hasProtoPluginWithIdentifier:identifier forObjectType:type];
 }
 
@@ -155,6 +158,9 @@
         return;
     }
     
+    CELogAPICall(self.logger, @"<ChatEngine::API> Register '%@' proto plugin with '%@' identifier for %@.%@", NSStringFromClass(cls), identifier,
+                 type, configuration.count ? [@[@" Configuration: ", configuration] componentsJoinedByString:@""] : @"");
+    
     [self.pluginsManager registerProtoPlugin:cls withIdentifier:identifier configuration:configuration forObjectType:type];
 }
 
@@ -172,6 +178,8 @@
     if (![CEPPlugin isValidIdentifier:identifier] || ![CEPPlugin isValidObjectType:type]) {
         return;
     }
+    
+    CELogAPICall(self.logger, @"<ChatEngine::API> Un-register proto plugin with '%@' identifier for %@.", identifier, type);
     
     [self.pluginsManager unregisterProtoPluginWithIdentifier:identifier forObjectType:type];
 }

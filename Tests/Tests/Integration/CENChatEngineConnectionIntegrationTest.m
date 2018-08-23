@@ -57,62 +57,69 @@
 
 - (void)testHandleEvent_ShouldBeNotified_WhenNewChatCreated {
     
-    NSString *chatName = [@[@"this-is-only-a-test-1", @([NSDate date].timeIntervalSince1970)] componentsJoinedByString:@""];
-    XCTestExpectation *expectation = [[XCTestExpectation alloc] initWithDescription:@"Test chat should notify on create."];
+    NSString *chatName = @"this-is-only-a-test-1";
+    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     CENChatEngine *client = [self chatEngineForUser:@"serhii"];
+    __block BOOL handlerCalled = NO;
     
     client.on(@"$.created.chat", ^(CENChat *chat) {
         NSString *expectedChannel = [@[client.currentConfiguration.globalChannel, @"chat#public.", chatName] componentsJoinedByString:@"#"];
         if ([expectedChannel isEqualToString:chat.channel]) {
-            [expectation fulfill];
+            handlerCalled = YES;
+            
+            dispatch_semaphore_signal(semaphore);
         }
     });
     
-    CENChat *chat = client.Chat().name(chatName).create();
-    chat.on(@"$.connected", ^{
-        chat.leave();
-    });
+    client.Chat().name(chatName).create();
     
-    [self waitForExpectations:@[expectation] timeout:3.f];
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelayWithNestedSemaphores * NSEC_PER_SEC)));
+    XCTAssertTrue(handlerCalled);
 }
 
 - (void)testHandleEvent_ShouldBeNotified_WhenChatConnected {
     
-    NSString *chatName = [@[@"this-is-only-a-test-2", @([NSDate date].timeIntervalSince1970)] componentsJoinedByString:@""];
-    XCTestExpectation *expectation = [[XCTestExpectation alloc] initWithDescription:@"Test chat should notify on connection."];
+    NSString *chatName = @"this-is-only-a-test-2";
+    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     CENChatEngine *client = [self chatEngineForUser:@"serhii"];
-    CENChat *chat = nil;
+    __block BOOL handlerCalled = NO;
     
     client.on(@"$.connected", ^(CENChat *chat) {
-        if ([chat.channel isEqualToString:chat.channel]) {
-            [expectation fulfill];
+        if ([chat.name isEqualToString:chatName]) {
+            handlerCalled = YES;
+            
+            dispatch_semaphore_signal(semaphore);
         }
     });
     
-    chat = client.Chat().name(chatName).create();
+    client.Chat().name(chatName).create();
     
-    [self waitForExpectations:@[expectation] timeout:3.f];
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
+    XCTAssertTrue(handlerCalled);
 }
 
 - (void)testHandleEvent_ShouldBeNotified_WhenChatDisconnected {
     
-    NSString *chatName = [@[@"this-is-only-a-test-3", @([NSDate date].timeIntervalSince1970)] componentsJoinedByString:@""];
-    XCTestExpectation *expectation = [[XCTestExpectation alloc] initWithDescription:@"Test chat should notify on disconnection."];
+    NSString *chatName = @"this-is-only-a-test-3";
+    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     CENChatEngine *client = [self chatEngineForUser:@"serhii"];
-    CENChat *chat = nil;
+    __block BOOL handlerCalled = NO;
     
     client.on(@"$.disconnected", ^(CENChat *chat) {
-        if ([chat.channel isEqualToString:chat.channel]) {
-            [expectation fulfill];
+        if ([chat.name isEqualToString:chatName]) {
+            handlerCalled = YES;
+            
+            dispatch_semaphore_signal(semaphore);
         }
     });
     
-    chat = client.Chat().name(chatName).create();
-    chat.on(@"$.connected", ^{
-        chat.leave();
+    CENChat *testChat = client.Chat().name(chatName).create();
+    testChat.once(@"$.connected", ^{
+        testChat.leave();
     });
     
-    [self waitForExpectations:@[expectation] timeout:3.f];
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelayWithNestedSemaphores * NSEC_PER_SEC)));
+    XCTAssertTrue(handlerCalled);
 }
 
 #pragma mark -

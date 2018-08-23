@@ -16,8 +16,8 @@ podfile: ./Tests/Podfile
 
 before_install:
   - sudo gem install xcpretty-travis-formatter
-  - sudo gem install cocoapods -v '1.5.0'
-  - cd ./Tests && pod install && cd ..
+  - sudo gem install cocoapods -v '1.5.3'
+  - cd ./Tests && pod update && cd ..
 
 script:
   - set -o pipefail

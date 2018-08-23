@@ -40,6 +40,36 @@
 
 #pragma mark - Setup / Tear down
 
+- (NSString *)filteredPublishMessageFrom:(NSString *)message {
+    
+    NSString *filteredMessage = [super filteredPublishMessageFrom:message];
+    
+    NSData *data = [filteredMessage dataUsingEncoding:NSUTF8StringEncoding];
+    NSMutableDictionary *payload = [[NSJSONSerialization JSONObjectWithData:data options:NSJSONReadingAllowFragments error:nil] mutableCopy];
+    
+    NSMutableDictionary *cepayload = [(payload[@"pn_apns"] ?: payload[@"pn_gcm"][@"data"])[@"cepayload"] mutableCopy];
+    cepayload[CENEventData.sdk] = @"objc";
+    cepayload[CENEventData.eventID] = @"unique-event-id";
+    
+    if (payload[@"pn_apns"]) {
+        NSMutableDictionary *apns = [payload[@"pn_apns"] mutableCopy];
+        apns[@"cepayload"] = [cepayload copy];
+        payload[@"pn_apns"] = apns;
+    }
+    
+    if (payload[@"pn_gcm"][@"data"]) {
+        NSMutableDictionary *gcm = [payload[@"pn_gcm"] mutableCopy];
+        NSMutableDictionary *gcmData = [payload[@"pn_gcm"][@"data"] mutableCopy];
+        gcmData[@"cepayload"] = [cepayload copy];
+        gcm[@"data"] = gcmData;
+        payload[@"pn_gcm"] = gcm;
+    }
+    
+    data = [NSJSONSerialization dataWithJSONObject:payload options:(NSJSONWritingOptions)0 error:nil];
+    
+    return [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+}
+
 - (void)setUp {
     
     [super setUp];
@@ -57,7 +87,7 @@
     
 #if TARGET_OS_IOS || TARGET_OS_WATCH
     if (@available(iOS 10.0, watchOS 3.0, *)) {
-        id notificationCenterMock = OCMClassMock([UNUserNotificationCenter class]);
+        id notificationCenterMock = [self mockForClass:[UNUserNotificationCenter class]];
         OCMStub(ClassMethod([notificationCenterMock currentNotificationCenter])).andReturn(nil);
     }
 #endif
@@ -75,11 +105,14 @@
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     void(^completionHandler)(NSError *) = ^(NSError *error) {};
     
-    OCMExpect([pubNubPartialMock addPushNotificationsOnChannels:expectedChannels withDevicePushToken:self.defaultToken andCompletion:[OCMArg any]]);
-    
+    OCMExpect([pubNubPartialMock addPushNotificationsOnChannels:expectedChannels withDevicePushToken:self.defaultToken andCompletion:[OCMArg any]])
+        .andDo(^(NSInvocation *invocation) {
+            dispatch_semaphore_signal(semaphore);
+        });
+
     [CENPushNotificationsPlugin enablePushNotificationsForChats:expectedChats withDeviceToken:self.defaultToken completion:completionHandler];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
     OCMVerifyAll(pubNubPartialMock);
 }
 
@@ -87,20 +120,38 @@
     
     CENChatEngine *client = [self chatEngineForUser:@"ian"];
     NSMutableArray<CENChat *> *expectedChats = [NSMutableArray new];
-    for (NSUInteger count = 0; count < 200; count++) {
+    for (NSUInteger count = 0; count < 400; count++) {
         [expectedChats addObjectsFromArray:@[client.global, client.me.direct, client.me.feed]];
     }
+    
     id pubNubPartialMock = [self partialMockForObject:client.pubnub];
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
+    NSUInteger expectedNumberOfCalls = 2;
+    __block NSUInteger numberOfCalls = 0;
     
     void(^completionHandler)(NSError *) = ^(NSError *error) {};
     
-    OCMExpect([pubNubPartialMock addPushNotificationsOnChannels:[OCMArg any] withDevicePushToken:self.defaultToken andCompletion:[OCMArg any]]);
-    OCMExpect([pubNubPartialMock addPushNotificationsOnChannels:[OCMArg any] withDevicePushToken:self.defaultToken andCompletion:[OCMArg any]]);
-    
+    OCMExpect([pubNubPartialMock addPushNotificationsOnChannels:[OCMArg any] withDevicePushToken:self.defaultToken andCompletion:[OCMArg any]])
+        .andDo(^(NSInvocation *invocation) {
+            numberOfCalls++;
+            
+            if (numberOfCalls == expectedNumberOfCalls) {
+                dispatch_semaphore_signal(semaphore);
+            }
+        });
+    OCMExpect([pubNubPartialMock addPushNotificationsOnChannels:[OCMArg any] withDevicePushToken:self.defaultToken andCompletion:[OCMArg any]])
+        .andDo(^(NSInvocation *invocation) {
+            numberOfCalls++;
+            
+            if (numberOfCalls == expectedNumberOfCalls) {
+                dispatch_semaphore_signal(semaphore);
+            }
+        });
+
     [CENPushNotificationsPlugin enablePushNotificationsForChats:expectedChats withDeviceToken:self.defaultToken completion:completionHandler];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
+    XCTAssertEqual(numberOfCalls, expectedNumberOfCalls);
     OCMVerifyAll(pubNubPartialMock);
 }
 
@@ -115,14 +166,15 @@
     __block BOOL handlerCalled = NO;
     
     id pubNubPartialMock = [self partialMockForObject:client.pubnub];
-    OCMStub([pubNubPartialMock addPushNotificationsOnChannels:expectedChannels withDevicePushToken:self.defaultToken andCompletion:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
-        void(^block)(PNAcknowledgmentStatus *) = nil;
-        [invocation getArgument:&block atIndex:4];
-        
-        PNErrorStatus *errorStatus = [self errorStatusForOperation:PNAddPushNotificationsOnChannelsOperation forChannels:expectedFailedChannels];
-        block((PNAcknowledgmentStatus *)errorStatus);
-    });
-    
+    OCMStub([pubNubPartialMock addPushNotificationsOnChannels:expectedChannels withDevicePushToken:self.defaultToken andCompletion:[OCMArg any]])
+        .andDo(^(NSInvocation *invocation) {
+            void(^block)(PNAcknowledgmentStatus *) = nil;
+            [invocation getArgument:&block atIndex:4];
+            
+            PNErrorStatus *errorStatus = [self errorStatusForOperation:PNAddPushNotificationsOnChannelsOperation forChannels:expectedFailedChannels];
+            block((PNAcknowledgmentStatus *)errorStatus);
+        });
+
     [CENPushNotificationsPlugin enablePushNotificationsForChats:expectedChats withDeviceToken:self.defaultToken completion:^(NSError *error) {
         handlerCalled = YES;
         
@@ -132,7 +184,7 @@
         dispatch_semaphore_signal(semaphore);
     }];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
     XCTAssertTrue(handlerCalled);
 }
 
@@ -152,24 +204,28 @@
     __block BOOL failedOnce = NO;
     
     id pubNubPartialMock = [self partialMockForObject:client.pubnub];
-    OCMStub([pubNubPartialMock addPushNotificationsOnChannels:[OCMArg any] withDevicePushToken:self.defaultToken andCompletion:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
-        void(^block)(PNAcknowledgmentStatus *) = nil;
-        [invocation getArgument:&block atIndex:4];
-        
-        PNErrorStatus *errorStatus = nil;
-        if (!failedOnce) {
-            failedOnce = YES;
-            errorStatus = [self errorStatusForOperation:PNAddPushNotificationsOnChannelsOperation forChannels:@[expectedFailedChannels.firstObject]];
-        } else {
-            errorStatus = [self errorStatusForOperation:PNAddPushNotificationsOnChannelsOperation forChannels:@[expectedFailedChannels.lastObject]];
-        }
-        block((PNAcknowledgmentStatus *)errorStatus);
-    });
-    
+    OCMStub([pubNubPartialMock addPushNotificationsOnChannels:[OCMArg any] withDevicePushToken:self.defaultToken andCompletion:[OCMArg any]])
+        .andDo(^(NSInvocation *invocation) {
+            void(^block)(PNAcknowledgmentStatus *) = nil;
+            PNErrorStatus *errorStatus = nil;
+            
+            [invocation getArgument:&block atIndex:4];
+
+            if (!failedOnce) {
+                failedOnce = YES;
+                errorStatus = [self errorStatusForOperation:PNAddPushNotificationsOnChannelsOperation forChannels:@[expectedFailedChannels.firstObject]];
+            } else {
+                errorStatus = [self errorStatusForOperation:PNAddPushNotificationsOnChannelsOperation forChannels:@[expectedFailedChannels.lastObject]];
+            }
+            
+            block((PNAcknowledgmentStatus *)errorStatus);
+        });
+
     [CENPushNotificationsPlugin enablePushNotificationsForChats:expectedChats withDeviceToken:self.defaultToken completion:^(NSError *error) {
         if (handlerCalledOnce) {
             handlerCalledTwice = YES;
         }
+        
         handlerCalledOnce = YES;
         
         XCTAssertNotNil(error);
@@ -178,7 +234,7 @@
         dispatch_semaphore_signal(semaphore);
     }];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2000.f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.falseTestCompletionDelay * NSEC_PER_SEC)));
     XCTAssertTrue(handlerCalledOnce);
     XCTAssertFalse(handlerCalledTwice);
 }
@@ -186,7 +242,7 @@
 
 #pragma mark - Tests :: Disable push notifications
 
-- (void)testDisablePushNotifications_ShouldEnableNotificationsOnChats_WhenSmallListHasBeenPassed {
+- (void)testDisablePushNotifications_ShouldDisableNotificationsOnChats_WhenSmallListHasBeenPassed {
     
     CENChatEngine *client = [self chatEngineForUser:@"ian"];
     NSArray<CENChat *> *expectedChats = @[client.global, client.me.direct, client.me.feed];
@@ -195,32 +251,53 @@
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     void(^completionHandler)(NSError *) = ^(NSError *error) {};
     
-    OCMExpect([pubNubPartialMock removePushNotificationsFromChannels:expectedChannels withDevicePushToken:self.defaultToken andCompletion:[OCMArg any]]);
-    
+    OCMExpect([pubNubPartialMock removePushNotificationsFromChannels:expectedChannels withDevicePushToken:self.defaultToken andCompletion:[OCMArg any]])
+        .andDo(^(NSInvocation *invocation) {
+            dispatch_semaphore_signal(semaphore);
+        });
+
     [CENPushNotificationsPlugin disablePushNotificationsForChats:expectedChats withDeviceToken:self.defaultToken completion:completionHandler];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
     OCMVerifyAll(pubNubPartialMock);
 }
 
-- (void)testDisablePushNotifications_ShouldEnableNotificationsOnChats_WhenLargeListHasBeenPassed {
+- (void)testDisablePushNotifications_ShouldDisableNotificationsOnChats_WhenLargeListHasBeenPassed {
     
     CENChatEngine *client = [self chatEngineForUser:@"ian"];
     NSMutableArray<CENChat *> *expectedChats = [NSMutableArray new];
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    for (NSUInteger count = 0; count < 200; count++) {
+    for (NSUInteger count = 0; count < 400; count++) {
         [expectedChats addObjectsFromArray:@[client.global, client.me.direct, client.me.feed]];
     }
+    NSUInteger expectedNumberOfCalls = 2;
+    __block NSUInteger numberOfCalls = 0;
     
     id pubNubPartialMock = [self partialMockForObject:client.pubnub];
     void(^completionHandler)(NSError *) = ^(NSError *error) {};
     
-    OCMExpect([pubNubPartialMock removePushNotificationsFromChannels:[OCMArg any] withDevicePushToken:self.defaultToken andCompletion:[OCMArg any]]);
-    OCMExpect([pubNubPartialMock removePushNotificationsFromChannels:[OCMArg any] withDevicePushToken:self.defaultToken andCompletion:[OCMArg any]]);
+    OCMExpect([pubNubPartialMock removePushNotificationsFromChannels:[OCMArg any] withDevicePushToken:self.defaultToken andCompletion:[OCMArg any]])
+        .andDo(^(NSInvocation *invocation) {
+            numberOfCalls++;
+            
+            if (numberOfCalls == expectedNumberOfCalls) {
+                dispatch_semaphore_signal(semaphore);
+            }
+        });
     
+    OCMExpect([pubNubPartialMock removePushNotificationsFromChannels:[OCMArg any] withDevicePushToken:self.defaultToken andCompletion:[OCMArg any]])
+        .andDo(^(NSInvocation *invocation) {
+            numberOfCalls++;
+            
+            if (numberOfCalls == expectedNumberOfCalls) {
+                dispatch_semaphore_signal(semaphore);
+            }
+        });
+
     [CENPushNotificationsPlugin disablePushNotificationsForChats:expectedChats withDeviceToken:self.defaultToken completion:completionHandler];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
+    XCTAssertEqual(numberOfCalls, expectedNumberOfCalls);
     OCMVerifyAll(pubNubPartialMock);
 }
 
@@ -242,7 +319,7 @@
         PNErrorStatus *errorStatus = [self errorStatusForOperation:PNRemovePushNotificationsFromChannelsOperation forChannels:expectedFailedChannels];
         block((PNAcknowledgmentStatus *)errorStatus);
     });
-    
+
     [CENPushNotificationsPlugin disablePushNotificationsForChats:expectedChats withDeviceToken:self.defaultToken completion:^(NSError *error) {
         handlerCalled = YES;
         
@@ -252,25 +329,27 @@
         dispatch_semaphore_signal(semaphore);
     }];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
     XCTAssertTrue(handlerCalled);
 }
 
 
 #pragma mark - Tests :: Disable all push notifications
 
-- (void)testDisableAllPushNotifications_ShouldEnableNotificationsOnChats {
+- (void)testDisableAllPushNotifications_ShouldDisableNotificationsOnChats {
     
     CENChatEngine *client = [self chatEngineForUser:@"ian"];
     id pubNubPartialMock = [self partialMockForObject:client.pubnub];
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     void(^completionHandler)(NSError *) = ^(NSError *error) {};
     
-    OCMExpect([pubNubPartialMock removeAllPushNotificationsFromDeviceWithPushToken:self.defaultToken andCompletion:[OCMArg any]]);
-    
+    OCMExpect([pubNubPartialMock removeAllPushNotificationsFromDeviceWithPushToken:self.defaultToken andCompletion:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
+        dispatch_semaphore_signal(semaphore);
+    });
+
     [CENPushNotificationsPlugin disableAllPushNotificationsForUser:client.me withDeviceToken:self.defaultToken completion:completionHandler];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
     OCMVerifyAll(pubNubPartialMock);
 }
 
@@ -290,7 +369,7 @@
         PNErrorStatus *errorStatus = [self errorStatusForOperation:PNRemoveAllPushNotificationsOperation forChannels:expectedFailedChannels];
         block((PNAcknowledgmentStatus *)errorStatus);
     });
-    
+
     [CENPushNotificationsPlugin disableAllPushNotificationsForUser:client.me withDeviceToken:self.defaultToken completion:^(NSError *error) {
         handlerCalled = YES;
         
@@ -300,7 +379,7 @@
         dispatch_semaphore_signal(semaphore);
     }];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
     XCTAssertTrue(handlerCalled);
 }
 
@@ -333,11 +412,11 @@
         dispatch_semaphore_signal(semaphore);
     }];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5f * NSEC_PER_SEC)));
+    client.once(@"$.network.up.connected", ^(PNStatus *status) {
+        [CENPushNotificationsPlugin markNotificationAsSeen:notification forUser:client.me withCompletion:nil];
+    });
     
-    [CENPushNotificationsPlugin markNotificationAsSeen:notification forUser:client.me withCompletion:nil];
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(6.f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
     XCTAssertTrue(handlerCalled);
 }
 
@@ -358,12 +437,12 @@
         XCTAssertEqualObjects(payload[@"pn_gcm"][@"data"][@"cepayload"][CENEventData.data][CENEventData.eventID], expected);
         dispatch_semaphore_signal(semaphore);
     }];
+
+    client.once(@"$.network.up.connected", ^(PNStatus *status) {
+        [CENPushNotificationsPlugin markAllNotificationAsSeenForUser:client.me withCompletion:nil];
+    });
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.5f * NSEC_PER_SEC)));
-    
-    [CENPushNotificationsPlugin markAllNotificationAsSeenForUser:client.me withCompletion:nil];
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(6.f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
     XCTAssertTrue(handlerCalled);
 }
 

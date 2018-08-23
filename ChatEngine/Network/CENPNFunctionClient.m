@@ -6,6 +6,7 @@
 #import "CENPNFunctionClient.h"
 #import "CENDictionary.h"
 #import "CENConstants.h"
+#import "CENLogMacro.h"
 
 
 #pragma mark Externs
@@ -28,11 +29,12 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, strong) NSOperationQueue *delegateQueue;
 @property (nonatomic, strong) NSDictionary *functionData;
 @property (nonatomic, copy) NSString *endpointURL;
+@property (nonatomic, weak) PNLLogger *logger;
 
 
 #pragma mark - Initialization and Configuration
 
-- (instancetype)initWithEndpoint:(NSString *)endpoint;
+- (instancetype)initWithEndpoint:(NSString *)endpoint logger:(PNLLogger *)logger;
 
 
 #pragma mark - REST API Calls
@@ -83,9 +85,9 @@ NS_ASSUME_NONNULL_END
 
 #pragma mark - Initialization and Configuration
 
-+ (instancetype)clientWithEndpoint:(NSString *)endpoint {
++ (instancetype)clientWithEndpoint:(NSString *)endpoint logger:(PNLLogger *)logger {
     
-    return [[self alloc] initWithEndpoint:endpoint];
+    return [[self alloc] initWithEndpoint:endpoint logger:logger];
 }
 
 - (instancetype)init {
@@ -95,10 +97,11 @@ NS_ASSUME_NONNULL_END
     return nil;
 }
 
-- (instancetype)initWithEndpoint:(NSString *)endpoint {
+- (instancetype)initWithEndpoint:(NSString *)endpoint logger:(PNLLogger *)logger  {
     
     if ((self = [super init])) {
         _endpointURL = [endpoint copy];
+        _logger = logger;
         _resourceAccessQueue = dispatch_queue_create("com.chatengine.pnfunctions.resource", DISPATCH_QUEUE_CONCURRENT);
         _processingQueue = dispatch_queue_create("com.chatengine.pnfunctions.processing", DISPATCH_QUEUE_CONCURRENT);
         
@@ -129,9 +132,12 @@ NS_ASSUME_NONNULL_END
         __weak __typeof__(self) weakSelf = self;
         
         [self callRouteWithData:series.firstObject completion:^(id response, BOOL isError) {
-            if (([response isKindOfClass:[NSString class]] && ((NSString *)response).length) || [response isKindOfClass:[NSDictionary class]]) {
-//                NSLog(@"\nIS ERROR? %@\nCURRENT: %@\nRESPONSE: '%@'", isError ? @"YES" : @"NO", series.firstObject, response);
+            if (isError) {
+                CELogRequestError(self.logger, @"<ChatEngine::Request> Failed with error: %@", response);
+            } else {
+                CELogResponse(self.logger, @"<ChatEngine::Response> Received response for route: %@\n%@", series.firstObject, response);
             }
+
             if (!isError) {
                 NSArray<NSDictionary *> *seriesToCompete = [series subarrayWithRange:NSMakeRange(1, series.count - 1)];
 
@@ -179,15 +185,10 @@ NS_ASSUME_NONNULL_END
     NSURLRequest *request = [self requestWithQueryParameters:queryParameters method:method postBody:httpBody];
     dispatch_async(self.resourceAccessQueue, ^{
         __weak __typeof__(self) weakSelf = self;
+        CELogRequest(self.logger, @"<ChatEngine::Request> %@ %@%@", request.HTTPMethod.uppercaseString, request.URL.absoluteString,
+                     httpBody.count ? [@[@"\nHTTP body: ", httpBody] componentsJoinedByString:@""] : @"");
         
         [[self.session dataTaskWithRequest:request completionHandler:^(NSData *data, NSURLResponse *urlResponse, NSError *error) {
-            if (error.code == NSURLErrorTimedOut) {
-                NSLog(@"\nREQUEST TIMEOUT\nURL: %@\nHTTP METHOD: %@\nQUERY: %@\nBODY: %@", request.URL, method.uppercaseString, query, body);
-            } else if (error || ((NSHTTPURLResponse *)urlResponse).statusCode >= 400) {
-//                NSLog(@"\nURL: %@\nHTTP METHOD: %@\nQUERY: %@\nBODY: %@\nRESPONSE: %@",
-//                      request.URL, method.uppercaseString, query, body, [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding]);
-            }
-            
             [weakSelf handleResponse:(NSHTTPURLResponse *)urlResponse withData:data error:error andCompletion:block];
         }] resume] ;
     });

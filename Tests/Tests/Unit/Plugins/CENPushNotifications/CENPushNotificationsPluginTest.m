@@ -18,7 +18,9 @@
 
 #pragma mark - Information
 
-@property (nonatomic, nullable, weak) CENChatEngine<PNObjectEventListener> *defaultClient;
+@property (nonatomic, nullable, weak) CENChatEngine<PNObjectEventListener> *client;
+@property (nonatomic, nullable, weak) CENChatEngine *clientMock;
+
 @property (nonatomic, nullable, strong) CENPushNotificationsPlugin *defaultPlugin;
 @property (nonatomic, nullable, strong) NSData *defaultToken;
 
@@ -34,6 +36,11 @@
 
 #pragma mark - Setup / Tear down
 
+- (BOOL)shouldSetupVCR {
+    
+    return NO;
+}
+
 -(void)setUp {
     
     [super setUp];
@@ -42,21 +49,15 @@
     self.defaultPlugin = [CENPushNotificationsPlugin pluginWithIdentifier:@"test" configuration:nil];
     
     CENConfiguration *configuration = [CENConfiguration configurationWithPublishKey:@"test-36" subscribeKey:@"test-36"];
-    self.defaultClient = [self partialMockForObject:[self chatEngineWithConfiguration:configuration]];
+    self.client = (CENChatEngine<PNObjectEventListener> *)[self chatEngineWithConfiguration:configuration];
+    self.clientMock = [self partialMockForObject:self.client];
     
-    OCMStub([self.defaultClient createDirectChatForUser:[OCMArg any]])
-        .andReturn(self.defaultClient.Chat().name(@"user-direct").autoConnect(NO).create());
-    OCMStub([self.defaultClient createFeedChatForUser:[OCMArg any]])
-        .andReturn(self.defaultClient.Chat().name(@"user-feed").autoConnect(NO).create());
-    OCMStub([self.defaultClient me]).andReturn([CENMe userWithUUID:@"tester" state:@{} chatEngine:self.defaultClient]);
-}
-
-- (void)tearDown {
-    
-    [self.defaultClient destroy];
-    self.defaultClient = nil;
-    
-    [super tearDown];
+    OCMStub([self.clientMock fetchParticipantsForChat:[OCMArg any]]).andDo(nil);
+    OCMStub([self.clientMock createDirectChatForUser:[OCMArg any]])
+        .andReturn(self.clientMock.Chat().name(@"chat-engine#user#tester#write.#direct").autoConnect(NO).create());
+    OCMStub([self.clientMock createFeedChatForUser:[OCMArg any]])
+        .andReturn(self.clientMock.Chat().name(@"chat-engine#user#tester#read.#feed").autoConnect(NO).create());
+    OCMStub([self.clientMock me]).andReturn([CENMe userWithUUID:@"tester" state:@{} chatEngine:self.clientMock]);
 }
 
 
@@ -108,7 +109,7 @@
 
 - (void)testExtension_ShouldProvideExtension_WhenCENMeInstancePassed {
     
-    Class extensionClass = [self.defaultPlugin extensionClassFor:self.defaultClient.me];
+    Class extensionClass = [self.defaultPlugin extensionClassFor:self.client.me];
     
     XCTAssertNotNil(extensionClass);
     XCTAssertEqualObjects(extensionClass, [CENPushNotificationsExtension class]);
@@ -126,7 +127,7 @@
 
 - (void)testMiddleware_ShouldProvideMiddleware_WhenCENChatInstancePassedForEmitLocation {
     
-    Class middlewareClass = [self.defaultPlugin middlewareClassForLocation:CEPMiddlewareLocation.emit object:self.defaultClient.me.direct];
+    Class middlewareClass = [self.defaultPlugin middlewareClassForLocation:CEPMiddlewareLocation.emit object:self.client.me.direct];
     
     XCTAssertNotNil(middlewareClass);
     XCTAssertEqualObjects(middlewareClass, [CENPushNotificationsMiddleware class]);
@@ -140,7 +141,7 @@
 
 - (void)testMiddleware_ShouldNotProvideMiddleware_WhenCENChatInstancePassedForUnexpectedLocation {
     
-    Class middlewareClass = [self.defaultPlugin middlewareClassForLocation:CEPMiddlewareLocation.on object:self.defaultClient.me.direct];
+    Class middlewareClass = [self.defaultPlugin middlewareClassForLocation:CEPMiddlewareLocation.on object:self.client.me.direct];
     XCTAssertNil(middlewareClass);
 }
 
@@ -149,11 +150,10 @@
 
 - (void)testEnableNotifications_ShouldCallExtension_WhenDeviceTokenAndChatsListPassed {
     
-    id mePartialMock = [self partialMockForObject:self.defaultClient.me];
+    id mePartialMock = [self partialMockForObject:self.client.me];
     OCMExpect([mePartialMock extensionWithIdentifier:CENPushNotificationsPlugin.identifier context:[OCMArg any]]);
     
-    [CENPushNotificationsPlugin enablePushNotificationsForChats:@[self.defaultClient.me.direct] withDeviceToken:self.defaultToken
-                                                     completion:nil];
+    [CENPushNotificationsPlugin enablePushNotificationsForChats:@[self.client.me.direct] withDeviceToken:self.defaultToken completion:nil];
     
     OCMVerifyAll(mePartialMock);
 }
@@ -161,11 +161,11 @@
 - (void)testEnableNotifications_ShouldCallExtensionMethod_WhenDeviceTokenAndChatsListPassed {
     
     CENPushNotificationsExtension *extension = [CENPushNotificationsExtension new];
-    NSArray<CENChat *> *expectedChats = @[self.defaultClient.me.direct];
+    NSArray<CENChat *> *expectedChats = @[self.client.me.direct];
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    void(^completionHandler)(NSError *) = ^(NSError *error) {};
+    void(^completionHandler)(NSError *) = ^(NSError *error) { };
     
-    id mePartialMock = [self partialMockForObject:self.defaultClient.me];
+    id mePartialMock = [self partialMockForObject:self.client.me];
     id extensionPartialMock = [self partialMockForObject:extension];
     
     OCMStub([mePartialMock extensionWithIdentifier:CENPushNotificationsPlugin.identifier context:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
@@ -179,7 +179,7 @@
     
     [CENPushNotificationsPlugin enablePushNotificationsForChats:expectedChats withDeviceToken:self.defaultToken completion:completionHandler];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.delayedCheck * NSEC_PER_SEC)));
     OCMVerifyAll(extensionPartialMock);
 }
 
@@ -187,10 +187,10 @@
     
     NSData *token = nil;
     
-    id mePartialMock = [self partialMockForObject:self.defaultClient.me];
+    id mePartialMock = [self partialMockForObject:self.client.me];
     OCMExpect([[mePartialMock reject] extensionWithIdentifier:CENPushNotificationsPlugin.identifier context:[OCMArg any]]);
     
-    [CENPushNotificationsPlugin enablePushNotificationsForChats:@[self.defaultClient.me.direct] withDeviceToken:token completion:nil];
+    [CENPushNotificationsPlugin enablePushNotificationsForChats:@[self.client.me.direct] withDeviceToken:token completion:nil];
     
     OCMVerifyAll(mePartialMock);
 }
@@ -199,10 +199,10 @@
     
     NSData *token = [NSData new];
     
-    id mePartialMock = [self partialMockForObject:self.defaultClient.me];
+    id mePartialMock = [self partialMockForObject:self.client.me];
     OCMExpect([[mePartialMock reject] extensionWithIdentifier:CENPushNotificationsPlugin.identifier context:[OCMArg any]]);
     
-    [CENPushNotificationsPlugin enablePushNotificationsForChats:@[self.defaultClient.me.direct] withDeviceToken:token completion:nil];
+    [CENPushNotificationsPlugin enablePushNotificationsForChats:@[self.client.me.direct] withDeviceToken:token completion:nil];
     
     OCMVerifyAll(mePartialMock);
 }
@@ -211,7 +211,7 @@
     
     NSArray<CENChat *> *chats = nil;
     
-    id mePartialMock = [self partialMockForObject:self.defaultClient.me];
+    id mePartialMock = [self partialMockForObject:self.client.me];
     OCMExpect([[mePartialMock reject] extensionWithIdentifier:CENPushNotificationsPlugin.identifier context:[OCMArg any]]);
     
     [CENPushNotificationsPlugin enablePushNotificationsForChats:chats withDeviceToken:self.defaultToken completion:nil];
@@ -223,7 +223,7 @@
     
     NSArray<CENChat *> *chats = [NSArray new];
     
-    id mePartialMock = [self partialMockForObject:self.defaultClient.me];
+    id mePartialMock = [self partialMockForObject:self.client.me];
     OCMExpect([[mePartialMock reject] extensionWithIdentifier:CENPushNotificationsPlugin.identifier context:[OCMArg any]]);
     
     [CENPushNotificationsPlugin enablePushNotificationsForChats:chats withDeviceToken:self.defaultToken completion:nil];
@@ -236,11 +236,10 @@
 
 - (void)testDisableNotifications_ShouldCallExtension_WhenDeviceTokenAndChatsListPassed {
     
-    id mePartialMock = [self partialMockForObject:self.defaultClient.me];
+    id mePartialMock = [self partialMockForObject:self.client.me];
     OCMExpect([mePartialMock extensionWithIdentifier:CENPushNotificationsPlugin.identifier context:[OCMArg any]]);
     
-    [CENPushNotificationsPlugin disablePushNotificationsForChats:@[self.defaultClient.me.direct] withDeviceToken:self.defaultToken
-                                                      completion:nil];
+    [CENPushNotificationsPlugin disablePushNotificationsForChats:@[self.client.me.direct] withDeviceToken:self.defaultToken completion:nil];
     
     OCMVerifyAll(mePartialMock);
 }
@@ -248,11 +247,11 @@
 - (void)testDisableNotifications_ShouldCallExtensionMethod_WhenDeviceTokenAndChatsListPassed {
     
     CENPushNotificationsExtension *extension = [CENPushNotificationsExtension new];
-    NSArray<CENChat *> *expectedChats = @[self.defaultClient.me.direct];
+    NSArray<CENChat *> *expectedChats = @[self.client.me.direct];
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     void(^completionHandler)(NSError *) = ^(NSError *error) {};
     
-    id mePartialMock = [self partialMockForObject:self.defaultClient.me];
+    id mePartialMock = [self partialMockForObject:self.client.me];
     id extensionPartialMock = [self partialMockForObject:extension];
     
     OCMStub([mePartialMock extensionWithIdentifier:CENPushNotificationsPlugin.identifier context:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
@@ -266,7 +265,7 @@
     
     [CENPushNotificationsPlugin disablePushNotificationsForChats:expectedChats withDeviceToken:self.defaultToken completion:completionHandler];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.delayedCheck * NSEC_PER_SEC)));
     OCMVerifyAll(extensionPartialMock);
 }
 
@@ -274,10 +273,10 @@
     
     NSData *token = nil;
     
-    id mePartialMock = [self partialMockForObject:self.defaultClient.me];
+    id mePartialMock = [self partialMockForObject:self.client.me];
     OCMExpect([[mePartialMock reject] extensionWithIdentifier:CENPushNotificationsPlugin.identifier context:[OCMArg any]]);
     
-    [CENPushNotificationsPlugin disablePushNotificationsForChats:@[self.defaultClient.me.direct] withDeviceToken:token completion:nil];
+    [CENPushNotificationsPlugin disablePushNotificationsForChats:@[self.client.me.direct] withDeviceToken:token completion:nil];
     
     OCMVerifyAll(mePartialMock);
 }
@@ -286,10 +285,10 @@
     
     NSData *token = [NSData new];
     
-    id mePartialMock = [self partialMockForObject:self.defaultClient.me];
+    id mePartialMock = [self partialMockForObject:self.client.me];
     OCMExpect([[mePartialMock reject] extensionWithIdentifier:CENPushNotificationsPlugin.identifier context:[OCMArg any]]);
     
-    [CENPushNotificationsPlugin disablePushNotificationsForChats:@[self.defaultClient.me.direct] withDeviceToken:token completion:nil];
+    [CENPushNotificationsPlugin disablePushNotificationsForChats:@[self.client.me.direct] withDeviceToken:token completion:nil];
     
     OCMVerifyAll(mePartialMock);
 }
@@ -298,7 +297,7 @@
     
     NSArray<CENChat *> *chats = nil;
     
-    id mePartialMock = [self partialMockForObject:self.defaultClient.me];
+    id mePartialMock = [self partialMockForObject:self.client.me];
     OCMExpect([[mePartialMock reject] extensionWithIdentifier:CENPushNotificationsPlugin.identifier context:[OCMArg any]]);
     
     [CENPushNotificationsPlugin disablePushNotificationsForChats:chats withDeviceToken:self.defaultToken completion:nil];
@@ -310,7 +309,7 @@
     
     NSArray<CENChat *> *chats = [NSArray new];
     
-    id mePartialMock = [self partialMockForObject:self.defaultClient.me];
+    id mePartialMock = [self partialMockForObject:self.client.me];
     OCMExpect([[mePartialMock reject] extensionWithIdentifier:CENPushNotificationsPlugin.identifier context:[OCMArg any]]);
     
     [CENPushNotificationsPlugin disablePushNotificationsForChats:chats withDeviceToken:self.defaultToken completion:nil];
@@ -324,10 +323,10 @@
 
 - (void)testDisableAllNotifications_ShouldCallExtension_WhenDeviceTokenAndChatsListPassed {
     
-    id mePartialMock = [self partialMockForObject:self.defaultClient.me];
+    id mePartialMock = [self partialMockForObject:self.client.me];
     OCMExpect([mePartialMock extensionWithIdentifier:CENPushNotificationsPlugin.identifier context:[OCMArg any]]);
     
-    [CENPushNotificationsPlugin disableAllPushNotificationsForUser:self.defaultClient.me withDeviceToken:self.defaultToken completion:nil];
+    [CENPushNotificationsPlugin disableAllPushNotificationsForUser:self.client.me withDeviceToken:self.defaultToken completion:nil];
     
     OCMVerifyAll(mePartialMock);
 }
@@ -338,7 +337,7 @@
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     void(^completionHandler)(NSError *) = ^(NSError *error) {};
     
-    id mePartialMock = [self partialMockForObject:self.defaultClient.me];
+    id mePartialMock = [self partialMockForObject:self.client.me];
     id extensionPartialMock = [self partialMockForObject:extension];
     
     OCMStub([mePartialMock extensionWithIdentifier:CENPushNotificationsPlugin.identifier context:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
@@ -350,9 +349,9 @@
     
     OCMExpect([extension enablePushNotifications:NO forChats:nil withDeviceToken:self.defaultToken completion:completionHandler]);
     
-    [CENPushNotificationsPlugin disableAllPushNotificationsForUser:self.defaultClient.me withDeviceToken:self.defaultToken completion:completionHandler];
+    [CENPushNotificationsPlugin disableAllPushNotificationsForUser:self.client.me withDeviceToken:self.defaultToken completion:completionHandler];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.delayedCheck * NSEC_PER_SEC)));
     OCMVerifyAll(extensionPartialMock);
 }
 
@@ -361,10 +360,10 @@
     
     NSData *token = nil;
     
-    id mePartialMock = [self partialMockForObject:self.defaultClient.me];
+    id mePartialMock = [self partialMockForObject:self.client.me];
     OCMExpect([[mePartialMock reject] extensionWithIdentifier:CENPushNotificationsPlugin.identifier context:[OCMArg any]]);
     
-    [CENPushNotificationsPlugin disableAllPushNotificationsForUser:self.defaultClient.me withDeviceToken:token completion:nil];
+    [CENPushNotificationsPlugin disableAllPushNotificationsForUser:self.client.me withDeviceToken:token completion:nil];
     
     OCMVerifyAll(mePartialMock);
 }
@@ -373,10 +372,10 @@
     
     NSData *token = [NSData new];
     
-    id mePartialMock = [self partialMockForObject:self.defaultClient.me];
+    id mePartialMock = [self partialMockForObject:self.client.me];
     OCMExpect([[mePartialMock reject] extensionWithIdentifier:CENPushNotificationsPlugin.identifier context:[OCMArg any]]);
     
-    [CENPushNotificationsPlugin disableAllPushNotificationsForUser:self.defaultClient.me withDeviceToken:token completion:nil];
+    [CENPushNotificationsPlugin disableAllPushNotificationsForUser:self.client.me withDeviceToken:token completion:nil];
     
     OCMVerifyAll(mePartialMock);
 }
@@ -391,7 +390,7 @@
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     void(^completionHandler)(NSError *) = ^(NSError *error) {};
     
-    id mePartialMock = [self partialMockForObject:self.defaultClient.me];
+    id mePartialMock = [self partialMockForObject:self.client.me];
     id extensionPartialMock = [self partialMockForObject:extension];
     
     OCMStub([mePartialMock extensionWithIdentifier:CENPushNotificationsPlugin.identifier context:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
@@ -403,9 +402,9 @@
     
     OCMExpect([extension markNotificationAsSeen:expectedNotification withCompletion:completionHandler]);
     
-    [CENPushNotificationsPlugin markNotificationAsSeen:expectedNotification forUser:self.defaultClient.me withCompletion:completionHandler];
+    [CENPushNotificationsPlugin markNotificationAsSeen:expectedNotification forUser:self.client.me withCompletion:completionHandler];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.delayedCheck * NSEC_PER_SEC)));
     OCMVerifyAll(extensionPartialMock);
 }
 
@@ -418,7 +417,7 @@
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     void(^completionHandler)(NSError *) = ^(NSError *error) {};
     
-    id mePartialMock = [self partialMockForObject:self.defaultClient.me];
+    id mePartialMock = [self partialMockForObject:self.client.me];
     id extensionPartialMock = [self partialMockForObject:extension];
     
     OCMStub([mePartialMock extensionWithIdentifier:CENPushNotificationsPlugin.identifier context:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
@@ -430,9 +429,9 @@
     
     OCMExpect([extension markAllNotificationAsSeenWithCompletion:completionHandler]);
     
-    [CENPushNotificationsPlugin markAllNotificationAsSeenForUser:self.defaultClient.me withCompletion:completionHandler];
+    [CENPushNotificationsPlugin markAllNotificationAsSeenForUser:self.client.me withCompletion:completionHandler];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.delayedCheck * NSEC_PER_SEC)));
     OCMVerifyAll(extensionPartialMock);
 }
 

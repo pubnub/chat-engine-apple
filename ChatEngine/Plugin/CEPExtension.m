@@ -22,7 +22,7 @@ NS_ASSUME_NONNULL_BEGIN
  * @brief  Stores reference on dictionary which is passed during plugin registration and contain extension required
  *         configuration information.
  */
-@property (nonatomic, nullable, weak) NSDictionary *configuration;
+@property (nonatomic, nullable, strong) NSDictionary *configuration;
 
 /**
  * @brief Stores reference on object for which extended interface has been provided.
@@ -68,18 +68,18 @@ NS_ASSUME_NONNULL_END
         return nil;
     }
     
-    if (configuration && ![configuration isKindOfClass:[NSDictionary class]]) {
+    if (!configuration || ![configuration isKindOfClass:[NSDictionary class]]) {
         configuration = @{};
     }
     
-    return [[self alloc] initWithIdentifier:identifier configuration:configuration ?: @{}];
+    return [[self alloc] initWithIdentifier:identifier configuration:configuration];
 }
 
 - (instancetype)initWithIdentifier:(NSString *)identifier configuration:(NSDictionary *)configuration {
     
     if ((self = [super init])) {
-        self.configuration = configuration;
-        self.identifier = identifier;
+        _configuration = configuration;
+        _identifier = identifier;
     }
     
     return self;
@@ -103,7 +103,7 @@ NS_ASSUME_NONNULL_END
 
 + (NSArray<NSString *> *)nonbindableProperties {
     
-    return @[@"configuration", @"", @"identifier", @"object"];
+    return @[@"configuration", @"identifier", @"object"];
 }
 
 #pragma mark -
