@@ -11,10 +11,10 @@
 #pragma mark General information constants
 
 // Stores client library version number
-static NSString * const kCELibraryVersion = @"0.9.1";
+static NSString * const kCELibraryVersion = @"0.9.2";
 
 // Stores information about SDK codebase
-static NSString * const kCECommit = @"eec06f9d157e76903277e55eedc60537e89d7c61";
+static NSString * const kCECommit = @"cb41650117d0e95023aa0fccb7f220b709932a22";
 
 
 #pragma mark - Service information

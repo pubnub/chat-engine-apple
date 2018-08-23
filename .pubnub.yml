@@ -1,0 +1,98 @@
+--- 
+name: chat-engine-apple
+scm: github.com/pubnub/chat-engine-apple
+version: "0.9.2"
+schema: 1
+changelog: 
+  - 
+    changes: 
+      - 
+        text: "Added VCR and fixtures for integration tests and updated existing unit tests."
+        type: improvement
+      - 
+        text: "Disabled presence heartbeat by default and switched heartbeat interval to 300 seconds by default."
+        type: improvement
+      - 
+        text: "Ordered connection to user's personal chats and state refresh bound to it (improve code testability)."
+        type: improvement
+      - 
+        text: "Ordered user connection steps in part of: updating state followed by connection to PubNub network and synchronization of chats if required (improve code testability)."
+        type: improvement
+      - 
+        text: "Improved received events processing in part of sender name resolution - user's state won't be fetched if it is local user (which already has it's state)."
+        type: improvement
+      - 
+        text: "Improved connection to chats in part of session synchronization - synchronization events won't be sent for system chats (global, direct, feed and synchronization chats)."
+        type: improvement
+      - 
+        text: "Improved connection to chats in part of participants fetch - now only one request after small delay will be done only for user's chats ignoring system chats (global, direct, feed and synchronization chats)."
+        type: improvement
+      - 
+        text: "Updated 'onAny' emitter logic to unify handling block signature (ChatEngine instance expect block with 3 argument and CENObject subclasses - 2)."
+        type: improvement
+      - 
+        text: "Updated default logger configuration to verbose for DEBUG ('DEBUG' preprocessor macro set to 1)  environment and shutdown by default for any other."
+        type: improvement
+      - 
+        text: "Removed outdated code from CEPMiddleware."
+        type: improvement
+      - 
+        text: "Fixed crash which has been caused by attempt to publish using not connected ChatEngine instance."
+        type: bug
+      - 
+        text: "Fixed cross-thread race of condition in access to synchronized chats and groups in CENSession."
+        type: bug
+      - 
+        text: "Fixed issue with error created from multiple requests to PubNub Function."
+        type: bug
+      - 
+        text: "Fixed queue dead-lock when awakening chat (after disconnection)"
+        type: bug
+      - 
+        text: "Fixed queue dead-lock when tried to print out information about user from one of callbacks."
+        type: bug
+      - 
+        text: "Fixed pluggable instance property storage getters for float and doubles."
+        type: bug
+      - 
+        text: "Fixed pluggable instance property storage setter for C string to remove them when NULL passed."
+        type: bug
+      - 
+        text: "Fixed middleware check for whether registered for specific event or not (fixed checks cache usage)."
+        type: bug
+      - 
+        text: "Fixed extension's 'configuration' property to be strong, because sometimes it became 'nil' during usage."
+        type: bug
+      - 
+        text: "Fixed random tests from usage of OCMock library."
+        type: bug
+    date: Au 23, 18
+    version: v0.9.2
+  - 
+    changes: 
+      - 
+        text: "Removed `ignoredChats` configuration for push notification plugin (list of affected chats managed by user)."
+        type: improvement
+      - 
+        text: "Fixed warnings with macro re-definition because of dependency used in Podspec for plugins."
+        type: improvement
+    date: Jun 23, 18
+    version: v0.9.1
+  - 
+    changes: 
+      - 
+        text: "initial ChatEngine release."
+        type: feature
+    date: Jun 19, 18
+    version: v0.9.0
+supported-platforms:
+  -
+    version: PubNub ChatEngine Objective-C
+    platforms:
+      - iOS 9.0 or higher.
+      - macOS 10.11 or higher.
+  -
+    version: PubNub ChatEngine Swift
+    platforms:
+      - iOS 9.0 or higher.
+      - macOS 10.11 or higher.
