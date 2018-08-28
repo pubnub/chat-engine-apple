@@ -1,6 +1,6 @@
 Pod::Spec.new do |spec|
     spec.name     = 'CENChatEngine'
-    spec.version  = '0.9.1'
+    spec.version  = '0.9.2'
     spec.summary  = 'Framework for building chat applications.'
     spec.homepage = 'https://github.com/pubnub/chat-engine-apple'
 
