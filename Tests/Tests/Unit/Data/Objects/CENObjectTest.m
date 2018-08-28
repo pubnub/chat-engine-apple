@@ -5,6 +5,7 @@
 #import <XCTest/XCTest.h>
 #import <OCMock/OCMock.h>
 #import <CENChatEngine/CENEventEmitter+Interface.h>
+#import <CENChatEngine/CENChatEngine+ChatPrivate.h>
 #import <CENChatEngine/CENEventEmitter+Private.h>
 #import <CENChatEngine/CENChatEngine+Private.h>
 #import <CENChatEngine/CENObject+Private.h>
@@ -17,8 +18,10 @@
 
 #pragma mark - Information
 
+@property (nonatomic, nullable, weak) CENChatEngine *client;
+@property (nonatomic, nullable, weak) CENChatEngine *clientMock;
+
 @property (nonatomic, nullable, strong) NSString *defaultObjectType;
-@property (nonatomic, nullable, weak) CENChatEngine *defaultClient;
 @property (nonatomic, nullable, strong) id objectClassMock;
 @property (nonatomic, nullable, strong) CENObject *object;
 
@@ -35,25 +38,29 @@
 
 #pragma mark - Setup / Tear down
 
+- (BOOL)shouldSetupVCR {
+    
+    return NO;
+}
+
 - (void)setUp {
     
     [super setUp];
     
-    CENChatEngine *client = [self chatEngineWithConfiguration:[CENConfiguration configurationWithPublishKey:@"test-36" subscribeKey:@"test-36"]];
-    self.defaultClient = [self partialMockForObject:client];
+    self.client = [self chatEngineWithConfiguration:[CENConfiguration configurationWithPublishKey:@"test-36" subscribeKey:@"test-36"]];
+    self.clientMock = [self partialMockForObject:self.client];
     
     self.defaultObjectType = @"test-object";
     self.objectClassMock = [self mockForClass:[CENObject class]];
-    OCMStub([self.objectClassMock objectType]).andReturn(self.defaultObjectType);
     
-    self.object = [[CENObject alloc] initWithChatEngine:self.defaultClient];
+    OCMStub([self.objectClassMock objectType]).andReturn(self.defaultObjectType);
+    OCMStub([self.clientMock fetchParticipantsForChat:[OCMArg any]]).andDo(nil);
+    
+    self.object = [[CENObject alloc] initWithChatEngine:self.client];
 }
 
 - (void)tearDown {
-    
-    [self.defaultClient destroy];
-    self.defaultClient = nil;
-    
+
     [self.object destruct];
     self.object = nil;
     
@@ -65,11 +72,11 @@
 
 - (void)testConstructor_ShouldCreateInstance {
     
-    CENObject *object = [[CENObject alloc] initWithChatEngine:self.defaultClient];
+    CENObject *object = [[CENObject alloc] initWithChatEngine:self.client];
     
     XCTAssertNotNil(object);
     XCTAssertNotNil(object.identifier);
-    XCTAssertEqual(object.chatEngine, self.defaultClient);
+    XCTAssertEqual(object.chatEngine, self.client);
 }
 
 - (void)testConstructor_ShouldThrow_WhenDesignatedInitializedNotUsed {
@@ -86,7 +93,7 @@
     __block BOOL clientHandlerCalled = NO;
     __block BOOL objectHandlerCalled = NO;
     
-    [self.defaultClient handleEventOnce:@"test-event" withHandlerBlock:^(CENObject *object) {
+    [self.client handleEventOnce:@"test-event" withHandlerBlock:^(CENObject *object) {
         clientHandlerCalled = YES;
         
         XCTAssertEqual(object, self.object);
@@ -105,7 +112,7 @@
     
     [self.object emitEventLocally:@"test-event", nil];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
     XCTAssertTrue(clientHandlerCalled);
     XCTAssertTrue(objectHandlerCalled);
 }
@@ -120,7 +127,7 @@
     __block BOOL clientHandlerCalled = NO;
     __block BOOL objectHandlerCalled = NO;
     
-    [self.defaultClient handleEventOnce:expectedEvent withHandlerBlock:^(CENObject *object) {
+    [self.client handleEventOnce:expectedEvent withHandlerBlock:^(CENObject *object) {
         clientHandlerCalled = YES;
         
         if (objectHandlerCalled) {
@@ -138,7 +145,7 @@
     
     [self.object onCreate];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
     XCTAssertTrue(clientHandlerCalled);
     XCTAssertTrue(objectHandlerCalled);
 }
@@ -148,11 +155,11 @@
 
 - (void)testDestruct_ShouldUnregisterObjectByClient {
     
-    OCMExpect([self.defaultClient unregisterAllFromObjects:self.object]);
+    OCMExpect([self.clientMock unregisterAllFromObjects:self.object]);
     
     [self.object destruct];
     
-    OCMVerifyAll((id)self.defaultClient);
+    OCMVerifyAll((id)self.clientMock);
 }
 
 

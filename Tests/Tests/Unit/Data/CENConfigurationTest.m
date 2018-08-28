@@ -27,10 +27,14 @@
 
 #pragma mark - Setup / Tear down
 
+- (BOOL)shouldSetupVCR {
+    
+    return NO;
+}
+
 - (void)setUp {
     
     [super setUp];
-    
     
     self.configuration = [CENConfiguration configurationWithPublishKey:@"test-36" subscribeKey:@"test-36"];
 }
@@ -264,7 +268,8 @@
 - (void)testSetPresenceHeartbeatValue_ShouldNotChangeHeartbeatInterval_WhenHeartbeatIntervalIsSet {
     
     NSInteger heartbeatValue = 10;
-    NSInteger expected = self.configuration.presenceHeartbeatInterval;
+    NSInteger expected = 20.f;
+    self.configuration.presenceHeartbeatInterval = expected;
     
     self.configuration.presenceHeartbeatValue = heartbeatValue;
     

@@ -94,6 +94,18 @@ NS_ASSUME_NONNULL_BEGIN
 #pragma mark - Misc
 
 /**
+ * @brief  Extract proper value for handler from list of passed \c parameters.
+ *
+ * @param index      Index of expected value in passed \c parameters list.
+ * @param parameters Reference on list which hold values to be passed into handler block.
+ *
+ * @return Value or \c nil in case if index bigger than \c parameters can provide or fetched value is \a NSNull.
+ *
+ * @since 0.9.2
+ */
+- (nullable id)valueAtIndex:(NSUInteger)index fromParametersList:(NSArray *)parameters;
+
+/**
  * @brief      Search for event handler subscribed to specific \c event.
  * @discussion Search also will find list of handlers which has been subscribed on wildcard \c event.
  *
@@ -340,7 +352,7 @@ NS_ASSUME_NONNULL_END
 
     event = event.lowercaseString;
     __block NSArray<NSDictionary *> *eventHandlers = nil;
-
+    
     dispatch_sync(self.eventsAccessQueue, ^{
         eventHandlers = [[self eventHandlersForEvent:event] copy];
         
@@ -368,26 +380,49 @@ NS_ASSUME_NONNULL_END
     BOOL isAnyEventHandler = ((NSNumber *)data[kCENEventIsAnyKey]).boolValue;
     id handler = data[kCENEventHandlerKey];
     if (isAnyEventHandler || ((NSNumber *)data[kCENEventIsWildcardKey]).boolValue) {
+        NSUInteger expectedCount = isAnyEventHandler ? ([self superclass] == [CENEventEmitter class] ? 3 : 2) : parameters.count;
         parameters = [@[event] arrayByAddingObjectsFromArray:parameters];
+        
+        while (parameters.count < expectedCount) {
+            parameters = [parameters arrayByAddingObject:[NSNull null]];
+        }
     }
     
     if (!parameters.count) {
         ((dispatch_block_t)handler)();
     } else if (parameters.count == 1) {
-        ((void(^)(id))handler)(parameters[0]);
+        ((void(^)(id))handler)([self valueAtIndex:0 fromParametersList:parameters]);
     } else if (parameters.count == 2) {
-        ((void(^)(id, id))handler)(parameters[0], parameters[1]);
+        ((void(^)(id, id))handler)([self valueAtIndex:0 fromParametersList:parameters], [self valueAtIndex:1 fromParametersList:parameters]);
     } else if (parameters.count == 3) {
-        ((void(^)(id, id, id))handler)(parameters[0], parameters[1], parameters[2]);
+        ((void(^)(id, id, id))handler)([self valueAtIndex:0 fromParametersList:parameters],
+                                       [self valueAtIndex:1 fromParametersList:parameters],
+                                       [self valueAtIndex:2 fromParametersList:parameters]);
     } else if (parameters.count == 4) {
-        ((void(^)(id, id, id, id))handler)(parameters[0], parameters[1], parameters[2], parameters[3]);
+        ((void(^)(id, id, id, id))handler)([self valueAtIndex:0 fromParametersList:parameters],
+                                           [self valueAtIndex:1 fromParametersList:parameters],
+                                           [self valueAtIndex:2 fromParametersList:parameters],
+                                           [self valueAtIndex:3 fromParametersList:parameters]);
     } else if (parameters.count == 5) {
-        ((void(^)(id, id, id, id, id))handler)(parameters[0], parameters[1], parameters[2], parameters[3], parameters[4]);
+        ((void(^)(id, id, id, id, id))handler)([self valueAtIndex:0 fromParametersList:parameters],
+                                               [self valueAtIndex:1 fromParametersList:parameters],
+                                               [self valueAtIndex:2 fromParametersList:parameters],
+                                               [self valueAtIndex:3 fromParametersList:parameters],
+                                               [self valueAtIndex:4 fromParametersList:parameters]);
     }
 }
 
 
 #pragma mark - Misc
+
+- (id)valueAtIndex:(NSUInteger)index fromParametersList:(NSArray *)parameters {
+    
+    if (index >= parameters.count || [parameters[index] isEqual:[NSNull null]]) {
+        return nil;
+    }
+    
+    return parameters[index];
+}
 
 - (NSArray<NSDictionary *> *)eventHandlersForEvent:(NSString *)event {
     
@@ -402,7 +437,6 @@ NS_ASSUME_NONNULL_END
 }
 
 - (NSArray<NSString *> *)eventNamesForEvent:(NSString *)event {
-    
     
     NSMutableArray<NSString *> *eventNames = [NSMutableArray array];
     NSMutableArray<NSString *> *eventComponents = [[event componentsSeparatedByString:@"."] mutableCopy];

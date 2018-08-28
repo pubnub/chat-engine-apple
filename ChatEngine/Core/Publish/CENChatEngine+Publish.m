@@ -32,6 +32,10 @@
         @throw [NSException exceptionWithName:@"ChatEngine Exception" reason:error.localizedDescription userInfo:@{ NSUnderlyingErrorKey: error }];
     }
     
+    if (!self.me) {
+        return nil;
+    }
+    
     NSString *eventID = [NSUUID UUID].UUIDString;
     CENEvent *tracer = [CENEvent eventWithName:eventName chat:chat chatEngine:self];
     NSDictionary *payload = @{

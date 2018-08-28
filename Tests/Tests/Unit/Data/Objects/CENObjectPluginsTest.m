@@ -5,6 +5,7 @@
 #import <XCTest/XCTest.h>
 #import <OCMock/OCMock.h>
 #import <CENChatEngine/CENChatEngine+PluginsPrivate.h>
+#import <CENChatEngine/CENChatEngine+ChatPrivate.h>
 #import <CENChatEngine/CENObject+PluginsPrivate.h>
 #import <CENChatEngine/CENSearchFilterPlugin.h>
 #import <CENChatEngine/CEPPlugin+Developer.h>
@@ -21,9 +22,10 @@
 
 #pragma mark - Information
 
+@property (nonatomic, nullable, weak) CENChatEngine *client;
+@property (nonatomic, nullable, weak) CENChatEngine *clientMock;
 
 @property (nonatomic, nullable, strong) NSString *defaultObjectType;
-@property (nonatomic, nullable, weak) CENChatEngine *defaultClient;
 @property (nonatomic, nullable, strong) id objectClassMock;
 @property (nonatomic, nullable, strong) CENObject *object;
 
@@ -40,25 +42,29 @@
 
 #pragma mark - Setup / Tear down
 
+- (BOOL)shouldSetupVCR {
+    
+    return NO;
+}
+
 - (void)setUp {
     
     [super setUp];
     
-    CENChatEngine *client = [self chatEngineWithConfiguration:[CENConfiguration configurationWithPublishKey:@"test-36" subscribeKey:@"test-36"]];
-    self.defaultClient = [self partialMockForObject:client];
+    self.client = [self chatEngineWithConfiguration:[CENConfiguration configurationWithPublishKey:@"test-36" subscribeKey:@"test-36"]];
+    self.clientMock = [self partialMockForObject:self.client];
     
     self.defaultObjectType = CENObjectType.search;
     self.objectClassMock = [self mockForClass:[CENObject class]];
     OCMStub([self.objectClassMock objectType]).andReturn(self.defaultObjectType);
     
-    self.object = [[CENObject alloc] initWithChatEngine:self.defaultClient];
+    self.object = [[CENObject alloc] initWithChatEngine:self.client];
+    
+    OCMStub([self.clientMock fetchParticipantsForChat:[OCMArg any]]).andDo(nil);
 }
 
 - (void)tearDown {
-    
-    [self.defaultClient destroy];
-    self.defaultClient = nil;
-    
+
     [self.object destruct];
     self.object = nil;
     
@@ -118,12 +124,12 @@
 
 - (void)testPluginRegisterPlugin_ShouldNotRegisterPluginWithDefaultIdentifier_WhenUnsupportedClassPassed {
     
-    OCMExpect([[(id)self.defaultClient reject] registerPlugin:[OCMArg any] withIdentifier:[OCMArg any] configuration:[OCMArg any]
-                                                    forObject:[OCMArg any] firstInList:NO completion:[OCMArg any]]);
+    OCMExpect([[(id)self.clientMock reject] registerPlugin:[OCMArg any] withIdentifier:[OCMArg any] configuration:[OCMArg any]
+                                                 forObject:[OCMArg any] firstInList:NO completion:[OCMArg any]]);
     
     [self.object registerPlugin:[NSArray class] withConfiguration:nil];
     
-    OCMVerifyAll((id)self.defaultClient);
+    OCMVerifyAll((id)self.clientMock);
 }
 
 - (void)testPluginRegisterPlugin_ShouldRegisterPluginWithCustomIdentifier_WhenPassedDuringRegistration {
@@ -135,22 +141,22 @@
 
 - (void)testPluginRegisterPlugin_ShouldNotRegisterPluginWithCustomIdentifier_WhenUnsupportedClassPassed {
     
-    OCMExpect([[(id)self.defaultClient reject] registerPlugin:[OCMArg any] withIdentifier:[OCMArg any] configuration:[OCMArg any]
-                                                    forObject:[OCMArg any] firstInList:NO completion:[OCMArg any]]);
+    OCMExpect([[(id)self.clientMock reject] registerPlugin:[OCMArg any] withIdentifier:[OCMArg any] configuration:[OCMArg any]
+                                                 forObject:[OCMArg any] firstInList:NO completion:[OCMArg any]]);
     
     [self.object registerPlugin:[NSArray class] withIdentifier:@"test-identifier" configuration:nil];
     
-    OCMVerifyAll((id)self.defaultClient);
+    OCMVerifyAll((id)self.clientMock);
 }
 
 - (void)testPluginRegisterPlugin_ShouldNotRegisterPluginWithCustomIdentifier_WhenUnsupportedIdentifierPassed {
     
-    OCMExpect([[(id)self.defaultClient reject] registerPlugin:[OCMArg any] withIdentifier:[OCMArg any] configuration:[OCMArg any]
-                                                    forObject:[OCMArg any] firstInList:NO completion:[OCMArg any]]);
+    OCMExpect([[(id)self.clientMock reject] registerPlugin:[OCMArg any] withIdentifier:[OCMArg any] configuration:[OCMArg any]
+                                                 forObject:[OCMArg any] firstInList:NO completion:[OCMArg any]]);
     
     [self.object registerPlugin:[CENSearchFilterPlugin class] withIdentifier:(id)@2010 configuration:nil];
     
-    OCMVerifyAll((id)self.defaultClient);
+    OCMVerifyAll((id)self.clientMock);
 }
 
 
@@ -227,7 +233,7 @@
         dispatch_semaphore_signal(semaphore);
     });
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
     XCTAssertTrue(handlerCalled);
 }
 
@@ -246,7 +252,7 @@
         dispatch_semaphore_signal(semaphore);
     }];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
     XCTAssertTrue(handlerCalled);
 }
 
@@ -265,7 +271,7 @@
         dispatch_semaphore_signal(semaphore);
     }];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
     XCTAssertTrue(handlerCalled);
 }
 
@@ -280,7 +286,7 @@
     
     [self.object extension:[NSArray class] withContext:handlerBlock];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.falseTestCompletionDelay * NSEC_PER_SEC)));
     OCMVerifyAll(self.objectClassMock);
 }
 
@@ -299,7 +305,7 @@
         dispatch_semaphore_signal(semaphore);
     });
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
     XCTAssertTrue(handlerCalled);
 }
 
@@ -318,7 +324,7 @@
         dispatch_semaphore_signal(semaphore);
     }];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
     XCTAssertTrue(handlerCalled);
 }
 
@@ -337,7 +343,7 @@
         dispatch_semaphore_signal(semaphore);
     }];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
     XCTAssertTrue(handlerCalled);
 }
 
@@ -347,13 +353,13 @@
     CEDummyPlugin.classesWithExtensions = @[[CENObject class]];
     void(^handlerBlock)(id extension) = nil;
     
-    OCMExpect([[(id)self.defaultClient reject] extensionForObject:[OCMArg any] withIdentifier:[OCMArg any] context:[OCMArg any]]);
+    OCMExpect([[(id)self.clientMock reject] extensionForObject:[OCMArg any] withIdentifier:[OCMArg any] context:[OCMArg any]]);
     self.object.plugin([CEDummyPlugin class]).store();
     
     [self.object extensionWithIdentifier:(id)@2010 context:handlerBlock];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
-    OCMVerifyAll((id)self.defaultClient);
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.falseTestCompletionDelay * NSEC_PER_SEC)));
+    OCMVerifyAll((id)self.clientMock);
 }
 
 

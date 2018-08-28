@@ -21,9 +21,32 @@
 #import "CENEventEmitter+Private.h"
 #import "CENChatEngine+Session.h"
 #import "CENChat+Private.h"
+#import "CENLogMacro.h"
+#import "CENMe.h"
 
 
-#pragma mark Interface implementation
+#pragma mark Protected interface declaration
+
+@interface CENChatEngine (ConnectionProtected)
+
+
+#pragma mark - Handlers
+
+/**
+ * @brief      Handle local user setup preparation completion.
+ * @discussion At moment of handler call, local user has been created along with it's connected \c direct and \c feed chats.
+ *
+ * @param state Reference on state which is expected to be set for user and available for everyone.
+ */
+- (void)handleLocalUserSetupWithState:(NSDictionary *)state;
+
+#pragma mark -
+
+
+@end
+
+
+#pragma mark - Interface implementation
 
 @implementation CENChatEngine (Connection)
 
@@ -88,32 +111,38 @@
     
     authKey = authKey ?: [[NSUUID UUID] UUIDString];
     
+    CELogAPICall(self.logger, @"<ChatEngine::API> Connect '%@' using '%@' auth key.%@", userUUID, authKey,
+                 state.count ? [@[@" State: ", state] componentsJoinedByString:@""] : @"");
+    
     [self authorizeLocalUserWithUUID:userUUID authorizationKey:authKey completion:^{
         [self setupPubNubForUserWithUUID:userUUID authorizationKey:authKey];
         
         [self createGlobalChat];
         [self.global handleEventOnce:@"$.connected" withHandlerBlock:^{
+            dispatch_group_t localUserCreationGroup = dispatch_group_create();
+            dispatch_group_enter(localUserCreationGroup);
+            dispatch_group_enter(localUserCreationGroup);
+            
             [self createUserWithUUID:userUUID state:@{}];
             
-            [self listenSynchronizationEvents];
-            
-            [self updateLocalUserState:state withCompletion:^{
-                dispatch_sync(self.resourceAccessQueue, ^{
-                    self.ready = YES;
-                    [self emitEventLocally:@"$.ready", self.me, nil];
-                });
-                
-                [self connectToPubNub];
-                
-                [self.global fetchParticipants];
-                
-                [self synchronizeSession];
+            [self.me.direct handleEventOnce:@"$.connected" withHandlerBlock:^{
+                dispatch_group_leave(localUserCreationGroup);
             }];
+            
+            [self.me.feed handleEventOnce:@"$.connected" withHandlerBlock:^{
+                dispatch_group_leave(localUserCreationGroup);
+            }];
+            
+            dispatch_group_notify(localUserCreationGroup, dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+                [self handleLocalUserSetupWithState:state];
+            });
         }];
     }];
 }
 
 - (void)reconnectUser {
+    
+    CELogAPICall(self.logger, @"<ChatEngine::API> Reconnect '%@' using '%@' auth key.", self.pubNubUUID, self.pubNubAuthKey);
     
     __weak __typeof__(self) weakSelf = self;
     [self authorizeLocalUserWithCompletion:^{
@@ -126,8 +155,31 @@
 
 - (void)disconnectUser {
     
+    CELogAPICall(self.logger, @"<ChatEngine::API> Disconnect '%@'.", self.pubNubUUID);
+    
     [self disconnectFromPubNub];
     [self disconnectChats];
+}
+
+
+#pragma mark - Handlers
+
+- (void)handleLocalUserSetupWithState:(NSDictionary *)state {
+    
+    [self updateLocalUserState:state withCompletion:^{
+        dispatch_sync(self.resourceAccessQueue, ^{
+            self.ready = YES;
+            [self emitEventLocally:@"$.ready", self.me, nil];
+        });
+        
+        [self connectToPubNub];
+        
+        [self.global fetchParticipants];
+        
+        [self listenSynchronizationEvents];
+        
+        [self synchronizeSession];
+    }];
 }
 
 #pragma mark -

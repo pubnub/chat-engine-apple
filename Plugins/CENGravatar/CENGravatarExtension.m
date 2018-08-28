@@ -79,14 +79,14 @@ NS_ASSUME_NONNULL_END
 
 - (void)onDestruct {
     
-    [self.object removeHandler:self.eventHandlerBlock forEvent:@"$.state"];
+    [self.object.chatEngine removeHandler:self.eventHandlerBlock forEvent:@"$.state"];
 }
 
 - (void)handleUserStateChange:(CENUser *)user {
     
     NSDictionary *userState = user.state;
     NSString *email = userState[self.configuration[CENGravatarPluginConfiguration.emailKey]];
-    
+
     if (![user isKindOfClass:[CENMe class]] || !email) {
         return;
     }

@@ -11,10 +11,10 @@
 #pragma mark General information constants
 
 // Stores client library version number
-static NSString * const kCELibraryVersion = @"0.9.0";
+static NSString * const kCELibraryVersion = @"0.9.2";
 
 // Stores information about SDK codebase
-static NSString * const kCECommit = @"initial";
+static NSString * const kCECommit = @"cb41650117d0e95023aa0fccb7f220b709932a22";
 
 
 #pragma mark - Service information
@@ -27,8 +27,8 @@ static NSString * const kCEPNFunctionsBaseURI = @"https://pubsub.pubnub.com/v1/b
 
 #pragma mark - Default client configuration
 
-static NSInteger const kCEDefaultPresenceHeartbeatValue = 150;
-static NSInteger const kCEDefaultPresenceHeartbeatInterval = 120;
+static NSInteger const kCEDefaultPresenceHeartbeatValue = 300;
+static NSInteger const kCEDefaultPresenceHeartbeatInterval = 0;
 static NSString * const kCEDefaultGlobalChannel = @"chat-engine";
 static BOOL const kCEDefaultShouldSynchronizeSession = NO;
 static BOOL const kCEDefaultEnableMeta = NO;

@@ -67,7 +67,7 @@
         dispatch_semaphore_signal(semaphore);
     });
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(10.f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
     XCTAssertTrue(hanlderCalled);
 }
 
@@ -79,10 +79,11 @@
     
     client.on(@"$.state", ^(CENUser *user) {
         hanlderCalled = YES;
+        
         dispatch_semaphore_signal(semaphore);
     });
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(4.f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.falseTestCompletionDelay * NSEC_PER_SEC)));
     XCTAssertFalse(hanlderCalled);
 }
 
@@ -101,7 +102,7 @@
         dispatch_semaphore_signal(semaphore);
     });
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(10.f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
     XCTAssertTrue(handlerCalled);
 }
 
@@ -110,30 +111,24 @@
     NSString *expected = @"https:/www.gravatar.com/avatar/9c0a62f30107b5ad7dbf83d97b27634f";
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     CENChatEngine *client = [self chatEngineForUser:@"ian"];
-    __block BOOL handlerCalledOnce = NO;
-    __block BOOL handlerCalledTwice = NO;
+    __block BOOL handlerCalled = NO;
     
     client.on(@"$.state", ^(CENUser *user) {
-        if (handlerCalledOnce) {
-            handlerCalledTwice = YES;
+        if (user.state[@"imgURL"] && [user.state[@"imgURL"] isEqualToString:expected]) {
+            handlerCalled = YES;
             
             XCTAssertNotNil(user.state[@"imgURL"]);
-            XCTAssertEqualObjects(user.state[@"imgURL"], expected);
             dispatch_semaphore_signal(semaphore);
         }
         
         if ([user.state[@"email"] isEqualToString:@"test@pubnub.com"]) {
+            dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.delayedCheck * NSEC_PER_SEC)));
             client.me.update(@{ @"email": @"test1@pubnub.com" });
-        }
-        
-        if ([user.state[@"email"] isEqualToString:@"test1@pubnub.com"]) {
-            handlerCalledOnce = YES;
         }
     });
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(10.f * NSEC_PER_SEC)));
-    XCTAssertTrue(handlerCalledOnce);
-    XCTAssertTrue(handlerCalledTwice);
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
+    XCTAssertTrue(handlerCalled);
 }
 
 #pragma mark -

@@ -148,6 +148,7 @@ NS_ASSUME_NONNULL_END
     configuration.globalChannel = self.globalChannel;
     configuration.synchronizeSession = self.shouldSynchronizeSession;
     configuration.enableMeta = self.enableMeta;
+    configuration.debugEvents = self.shouldDebugEvents;
     configuration.throwExceptions = self.shouldThrowExceptions;
     
     return configuration;

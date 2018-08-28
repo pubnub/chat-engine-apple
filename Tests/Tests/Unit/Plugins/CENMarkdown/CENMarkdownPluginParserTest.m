@@ -2,11 +2,11 @@
  * @author Serhii Mamontov
  * @copyright © 2009-2018 PubNub, Inc.
  */
-#import <XCTest/XCTest.h>
 #import <CENChatEngine/CENMarkdownParser+Private.h>
+#import "CENTestCase.h"
 
 
-@interface CENMarkdownPluginParserTest : XCTestCase
+@interface CENMarkdownPluginParserTest : CENTestCase
 
 
 #pragma mark - Information
@@ -40,6 +40,11 @@
 
 
 #pragma mark - Setup / Tear down
+
+- (BOOL)shouldSetupVCR {
+    
+    return [self.name isEqualToString:@"testImage_ShuldAddImageAttachment_WhenTextStringWithImageMarkdownMarkupPassed"];
+}
 
 - (void)setUp {
     

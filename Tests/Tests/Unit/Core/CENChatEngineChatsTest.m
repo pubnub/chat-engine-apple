@@ -7,11 +7,14 @@
 #import <CENChatEngine/CENChatEngine+AuthorizationPrivate.h>
 #import <CENChatEngine/CENChatEngine+ChatInterface.h>
 #import <CENChatEngine/CENChatEngine+PubNubPrivate.h>
+#import <CENChatEngine/CENChatEngine+EventEmitter.h>
 #import <CENChatEngine/CENChatEngine+ChatPrivate.h>
 #import <CENChatEngine/CENEventEmitter+Private.h>
+#import <CENChatEngine/CENChatEngine+Publish.h>
 #import <CENChatEngine/CENChatEngine+Session.h>
 #import <CENChatEngine/CENChatEngine+Private.h>
 #import <CENChatEngine/CENPNFunctionClient.h>
+#import <CENChatEngine/CENSession+Private.h>
 #import <CENChatEngine/CENChat+Interface.h>
 #import <CENChatEngine/CENChatsManager.h>
 #import <CENChatEngine/CENChat+Private.h>
@@ -26,7 +29,11 @@
 
 #pragma mark - Information
 
-@property (nonatomic, nullable, weak) CENChatEngine *defaultClient;
+@property (nonatomic, nullable, weak) CENChatEngine *client;
+@property (nonatomic, nullable, weak) CENChatEngine *clientMock;
+
+@property (nonatomic, nullable, weak) CENChat *global;
+@property (nonatomic, nullable, weak) CENChat *globalMock;
 
 
 #pragma mark - Misc
@@ -47,27 +54,39 @@
 
 #pragma mark - Setup / Tear down
 
+- (BOOL)shouldSetupVCR {
+    
+    return NO;
+}
+
 - (void)setUp {
     
     [super setUp];
     
     CENConfiguration *configuration = [CENConfiguration configurationWithPublishKey:@"test-36" subscribeKey:@"test-36"];
-    self.defaultClient = [self partialMockForObject:[self chatEngineWithConfiguration:configuration]];
+    configuration.synchronizeSession = [self.name rangeOfString:@"SynchronizationChat"].location != NSNotFound;
+    self.client = [self chatEngineWithConfiguration:configuration];
+    self.clientMock = [self partialMockForObject:self.client];
     
     BOOL mockDirectFeed = ([self.name rangeOfString:@"DirectChatForUser"].location == NSNotFound &&
                            [self.name rangeOfString:@"FeedChatForUser"].location == NSNotFound);
     BOOL mockChatConnection = [self.name rangeOfString:@"ConnectToChat"].location == NSNotFound;
     
     if (mockDirectFeed) {
-        OCMStub([self.defaultClient createDirectChatForUser:[OCMArg any]])
-            .andReturn(self.defaultClient.Chat().name(@"user-direct").autoConnect(NO).create());
-        OCMStub([self.defaultClient createFeedChatForUser:[OCMArg any]])
-            .andReturn(self.defaultClient.Chat().name(@"user-feed").autoConnect(NO).create());
+        OCMStub([self.clientMock createDirectChatForUser:[OCMArg any]])
+            .andReturn(self.clientMock.Chat().name(@"chat-engine#user#tester#write.#direct").autoConnect(NO).create());
+        OCMStub([self.clientMock createFeedChatForUser:[OCMArg any]])
+            .andReturn(self.clientMock.Chat().name(@"chat-engine#user#tester#read.#feed").autoConnect(NO).create());
     }
-    OCMStub([self.defaultClient me]).andReturn([CENMe userWithUUID:@"tester" state:@{} chatEngine:self.defaultClient]);
+    
+    OCMStub([self.clientMock me]).andReturn([CENMe userWithUUID:@"tester" state:@{} chatEngine:self.clientMock]);
+    
+    if ([self.name rangeOfString:@"FetchParticipants"].location == NSNotFound) {
+        OCMStub([self.clientMock fetchParticipantsForChat:[OCMArg any]]).andDo(nil);
+    }
     
     if (mockChatConnection) {
-        OCMStub([self.defaultClient connectToChat:[OCMArg any] withCompletion:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
+        OCMStub([self.clientMock connectToChat:[OCMArg any] withCompletion:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
             void(^handleBlock)(NSDictionary *) = nil;
             
             [invocation getArgument:&handleBlock atIndex:3];
@@ -75,15 +94,18 @@
         });
     }
     
-    [self.defaultClient createGlobalChat];
-}
-
-- (void)tearDown {
+    [self.clientMock createGlobalChat];
     
-    [self.defaultClient destroy];
-    self.defaultClient = nil;
+    self.global = self.client.global;
+    if ([self.name rangeOfString:@"testFetchParticipantsForChat_ShouldRequestParticipantsListWithStates_WhenRequestedForGlobalChat"].location == NSNotFound) {
+        self.globalMock = [self partialMockForObject:self.global];
+        OCMStub([self.clientMock global]).andReturn(self.globalMock);
+        OCMStub([self.clientMock.global connected]).andReturn(YES);
+    }
     
-    [super tearDown];
+    if (configuration.shouldSynchronizeSession) {
+        [self.client.synchronizationSession listenEvents];
+    }
 }
 
 
@@ -91,12 +113,12 @@
 
 - (void)testChatCreateChatWithName_ShouldCreateChatInstance {
     
-    XCTAssertNotNil(self.defaultClient.Chat().name(@"test-chat").autoConnect(NO).create());
+    XCTAssertNotNil(self.client.Chat().name(@"test-chat").autoConnect(NO).create());
 }
 
 - (void)testChatCreateChatWithName_ShouldCreateChatInstanceWithRandomName {
     
-    CENChat *chat = self.defaultClient.Chat().autoConnect(NO).create();
+    CENChat *chat = self.client.Chat().autoConnect(NO).create();
     
     XCTAssertNotNil(chat.name);
     XCTAssertGreaterThan(chat.name.length, 0);
@@ -104,7 +126,7 @@
 
 - (void)testChatCreateChatWithName_ShouldCreatePrivateChatInstance {
     
-    CENChat *chat = self.defaultClient.Chat().name(@"test-chat").private(YES).autoConnect(NO).create();
+    CENChat *chat = self.client.Chat().name(@"test-chat").private(YES).autoConnect(NO).create();
     
     XCTAssertTrue(chat.isPrivate);
 }
@@ -112,7 +134,7 @@
 - (void)testChatCreateChatWithName_ShouldCreateChatInstanceWithMetaData {
     
     NSDictionary *expectedMeta = @{ @"test": @"meta" };
-    CENChat *chat = self.defaultClient.Chat().name(@"test-chat").meta(expectedMeta).autoConnect(NO).create();
+    CENChat *chat = self.client.Chat().name(@"test-chat").meta(expectedMeta).autoConnect(NO).create();
     
     XCTAssertNotNil(chat.meta);
     XCTAssertEqualObjects(chat.meta, expectedMeta);
@@ -120,9 +142,8 @@
 
 - (void)testChatCreateChatWithName_ShouldReturnExistingChatInstance {
     
-    CENChat *chat1 = self.defaultClient.Chat().name(@"test-chat").autoConnect(NO).create();
-    
-    CENChat *chat2 = self.defaultClient.Chat().name(@"test-chat").autoConnect(NO).create();
+    CENChat *chat1 = self.client.Chat().name(@"test-chat").autoConnect(NO).create();
+    CENChat *chat2 = self.client.Chat().name(@"test-chat").autoConnect(NO).create();
     
     XCTAssertEqual(chat2, chat1);
 }
@@ -132,9 +153,8 @@
 
 - (void)testChatChatWithName_ShouldFindAndReturnChatByName {
     
-    CENChat *chat1 = self.defaultClient.Chat().name(@"test-chat").autoConnect(NO).create();
-    
-    CENChat *chat2 = self.defaultClient.Chat().name(@"test-chat").get();
+    CENChat *chat1 = self.client.Chat().name(@"test-chat").autoConnect(NO).create();
+    CENChat *chat2 = self.client.Chat().name(@"test-chat").get();
     
     XCTAssertNotNil(chat2);
     XCTAssertEqual(chat2, chat1);
@@ -142,9 +162,9 @@
 
 - (void)testChatChatWithName_ShouldNotFindChatByName_WhenDifferentPrivacyPassed {
     
-    self.defaultClient.Chat().name(@"test-chat").autoConnect(NO).create();
+    self.client.Chat().name(@"test-chat").autoConnect(NO).create();
     
-    CENChat *chat = self.defaultClient.Chat().name(@"test-chat").private(YES).get();
+    CENChat *chat = self.client.Chat().name(@"test-chat").private(YES).get();
     
     XCTAssertNil(chat);
 }
@@ -154,14 +174,14 @@
 
 - (void)testCreateGlobalChat_ShouldCreateGlobalChat {
     
-    id chatsManagerPartialMock = [self partialMockForObject:self.defaultClient.chatsManager];
-    NSString *expectedGlobalChat = self.defaultClient.currentConfiguration.globalChannel;
+    id chatsManagerPartialMock = [self partialMockForObject:self.client.chatsManager];
+    NSString *expectedGlobalChat = self.client.currentConfiguration.globalChannel;
     NSString *expectedGroup = CENChatGroup.system;
     
     OCMExpect([chatsManagerPartialMock createChatWithName:expectedGlobalChat group:expectedGroup private:NO autoConnect:YES metaData:nil])
         .andDo(nil);
     
-    [self.defaultClient createGlobalChat];
+    [self.client createGlobalChat];
     
     OCMVerifyAll(chatsManagerPartialMock);
 }
@@ -171,30 +191,30 @@
 
 - (void)testCreateDirectChatForUser_ShouldCreateInstanceForLocalUser {
     
-    NSString *globalChannel = self.defaultClient.configuration.globalChannel;
-    NSString *expectedChatName = [@[globalChannel, @"user", self.defaultClient.me.uuid, @"write.", @"direct"] componentsJoinedByString:@"#"];
+    NSString *globalChannel = self.clientMock.configuration.globalChannel;
+    NSString *expectedChatName = [@[globalChannel, @"user", self.clientMock.me.uuid, @"write.", @"direct"] componentsJoinedByString:@"#"];
     NSString *expectedGroup = CENChatGroup.system;
     
-    OCMExpect([self.defaultClient createChatWithName:expectedChatName group:expectedGroup private:NO autoConnect:YES metaData:nil])
+    OCMExpect([self.clientMock createChatWithName:expectedChatName group:expectedGroup private:NO autoConnect:NO metaData:nil])
         .andDo(nil);
     
-    [self.defaultClient createDirectChatForUser:self.defaultClient.me];
+    [self.clientMock createDirectChatForUser:self.clientMock.me];
     
-    OCMVerifyAll((id)self.defaultClient);
+    OCMVerifyAll((id)self.clientMock);
 }
 
 - (void)testCreateDirectChatForUser_ShouldCreateInstanceForRemoteUser {
     
-    CENUser *user = [CENUser userWithUUID:@"remoter" state:@{} chatEngine:self.defaultClient];
-    NSString *globalChannel = self.defaultClient.configuration.globalChannel;
+    CENUser *user = [CENUser userWithUUID:@"remoter" state:@{} chatEngine:self.clientMock];
+    NSString *globalChannel = self.clientMock.configuration.globalChannel;
     NSString *expectedChatName = [@[globalChannel, @"user", user.uuid, @"write.", @"direct"] componentsJoinedByString:@"#"];
     NSString *expectedGroup = CENChatGroup.system;
     
-    OCMExpect([self.defaultClient createChatWithName:expectedChatName group:expectedGroup private:NO autoConnect:NO metaData:nil]).andDo(nil);
+    OCMExpect([self.clientMock createChatWithName:expectedChatName group:expectedGroup private:NO autoConnect:NO metaData:nil]).andDo(nil);
     
-    [self.defaultClient createDirectChatForUser:user];
+    [self.clientMock createDirectChatForUser:user];
     
-    OCMVerifyAll((id)self.defaultClient);
+    OCMVerifyAll((id)self.clientMock);
 }
 
 
@@ -202,29 +222,29 @@
 
 - (void)testCreateFeedChatForUser_ShouldCreateInstanceForLocalUser {
     
-    NSString *globalChannel = self.defaultClient.configuration.globalChannel;
-    NSString *expectedChatName = [@[globalChannel, @"user", self.defaultClient.me.uuid, @"read.", @"feed"] componentsJoinedByString:@"#"];
+    NSString *globalChannel = self.clientMock.configuration.globalChannel;
+    NSString *expectedChatName = [@[globalChannel, @"user", self.clientMock.me.uuid, @"read.", @"feed"] componentsJoinedByString:@"#"];
     NSString *expectedGroup = CENChatGroup.system;
     
-    OCMExpect([self.defaultClient createChatWithName:expectedChatName group:expectedGroup private:NO autoConnect:YES metaData:nil]).andDo(nil);
+    OCMExpect([self.clientMock createChatWithName:expectedChatName group:expectedGroup private:NO autoConnect:NO metaData:nil]).andDo(nil);
     
-    [self.defaultClient createFeedChatForUser:self.defaultClient.me];
+    [self.clientMock createFeedChatForUser:self.clientMock.me];
     
-    OCMVerifyAll((id)self.defaultClient);
+    OCMVerifyAll((id)self.clientMock);
 }
 
 - (void)testCreateFeedChatForUser_ShouldCreateInstanceForRemoteUser {
     
-    CENUser *user = [CENUser userWithUUID:@"remoter" state:@{} chatEngine:self.defaultClient];
-    NSString *globalChannel = self.defaultClient.configuration.globalChannel;
+    CENUser *user = [CENUser userWithUUID:@"remoter" state:@{} chatEngine:self.clientMock];
+    NSString *globalChannel = self.clientMock.configuration.globalChannel;
     NSString *expectedChatName = [@[globalChannel, @"user", user.uuid, @"read.", @"feed"] componentsJoinedByString:@"#"];
     NSString *expectedGroup = CENChatGroup.system;
     
-    OCMExpect([self.defaultClient createChatWithName:expectedChatName group:expectedGroup private:NO autoConnect:NO metaData:nil]).andDo(nil);
+    OCMExpect([self.clientMock createChatWithName:expectedChatName group:expectedGroup private:NO autoConnect:NO metaData:nil]).andDo(nil);
     
-    [self.defaultClient createFeedChatForUser:user];
+    [self.clientMock createFeedChatForUser:user];
     
-    OCMVerifyAll((id)self.defaultClient);
+    OCMVerifyAll((id)self.clientMock);
 }
 
 
@@ -232,12 +252,12 @@
 
 - (void)testRemoveChat_ShouldRequestChatRemoval {
     
-    id chatsManagerPartialMock = [self partialMockForObject:self.defaultClient.chatsManager];
-    CENChat *expectedChat = self.defaultClient.me.direct;
+    id chatsManagerPartialMock = [self partialMockForObject:self.client.chatsManager];
+    CENChat *expectedChat = self.client.me.direct;
     
     OCMExpect([chatsManagerPartialMock removeChat:expectedChat]).andDo(nil);
     
-    [self.defaultClient removeChat:expectedChat];
+    [self.client removeChat:expectedChat];
     
     OCMVerifyAll(chatsManagerPartialMock);
 }
@@ -247,39 +267,34 @@
 
 - (void)testFetchRemoteStateForChat_ShouldCallSetOfEndpoints {
     
-    CENChat *expectedChat = self.defaultClient.me.direct;
+    CENChat *expectedChat = self.client.me.direct;
     NSArray<NSDictionary *> *expectedRoutes = @[@{ @"route": @"chat", @"method": @"get", @"query": @{ @"channel": expectedChat.channel } }];
-    id functionsClientPartialMock = [self partialMockForObject:self.defaultClient.functionsClient];
+    id functionsClientPartialMock = [self partialMockForObject:self.client.functionsClient];
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     __block BOOL handlerCalled = NO;
     
     OCMExpect([functionsClientPartialMock callRouteSeries:expectedRoutes withCompletion:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
-        void(^handlerBlock)(BOOL, NSArray *) = nil;
-        
-        [invocation getArgument:&handlerBlock atIndex:3];
-        handlerBlock(YES, nil);
+        handlerCalled = YES;
+
+        dispatch_semaphore_signal(semaphore);
     });
     
-    [self.defaultClient fetchRemoteStateForChat:expectedChat withCompletion:^(BOOL isError, NSDictionary *meta) {
-        handlerCalled = YES;
-        
-        XCTAssertFalse(isError);
-        dispatch_semaphore_signal(semaphore);
-    }];
+    [self.client fetchRemoteStateForChat:expectedChat withCompletion:^(BOOL isError, NSDictionary *meta) { }];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
     OCMVerifyAll(functionsClientPartialMock);
     XCTAssertTrue(handlerCalled);
 }
 
 - (void)testFetchRemoteStateForChat_ShouldUpdateChatMeta_WhenStateFetchedSuccessfully {
     
-    CENChat *expectedChat = self.defaultClient.global;
+    CENChat *expectedChat = self.clientMock.global;
     NSArray<NSDictionary *> *expectedRoutes = @[@{ @"route": @"chat", @"method": @"get", @"query": @{ @"channel": expectedChat.channel } }];
     NSDictionary *expectedMeta = @{ @"cloud": @[@"stored",@"meta"] };
     NSDictionary *remoteMetaData = @{ CENEventData.chat: @{ @"meta": expectedMeta } };
-    id functionsClientPartialMock = [self partialMockForObject:self.defaultClient.functionsClient];
+    id functionsClientPartialMock = [self partialMockForObject:self.clientMock.functionsClient];
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
+    __block BOOL handlerCalled = NO;
     
     OCMStub([functionsClientPartialMock callRouteSeries:expectedRoutes withCompletion:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
         void(^handlerBlock)(BOOL, NSArray *) = nil;
@@ -288,12 +303,18 @@
         handlerBlock(YES, @[remoteMetaData]);
     });
     
-    OCMExpect([self.defaultClient handleFetchedMeta:expectedMeta forChat:expectedChat]).andForwardToRealObject();
+    OCMExpect([self.clientMock handleFetchedMeta:expectedMeta forChat:expectedChat]).andDo(^(NSInvocation *invocation) {
+        handlerCalled = YES;
+        
+        [invocation invoke];
+        dispatch_semaphore_signal(semaphore);
+    });
     
-    [self.defaultClient fetchRemoteStateForChat:expectedChat withCompletion:^(BOOL success, NSDictionary * _Nonnull meta) { }];
+    [self.clientMock fetchRemoteStateForChat:expectedChat withCompletion:^(BOOL success, NSDictionary * _Nonnull meta) { }];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
-    OCMVerifyAll((id)self.defaultClient);
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
+    OCMVerifyAll((id)self.clientMock);
+    XCTAssertTrue(handlerCalled);
     XCTAssertEqualObjects(expectedChat.meta, expectedMeta);
 }
 
@@ -302,10 +323,10 @@
 
 - (void)testHandleFetchedMeta_ShouldRequestChatToUpdateMeta {
     
-    CENChat *chat = self.defaultClient.global;
+    CENChat *chat = self.client.global;
     NSDictionary *expectedMeta = @{ @"cloud": @[@"stored",@"meta"] };
     
-    [self.defaultClient handleFetchedMeta:expectedMeta forChat:chat];
+    [self.client handleFetchedMeta:expectedMeta forChat:chat];
     
     XCTAssertEqualObjects(chat.meta, expectedMeta);
 }
@@ -315,12 +336,12 @@
 
 - (void)testUpdateChatState_ShouldUpdateStateOnGlobalChat {
     
-    NSString *expectedChannel = self.defaultClient.currentConfiguration.globalChannel;
+    NSString *expectedChannel = self.clientMock.currentConfiguration.globalChannel;
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     NSDictionary *expectedState = @{ @"test": @"meta" };
     __block BOOL handlerCalled = NO;
     
-    OCMExpect([self.defaultClient setClientState:expectedState forChannel:expectedChannel withCompletion:[OCMArg any]])
+    OCMExpect([self.clientMock setClientState:expectedState forChannel:expectedChannel withCompletion:[OCMArg any]])
         .andDo(^(NSInvocation *invocation) {
             void(^handlerBlock)(PNClientStateUpdateStatus *) = nil;
             
@@ -328,14 +349,14 @@
             handlerBlock(nil);
         });
     
-    [self.defaultClient updateChatState:self.defaultClient.me.direct withData:expectedState completion:^{
+    [self.clientMock updateChatState:self.clientMock.me.direct withData:expectedState completion:^{
         handlerCalled = YES;
         
         dispatch_semaphore_signal(semaphore);
     }];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
-    OCMVerifyAll((id)self.defaultClient);
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
+    OCMVerifyAll((id)self.clientMock);
     XCTAssertTrue(handlerCalled);
 }
 
@@ -344,11 +365,11 @@
 
 - (void)testPushUpdatedChatMeta_ShouldCallSetOfEndpoints {
     
-    CENChat *expectedChat = self.defaultClient.me.direct;
+    CENChat *expectedChat = self.client.me.direct;
     NSArray<NSDictionary *> *expectedRoutes = @[
         @{ @"route": @"chat", @"method": @"post", @"body": @{ @"chat": [expectedChat dictionaryRepresentation] } }
     ];
-    id functionsClientPartialMock = [self partialMockForObject:self.defaultClient.functionsClient];
+    id functionsClientPartialMock = [self partialMockForObject:self.client.functionsClient];
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     __block BOOL handlerCalled = NO;
     
@@ -365,17 +386,17 @@
         dispatch_semaphore_signal(semaphore);
     });
     
-    [self.defaultClient pushUpdatedChatMeta:expectedChat withRepresentation:[expectedChat dictionaryRepresentation]];
+    [self.client pushUpdatedChatMeta:expectedChat withRepresentation:[expectedChat dictionaryRepresentation]];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.falseTestCompletionDelay * NSEC_PER_SEC)));
     OCMVerifyAll(functionsClientPartialMock);
     XCTAssertFalse(handlerCalled);
 }
 
 - (void)testPushUpdatedChatMeta_ShouldThrowEmitError_WhenUpdateUnsuccessful {
     
-    CENChat *expectedChat = self.defaultClient.me.direct;
-    id functionsClientPartialMock = [self partialMockForObject:self.defaultClient.functionsClient];
+    CENChat *expectedChat = self.client.me.direct;
+    id functionsClientPartialMock = [self partialMockForObject:self.client.functionsClient];
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     __block BOOL handlerCalled = NO;
     
@@ -392,16 +413,16 @@
         dispatch_semaphore_signal(semaphore);
     });
     
-    [self.defaultClient pushUpdatedChatMeta:expectedChat withRepresentation:[expectedChat dictionaryRepresentation]];
+    [self.client pushUpdatedChatMeta:expectedChat withRepresentation:[expectedChat dictionaryRepresentation]];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
     XCTAssertTrue(handlerCalled);
 }
 
 - (void)testPushUpdatedChatMeta_ShouldThrowEmitError_WhenUpdateUnsuccessfulWithUnknownError {
     
-    CENChat *expectedChat = self.defaultClient.me.direct;
-    id functionsClientPartialMock = [self partialMockForObject:self.defaultClient.functionsClient];
+    CENChat *expectedChat = self.client.me.direct;
+    id functionsClientPartialMock = [self partialMockForObject:self.client.functionsClient];
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     __block BOOL handlerCalled = NO;
     
@@ -420,12 +441,11 @@
         dispatch_semaphore_signal(semaphore);
     });
     
-    [self.defaultClient pushUpdatedChatMeta:expectedChat withRepresentation:[expectedChat dictionaryRepresentation]];
+    [self.client pushUpdatedChatMeta:expectedChat withRepresentation:[expectedChat dictionaryRepresentation]];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
     XCTAssertTrue(handlerCalled);
 }
-
 
 
 #pragma mark - Tests :: connectToChat
@@ -433,81 +453,150 @@
 - (void)testConnectToChat_ShouldRequestAccessRights {
     
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    CENChat *expectedChat = self.defaultClient.me.direct;
+    CENChat *expectedChat = self.clientMock.me.direct;
     __block BOOL handlerCalled = NO;
     
-    OCMExpect([self.defaultClient handshakeChatAccess:expectedChat withCompletion:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
+    OCMExpect([self.clientMock handshakeChatAccess:expectedChat withCompletion:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
         void(^handlerBlock)(BOOL, NSArray *) = nil;
         
         [invocation getArgument:&handlerBlock atIndex:3];
         handlerBlock(NO, nil);
     });
     
-    [self.defaultClient connectToChat:expectedChat withCompletion:^(NSDictionary *meta){
+    [self.clientMock connectToChat:expectedChat withCompletion:^(NSDictionary *meta) {
         handlerCalled = YES;
         
         dispatch_semaphore_signal(semaphore);
     }];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
-    OCMVerifyAll((id)self.defaultClient);
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
+    OCMVerifyAll((id)self.clientMock);
     XCTAssertTrue(handlerCalled);
 }
 
 - (void)testConnectToChat_ShouldNotCompleteConnection_WhenAccessRightsRequesDidFail {
     
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    CENChat *expectedChat = self.defaultClient.me.direct;
+    CENChat *expectedChat = self.clientMock.me.direct;
+    __block BOOL handlerCalled = NO;
     
-    OCMStub([self.defaultClient handshakeChatAccess:expectedChat withCompletion:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
+    OCMStub([self.clientMock handshakeChatAccess:expectedChat withCompletion:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
         void(^handlerBlock)(BOOL, NSArray *) = nil;
         
         [invocation getArgument:&handlerBlock atIndex:3];
         handlerBlock(YES, nil);
     });
     
-    OCMExpect([[(id)self.defaultClient reject] synchronizeSessionChatJoin:expectedChat]);
+    OCMExpect([[(id)self.clientMock reject] synchronizeSessionChatJoin:expectedChat]);
     
-    [self.defaultClient connectToChat:expectedChat withCompletion:^(NSDictionary *meta){ }];
+    [self.clientMock connectToChat:expectedChat withCompletion:^(NSDictionary *meta) {
+        handlerCalled = YES;
+        dispatch_semaphore_signal(semaphore);
+    }];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
-    OCMVerifyAll((id)self.defaultClient);
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.falseTestCompletionDelay * NSEC_PER_SEC)));
+    OCMVerifyAll((id)self.clientMock);
+    XCTAssertFalse(handlerCalled);
 }
 
 - (void)testConnectToChat_ShouldSynchronizeJoinToChat {
     
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    CENChat *expectedChat = self.defaultClient.me.direct;
+    CENChat *expectedChat = self.clientMock.Chat().group(CENChatGroup.system).autoConnect(NO).create();
     __block BOOL handlerCalled = NO;
     
-    OCMStub([self.defaultClient handshakeChatAccess:expectedChat withCompletion:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
+    OCMStub([self.clientMock isReady]).andReturn(YES);
+    OCMStub([self.clientMock handshakeChatAccess:expectedChat withCompletion:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
         void(^handlerBlock)(BOOL, NSArray *) = nil;
         
         [invocation getArgument:&handlerBlock atIndex:3];
         handlerBlock(NO, nil);
     });
     
-    OCMExpect([(id)self.defaultClient synchronizeSessionChatJoin:expectedChat]).andDo(^(NSInvocation *invocation) {
+    OCMExpect([(id)self.clientMock synchronizeSessionChatJoin:expectedChat]).andDo(^(NSInvocation *invocation) {
         handlerCalled = YES;
         
         dispatch_semaphore_signal(semaphore);
     });
     
-    [self.defaultClient connectToChat:expectedChat withCompletion:^(NSDictionary *meta) { }];
+    [self.clientMock connectToChat:expectedChat withCompletion:^(NSDictionary *meta) { }];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
-    OCMVerifyAll((id)self.defaultClient);
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
+    OCMVerifyAll((id)self.clientMock);
     XCTAssertTrue(handlerCalled);
+}
+
+- (void)testConnectToChat_ShouldNotSynchronizeJoinToChat_WhenItIsGlobalChat {
+    
+    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
+    CENChat *expectedChat = self.clientMock.global;
+    
+    OCMStub([self.clientMock isReady]).andReturn(YES);
+    OCMStub([self.clientMock handshakeChatAccess:expectedChat withCompletion:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
+        void(^handlerBlock)(BOOL, NSArray *) = nil;
+        
+        [invocation getArgument:&handlerBlock atIndex:3];
+        handlerBlock(NO, nil);
+    });
+    
+    OCMExpect([[(id)self.clientMock reject] synchronizeSessionChatJoin:expectedChat]);
+    
+    [self.clientMock connectToChat:expectedChat withCompletion:^(NSDictionary *meta) { }];
+    
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.falseTestCompletionDelay * NSEC_PER_SEC)));
+    OCMVerifyAll((id)self.clientMock);
+}
+
+- (void)testConnectToChat_ShouldNotSynchronizeJoinToChat_WhenItIsDirectChat {
+    
+    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
+    CENChat *expectedChat = self.clientMock.me.direct;
+    
+    OCMStub([self.clientMock isReady]).andReturn(YES);
+    OCMStub([self.clientMock handshakeChatAccess:expectedChat withCompletion:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
+        void(^handlerBlock)(BOOL, NSArray *) = nil;
+        
+        [invocation getArgument:&handlerBlock atIndex:3];
+        handlerBlock(NO, nil);
+    });
+    
+    OCMExpect([[(id)self.clientMock reject] synchronizeSessionChatJoin:expectedChat]);
+    
+    [self.clientMock connectToChat:expectedChat withCompletion:^(NSDictionary *meta) { }];
+    
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.falseTestCompletionDelay * NSEC_PER_SEC)));
+    OCMVerifyAll((id)self.clientMock);
+}
+
+- (void)testConnectToChat_ShouldNotSynchronizeJoinToChat_WhenItIsFeedChat {
+    
+    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
+    CENChat *expectedChat = self.clientMock.me.feed;
+    
+    OCMStub([self.clientMock isReady]).andReturn(YES);
+    OCMStub([self.clientMock handshakeChatAccess:expectedChat withCompletion:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
+        void(^handlerBlock)(BOOL, NSArray *) = nil;
+        
+        [invocation getArgument:&handlerBlock atIndex:3];
+        handlerBlock(NO, nil);
+    });
+    
+    OCMExpect([[(id)self.clientMock reject] synchronizeSessionChatJoin:expectedChat]);
+    
+    [self.clientMock connectToChat:expectedChat withCompletion:^(NSDictionary *meta) { }];
+    
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.falseTestCompletionDelay * NSEC_PER_SEC)));
+    OCMVerifyAll((id)self.clientMock);
 }
 
 - (void)testConnectToChat_ShouldNotifyLocalUserJoin_WhenClientIsReady {
     
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    CENChat *expectedChat = self.defaultClient.Chat().autoConnect(NO).create();
+    CENChat *expectedChat = self.clientMock.Chat().autoConnect(NO).create();
     __block BOOL handlerCalled = NO;
     
-    OCMStub([self.defaultClient isReady]).andReturn(YES);
-    OCMStub([self.defaultClient handshakeChatAccess:expectedChat withCompletion:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
+    OCMStub([self.clientMock isReady]).andReturn(YES);
+    OCMStub([self.clientMock handshakeChatAccess:expectedChat withCompletion:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
         void(^handlerBlock)(BOOL, NSArray *) = nil;
         
         [invocation getArgument:&handlerBlock atIndex:3];
@@ -517,24 +606,24 @@
     expectedChat.once(@"$.online.join", ^(CENUser *user) {
         handlerCalled = YES;
         
-        XCTAssertEqual(user, self.defaultClient.me);
+        XCTAssertEqual(user, self.clientMock.me);
         dispatch_semaphore_signal(semaphore);
     });
     
-    [self.defaultClient connectToChat:expectedChat withCompletion:^(NSDictionary *meta) { }];
+    [self.clientMock connectToChat:expectedChat withCompletion:^(NSDictionary *meta) { }];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
-    OCMVerifyAll((id)self.defaultClient);
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
+    OCMVerifyAll((id)self.clientMock);
     XCTAssertTrue(handlerCalled);
 }
 
 - (void)testConnectToChat_ShouldNotifyLocalUserJoin_WhenClientNotReadyYet {
     
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    CENChat *expectedChat = self.defaultClient.Chat().autoConnect(NO).create();
+    CENChat *expectedChat = self.clientMock.Chat().autoConnect(NO).create();
     __block BOOL handlerCalled = NO;
     
-    OCMStub([self.defaultClient handshakeChatAccess:expectedChat withCompletion:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
+    OCMStub([self.clientMock handshakeChatAccess:expectedChat withCompletion:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
         void(^handlerBlock)(BOOL, NSArray *) = nil;
         
         [invocation getArgument:&handlerBlock atIndex:3];
@@ -544,43 +633,108 @@
     expectedChat.once(@"$.online.join", ^(CENUser *user) {
         handlerCalled = YES;
         
-        XCTAssertEqual(user, self.defaultClient.me);
+        XCTAssertEqual(user, self.clientMock.me);
         dispatch_semaphore_signal(semaphore);
     });
     
-    [self.defaultClient connectToChat:expectedChat withCompletion:^(NSDictionary *meta) { }];
-    [self.defaultClient emitEventLocally:@"$.ready", self.defaultClient.me, nil];
+    [self.clientMock connectToChat:expectedChat withCompletion:^(NSDictionary *meta) { }];
+    [self.clientMock emitEventLocally:@"$.ready", self.clientMock.me, nil];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
-    OCMVerifyAll((id)self.defaultClient);
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
+    OCMVerifyAll((id)self.clientMock);
     XCTAssertTrue(handlerCalled);
 }
 
-- (void)testConnectToChat_ShouldFetchParticipants {
+- (void)testConnectToChat_ShouldFetchParticipants_WhenCustomChatPassed {
     
-    CENChat *expectedChat = self.defaultClient.Chat().autoConnect(NO).create();
+    CENChat *expectedChat = self.clientMock.Chat().autoConnect(NO).create();
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    id chatPartialMock = [self partialMockForObject:expectedChat];
     __block BOOL handlerCalled = NO;
     
-    OCMStub([self.defaultClient handshakeChatAccess:expectedChat withCompletion:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
+    OCMStub([self.clientMock isReady]).andReturn(YES);
+    OCMStub([self.clientMock handshakeChatAccess:expectedChat withCompletion:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
         void(^handlerBlock)(BOOL, NSArray *) = nil;
         
         [invocation getArgument:&handlerBlock atIndex:3];
         handlerBlock(NO, nil);
     });
     
-    OCMExpect([chatPartialMock fetchParticipants]).andDo(^(NSInvocation *invocation) {
+    OCMExpect([self.clientMock fetchParticipantsForChat:expectedChat]).andDo(^(NSInvocation *invocation) {
         handlerCalled = YES;
         
         dispatch_semaphore_signal(semaphore);
     });
     
-    [self.defaultClient connectToChat:expectedChat withCompletion:^(NSDictionary *meta) { }];
+    [self.clientMock connectToChat:expectedChat withCompletion:^(NSDictionary *meta) { }];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
-    OCMVerifyAll((id)self.defaultClient);
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
+    OCMVerifyAll((id)self.clientMock);
     XCTAssertTrue(handlerCalled);
+}
+
+- (void)testConnectToChat_ShouldNotFetchParticipants_WhenDirectChatPassed {
+    
+    CENChat *expectedChat = self.clientMock.me.direct;
+    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
+    
+    OCMStub([self.clientMock isReady]).andReturn(YES);
+    OCMStub([self.clientMock handshakeChatAccess:expectedChat withCompletion:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
+        void(^handlerBlock)(BOOL, NSArray *) = nil;
+        
+        [invocation getArgument:&handlerBlock atIndex:3];
+        handlerBlock(NO, nil);
+    });
+    
+    OCMExpect([[(id)self.clientMock reject] fetchParticipantsForChat:expectedChat]);
+    
+    [self.clientMock connectToChat:expectedChat withCompletion:^(NSDictionary *meta) { }];
+    
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.f * NSEC_PER_SEC)));
+    OCMVerifyAll((id)self.clientMock);
+}
+
+- (void)testConnectToChat_ShouldNotFetchParticipants_WhenFeedChatPassed {
+    
+    CENChat *expectedChat = self.client.me.feed;
+    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
+    
+    OCMStub([self.clientMock isReady]).andReturn(YES);
+    OCMStub([self.clientMock handshakeChatAccess:expectedChat withCompletion:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
+        void(^handlerBlock)(BOOL, NSArray *) = nil;
+        
+        [invocation getArgument:&handlerBlock atIndex:3];
+        handlerBlock(NO, nil);
+    });
+    
+    OCMExpect([[(id)self.clientMock reject] fetchParticipantsForChat:expectedChat]);
+    
+    [self.client connectToChat:expectedChat withCompletion:^(NSDictionary *meta) { }];
+    
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.f * NSEC_PER_SEC)));
+    OCMVerifyAll((id)self.clientMock);
+}
+
+- (void)testConnectToChat_ShouldNotFetchParticipants_WhenSynchronizationChatPassed {
+    
+    NSString *chatsNamespace = self.client.currentConfiguration.globalChannel;
+    NSString *synchronizationChatName = [@[chatsNamespace, @"user", self.client.me.uuid, @"me.", @"sync"] componentsJoinedByString:@"#"];
+    CENChat *expectedChat = self.client.Chat().name(synchronizationChatName).get();
+    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
+    
+    OCMStub([self.clientMock isReady]).andReturn(YES);
+    OCMStub([self.clientMock handshakeChatAccess:expectedChat withCompletion:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
+        void(^handlerBlock)(BOOL, NSArray *) = nil;
+        
+        [invocation getArgument:&handlerBlock atIndex:3];
+        handlerBlock(NO, nil);
+    });
+    
+    OCMExpect([[(id)self.clientMock reject] fetchParticipantsForChat:expectedChat]);
+    
+    [self.client connectToChat:expectedChat withCompletion:^(NSDictionary *meta) { }];
+    
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.f * NSEC_PER_SEC)));
+    OCMVerifyAll((id)self.clientMock);
 }
 
 
@@ -588,10 +742,10 @@
 
 - (void)testConnectChats_ShouldRequestManagerToConnect {
     
-    id chatsManagerPartialMock = [self partialMockForObject:self.defaultClient.chatsManager];
+    id chatsManagerPartialMock = [self partialMockForObject:self.client.chatsManager];
     OCMExpect([chatsManagerPartialMock connectChats]);
     
-    [self.defaultClient connectChats];
+    [self.client connectChats];
     
     OCMVerifyAll(chatsManagerPartialMock);
 }
@@ -601,10 +755,10 @@
 
 - (void)testDisconnectChats_ShouldRequestManagerToDisconnect {
     
-    id chatsManagerPartialMock = [self partialMockForObject:self.defaultClient.chatsManager];
+    id chatsManagerPartialMock = [self partialMockForObject:self.client.chatsManager];
     OCMExpect([chatsManagerPartialMock disconnectChats]);
     
-    [self.defaultClient disconnectChats];
+    [self.client disconnectChats];
     
     OCMVerifyAll(chatsManagerPartialMock);
 }
@@ -614,16 +768,15 @@
 
 - (void)testInviteToChat_ShouldCallSetOfEndpoints {
     
-    CENUser *expectedUser = [CENUser userWithUUID:@"invite-tester" state:@{} chatEngine:self.defaultClient];
-    CENChat *expectedChat = self.defaultClient.me.direct;
+    CENUser *expectedUser = [CENUser userWithUUID:@"invite-tester" state:@{} chatEngine:self.client];
+    CENChat *expectedChat = self.client.me.direct;
     NSDictionary *expectedInviteData = @{ @"channel": expectedChat.channel };
     NSArray<NSDictionary *> *expectedRoutes = @[@{
         @"route": @"invite",
         @"method": @"post",
         @"body": @{ @"to": expectedUser.uuid, @"chat": [expectedChat dictionaryRepresentation] }
     }];
-    id functionsClientPartialMock = [self partialMockForObject:self.defaultClient.functionsClient];
-    id chatPartialMock = [self partialMockForObject:expectedChat];
+    id functionsClientPartialMock = [self partialMockForObject:self.client.functionsClient];
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     __block BOOL handlerCalled = NO;
     
@@ -634,25 +787,25 @@
         handlerBlock(YES, nil);
     });
     
-    OCMExpect([chatPartialMock emitEvent:@"$.invite" withData:expectedInviteData]).andDo(^(NSInvocation *invocation) {
+    OCMExpect([self.clientMock publishToChat:expectedChat eventWithName:@"$.invite" data:expectedInviteData]).andDo(^(NSInvocation *invocation) {
         handlerCalled = YES;
         
         dispatch_semaphore_signal(semaphore);
     });
     
-    [self.defaultClient inviteToChat:expectedChat user:expectedUser];
+    [self.client inviteToChat:expectedChat user:expectedUser];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
     OCMVerifyAll(functionsClientPartialMock);
-    OCMVerifyAll(chatPartialMock);
+    OCMVerifyAll((id)self.clientMock);
     XCTAssertTrue(handlerCalled);
 }
 
 - (void)testInviteToChat_WhenInviteUnsuccessful {
     
-    CENUser *expectedUser = [CENUser userWithUUID:@"invite-tester" state:@{} chatEngine:self.defaultClient];
-    CENChat *expectedChat = self.defaultClient.me.direct;
-    id functionsClientPartialMock = [self partialMockForObject:self.defaultClient.functionsClient];
+    CENUser *expectedUser = [CENUser userWithUUID:@"invite-tester" state:@{} chatEngine:self.client];
+    CENChat *expectedChat = self.client.me.direct;
+    id functionsClientPartialMock = [self partialMockForObject:self.client.functionsClient];
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     __block BOOL handlerCalled = NO;
     
@@ -669,17 +822,17 @@
         dispatch_semaphore_signal(semaphore);
     });
     
-    [self.defaultClient inviteToChat:expectedChat user:expectedUser];
+    [self.client inviteToChat:expectedChat user:expectedUser];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
     XCTAssertTrue(handlerCalled);
 }
 
 - (void)testInviteToChat_ShouldThrowEmitError_WhenInviteUnsuccessfulWithUnknownError {
     
-    CENUser *expectedUser = [CENUser userWithUUID:@"invite-tester" state:@{} chatEngine:self.defaultClient];
-    CENChat *expectedChat = self.defaultClient.me.direct;
-    id functionsClientPartialMock = [self partialMockForObject:self.defaultClient.functionsClient];
+    CENUser *expectedUser = [CENUser userWithUUID:@"invite-tester" state:@{} chatEngine:self.client];
+    CENChat *expectedChat = self.client.me.direct;
+    id functionsClientPartialMock = [self partialMockForObject:self.client.functionsClient];
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     __block BOOL handlerCalled = NO;
     
@@ -698,9 +851,9 @@
         dispatch_semaphore_signal(semaphore);
     });
     
-    [self.defaultClient inviteToChat:expectedChat user:expectedUser];
+    [self.client inviteToChat:expectedChat user:expectedUser];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
     XCTAssertTrue(handlerCalled);
 }
 
@@ -709,14 +862,13 @@
 
 - (void)testLeaveChat_ShouldCallSetOfEndpoints {
     
-    CENChat *expectedChat = self.defaultClient.me.direct;
+    CENChat *expectedChat = self.client.me.direct;
     NSArray<NSDictionary *> *expectedRoutes = @[@{
         @"route": @"leave",
         @"method": @"post",
         @"body": @{ @"chat": [expectedChat dictionaryRepresentation] }
     }];
-    id functionsClientPartialMock = [self partialMockForObject:self.defaultClient.functionsClient];
-    id chatPartialMock = [self partialMockForObject:expectedChat];
+    id functionsClientPartialMock = [self partialMockForObject:self.client.functionsClient];
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     __block BOOL handlerCalled = NO;
     
@@ -727,36 +879,47 @@
         handlerBlock(YES, nil);
     });
     
-    OCMExpect([chatPartialMock handleLeave]).andDo(^(NSInvocation *invocation) {
-        handlerCalled = YES;
-        
-        dispatch_semaphore_signal(semaphore);
-    });
+    OCMExpect([self.clientMock triggerEventLocallyFrom:expectedChat event:@"$.left" withParameters:@[] completion:nil])
+        .andDo(^(NSInvocation *invocation) {
+            handlerCalled = YES;
+            
+            dispatch_semaphore_signal(semaphore);
+        });
     
-    [self.defaultClient leaveChat:expectedChat];
+    [self.clientMock leaveChat:expectedChat];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
     OCMVerifyAll(functionsClientPartialMock);
-    OCMVerifyAll(chatPartialMock);
+    OCMVerifyAll((id)self.clientMock);
     XCTAssertTrue(handlerCalled);
 }
 
 - (void)testLeaveChat_ShouldUnsubscribeFromChat {
     
-    CENChat *expectedChat = self.defaultClient.me.direct;
+    id functionsClientPartialMock = [self partialMockForObject:self.clientMock.functionsClient];
+    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
+    CENChat *expectedChat = self.client.me.direct;
+    __block BOOL handlerCalled = NO;
     
-    OCMExpect([self.defaultClient unsubscribeFromChannels:@[expectedChat.channel]]);
+    OCMExpect([functionsClientPartialMock callRouteSeries:[OCMArg any] withCompletion:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
+        handlerCalled = YES;
+        
+        dispatch_semaphore_signal(semaphore);
+    });
     
-    [self.defaultClient leaveChat:expectedChat];
+    OCMExpect([self.clientMock unsubscribeFromChannels:@[expectedChat.channel]]);
     
-    OCMVerifyAll((id)self.defaultClient);
+    [self.clientMock leaveChat:expectedChat];
+    
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
+    OCMVerifyAll((id)self.clientMock);
 }
 
 - (void)testLeaveChat_ShouldSynchronizeLeaveFromChat {
     
-    id functionsClientPartialMock = [self partialMockForObject:self.defaultClient.functionsClient];
+    id functionsClientPartialMock = [self partialMockForObject:self.client.functionsClient];
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    CENChat *expectedChat = self.defaultClient.me.direct;
+    CENChat *expectedChat = self.client.me.direct;
     __block BOOL handlerCalled = NO;
     
     OCMExpect([functionsClientPartialMock callRouteSeries:[OCMArg any] withCompletion:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
@@ -766,23 +929,23 @@
         handlerBlock(YES, nil);
     });
     
-    OCMExpect([(id)self.defaultClient synchronizeSessionChatLeave:expectedChat]).andDo(^(NSInvocation *invocation) {
+    OCMExpect([(id)self.clientMock synchronizeSessionChatLeave:expectedChat]).andDo(^(NSInvocation *invocation) {
         handlerCalled = YES;
         
         dispatch_semaphore_signal(semaphore);
     });
     
-    [self.defaultClient leaveChat:expectedChat];
+    [self.client leaveChat:expectedChat];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
-    OCMVerifyAll((id)self.defaultClient);
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
+    OCMVerifyAll((id)self.clientMock);
     XCTAssertTrue(handlerCalled);
 }
 
 - (void)testLeaveChat_WhenLeaveUnsuccessful {
     
-    CENChat *expectedChat = self.defaultClient.me.direct;
-    id functionsClientPartialMock = [self partialMockForObject:self.defaultClient.functionsClient];
+    CENChat *expectedChat = self.client.me.direct;
+    id functionsClientPartialMock = [self partialMockForObject:self.client.functionsClient];
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     __block BOOL handlerCalled = NO;
     
@@ -799,16 +962,16 @@
         dispatch_semaphore_signal(semaphore);
     });
     
-    [self.defaultClient leaveChat:expectedChat];
+    [self.client leaveChat:expectedChat];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
     XCTAssertTrue(handlerCalled);
 }
 
 - (void)testLeaveChat_ShouldThrowEmitError_WhenLeaveUnsuccessfulWithUnknownError {
     
-    CENChat *expectedChat = self.defaultClient.me.direct;
-    id functionsClientPartialMock = [self partialMockForObject:self.defaultClient.functionsClient];
+    CENChat *expectedChat = self.client.me.direct;
+    id functionsClientPartialMock = [self partialMockForObject:self.client.functionsClient];
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     __block BOOL handlerCalled = NO;
     
@@ -827,7 +990,7 @@
         dispatch_semaphore_signal(semaphore);
     });
     
-    [self.defaultClient leaveChat:expectedChat];
+    [self.client leaveChat:expectedChat];
     
     dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
     XCTAssertTrue(handlerCalled);
@@ -836,36 +999,36 @@
 
 #pragma mark - Tests :: fetchParticipantsForChat
 
-- (void)testFetchParticipantsForChat_ShouldRequestParticipantsListWithStates_WhenRequestedForGlobalChat {
-    
-    CENChat *expectedChat = self.defaultClient.global;
-    
-    OCMExpect([self.defaultClient fetchParticipantsForChannel:expectedChat.channel withState:YES completion:[OCMArg any]]);
-    
-    [self.defaultClient fetchParticipantsForChat:expectedChat];
-    
-    OCMVerifyAll((id)self.defaultClient);
-}
-
 - (void)testFetchParticipantsForChat_ShouldRequestParticipantsListWithOutStates_WhenRequestedForCustomChat {
     
-    CENChat *expectedChat = self.defaultClient.Chat().autoConnect(NO).create();
+    CENChat *expectedChat = self.client.Chat().autoConnect(NO).create();
     
-    OCMExpect([self.defaultClient fetchParticipantsForChannel:expectedChat.channel withState:NO completion:[OCMArg any]]);
+    OCMExpect([self.clientMock fetchParticipantsForChannel:expectedChat.channel withState:NO completion:[OCMArg any]]);
     
-    [self.defaultClient fetchParticipantsForChat:expectedChat];
+    [self.client fetchParticipantsForChat:expectedChat];
     
-    OCMVerifyAll((id)self.defaultClient);
+    OCMVerifyAll((id)self.clientMock);
+}
+
+- (void)testFetchParticipantsForChat_ShouldRequestParticipantsListWithStates_WhenRequestedForGlobalChat {
+    
+    CENChat *expectedChat = self.client.global;
+    
+    OCMExpect([self.clientMock fetchParticipantsForChannel:expectedChat.channel withState:YES completion:[OCMArg any]]);
+    
+    [self.client fetchParticipantsForChat:expectedChat];
+    
+    OCMVerifyAll((id)self.clientMock);
 }
 
 - (void)testFetchParticipantsForChat_ShouldCreateUserWithState_WhenListReceived {
     
-    CENChat *expectedChat = self.defaultClient.Chat().autoConnect(NO).create();
+    CENChat *expectedChat = self.client.Chat().autoConnect(NO).create();
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     NSDictionary *expectedState = @{ @"user-state": @"good" };
     __block BOOL handlerCalled = NO;
     
-    OCMStub([self.defaultClient fetchParticipantsForChannel:expectedChat.channel withState:NO completion:[OCMArg any]])
+    OCMStub([self.clientMock fetchParticipantsForChannel:expectedChat.channel withState:NO completion:[OCMArg any]])
         .andDo(^(NSInvocation *invocation) {
             void(^handlerBlock)(PNPresenceChannelHereNowResult *, PNErrorStatus *) = nil;
             
@@ -873,7 +1036,7 @@
             handlerBlock([self hereNowResultWithState:YES], nil);
         });
     
-    self.defaultClient.once(@"$.online.join", ^(CENChat *chat, CENUser *user) {
+    self.client.once(@"$.online.join", ^(CENChat *chat, CENUser *user) {
         handlerCalled = YES;
         
         XCTAssertNotNil(user);
@@ -882,28 +1045,28 @@
         dispatch_semaphore_signal(semaphore);
     });
     
-    [self.defaultClient fetchParticipantsForChat:expectedChat];
+    [self.client fetchParticipantsForChat:expectedChat];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
     XCTAssertTrue(handlerCalled);
 }
 
 - (void)testFetchParticipantsForChat_ShouldCreateUserWithOutState_WhenListReceived {
     
-    CENChat *expectedChat = self.defaultClient.Chat().autoConnect(NO).create();
+    CENChat *expectedChat = self.client.Chat().autoConnect(NO).create();
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     NSDictionary *expectedState = @{};
     __block BOOL handlerCalled = NO;
     
-    OCMStub([self.defaultClient fetchParticipantsForChannel:expectedChat.channel withState:NO completion:[OCMArg any]])
-    .andDo(^(NSInvocation *invocation) {
-        void(^handlerBlock)(PNPresenceChannelHereNowResult *, PNErrorStatus *) = nil;
-        
-        [invocation getArgument:&handlerBlock atIndex:4];
-        handlerBlock([self hereNowResultWithState:NO], nil);
-    });
+    OCMStub([self.clientMock fetchParticipantsForChannel:expectedChat.channel withState:NO completion:[OCMArg any]])
+        .andDo(^(NSInvocation *invocation) {
+            void(^handlerBlock)(PNPresenceChannelHereNowResult *, PNErrorStatus *) = nil;
+            
+            [invocation getArgument:&handlerBlock atIndex:4];
+            handlerBlock([self hereNowResultWithState:NO], nil);
+        });
     
-    self.defaultClient.once(@"$.online.join", ^(CENChat *chat, CENUser *user) {
+    self.client.once(@"$.online.join", ^(CENChat *chat, CENUser *user) {
         handlerCalled = YES;
         
         XCTAssertNotNil(user);
@@ -911,25 +1074,25 @@
         dispatch_semaphore_signal(semaphore);
     });
     
-    [self.defaultClient fetchParticipantsForChat:expectedChat];
+    [self.client fetchParticipantsForChat:expectedChat];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
     XCTAssertTrue(handlerCalled);
 }
 
 - (void)testFetchParticipantsForChat_ShouldThrowEmitError_WhenFetchDidFail {
     
-    CENChat *expectedChat = self.defaultClient.Chat().autoConnect(NO).create();
+    CENChat *expectedChat = self.client.Chat().autoConnect(NO).create();
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     __block BOOL handlerCalled = NO;
     
-    OCMStub([self.defaultClient fetchParticipantsForChannel:expectedChat.channel withState:NO completion:[OCMArg any]])
-    .andDo(^(NSInvocation *invocation) {
-        void(^handlerBlock)(PNPresenceChannelHereNowResult *, PNErrorStatus *) = nil;
-        
-        [invocation getArgument:&handlerBlock atIndex:4];
-        handlerBlock(nil, [self hereNowErrorStatus]);
-    });
+    OCMStub([self.clientMock fetchParticipantsForChannel:expectedChat.channel withState:NO completion:[OCMArg any]])
+        .andDo(^(NSInvocation *invocation) {
+            void(^handlerBlock)(PNPresenceChannelHereNowResult *, PNErrorStatus *) = nil;
+            
+            [invocation getArgument:&handlerBlock atIndex:4];
+            handlerBlock(nil, [self hereNowErrorStatus]);
+        });
     
     expectedChat.once(@"$.error.presence", ^(NSError *error) {
         handlerCalled = YES;
@@ -938,9 +1101,9 @@
         dispatch_semaphore_signal(semaphore);
     });
     
-    [self.defaultClient fetchParticipantsForChat:expectedChat];
+    [self.client fetchParticipantsForChat:expectedChat];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
     XCTAssertTrue(handlerCalled);
 }
 
@@ -949,8 +1112,8 @@
 
 - (void)testChats_ShouldReturnListOfCreatedChats {
     
-    XCTAssertNotNil(self.defaultClient.chats);
-    XCTAssertGreaterThanOrEqual(self.defaultClient.chats.count, 2);
+    XCTAssertNotNil(self.client.chats);
+    XCTAssertGreaterThanOrEqual(self.client.chats.count, 2);
 }
 
 
@@ -958,11 +1121,11 @@
 
 - (void)testGlobal_ShouldReturnListOfCreatedChats {
     
-    XCTAssertNotNil(self.defaultClient.global);
-    XCTAssertEqualObjects(self.defaultClient.global.name, self.defaultClient.currentConfiguration.globalChannel);
-    XCTAssertEqualObjects(self.defaultClient.global.group, CENChatGroup.system);
-    XCTAssertFalse(self.defaultClient.global.isPrivate);
-    XCTAssertFalse(self.defaultClient.global.asleep);
+    XCTAssertNotNil(self.client.global);
+    XCTAssertEqualObjects(self.client.global.name, self.client.currentConfiguration.globalChannel);
+    XCTAssertEqualObjects(self.client.global.group, CENChatGroup.system);
+    XCTAssertFalse(self.client.global.isPrivate);
+    XCTAssertFalse(self.client.global.asleep);
 }
 
 
@@ -970,11 +1133,11 @@
 
 - (void)testDestroyChats_ShouldRequestChatsManagerDestruction {
     
-    id chatsManagerPartialMock = [self partialMockForObject:self.defaultClient.chatsManager];
+    id chatsManagerPartialMock = [self partialMockForObject:self.client.chatsManager];
     
     OCMExpect([chatsManagerPartialMock destroy]);
     
-    [self.defaultClient destroyChats];
+    [self.client destroyChats];
     
     OCMVerifyAll(chatsManagerPartialMock);
 }

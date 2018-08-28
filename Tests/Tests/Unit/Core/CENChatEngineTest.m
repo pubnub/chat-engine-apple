@@ -23,7 +23,8 @@
 
 #pragma mark - Information
 
-@property (nonatomic, nullable, weak) CENChatEngine *defaultClient;
+@property (nonatomic, nullable, weak) CENChatEngine *client;
+@property (nonatomic, nullable, weak) CENChatEngine *clientMock;
 @property (nonatomic, nullable, weak) id loggerClassMock;
 
 #pragma mark -
@@ -39,6 +40,11 @@
 
 #pragma mark - Setup / Tear down
 
+- (BOOL)shouldSetupVCR {
+    
+    return NO;
+}
+
 - (void)setUp {
     
     [super setUp];
@@ -46,20 +52,12 @@
     self.loggerClassMock = [self mockForClass:[PNLLogger class]];
     
     CENConfiguration *configuration = [CENConfiguration configurationWithPublishKey:@"test-36" subscribeKey:@"test-36"];
-    self.defaultClient = [self partialMockForObject:[self chatEngineWithConfiguration:configuration]];
-    self.defaultClient.logger.logLevel = CENExceptionsLogLevel;
+    self.client = [self chatEngineWithConfiguration:configuration];
+    self.clientMock = [self partialMockForObject:self.client];
+    self.client.logger.logLevel = CENExceptionsLogLevel;
     
     id objectClassMock = [self mockForClass:[CENObject class]];
     OCMStub([objectClassMock objectType]).andReturn(CENObjectType.me);
-    
-}
-
-- (void)tearDown {
-    
-    [self.defaultClient destroy];
-    self.defaultClient = nil;
-    
-    [super tearDown];
 }
 
 
@@ -67,22 +65,22 @@
 
 - (void)testConstructor_ShouldCreateInstance {
     
-    XCTAssertNotNil(self.defaultClient);
-    XCTAssertNotNil(self.defaultClient.temporaryObjectsManager);
-    XCTAssertNil(self.defaultClient.synchronizationSession);
-    XCTAssertNotNil(self.defaultClient.pubNubConfiguration);
-    XCTAssertNotNil(self.defaultClient.functionsClient);
-    XCTAssertNotNil(self.defaultClient.pluginsManager);
-    XCTAssertNotNil(self.defaultClient.chatsManager);
-    XCTAssertNotNil(self.defaultClient.usersManager);
-    XCTAssertFalse(self.defaultClient.isReady);
+    XCTAssertNotNil(self.client);
+    XCTAssertNotNil(self.client.temporaryObjectsManager);
+    XCTAssertNil(self.client.synchronizationSession);
+    XCTAssertNotNil(self.client.pubNubConfiguration);
+    XCTAssertNotNil(self.client.functionsClient);
+    XCTAssertNotNil(self.client.pluginsManager);
+    XCTAssertNotNil(self.client.chatsManager);
+    XCTAssertNotNil(self.client.usersManager);
+    XCTAssertFalse(self.client.isReady);
 }
 
 - (void)testConstructor_ShouldCreateSynchronizationInstance_WhenRequestedByConfiguration {
     
     CENConfiguration *configuration = [CENConfiguration configurationWithPublishKey:@"test-36" subscribeKey:@"test-36"];
     configuration.synchronizeSession = YES;
-    CENChatEngine *client = [CENChatEngine clientWithConfiguration:configuration];
+    CENChatEngine *client = [self chatEngineWithConfiguration:configuration];
     
     XCTAssertNotNil(client.synchronizationSession);
 }
@@ -90,7 +88,7 @@
 - (void)testConstructor_ShouldNotChangeConfiguration_WhenChangedPassedInstance {
     
     CENConfiguration *configuration = [CENConfiguration configurationWithPublishKey:@"test-36" subscribeKey:@"test-36"];
-    CENChatEngine *client = [CENChatEngine clientWithConfiguration:configuration];
+    CENChatEngine *client = [self chatEngineWithConfiguration:configuration];
     configuration.throwExceptions = YES;
     
     XCTAssertNotEqual(client.configuration.shouldThrowExceptions, configuration.shouldThrowExceptions);
@@ -101,12 +99,12 @@
 
 - (void)testStoreTemporaryObject_ShouldStorePassedObject {
     
-    id managerPartialMock = [self partialMockForObject:self.defaultClient.temporaryObjectsManager];
-    CENObject *object = [[CENObject alloc] initWithChatEngine:self.defaultClient];
+    id managerPartialMock = [self partialMockForObject:self.client.temporaryObjectsManager];
+    CENObject *object = [[CENObject alloc] initWithChatEngine:self.client];
     
     OCMExpect([managerPartialMock storeTemporaryObject:object]).andDo(nil);
     
-    [self.defaultClient storeTemporaryObject:object];
+    [self.client storeTemporaryObject:object];
     
     OCMVerifyAll(managerPartialMock);
 }
@@ -116,13 +114,13 @@
 
 - (void)testUnregisterAllFromObjects_ShouldRequestPluginsRemoval {
     
-    CENObject *object = [[CENObject alloc] initWithChatEngine:self.defaultClient];
+    CENObject *object = [[CENObject alloc] initWithChatEngine:self.client];
     
-    OCMExpect([self.defaultClient unregisterAllPluginsFromObjects:object]);
+    OCMExpect([self.clientMock unregisterAllPluginsFromObjects:object]);
     
-    [self.defaultClient unregisterAllFromObjects:object];
+    [self.clientMock unregisterAllFromObjects:object];
     
-    OCMExpect((id)self.defaultClient);
+    OCMExpect((id)self.clientMock);
 }
 
 
@@ -130,17 +128,16 @@
 
 - (void)testDestroy_ShouldCleanUpResrcoues {
     
-    OCMExpect([self.defaultClient destroySession]).andDo(nil);
-    OCMExpect([self.defaultClient disconnectUser]).andDo(nil);
-    OCMExpect([self.defaultClient destroyPubNub]).andDo(nil);
-    OCMExpect([self.defaultClient destroyPlugins]).andDo(nil);
-    OCMExpect([self.defaultClient destroyUsers]).andDo(nil);
-    OCMExpect([self.defaultClient destroyChats]).andDo(nil);
+    OCMExpect([self.clientMock destroySession]).andDo(nil);
+    OCMExpect([self.clientMock disconnectUser]).andDo(nil);
+    OCMExpect([self.clientMock destroyPubNub]).andDo(nil);
+    OCMExpect([self.clientMock destroyPlugins]).andDo(nil);
+    OCMExpect([self.clientMock destroyUsers]).andDo(nil);
+    OCMExpect([self.clientMock destroyChats]).andDo(nil);
     
-    [self.defaultClient destroy];
+    [self.client destroy];
     
-    OCMVerifyAll((id)self.defaultClient);
-    [(id)self.defaultClient stopMocking];
+    OCMVerifyAll((id)self.clientMock);
 }
 
 
@@ -148,10 +145,10 @@
 
 - (void)testCurrentConfiguration_ShouldNotChangeClientConfguration_WhenReturnedInstanceModified {
     
-    CENConfiguration *configuration = self.defaultClient.currentConfiguration;
+    CENConfiguration *configuration = self.client.currentConfiguration;
     configuration.throwExceptions = YES;
     
-    XCTAssertNotEqual(self.defaultClient.configuration.shouldThrowExceptions, configuration.shouldThrowExceptions);
+    XCTAssertNotEqual(self.client.configuration.shouldThrowExceptions, configuration.shouldThrowExceptions);
 }
 
 
@@ -167,7 +164,7 @@
 
 - (void)testLogger_ShouldHaveConfiguredLogger {
     
-    XCTAssertNotNil(self.defaultClient.logger);
+    XCTAssertNotNil(self.client.logger);
 }
 
 #pragma maek -

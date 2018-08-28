@@ -29,6 +29,7 @@
     [super setUp];
     
     NSString *global = [@[@"test", [NSUUID UUID].UUIDString] componentsJoinedByString:@"-"];
+    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     NSMutableDictionary *configuration = nil;
     
     if ([self.name rangeOfString:@"ShouldFindUserByFieldInState"].location != NSNotFound ||
@@ -42,12 +43,21 @@
     }
     
     [self setupChatEngineWithGlobal:global forUser:@"ian" synchronization:NO meta:NO state:@{ @"works": @YES }];
+    
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.delayBetweenActions * NSEC_PER_SEC)));
+    
     [self setupChatEngineWithGlobal:global forUser:@"stephen1" synchronization:NO meta:NO state:@{ @"works": @YES }];
+    
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.delayBetweenActions * NSEC_PER_SEC)));
+    
     [self setupChatEngineWithGlobal:global forUser:@"stephen2" synchronization:NO meta:NO state:@{ @"works": @NO, @"lastName": @"Blum" }];
     
     [self chatEngineForUser:@"ian"].global.plugin([CENOnlineUserSearchPlugin class]).configuration(configuration).store();
     [self chatEngineForUser:@"stephen1"].global.plugin([CENOnlineUserSearchPlugin class]).configuration(configuration).store();
     [self chatEngineForUser:@"stephen2"].global.plugin([CENOnlineUserSearchPlugin class]).configuration(configuration).store();
+    
+    // Give some time to connect both users.
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.delayBetweenActions * NSEC_PER_SEC)));
 }
 
 
@@ -59,10 +69,7 @@
     CENChatEngine *client1 = [self chatEngineForUser:@"ian"];
     CENChatEngine *client2 = [self chatEngineForUser:@"stephen1"];
     __block BOOL handlerCalled = NO;
-    
-    // Wait for all users to connect to global chat.
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.f * NSEC_PER_SEC)));
-    
+
     [CENOnlineUserSearchPlugin search:@"stephen1" inChat:client1.global withCompletion:^(NSArray<CENUser *> *users) {
         handlerCalled = YES;
         
@@ -71,7 +78,7 @@
         dispatch_semaphore_signal(semaphore);
     }];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(4.f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
     XCTAssertTrue(handlerCalled);
 }
 
@@ -81,10 +88,7 @@
     CENChatEngine *client1 = [self chatEngineForUser:@"ian"];
     CENChatEngine *client2 = [self chatEngineForUser:@"stephen2"];
     __block BOOL handlerCalled = NO;
-    
-    // Wait for all users to connect to global chat.
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.f * NSEC_PER_SEC)));
-    
+
     [CENOnlineUserSearchPlugin search:@"hen" inChat:client1.global withCompletion:^(NSArray<CENUser *> *users) {
         handlerCalled = YES;
         
@@ -93,7 +97,7 @@
         dispatch_semaphore_signal(semaphore);
     }];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(4.f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
     XCTAssertTrue(handlerCalled);
 }
 
@@ -106,10 +110,7 @@
     CENChatEngine *client1 = [self chatEngineForUser:@"ian"];
     CENChatEngine *client2 = [self chatEngineForUser:@"stephen2"];
     __block BOOL handlerCalled = NO;
-    
-    // Wait for all users to connect to global chat.
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.f * NSEC_PER_SEC)));
-    
+
     [CENOnlineUserSearchPlugin search:@"Blum" inChat:client1.global withCompletion:^(NSArray<CENUser *> *users) {
         handlerCalled = YES;
         
@@ -118,7 +119,7 @@
         dispatch_semaphore_signal(semaphore);
     }];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(4.f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
     XCTAssertTrue(handlerCalled);
 }
 
@@ -128,10 +129,7 @@
     CENChatEngine *client1 = [self chatEngineForUser:@"ian"];
     CENChatEngine *client2 = [self chatEngineForUser:@"stephen2"];
     __block BOOL handlerCalled = NO;
-    
-    // Wait for all users to connect to global chat.
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.f * NSEC_PER_SEC)));
-    
+
     [CENOnlineUserSearchPlugin search:@"bl" inChat:client1.global withCompletion:^(NSArray<CENUser *> *users) {
         handlerCalled = YES;
         
@@ -140,7 +138,7 @@
         dispatch_semaphore_signal(semaphore);
     }];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(4.f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
     XCTAssertTrue(handlerCalled);
 }
 
@@ -149,10 +147,7 @@
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     CENChatEngine *client = [self chatEngineForUser:@"ian"];
     __block BOOL handlerCalled = NO;
-    
-    // Wait for all users to connect to global chat.
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.f * NSEC_PER_SEC)));
-    
+
     [CENOnlineUserSearchPlugin search:@"blum" inChat:client.global withCompletion:^(NSArray<CENUser *> *users) {
         handlerCalled = YES;
         
@@ -160,7 +155,7 @@
         dispatch_semaphore_signal(semaphore);
     }];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(4.f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
     XCTAssertTrue(handlerCalled);
 }
 

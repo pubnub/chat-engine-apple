@@ -25,11 +25,17 @@
 #pragma mark - Setup / Tear down
 
 - (void)setUp {
+    
     [super setUp];
     
     NSDictionary *configuration = nil;
     NSString *global = [@[@"test", [NSUUID UUID].UUIDString] componentsJoinedByString:@"-"];
+    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
+    
     [self setupChatEngineWithGlobal:global forUser:@"ian" synchronization:NO meta:NO state:@{ @"works": @YES }];
+    
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.delayBetweenActions * NSEC_PER_SEC)));
+    
     [self setupChatEngineWithGlobal:global forUser:@"stephen" synchronization:NO meta:NO state:@{ @"works": @YES }];
     
     if ([self.name rangeOfString:@"testDefaultCondfiguration"].location == NSNotFound) {
@@ -38,6 +44,9 @@
     
     [self chatEngineForUser:@"ian"].global.plugin([CENMarkdownPlugin class]).configuration(configuration).store();
     [self chatEngineForUser:@"stephen"].global.plugin([CENMarkdownPlugin class]).configuration(configuration).store();
+    
+    // Give some time to connect both users.
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.delayBetweenActions * NSEC_PER_SEC)));
 }
 
 - (void)testDefaultCondfiguration_ShouldHandleMessageEventsByDefault {
@@ -47,7 +56,7 @@
     CENChatEngine *client2 = [self chatEngineForUser:@"stephen"];
     __block BOOL handlerCalled = NO;
     
-    client1.global.on(@"message", ^(NSDictionary *payload) {
+    client1.global.once(@"message", ^(NSDictionary *payload) {
         handlerCalled = YES;
         
         XCTAssertNotNil(payload[CENEventData.data][@"text"]);
@@ -57,7 +66,7 @@
     
     client2.global.emit(@"message").data(@{ @"text": @"_Italic_ text" }).perform();
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(10.f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
     XCTAssertTrue(handlerCalled);
 }
 
@@ -68,7 +77,7 @@
     CENChatEngine *client2 = [self chatEngineForUser:@"stephen"];
     __block BOOL handlerCalled = NO;
     
-    client1.global.on(@"message", ^(NSDictionary *payload) {
+    client1.global.once(@"message", ^(NSDictionary *payload) {
         handlerCalled = YES;
         
         XCTAssertNotNil(payload[CENEventData.data][@"text"]);
@@ -78,7 +87,7 @@
     
     client2.global.emit(@"message").data(@{ @"text": @"**Bold** text" }).perform();
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(60.f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
     XCTAssertTrue(handlerCalled);
 }
 
@@ -89,7 +98,7 @@
     CENChatEngine *client2 = [self chatEngineForUser:@"stephen"];
     __block BOOL handlerCalled = NO;
     
-    client1.global.on(@"message", ^(NSDictionary *payload) {
+    client1.global.once(@"message", ^(NSDictionary *payload) {
         handlerCalled = YES;
         
         XCTAssertNotNil(payload[CENEventData.data][@"text"]);
@@ -99,7 +108,7 @@
     
     client2.global.emit(@"message").data(@{ @"text": @"Simple text" }).perform();
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(10.f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
     XCTAssertTrue(handlerCalled);
 }
 
@@ -110,7 +119,7 @@
     CENChatEngine *client2 = [self chatEngineForUser:@"stephen"];
     __block BOOL handlerCalled = NO;
     
-    client1.global.on(@"message", ^(NSDictionary *payload) {
+    client1.global.once(@"message", ^(NSDictionary *payload) {
         handlerCalled = YES;
         
         XCTAssertNotNil(payload[CENEventData.data][@"text"]);
@@ -120,7 +129,7 @@
     
     client2.global.emit(@"message").data(@{ @"text": @"**Bold** text" }).perform();
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(60.f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
     XCTAssertTrue(handlerCalled);
 }
 

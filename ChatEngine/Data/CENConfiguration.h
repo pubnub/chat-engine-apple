@@ -91,6 +91,16 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, assign) BOOL enableMeta;
 
 /**
+ * @brief      Whether \b ChatEngine should print out all received events.
+ * @discussion Console will print out all events which has been emitted locally or by remote client.
+ *
+ * @default \b NO
+ *
+ * @since 0.9.2
+ */
+@property (nonatomic, assign, getter = shouldDebugEvents) BOOL debugEvents NS_SWIFT_NAME(debugEvents);
+
+/**
  * @brief  Whether \b ChatEngine should trhow errors or not.
  *
  * @default \b NO

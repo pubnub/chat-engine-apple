@@ -62,10 +62,20 @@
     NSMutableDictionary *errorInformation = [@{ NSLocalizedDescriptionKey: (status.errorData.information ?: @"Unknown error") } mutableCopy];
     [errorInformation addEntriesFromDictionary:userInfo];
     
-    return [NSError errorWithDomain:kCENPNErrorDomain code:[self errorCodeFromPubNubStatus:status ] userInfo:errorInformation];
+    return [NSError errorWithDomain:kCENPNErrorDomain code:[self errorCodeFromPubNubStatus:status] userInfo:errorInformation];
 }
 
-+ (NSError *)errorFromPubNubFunctionError:(nullable NSError *)functionError withDescription:(NSString *)description {
++ (NSError *)errorFromPubNubFunctionError:(nullable id)functionResponses withDescription:(NSString *)description {
+    
+    NSError *functionError = nil;
+    
+    for (id response in functionResponses) {
+        if ([response isKindOfClass:[NSError class]]) {
+            functionError = response;
+            
+            break;
+        }
+    }
     
     if (!functionError) {
         NSDictionary *errorInformation = @{ NSLocalizedDescriptionKey: @"Unknown error" };

@@ -27,6 +27,11 @@
 
 #pragma mark - Setup / Tear down
 
+- (BOOL)shouldSetupVCR {
+    
+    return NO;
+}
+
 - (void)setUp {
     
     [super setUp];
@@ -64,6 +69,7 @@
     
     dispatch_block_t handler = ^{};
     NSArray<NSString *> *expected = @[];
+    
     self.emitter.on(@"test-event", handler);
     
     XCTAssertEqual(self.emitter.eventNames.count, 1);
@@ -79,6 +85,7 @@
     
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     __block BOOL handlerCalled = NO;
+    
     self.emitter.on(@"test-event", ^{
         handlerCalled = YES;
         
@@ -87,7 +94,7 @@
     
     [self.emitter emitEventLocally:@"test-event", nil];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
     XCTAssertTrue(handlerCalled);
 }
 
@@ -95,79 +102,93 @@
     
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     __block BOOL handlerNotCalled = YES;
+    
     self.emitter.on(@"test-event1", ^{
         handlerNotCalled = NO;
     });
     
     [self.emitter emitEventLocally:@"test-event2", nil];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.falseTestCompletionDelay * NSEC_PER_SEC)));
     XCTAssertTrue(handlerNotCalled);
 }
 
 - (void)testThat_HandlerRegisteredOnConcreteEvent_WhenEmittedEventWithSingleData_ThenReceiveData {
     
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
+    __block BOOL handlerCalled = NO;
     NSString *expected = @"1";
+    
     self.emitter.on(@"test.event", ^(id parameter1) {
-        XCTAssertEqualObjects(parameter1, expected);
+        handlerCalled = YES;
         
+        XCTAssertEqualObjects(parameter1, expected);
         dispatch_semaphore_signal(semaphore);
     });
     
     [self.emitter emitEventLocally:@"test.event", expected, nil];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
+    XCTAssertTrue(handlerCalled);
 }
 
 - (void)testThat_HandlerRegisteredOnConcreteEvent_WhenEmittedEventWithFourData_ThenReceiveData {
     
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
+    __block BOOL handlerCalled = NO;
     NSString *expected1 = @"1";
     NSString *expected2 = @"2";
     NSString *expected3 = @"3";
     NSString *expected4 = @"4";
+    
     self.emitter.on(@"test.event", ^(id parameter1, id parameter2, id parameter3, id parameter4) {
+        handlerCalled = YES;
+        
         XCTAssertEqualObjects(parameter1, expected1);
         XCTAssertEqualObjects(parameter2, expected2);
         XCTAssertEqualObjects(parameter3, expected3);
         XCTAssertEqualObjects(parameter4, expected4);
-        
         dispatch_semaphore_signal(semaphore);
     });
     
     [self.emitter emitEventLocally:@"test.event", expected1, expected2, expected3, expected4, nil];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
+    XCTAssertTrue(handlerCalled);
 }
 
 - (void)testThat_HandlerRegisteredOnConcreteEvent_WhenEmittedEventWithFiveData_ThenReceiveData {
     
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
+    __block BOOL handlerCalled = NO;
     NSString *expected1 = @"1";
     NSString *expected2 = @"2";
     NSString *expected3 = @"3";
     NSString *expected4 = @"4";
     NSString *expected5 = @"5";
+    
     self.emitter.on(@"test.event", ^(id parameter1, id parameter2, id parameter3, id parameter4, id parameter5) {
+        handlerCalled = YES;
+        
         XCTAssertEqualObjects(parameter1, expected1);
         XCTAssertEqualObjects(parameter2, expected2);
         XCTAssertEqualObjects(parameter3, expected3);
         XCTAssertEqualObjects(parameter4, expected4);
         XCTAssertEqualObjects(parameter5, expected5);
-        
         dispatch_semaphore_signal(semaphore);
     });
     
     [self.emitter emitEventLocally:@"test.event", expected1, expected2, expected3, expected4, expected5, nil];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
+    XCTAssertTrue(handlerCalled);
 }
 
 - (void)testThat_HandlerRegisteredOnEventWithSingleWildcard_WhenEmittedEventWithOneSubstitution_ThenHandlerCalled {
     
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     __block BOOL handlerCalled = NO;
+    
     self.emitter.on(@"test.*", ^{
         handlerCalled = YES;
         
@@ -176,7 +197,7 @@
     
     [self.emitter emitEventLocally:@"test.event", nil];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
     XCTAssertTrue(handlerCalled);
 }
 
@@ -184,6 +205,7 @@
     
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     __block BOOL handlerNotCalled = YES;
+    
     self.emitter.on(@"test.*", ^{
         handlerNotCalled = NO;
         
@@ -192,7 +214,7 @@
     
     [self.emitter emitEventLocally:@"test.event.sent", nil];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.falseTestCompletionDelay * NSEC_PER_SEC)));
     XCTAssertTrue(handlerNotCalled);
 }
 
@@ -200,23 +222,28 @@
     
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     NSString *expectedEvent = @"test.event";
+    __block BOOL handlerCalled = NO;
     NSString *expectedValue = @"1";
+    
     self.emitter.on(@"test.*", ^(NSString *event, id parameter) {
+        handlerCalled = YES;
+        
         XCTAssertEqualObjects(event, expectedEvent);
         XCTAssertEqualObjects(parameter, expectedValue);
-        
         dispatch_semaphore_signal(semaphore);
     });
     
     [self.emitter emitEventLocally:@"test.event", expectedValue, nil];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
+    XCTAssertTrue(handlerCalled);
 }
 
 - (void)testThat_HandlerRegisteredOnEventWithMultipleWildcard_WhenEmittedEventWithMultipleSubstitutions_ThenHandlerCalled {
     
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     __block BOOL handlerCalled = NO;
+    
     self.emitter.on(@"test.**", ^{
         handlerCalled = YES;
         
@@ -225,7 +252,7 @@
     
     [self.emitter emitEventLocally:@"test.event.sent", nil];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
     XCTAssertTrue(handlerCalled);
 }
 
@@ -234,16 +261,26 @@
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     __block BOOL handler1Called = NO;
     __block BOOL handler2Called = NO;
+    
     self.emitter.on(@"test.**", ^{
         handler1Called = YES;
+        
+        if (handler2Called) {
+            dispatch_semaphore_signal(semaphore);
+        }
     });
+    
     self.emitter.on(@"test.event.*", ^{
         handler2Called = YES;
+        
+        if (handler1Called) {
+            dispatch_semaphore_signal(semaphore);
+        }
     });
     
     [self.emitter emitEventLocally:@"test.event.sent", nil];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
     XCTAssertTrue(handler1Called);
     XCTAssertTrue(handler2Called);
 }
@@ -255,6 +292,7 @@
     
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     __block BOOL handlerCalled = NO;
+    
     self.emitter.on(@"*", ^{
         handlerCalled = YES;
         
@@ -263,7 +301,7 @@
     
     [self.emitter emitEventLocally:@"test.event.sent", nil];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
     XCTAssertTrue(handlerCalled);
 }
 
@@ -271,6 +309,7 @@
     
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     __block BOOL handlerCalled = NO;
+    
     self.emitter.onAny(^{
         handlerCalled = YES;
         
@@ -279,7 +318,7 @@
     
     [self.emitter emitEventLocally:@"test.event.sent", nil];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
     XCTAssertTrue(handlerCalled);
 }
 
@@ -287,35 +326,42 @@
     
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     NSString *expectedEvent = @"test.event";
+    __block BOOL handlerCalled = NO;
     NSString *expectedValue = @"1";
+    
     self.emitter.onAny(^(NSString *event, id parameter) {
+        handlerCalled = YES;
+        
         XCTAssertEqualObjects(event, expectedEvent);
         XCTAssertEqualObjects(parameter, expectedValue);
-        
         dispatch_semaphore_signal(semaphore);
     });
     
     [self.emitter emitEventLocally:@"test.event", expectedValue, nil];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
+    XCTAssertTrue(handlerCalled);
 }
 
 - (void)testThat_HandlerRegisteredOnWildcard_WhenEmittedEventWithDataWhichIncludeEmitter_ThenReceiveDataWithOnlyOneEmitterReferenceInIt {
     
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     NSString *expectedEvent = @"test.event";
+    __block BOOL handlerCalled = NO;
     NSString *expectedValue = @"1";
-    self.emitter.onAny(^(NSString *event, id emittedBy, id parameter) {
-        XCTAssertEqualObjects(event, expectedEvent);
-        XCTAssertEqualObjects(emittedBy, self.emitter);
-        XCTAssertEqualObjects(parameter, expectedValue);
+    
+    self.emitter.onAny(^(NSString *event, id parameter) {
+        handlerCalled = YES;
         
+        XCTAssertEqualObjects(event, expectedEvent);
+        XCTAssertEqualObjects(parameter, expectedValue);
         dispatch_semaphore_signal(semaphore);
     });
     
-    [self.emitter emitEventLocally:@"test.event", self.emitter, expectedValue, nil];
+    [self.emitter emitEventLocally:@"test.event", expectedValue, nil];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
+    XCTAssertTrue(handlerCalled);
 }
 
 
@@ -327,9 +373,12 @@
     NSArray<NSString *> *expected = @[];
     __block BOOL calledOnce = NO;
     __block BOOL calledTwice = NO;
+    
     self.emitter.once(@"test-event", ^{
         if (calledOnce) {
             calledTwice = YES;
+            
+            dispatch_semaphore_signal(semaphore);
         }
         
         calledOnce = YES;
@@ -338,7 +387,7 @@
     [self.emitter emitEventLocally:@"test-event", nil];
     [self.emitter emitEventLocally:@"test-event", nil];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.falseTestCompletionDelay * NSEC_PER_SEC)));
     XCTAssertEqualObjects(self.emitter.eventNames, expected);
     XCTAssertFalse(calledTwice);
     XCTAssertTrue(calledOnce);
@@ -353,20 +402,24 @@
     NSArray<NSString *> *expected = @[];
     __block BOOL calledOnce = NO;
     __block BOOL calledTwice = NO;
+    
     dispatch_block_t handler = ^{
         if (calledOnce) {
             calledTwice = YES;
+            
+            dispatch_semaphore_signal(semaphore);
         }
         
         calledOnce = YES;
     };
+    
     self.emitter.on(@"test-event", handler);
     
     [self.emitter emitEventLocally:@"test-event", nil];
     self.emitter.off(@"test-event", handler);
     [self.emitter emitEventLocally:@"test-event", nil];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.falseTestCompletionDelay * NSEC_PER_SEC)));
     XCTAssertEqualObjects(self.emitter.eventNames, expected);
     XCTAssertFalse(calledTwice);
     XCTAssertTrue(calledOnce);
@@ -380,6 +433,7 @@
     __block BOOL handler1CalledTwice = NO;
     __block BOOL handler2CalledOnce = NO;
     __block BOOL handler2CalledTwice = NO;
+    
     dispatch_block_t handler1 = ^{
         if (handler1CalledOnce) {
             handler1CalledTwice = YES;
@@ -390,6 +444,8 @@
     dispatch_block_t handler2 = ^{
         if (handler2CalledOnce) {
             handler2CalledTwice = YES;
+            
+            dispatch_semaphore_signal(semaphore);
         }
         
         handler2CalledOnce = YES;
@@ -402,7 +458,7 @@
     self.emitter.off(@"test-event", handler1);
     [self.emitter emitEventLocally:@"test-event", nil];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
     XCTAssertEqualObjects(self.emitter.eventNames, expected);
     XCTAssertTrue(handler1CalledOnce);
     XCTAssertFalse(handler1CalledTwice);
@@ -420,6 +476,7 @@
     __block BOOL handler1CalledTwice = NO;
     __block BOOL handler2CalledOnce = NO;
     __block BOOL handler2CalledTwice = NO;
+    
     dispatch_block_t handler1 = ^{
         if (handler1CalledOnce) {
             handler1CalledTwice = YES;
@@ -430,6 +487,8 @@
     dispatch_block_t handler2 = ^{
         if (handler2CalledOnce) {
             handler2CalledTwice = YES;
+            
+            dispatch_semaphore_signal(semaphore);
         }
         
         handler2CalledOnce = YES;
@@ -441,7 +500,7 @@
     self.emitter.offAny(handler1);
     [self.emitter emitEventLocally:@"test-event", nil];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
     XCTAssertTrue(handler1CalledOnce);
     XCTAssertFalse(handler1CalledTwice);
     XCTAssertTrue(handler2CalledOnce);
@@ -458,6 +517,7 @@
     __block BOOL handler1CalledTwice = NO;
     __block BOOL handler2CalledOnce = NO;
     __block BOOL handler2CalledTwice = NO;
+    
     dispatch_block_t handler1 = ^{
         if (handler1CalledOnce) {
             handler1CalledTwice = YES;
@@ -468,6 +528,8 @@
     dispatch_block_t handler2 = ^{
         if (handler2CalledOnce) {
             handler2CalledTwice = YES;
+            
+            dispatch_semaphore_signal(semaphore);
         }
         
         handler2CalledOnce = YES;
@@ -479,7 +541,7 @@
     self.emitter.removeAll(@"test-event");
     [self.emitter emitEventLocally:@"test-event", nil];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.falseTestCompletionDelay * NSEC_PER_SEC)));
     XCTAssertTrue(handler1CalledOnce);
     XCTAssertFalse(handler1CalledTwice);
     XCTAssertTrue(handler2CalledOnce);
@@ -493,6 +555,7 @@
     __block BOOL handler1CalledTwice = NO;
     __block BOOL handler2CalledOnce = NO;
     __block BOOL handler2CalledTwice = NO;
+    
     dispatch_block_t handler1 = ^{
         if (handler1CalledOnce) {
             handler1CalledTwice = YES;
@@ -503,10 +566,13 @@
     dispatch_block_t handler2 = ^{
         if (handler2CalledOnce) {
             handler2CalledTwice = YES;
+            
+            dispatch_semaphore_signal(semaphore);
         }
         
         handler2CalledOnce = YES;
     };
+    
     self.emitter.on(@"*", handler1);
     self.emitter.on(@"*", handler2);
     
@@ -514,27 +580,28 @@
     self.emitter.removeAll(@"*");
     [self.emitter emitEventLocally:@"test-event", nil];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.falseTestCompletionDelay * NSEC_PER_SEC)));
     XCTAssertTrue(handler1CalledOnce);
     XCTAssertFalse(handler1CalledTwice);
     XCTAssertTrue(handler2CalledOnce);
     XCTAssertFalse(handler2CalledTwice);
 }
 
-
-
-
 - (void)testThat_RegisteredTwoHandlersForEventWithPath_WhenEventRemoveAllListenersWithPartialEvent_ThenEventsListShouldBeEmpty {
     
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     __block BOOL handler1Called = NO;
     __block BOOL handler2Called = NO;
+    
     dispatch_block_t handler1 = ^{
         handler1Called = YES;
     };
     dispatch_block_t handler2 = ^{
         handler2Called = YES;
+        
+        dispatch_semaphore_signal(semaphore);
     };
+    
     self.emitter.on(@"test.event1", handler1);
     self.emitter.on(@"test.event2", handler2);
     
@@ -542,7 +609,7 @@
     self.emitter.removeAll(@"test.*");
     [self.emitter emitEventLocally:@"test.event2", nil];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.falseTestCompletionDelay * NSEC_PER_SEC)));
     XCTAssertTrue(handler1Called);
     XCTAssertFalse(handler2Called);
 }
@@ -552,11 +619,14 @@
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     __block BOOL handler1Called = NO;
     __block BOOL handler2Called = NO;
+    
     dispatch_block_t handler1 = ^{
         handler1Called = YES;
     };
     dispatch_block_t handler2 = ^{
         handler2Called = YES;
+        
+        dispatch_semaphore_signal(semaphore);
     };
     self.emitter.on(@"test.*", handler1);
     self.emitter.on(@"test.event.2", handler2);
@@ -566,7 +636,7 @@
     self.emitter.removeAll(@"test.**");
     [self.emitter emitEventLocally:@"test.event.2", nil];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5f * NSEC_PER_SEC)));
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.falseTestCompletionDelay * NSEC_PER_SEC)));
     XCTAssertTrue(handler1Called);
     XCTAssertFalse(handler2Called);
 }

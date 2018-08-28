@@ -44,7 +44,7 @@
                                                object:(CENObject *)object
                                           withPayload:data
                                            completion:^(BOOL rejected, id processedData) {
-                         
+
             if (rejected) {
                 if (block) {
                     block(event, nil, YES);
@@ -76,9 +76,13 @@
             CENUser *sender = [self createUserWithUUID:data[CENEventData.sender] state:nil];
             data[CENEventData.sender] = sender;
             
-            [sender fetchStoredStateWithCompletion:^(__unused NSDictionary *state) {
+            if (![data[CENEventData.sender] isEqual:self.me]) {
+                [sender fetchStoredStateWithCompletion:^(__unused NSDictionary *state) {
+                    completion(data);
+                }];
+            } else {
                 completion(data);
-            }];
+            }
         } else {
             completion(data);
         }
