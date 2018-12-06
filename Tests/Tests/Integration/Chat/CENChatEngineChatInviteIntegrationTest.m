@@ -10,6 +10,11 @@
 @interface CENChatEngineChatInviteIntegrationTest : CENTestCase
 
 
+#pragma mark - Information
+
+@property (nonatomic, strong) NSString *globalChannel;
+@property (nonatomic, copy) NSString *namespace;
+
 #pragma mark -
 
 
@@ -23,56 +28,80 @@
 
 #pragma mark - Setup / Tear down
 
+- (BOOL)shouldConnectChatEngineForTestCaseWithName:(NSString *)name {
+    
+    return YES;
+}
+
+- (NSString *)globalChatChannelForTestCaseWithName:(NSString *)name {
+    
+    NSString *channel = [super globalChatChannelForTestCaseWithName:name];
+    
+    if (!self.globalChannel) {
+        self.globalChannel = channel;
+    }
+    
+    return self.globalChannel ?: channel;
+}
+
+- (NSString *)namespaceForTestCaseWithName:(NSString *)name {
+    
+    NSString *namespace = [super namespaceForTestCaseWithName:name];
+    
+    if (!self.namespace) {
+        self.namespace = namespace;
+    }
+    
+    return self.namespace ?: namespace;
+}
+
 - (void)setUp {
     
     [super setUp];
     
-    NSString *global = [@[@"test", [NSUUID UUID].UUIDString] componentsJoinedByString:@"-"];
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     
-    [self setupChatEngineWithGlobal:global forUser:@"ian" synchronization:NO meta:NO state:@{ @"works": @YES }];
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.delayBetweenActions * NSEC_PER_SEC)));
-    
-    [self setupChatEngineWithGlobal:global forUser:@"stephen" synchronization:NO meta:NO state:@{ @"works": @YES }];
+    [self setupChatEngineForUser:@"ian"];
+    [self setupChatEngineForUser:@"stephen"];
 }
 
 - (void)testInvite_ShouldBeAbleToConnectTwoUsersInPrivateChat_WhenOneUserInvitedAnother {
     
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     NSString *privateChatName = @"predictable-secret-channel";
     CENChatEngine *client1 = [self chatEngineForUser:@"ian"];
     CENChatEngine *client2 = [self chatEngineForUser:@"stephen"];
-    __block BOOL messageReceived = NO;
-    __block BOOL handlerCalled = NO;
+    __block CENChat *myPrivateChat = nil;
+    __block CENChat *privateChat = nil;
     NSString *expected = @"sup?";
     
-    client1.me.direct.once(@"$.invite", ^(NSDictionary *payload) {
-        CENChat *myPrivateChat = client1.Chat().name(payload[CENEventData.data][@"channel"]).create();
-        
-        myPrivateChat.once(@"$.connected", ^{
-            myPrivateChat.emit(@"message").data(@{ @"text": expected }).perform();
+    
+    [self object:client1.me.direct shouldHandleEvent:@"$.invite" withHandler:^CENEventHandlerBlock (dispatch_block_t handler) {
+        return ^(CENEmittedEvent *emittedEvent1) {
+            NSDictionary *payload = emittedEvent1.data;
+            
+            myPrivateChat = client1.Chat().name(payload[CENEventData.data][@"channel"]).autoConnect(NO).create();
+            myPrivateChat.once(@"$.connected", ^(CENEmittedEvent *emittedEvent2) {
+                handler();
+            });
+            myPrivateChat.connect();
+        };
+    } afterBlock:^{
+        privateChat = client2.Chat().name(privateChatName).autoConnect(NO).create();
+        privateChat.once(@"$.connected", ^(CENEmittedEvent *emittedEvent) {
+            privateChat.invite(client1.me);
         });
-    });
+        privateChat.connect();
+    }];
     
-    CENChat *privateChat = client2.Chat().name(privateChatName).create();
-    privateChat.once(@"$.connected", ^{
-        privateChat.invite(client1.me);
-    });
-    
-    privateChat.once(@"message", ^(NSDictionary *payload) {
-        if (!messageReceived) {
-            messageReceived = YES;
-            handlerCalled = YES;
+    [self object:privateChat shouldHandleEvent:@"message" withHandler:^CENEventHandlerBlock (dispatch_block_t handler) {
+        return ^(CENEmittedEvent *emittedEvent) {
+            NSDictionary *payload = emittedEvent.data;
             
             XCTAssertEqualObjects(payload[CENEventData.data][@"text"], expected);
-            dispatch_semaphore_signal(semaphore);
-        }
-    });
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelayWithNestedSemaphores * NSEC_PER_SEC)));
-    XCTAssertTrue(messageReceived);
-    XCTAssertTrue(handlerCalled);
+            handler();
+        };
+    } afterBlock:^{
+        myPrivateChat.emit(@"message").data(@{ @"text": expected }).perform();
+    }];
 }
 
 #pragma mark -

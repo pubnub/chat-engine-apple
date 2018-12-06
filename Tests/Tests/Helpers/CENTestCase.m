@@ -3,6 +3,13 @@
  * @copyright © 2009-2018 PubNub, Inc.
  */
 #import "CENTestCase.h"
+#import <objc/runtime.h>
+#import <CENChatEngine/CENChatEngine+AuthorizationPrivate.h>
+#import <CENChatEngine/CENChatEngine+PubNubPrivate.h>
+#import <CENChatEngine/CENChatEngine+ChatInterface.h>
+#import <CENChatEngine/CENChatEngine+ChatPrivate.h>
+#import <CENChatEngine/CENEventEmitter+Interface.h>
+#import <CENChatEngine/CENPrivateStructures.h>
 #import <CENChatEngine/CENObject+Private.h>
 #import <CENChatEngine/CENChat+Private.h>
 #import <CENChatEngine/ChatEngine.h>
@@ -12,6 +19,8 @@
 
 
 #define WRITTING_CASSETTES 0
+#define CEN_LOGGER_ENABLED NO
+#define CEN_PUBNUB_LOGGER_ENABLED NO
 
 
 #pragma mark Protected interface declaration
@@ -20,6 +29,14 @@
 
 
 #pragma mark - Information
+
+/**
+ * @brief Reference on currently used ChatEngine instance.
+ *
+ * @discussion Instance created lazily and take into account whether mocking enabled at this moment
+ * or not.
+ */
+@property (nonatomic, nullable, weak) CENChatEngine *client;
 
 /**
  * @brief      Stores number of seconds which test should wait till async operation completion.
@@ -48,9 +65,14 @@
 @property (nonatomic, assign) NSTimeInterval falseTestCompletionDelay;
 
 /**
- * @brief Stores reference on list of generated and used global chat names.
+ * @brief Stores reference on list of generated and used namespaces.
  */
-@property (nonatomic, strong) NSMutableDictionary<NSString *, NSString *> *randomizedGlobalChatNames;
+@property (nonatomic, strong) NSMutableDictionary<NSString *, NSString *> *randomizedNamespaces;
+
+/**
+ * @brief Stores reference on list of generated and used globals.
+ */
+@property (nonatomic, strong) NSMutableDictionary<NSString *, NSString *> *randomizedGlobals;
 
 /**
  * @brief  Stores reference on list of configured for test case \b ChatEngine instances.
@@ -67,8 +89,12 @@
 /**
  * @brief Stores reference on previously created mocking objects.
  */
-@property (nonatomic, strong) NSMutableArray *mocks;
+@property (nonatomic, strong) NSMutableArray *classMocks;
 
+/**
+ * @brief Stores reference on previously created mocking objects.
+ */
+@property (nonatomic, strong) NSMutableArray *instanceMocks;
 
 /**
  * @brief  Stores reference on \b PubNub publish key which should be used for client configuration.
@@ -80,6 +106,13 @@
  */
 @property (nonatomic, copy) NSString *subscribeKey;
 
+/**
+ * @brief List of objects which has been pulled out from method invocation arguments.
+ *
+ * @return List of stored invocation objects.
+ */
++ (NSMutableArray *)invocationObjects;
+
 
 #pragma mark - Chat mocking
 
@@ -88,11 +121,31 @@
  *         chats mocking.
  *
  * @param isPrivate  Reference on flag which specify whether chat should be private or public.
+ * @param group One of \b CENChatGroup enum fields which describe scope to which chat belongs.
+ *     \b Default: \c CENChatGroup.custom
+ * @param meta Dictionary with information which shold be bound to chat instance.
+ *     \b Default: @{}
  * @param chatEngine Reference on \b ChatEngine client instance for which mocking has been done.
  *
  * @return Configured and ready to use private chat representing model.
  */
-- (CENChat *)chatForMocking:(BOOL)isPrivate chatEngine:(CENChatEngine *)chatEngine;
+- (CENChat *)privateChat:(BOOL)isPrivate fromGroup:(nullable NSString *)group
+                withMeta:(nullable NSDictionary *)meta chatEngine:(CENChatEngine *)chatEngine;
+
+
+#pragma mark - Handlers
+
+/**
+ * @brief Test recorded (OCMExpect) stub call within specified interval.
+ *
+ * @param object Mock from objecr on which invocation call is expected.
+ * @param invocation Invocation which is expected to be called.
+ * @param shouldCall Whether tested \c invocation call or reject.
+ * @param interval Number of seconds which test case should wait before it's continuation.
+ * @param initalBlock GCD block which contain initalization of code required to invoce tested code.
+ */
+- (void)waitForObject:(id)object recordedInvocation:(id)invocation call:(BOOL)shouldCall
+       withinInterval:(NSTimeInterval)interval afterBlock:(void(^)(void))initalBlock;
 
 
 #pragma mark - Misc
@@ -115,6 +168,21 @@
 @implementation CENTestCase
 
 
+#pragma mark - Information
+
++ (NSMutableArray *)invocationObjects {
+    
+    static NSMutableArray *_invocationObjects;
+    static dispatch_once_t onceToken;
+
+    dispatch_once(&onceToken, ^{
+        _invocationObjects = [NSMutableArray new];
+    });
+    
+    return _invocationObjects;
+}
+
+
 #pragma mark - Configuration
 
 - (void)setUp {
@@ -126,61 +194,130 @@
     self.testCompletionDelay = 15.f;
     self.delayedCheck = 0.25f;
     self.falseTestCompletionDelay = (YHVVCR.cassette.isNewCassette ? self.testCompletionDelay : 0.25f);
-    self.delayBetweenActions = YHVVCR.cassette.isNewCassette ? 5.f : 0.f;
+    self.delayBetweenActions = YHVVCR.cassette.isNewCassette ? 5.f : 0.1f;
     self.testCompletionDelayWithNestedSemaphores = (YHVVCR.cassette.isNewCassette ? 60.f : 15.f);
-    self.randomizedGlobalChatNames = [NSMutableDictionary new];
+    self.randomizedNamespaces = [NSMutableDictionary new];
+    self.randomizedGlobals = [NSMutableDictionary new];
     self.randomizedUUIDs = [NSMutableDictionary new];
     self.clientClones = [NSMutableDictionary new];
+    self.instanceMocks = [NSMutableArray new];
     self.clients = [NSMutableDictionary new];
-    self.mocks = [NSMutableArray new];
+    self.classMocks = [NSMutableArray new];
 }
 
 - (void)tearDown {
     
     BOOL shouldPostponeTearDown = self.clients.count || self.clientClones.count;
-    if (shouldPostponeTearDown && [self shouldSetupVCR] && YHVVCR.cassette.isNewCassette) {
+    BOOL shouldWaitToRecordResponses = [self shouldSetupVCR] && YHVVCR.cassette.isNewCassette;
+    if (shouldPostponeTearDown && shouldWaitToRecordResponses) {
         NSLog(@"Test completed. Record final requests from clients.");
     }
     
-    if (shouldPostponeTearDown || self.mocks.count) {
-        [self waitTask:@"clientsTaskCompletion" completionFor:0.2f];
-    }
-    
-    if (shouldPostponeTearDown && [self shouldSetupVCR] && YHVVCR.cassette.isNewCassette) {
-        NSLog(@"Destroy mock objects.");
-    }
-    
-    [self.mocks makeObjectsPerformSelector:@selector(stopMocking)];
-    [self.mocks removeAllObjects];
-    
-    if (shouldPostponeTearDown && [self shouldSetupVCR] && YHVVCR.cassette.isNewCassette) {
-        [self waitTask:@"mocksRemovalCompletion" completionFor:0.2f];
-    }
-    
-    if (shouldPostponeTearDown && [self shouldSetupVCR] && YHVVCR.cassette.isNewCassette) {
-        NSLog(@"Destroy created ChatEngine instances.");
-    }
-    
-    [self.clients.allValues makeObjectsPerformSelector:@selector(destroy)];
-    [self.clientClones.allValues makeObjectsPerformSelector:@selector(destroy)];
-    
-    if (shouldPostponeTearDown && [self shouldSetupVCR] && YHVVCR.cassette.isNewCassette) {
-        [self waitTask:@"clientsRemovalCompletion" completionFor:4.0f];
+    if (shouldPostponeTearDown || self.instanceMocks.count || self.classMocks.count) {
+        NSTimeInterval waitDelay = shouldWaitToRecordResponses ? 4.f : .01f;
+        
+        [self waitTask:@"clientsTaskCompletion" completionFor:waitDelay];
     }
     
     [self.clientClones removeAllObjects];
     [self.clients removeAllObjects];
+    self.client = nil;
     
-    if (shouldPostponeTearDown && [self shouldSetupVCR] && YHVVCR.cassette.isNewCassette) {
-        NSLog(@"Record cassette's content.");
+    [self.instanceMocks removeAllObjects];
+    [self.classMocks removeAllObjects];
+    
+    [self.randomizedNamespaces removeAllObjects];
+    [self.randomizedGlobals removeAllObjects];
+    [self.randomizedUUIDs removeAllObjects];
+    [self.clientClones removeAllObjects];
+    [self.clients removeAllObjects];
+    
+    if (shouldPostponeTearDown) {
+        NSTimeInterval waitDelay = shouldWaitToRecordResponses ? 4.f : .01f;
+        
+        [self waitTask:@"clientsDestroyCompletion" completionFor:waitDelay];
     }
     
     [super tearDown];
 }
 
-- (CENConfiguration *)defaultConfiguration {
+
+#pragma mark - Test configuration
+
+- (BOOL)shouldThrowExceptionForTestCaseWithName:(NSString *)__unused name {
     
-    return [CENConfiguration configurationWithPublishKey:self.publishKey subscribeKey:self.subscribeKey];
+    return NO;
+}
+
+- (BOOL)shouldEnableGlobalChatForTestCaseWithName:(NSString *)__unused name {
+    
+    return YES;
+}
+
+- (BOOL)shouldEnableMetaForTestCaseWithName:(NSString *)__unused name {
+    
+    return NO;
+}
+
+- (BOOL)shouldSynchronizeSessionForTestCaseWithName:(NSString *)__unused name {
+    
+    return NO;
+}
+
+- (BOOL)shouldConnectChatEngineForTestCaseWithName:(NSString *)__unused name {
+
+    return NO;
+}
+
+- (BOOL)shouldWaitOwnPresenceEventsTestCaseWithName:(NSString *)__unused name {
+    
+    return YES;
+}
+
+- (BOOL)shouldWaitOwnStateChangeEventTestCaseWithName:(NSString *)__unused name {
+    
+    return YES;
+}
+
+- (nullable NSString *)namespaceForTestCaseWithName:(NSString *)__unused name {
+    
+    NSString *namespace = [@[@"namespace", [[NSUUID UUID].UUIDString substringToIndex:13]] componentsJoinedByString:@"-"];
+    
+    return YHVVCR.cassette.isNewCassette ? namespace : @"namespace";
+}
+
+- (NSString *)globalChatChannelForTestCaseWithName:(NSString *)__unused name {
+    
+    NSString *channel = [@[@"test", [[NSUUID UUID].UUIDString substringToIndex:13]] componentsJoinedByString:@"-"];
+    
+    return YHVVCR.cassette.isNewCassette ? channel : @"global";
+}
+
+- (NSDictionary *)stateForUser:(NSString *)__unused user inTestCaseWithName:(NSString *)__unused name {
+    
+    return nil;
+}
+
+- (CENConfiguration *)configurationForTestCaseWithName:(NSString *)name {
+    
+    CENConfiguration *configuration = [self defaultConfiguration];
+    configuration.throwExceptions = [self shouldThrowExceptionForTestCaseWithName:name];
+    configuration.enableGlobal = [self shouldEnableGlobalChatForTestCaseWithName:name];
+    configuration.enableMeta = [self shouldEnableMetaForTestCaseWithName:name];
+    configuration.synchronizeSession = [self shouldSynchronizeSessionForTestCaseWithName:name];
+    configuration.namespace = [self namespaceForTestCaseWithName:name];
+    
+    if (!configuration.namespace) {
+        NSString *timestamp = [NSString stringWithFormat:@"%f", [NSDate date].timeIntervalSince1970];
+        NSString *namespace = [@[@"test", CENChatEngine.sdkVersion, timestamp] componentsJoinedByString:@"-"];
+        configuration.namespace = [namespace stringByReplacingOccurrencesOfString:@"." withString:@"-"];
+    }
+    
+    if (!YHVVCR.cassette.isNewCassette) {
+        configuration.namespace = @"namespace";
+    }
+    
+    return configuration;
 }
 
 
@@ -189,8 +326,9 @@
 - (void)updateVCRConfigurationFromDefaultConfiguration:(YHVConfiguration *)configuration {
     
 #if WRITTING_CASSETTES
+    NSString *fixturesPath = @"/Volumes/Develop/Projects/Xcode/PubNub/chat-engine-apple/Tests/Tests/Fixtures";
     NSString *cassette = [NSStringFromClass([self class]) stringByAppendingPathExtension:@"bundle"];
-    configuration.cassettesPath = [@"/Volumes/Develop/Projects/Xcode/PubNub/chat-engine-apple/Tests/Tests/Fixtures" stringByAppendingPathComponent:cassette];
+    configuration.cassettesPath = [fixturesPath stringByAppendingPathComponent:cassette];
 #endif
     
     NSMutableArray *matchers = [configuration.matchers mutableCopy];
@@ -210,15 +348,17 @@
             [pathComponents addObject:filteredString];
         }
 
-        [self.clients enumerateKeysAndObjectsUsingBlock:^(NSString * __unused identifider, CENChatEngine *client, BOOL * __unused stop) {
-            NSString *globalChannel = client.currentConfiguration.globalChannel;
+        [self.clients enumerateKeysAndObjectsUsingBlock:^(NSString * __unused identifier, CENChatEngine *client,
+                                                          BOOL * __unused stop) {
+
+            NSString *namespace = client.currentConfiguration.namespace;
             for (NSString *component in [pathComponents copy]) {
-                if ([component rangeOfString:globalChannel].location == NSNotFound) {
+                if ([component rangeOfString:namespace].location == NSNotFound || [component isEqualToString:@"chat-engine-server"]) {
                     continue;
                 }
                 
-                NSString *replacement = [[component componentsSeparatedByString:globalChannel] componentsJoinedByString:@"chatEngine"];
-                [pathComponents replaceObjectAtIndex:[pathComponents indexOfObject:component] withObject:replacement];
+                NSString *replacement = [[component componentsSeparatedByString:namespace] componentsJoinedByString:@"namespace"];
+                pathComponents[[pathComponents indexOfObject:component]] = replacement;
             }
         }];
         
@@ -226,7 +366,9 @@
             NSUInteger componentIdx = [pathComponents indexOfObject:component];
             id replacement = component;
             
-            if (component.length > 10 && ([component isEqualToString:self.publishKey] || [component isEqualToString:self.subscribeKey])) {
+            if (component.length > 10 && ([component isEqualToString:self.publishKey] ||
+                                          [component isEqualToString:self.subscribeKey])) {
+
                 replacement = @"demo-36";
             }
             
@@ -248,14 +390,21 @@
                 }
             }
             
-            for (NSString *globalChat in self.randomizedGlobalChatNames.allValues) {
-                if ([component rangeOfString:globalChat].location != NSNotFound) {
-                    replacement = [[component componentsSeparatedByString:globalChat] componentsJoinedByString:@"chatEngine"];
+            for (NSString *randomNamespace in self.randomizedNamespaces.allValues) {
+                if ([component rangeOfString:randomNamespace].location != NSNotFound) {
+                    replacement = [[component componentsSeparatedByString:randomNamespace] componentsJoinedByString:@"namespace"];
                     break;
                 }
             }
             
-            [pathComponents replaceObjectAtIndex:componentIdx withObject:replacement];
+            for (NSString *randomGlobal in self.randomizedGlobals.allValues) {
+                if ([component rangeOfString:randomGlobal].location != NSNotFound) {
+                    replacement = [[component componentsSeparatedByString:randomGlobal] componentsJoinedByString:@"chat-engine"];
+                    break;
+                }
+            }
+
+            pathComponents[componentIdx] = replacement;
         }
         
         return [pathComponents componentsJoinedByString:@"/"];
@@ -265,7 +414,9 @@
         for (NSString *parameter in queryParameters.allKeys) {
             __block id value = queryParameters[parameter];
             
-            if ([parameter hasPrefix:@"l_"] || [parameter isEqualToString:@"deviceid"] || [parameter isEqualToString:@"instanceid"] || [parameter isEqualToString:@"requestid"]) {
+            if ([parameter hasPrefix:@"l_"] || [parameter isEqualToString:@"deviceid"] ||
+                [parameter isEqualToString:@"instanceid"] || [parameter isEqualToString:@"requestid"]) {
+
                 [queryParameters removeObjectForKey:parameter];
                 continue;
             }
@@ -278,12 +429,13 @@
                 value = @"1";
             }
             
-            if ([parameter isEqualToString:@"global"]) {
-                value = @"chatEngine";
+            if ([parameter isEqualToString:@"namespace"]) {
+                value = @"namespace";
             }
             
             if ([parameter isEqualToString:@"user"] &&
                 [value componentsSeparatedByString:@"-"].count >= [self.randomizedUUIDs.allValues.firstObject componentsSeparatedByString:@"-"].count) {
+
                 value = [value componentsSeparatedByString:@"-"].firstObject;
             }
             
@@ -295,12 +447,20 @@
                 value = [[value componentsSeparatedByString:key] componentsJoinedByString:@"demo-36"];
             }
             
-            for (NSString *globalChat in self.randomizedGlobalChatNames.allValues) {
-                if (![value isKindOfClass:[NSString class]] || [globalChat isEqualToString:@"global"]) {
+            for (NSString *randomNamespace in self.randomizedNamespaces.allValues) {
+                if (![value isKindOfClass:[NSString class]]) {
                     continue;
                 }
                 
-                value = [[value componentsSeparatedByString:globalChat] componentsJoinedByString:@"chatEngine"];
+                value = [[value componentsSeparatedByString:randomNamespace] componentsJoinedByString:@"namespace"];
+            }
+            
+            for (NSString *randomGlobal in self.randomizedGlobals.allValues) {
+                if (![value isKindOfClass:[NSString class]]) {
+                    continue;
+                }
+                
+                value = [[value componentsSeparatedByString:randomGlobal] componentsJoinedByString:@"chat-engine"];
             }
             
             for (NSString *uuid in self.randomizedUUIDs) {
@@ -311,11 +471,13 @@
                 value = [[value componentsSeparatedByString:self.randomizedUUIDs[uuid]] componentsJoinedByString:uuid];
             }
             
-            [self.clients enumerateKeysAndObjectsUsingBlock:^(NSString * __unused identifider, CENChatEngine *client, BOOL * __unused stop) {
-                NSString *globalChannel = client.currentConfiguration.globalChannel;
+            [self.clients enumerateKeysAndObjectsUsingBlock:^(NSString * __unused identifier, CENChatEngine *client,
+                                                              BOOL * __unused stop) {
+
+                NSString *namespace = client.currentConfiguration.namespace;
                 
                 if ([value isKindOfClass:[NSString class]]) {
-                    value = [[value componentsSeparatedByString:globalChannel] componentsJoinedByString:@"chatEngine"];
+                    value = [[value componentsSeparatedByString:namespace] componentsJoinedByString:@"namespace"];
                 }
             }];
             
@@ -335,16 +497,17 @@
             httpBodyString = [[httpBodyString componentsSeparatedByString:self.randomizedUUIDs[uuid]] componentsJoinedByString:uuid];
         }
         
-        for (NSString *globalChat in self.randomizedGlobalChatNames.allValues) {
-            if ([globalChat isEqualToString:@"global"]) {
-                continue;
-            }
-            
-            httpBodyString = [[httpBodyString componentsSeparatedByString:globalChat] componentsJoinedByString:@"chatEngine"];
+        for (NSString *randomNamespace in self.randomizedNamespaces.allValues) {
+            httpBodyString = [[httpBodyString componentsSeparatedByString:randomNamespace] componentsJoinedByString:@"namespace"];
+        }
+        
+        for (NSString *randomGlobal in self.randomizedGlobals.allValues) {
+            httpBodyString = [[httpBodyString componentsSeparatedByString:randomGlobal] componentsJoinedByString:@"chat-engine"];
         }
         
         NSData *bodyData = [httpBodyString dataUsingEncoding:NSUTF8StringEncoding];
-        NSJSONReadingOptions readOptions = NSJSONReadingMutableContainers | NSJSONReadingMutableLeaves | NSJSONReadingAllowFragments;
+        NSJSONReadingOptions readOptions = (NSJSONReadingMutableContainers | NSJSONReadingMutableLeaves |
+                                            NSJSONReadingAllowFragments);
         id bodyContent = bodyData;
         
         if (![request.URL.absoluteString hasSuffix:@".png"] && ![request.URL.absoluteString hasSuffix:@".jpg"]) {
@@ -355,10 +518,11 @@
             return body;
         }
         
-        if (bodyContent[@"global"]) {
-            bodyContent[@"global"] = @"chatEngine";
+        if (bodyContent[@"namespace"]) {
+            bodyContent[@"namespace"] = @"namespace";
             if ([bodyContent[@"chat"][@"channel"] rangeOfString:@"global"].location != NSNotFound) {
-                bodyContent[@"chat"][@"channel"] = [[bodyContent[@"chat"][@"channel"] componentsSeparatedByString:@"global"] componentsJoinedByString:@"chatEngine"];
+                NSArray *channelComponents = [bodyContent[@"chat"][@"channel"] componentsSeparatedByString:@"global"];
+                bodyContent[@"chat"][@"channel"] = [channelComponents componentsJoinedByString:@"chat-engine"];
             }
         }
 
@@ -369,12 +533,13 @@
     
     configuration.responseBodyFilter = ^NSData * (NSURLRequest *request, NSHTTPURLResponse *response, NSData *data) {
         NSData *filteredBody = data;
-        
         if (!filteredBody.length) {
             return filteredBody;
         }
         
-        return postBodyFilter(request, data);
+        filteredBody = postBodyFilter(request, data);
+        
+        return filteredBody;
     };
 }
 
@@ -387,12 +552,17 @@
         message = [[message componentsSeparatedByString:self.randomizedUUIDs[uuid]] componentsJoinedByString:uuid];
     }
     
-    for (NSString *globalChat in self.randomizedGlobalChatNames.allValues) {
-        message = [[message componentsSeparatedByString:globalChat] componentsJoinedByString:@"chatEngine"];
+    for (NSString *randomNamespace in self.randomizedNamespaces.allValues) {
+        message = [[message componentsSeparatedByString:randomNamespace] componentsJoinedByString:@"namespace"];
+    }
+    
+    for (NSString *randomGlobal in self.randomizedGlobals.allValues) {
+        message = [[message componentsSeparatedByString:randomGlobal] componentsJoinedByString:@"chat-engine"];
     }
     
     NSData *data = [message dataUsingEncoding:NSUTF8StringEncoding];
-    NSMutableDictionary *payload = [[NSJSONSerialization JSONObjectWithData:data options:NSJSONReadingAllowFragments error:nil] mutableCopy];
+    NSJSONReadingOptions readOptions = NSJSONReadingMutableContainers | NSJSONReadingMutableLeaves | NSJSONReadingAllowFragments;
+    NSMutableDictionary *payload = [NSJSONSerialization JSONObjectWithData:data options:readOptions error:nil];
     
     payload[CENEventData.sdk] = @"objc";
     payload[CENEventData.eventID] = @"unique-event-id";
@@ -405,73 +575,63 @@
 
 #pragma mark - Client configuration
 
-- (CENChatEngine *)chatEngineWithConfiguration:(CENConfiguration *)configuration {
+- (CENConfiguration *)defaultConfiguration {
     
-    NSString *uuid = [[NSUUID UUID] UUIDString];
-    self.clients[uuid] = [CENChatEngine clientWithConfiguration:configuration];
-    self.clients[uuid].logger.enabled = NO;
-    
-    return self.clients[uuid];
+    return [CENConfiguration configurationWithPublishKey:self.publishKey subscribeKey:self.subscribeKey];
 }
 
-- (void)setupChatEngineForUser:(NSString *)user withSynchronization:(BOOL)synchronizeSession meta:(BOOL)synchronizeMeta state:(NSDictionary *)state {
+- (CENChatEngine *)client {
     
-    NSNumber *timestamp = @((NSUInteger)[NSDate date].timeIntervalSince1970);
-    NSString *globalChannel = [@[@"test", CENChatEngine.sdkVersion, timestamp] componentsJoinedByString:@"-"];
+    if (!_client) {
+        CENConfiguration *configuration = [self configurationForTestCaseWithName:self.name];
+        CENChatEngine *chatEngine = [self createChatEngineWithConfiguration:configuration];
     
-    [self setupChatEngineWithGlobal:globalChannel forUser:user synchronization:synchronizeSession meta:synchronizeMeta state:state];
+        _client = !self.usesMockedObjects ? chatEngine : [self mockForObject:chatEngine];
+    }
+    
+    return _client;
 }
 
-- (void)setupChatEngineWithConfiguration:(CENConfiguration *)configuration forUser:(NSString *)user withState:(NSDictionary *)state {
-    
-    NSString *userUUID = [self randomNameWithUUID:user];
-    
-    configuration.globalChannel = self.randomizedGlobalChatNames[user] ?: configuration.globalChannel;
+- (CENChatEngine *)createChatEngineForUser:(NSString *)user {
+
+    return [self createChatEngineForUser:user withConfiguration:[self configurationForTestCaseWithName:self.name]];
+}
+
+- (CENChatEngine *)createChatEngineWithConfiguration:(CENConfiguration *)configuration {
+
+    return [self createChatEngineForUser:[[NSUUID UUID] UUIDString] withConfiguration:configuration];
+}
+
+- (CENChatEngine *)createChatEngineForUser:(NSString *)user withConfiguration:(CENConfiguration *)configuration {
+
     CENChatEngine *client = [CENChatEngine clientWithConfiguration:configuration];
-    client.logger.enabled = NO;
-    
+    client.logger.enabled = CEN_LOGGER_ENABLED;
+    client.logger.logLevel = CEN_LOGGER_ENABLED ? CENVerboseLogLevel : CENSilentLogLevel;
+
     if (!self.clients[user]) {
         self.clients[user] = client;
     } else if (!self.clientClones[user]) {
         self.clientClones[user] = client;
     } else {
-        @throw [NSException exceptionWithName:@"CENChatEngine setup"
-                                       reason:[@"Attempt to create more than 2 instances for: " stringByAppendingString:user]
-                                     userInfo:nil];
+        NSString *reason = [@"Attempt to create more than 2 instances for: " stringByAppendingString:user];
+
+        @throw [NSException exceptionWithName:@"CENChatEngine setup" reason:reason userInfo:nil];
     }
     
-    self.randomizedGlobalChatNames[user] = self.randomizedGlobalChatNames[user] ?: configuration.globalChannel;
-    [self connectUser:userUUID withAuthKey:userUUID state:state usingClient:client];
+    if (![configuration.namespace isEqualToString:@"namespace"]) {
+        self.randomizedNamespaces[user] = self.randomizedNamespaces[user] ?: configuration.namespace;
+    }
+    
+    return client;
 }
 
-- (void)setupChatEngineWithGlobal:(nullable NSString *)globalChannel
-                          forUser:(NSString *)user
-                  synchronization:(BOOL)synchronizeSession
-                             meta:(BOOL)synchronizeMeta
-                            state:(NSDictionary *)state {
-    
-    globalChannel = [globalChannel stringByReplacingOccurrencesOfString:@"." withString:@"-"];
-    CENConfiguration *configuration = [self defaultConfiguration];
-    NSString *userUUID = [self randomNameWithUUID:user];
-    configuration.synchronizeSession = synchronizeSession;
-    configuration.throwExceptions = YES;
-    configuration.globalChannel = YHVVCR.cassette.isNewCassette ? globalChannel : @"chatEngine";
-    
-    CENChatEngine *client = [CENChatEngine clientWithConfiguration:configuration];
-    client.logger.enabled = NO;
-    
-    if (!self.clients[user]) {
-        self.clients[user] = client;
-    } else if (!self.clientClones[user]) {
-        self.clientClones[user] = client;
-    } else {
-        @throw [NSException exceptionWithName:@"CENChatEngine setup"
-                                       reason:[@"Attempt to create more than 2 instances for: " stringByAppendingString:user]
-                                     userInfo:nil];
+- (void)setupChatEngineForUser:(NSString *)user {
+
+    CENChatEngine *client = [self createChatEngineForUser:user];
+
+    if ([self shouldConnectChatEngineForTestCaseWithName:self.name]) {
+        [self connectUser:user usingClient:client];
     }
-    
-    self.randomizedGlobalChatNames[user] = self.randomizedGlobalChatNames[user] ?: configuration.globalChannel;
-    [self connectUser:userUUID withAuthKey:userUUID state:state usingClient:client];
 }
 
 - (CENChatEngine *)chatEngineForUser:(NSString *)user {
@@ -487,15 +647,62 @@
 
 #pragma mark - Connection
 
-- (void)connectUser:(NSString *)uuid withAuthKey:(NSString *)authKey state:(NSDictionary *)state usingClient:(CENChatEngine *)client {
-    
+- (void)connectUser:(NSString *)user usingClient:(CENChatEngine *)client {
+
+    NSDictionary *state = [self stateForUser:user inTestCaseWithName:self.name];
     dispatch_semaphore_t connectionSemaphore = dispatch_semaphore_create(0);
+    NSString *userUUID = [self randomNameWithUUID:user];
+    CENUserConnectBuilderInterface *connection = client.connect(userUUID).authKey(userUUID);
     
-    client.connect(uuid).state(state).authKey(authKey).perform();
-    client.once(@"$.ready", ^(CENMe *me) {
+    if (client.currentConfiguration.enableGlobal) {
+        NSString *globalChannel = [self globalChatChannelForTestCaseWithName:self.name] ?: @"global";
+        globalChannel = YHVVCR.cassette.isNewCassette ? globalChannel : @"chat-engine";
+        
+        self.randomizedGlobals[user] = self.randomizedGlobals[user] ?: globalChannel;
+        connection = connection.globalChannel(globalChannel);
+    }
+    
+    connection.perform().once(@"$.ready", ^(CENEmittedEvent *event) {
+        client.pubnub.logger.enabled = CEN_PUBNUB_LOGGER_ENABLED;
+        client.pubnub.logger.logLevel = CEN_PUBNUB_LOGGER_ENABLED ? PNVerboseLogLevel : PNSilentLogLevel;
+        
+        if ([self shouldWaitOwnPresenceEventsTestCaseWithName:self.name]) {
+            dispatch_semaphore_t presenceSemaphore = dispatch_semaphore_create(0);
+            
+            if (client.global) {
+                [self object:client shouldHandleEvent:@"$.online.*" withHandler:^CENEventHandlerBlock (dispatch_block_t handler) {
+                    return ^(CENEmittedEvent *emittedEvent) {
+                        CENChat *chat = emittedEvent.emitter;
+                        CENUser *user = emittedEvent.data;
+                        
+                        if ([user.uuid isEqualToString:user.uuid] && [chat.name isEqualToString:client.global.name]) {
+                            handler();
+                        }
+                    };
+                } afterBlock:^{ }];
+            }
+            
+            dispatch_semaphore_wait(presenceSemaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.delayedCheck * NSEC_PER_SEC)));
+        }
+        
+        if (client.global && state.count) {
+            if ([self shouldWaitOwnStateChangeEventTestCaseWithName:self.name]) {
+                dispatch_semaphore_t stateSemaphore = dispatch_semaphore_create(0);
+                
+                client.me.update(state, nil);
+                dispatch_semaphore_wait(stateSemaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.delayedCheck * 2.f * NSEC_PER_SEC)));
+            } else {
+                client.me.update(state, nil);
+            }
+        }
+
+        dispatch_semaphore_signal(connectionSemaphore);
+    }).once(@"$.error.*", ^(CENEmittedEvent *event) {
+        dispatch_semaphore_signal(connectionSemaphore);
+    }).once(@"$.error.**", ^(CENEmittedEvent *event) {
         dispatch_semaphore_signal(connectionSemaphore);
     });
-    
+
     dispatch_semaphore_wait(connectionSemaphore, DISPATCH_TIME_FOREVER);
 }
 
@@ -504,7 +711,7 @@
     dispatch_semaphore_t connectionSemaphore = dispatch_semaphore_create(0);
     
     client.disconnect();
-    client.once(@"$.disconnected", ^(CENMe *me) {
+    client.once(@"$.disconnected", ^(CENEmittedEvent *event) {
         dispatch_semaphore_signal(connectionSemaphore);
     });
     
@@ -516,7 +723,7 @@
     dispatch_semaphore_t connectionSemaphore = dispatch_semaphore_create(0);
     
     client.reconnect();
-    client.once(@"$.connected", ^(CENChat *chat) {
+    client.once(@"$.connected", ^(CENEmittedEvent *event) {
         dispatch_semaphore_signal(connectionSemaphore);
     });
     
@@ -530,8 +737,8 @@
     
     dispatch_semaphore_t connectionSemaphore = dispatch_semaphore_create(0);
     
-    me.update(state);
-    me.chatEngine.once(@"$.state", ^(CENMe *me) {
+    me.update(state, me.chatEngine.global);
+    me.chatEngine.once(@"$.state", ^(CENEmittedEvent *event) {
         dispatch_semaphore_signal(connectionSemaphore);
     });
     
@@ -541,43 +748,143 @@
 
 #pragma mark - Mocking
 
-- (id)mockForClass:(Class)cls {
+- (id)mockForObject:(id)object {
     
-    id classMock = OCMClassMock(cls);
+    BOOL isClass = object_isClass(object);
+    __unsafe_unretained id mock = isClass ? OCMClassMock(object) : OCMPartialMock(object);
     
-    [self.mocks addObject:classMock];
+    if (isClass) {
+        [self.classMocks addObject:mock];
+    } else {
+        [self.instanceMocks addObject:mock];
+    }
     
-    return classMock;
-}
-
-- (id)partialMockForObject:(id)object {
-
-    __strong id partialMock = OCMPartialMock(object);
-    
-    [self.mocks addObject:partialMock];
-    
-    return partialMock;
+    return mock;
 }
 
 
 #pragma mark - Chat mocking
 
-- (CENChat *)privateChatForMockingWithChatEngine:(CENChatEngine *)chatEngine {
+- (void)stubUserAuthorization {
     
-    return [self chatForMocking:YES chatEngine:chatEngine];
+    OCMStub([self.client authorizeLocalUserWithUUID:[OCMArg any] authorizationKey:[OCMArg any] completion:[OCMArg any]])
+        .andDo(^(NSInvocation *invocation) {
+            dispatch_block_t handlerBlock = [self objectForInvocation:invocation argumentAtIndex:3];
+            handlerBlock();
+        });
 }
 
-- (CENChat *)publicChatForMockingWithChatEngine:(CENChatEngine *)chatEngine {
+- (void)stubChatConnection {
     
-    return [self chatForMocking:NO chatEngine:chatEngine];
+    OCMStub([self.client connectToChat:[OCMArg any] withCompletion:[OCMArg any]])
+        .andDo(^(NSInvocation *invocation) {
+            dispatch_block_t handlerBlock = [self objectForInvocation:invocation argumentAtIndex:2];
+            handlerBlock();
+        });
 }
 
-- (CENChat *)chatForMocking:(BOOL)isPrivate chatEngine:(CENChatEngine *)chatEngine {
+- (void)stubChatHandshake {
+    
+    OCMStub([self.client handshakeChatAccess:[OCMArg any] withCompletion:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
+        dispatch_block_t block = [self objectForInvocation:invocation argumentAtIndex:2];
+        block();
+    });
+}
+
+- (void)stubPubNubSubscribe {
+    
+    OCMStub([self.client connectToPubNubWithCompletion:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
+        dispatch_block_t block = [self objectForInvocation:invocation argumentAtIndex:1];
+        block();
+    });
+}
+
+- (CENChat *)feedChatForUser:(NSString *)uuid connectable:(BOOL)ableToConnect
+              withChatEngine:(CENChatEngine *)chatEngine {
+    
+    NSString *namespace = [self namespaceForTestCaseWithName:self.name] ?: @"namespace";
+    NSString *name = [@[namespace, @"user", uuid, @"read.#feed"] componentsJoinedByString:@"#"];
+    CENChat *chat = chatEngine.Chat().name(name).autoConnect(NO).create();
+    
+    if (!ableToConnect) {
+        OCMStub([chatEngine connectToChat:chat withCompletion:[OCMArg any]])
+            .andDo(^(NSInvocation *invocation) {
+                dispatch_block_t block = [self objectForInvocation:invocation argumentAtIndex:2];
+                block();
+            });
+    }
+    
+    return chat;
+}
+
+- (CENChat *)directChatForUser:(NSString *)uuid connectable:(BOOL)ableToConnect
+                withChatEngine:(CENChatEngine *)chatEngine {
+    
+    NSString *namespace = [self namespaceForTestCaseWithName:self.name] ?: @"namespace";
+    NSString *name = [@[namespace, @"user", uuid, @"write.#direct"] componentsJoinedByString:@"#"];
+    CENChat *chat = chatEngine.Chat().name(name).autoConnect(NO).create();
+    
+    if (!ableToConnect) {
+        OCMStub([chatEngine connectToChat:chat withCompletion:[OCMArg any]])
+            .andDo(^(NSInvocation *invocation) {
+                dispatch_block_t block = [self objectForInvocation:invocation argumentAtIndex:2];
+                
+                block();
+            });
+    }
+    
+    return chat;
+}
+
+- (CENChat *)privateChatWithChatEngine:(CENChatEngine *)chatEngine {
+    
+    return [self privateChatWithMeta:nil chatEngine:chatEngine];
+}
+
+- (CENChat *)privateChatWithMeta:(NSDictionary *)meta chatEngine:(CENChatEngine *)chatEngine {
+    
+    return [self privateChatFromGroup:nil withMeta:meta chatEngine:chatEngine];
+}
+
+- (CENChat *)privateChatFromGroup:(NSString *)group withChatEngine:(CENChatEngine *)chatEngine {
+    
+    return [self privateChatFromGroup:group withMeta:nil chatEngine:chatEngine];
+}
+
+- (CENChat *)privateChatFromGroup:(NSString *)group withMeta:(NSDictionary *)meta
+                       chatEngine:(CENChatEngine *)chatEngine {
+    
+    return [self privateChat:YES fromGroup:group withMeta:meta chatEngine:chatEngine];
+}
+
+- (CENChat *)publicChatWithChatEngine:(CENChatEngine *)chatEngine {
+    
+    return [self publicChatWithMeta:nil chatEngine:chatEngine];
+}
+
+- (CENChat *)publicChatWithMeta:(NSDictionary *)meta chatEngine:(CENChatEngine *)chatEngine {
+    
+    return [self publicChatFromGroup:nil withMeta:meta cithChatEngine:chatEngine];
+}
+
+- (CENChat *)publicChatFromGroup:(NSString *)group withChatEngine:(CENChatEngine *)chatEngine {
+    
+    return [self publicChatFromGroup:group withMeta:nil cithChatEngine:chatEngine];
+}
+
+- (CENChat *)publicChatFromGroup:(NSString *)group withMeta:(NSDictionary *)meta
+                  cithChatEngine:(CENChatEngine *)chatEngine {
+    
+    return [self privateChat:NO fromGroup:group withMeta:meta chatEngine:chatEngine];
+}
+
+- (CENChat *)privateChat:(BOOL)isPrivate fromGroup:(NSString *)group withMeta:(NSDictionary *)meta
+              chatEngine:(CENChatEngine *)chatEngine {
     
     NSString *name = [[NSUUID UUID] UUIDString];
-    NSString *namespace = [[NSUUID UUID] UUIDString];
     
-    return [CENChat chatWithName:name namespace:namespace group:CENChatGroup.custom private:isPrivate metaData:@{} chatEngine:chatEngine];
+    return [chatEngine createChatWithName:name group:(group ?: CENChatGroup.custom) private:isPrivate
+                              autoConnect:NO metaData:(meta ?: @{})];
 }
 
 - (id)createPrivateChat:(BOOL)isPrivate invocationForClassMock:(id)mock {
@@ -593,6 +900,209 @@
 
 #pragma mark - Helpers
 
+- (void)waitForObject:(id)object recordedInvocation:(id)invocation call:(BOOL)shouldCall
+       withinInterval:(NSTimeInterval)interval afterBlock:(void(^)(void))initalBlock {
+    
+    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
+    __block BOOL handlerCalled = NO;
+    
+    ((OCMStubRecorder *)invocation).andDo(^(NSInvocation *expectedInvocation) {
+        handlerCalled = YES;
+        dispatch_semaphore_signal(semaphore);
+    });
+    
+    if (initalBlock) {
+        initalBlock();
+    }
+    
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(interval * NSEC_PER_SEC)));
+    if (shouldCall) {
+        XCTAssertTrue(handlerCalled);
+    } else {
+        XCTAssertFalse(handlerCalled);
+    }
+    OCMVerifyAll(object);
+}
+
+- (void)waitForObject:(id)object recordedInvocationCall:(id)invocation withinInterval:(NSTimeInterval)interval
+           afterBlock:(void(^)(void))initalBlock {
+    
+    [self waitForObject:object recordedInvocation:invocation call:YES withinInterval:interval
+             afterBlock:initalBlock];
+}
+
+- (void)waitToCompleteIn:(NSTimeInterval)delay codeBlock:(void(^)(dispatch_block_t handler))codeBlock {
+    
+    [self waitToCompleteIn:delay codeBlock:codeBlock afterBlock:nil];
+}
+
+- (void)waitToCompleteIn:(NSTimeInterval)delay codeBlock:(void(^)(dispatch_block_t handler))codeBlock
+              afterBlock:(void(^)(void))initalBlock {
+    
+    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
+    __block BOOL handlerCalled = NO;
+    
+    codeBlock(^{
+        handlerCalled = YES;
+        dispatch_semaphore_signal(semaphore);
+    });
+    
+    if (initalBlock) {
+        initalBlock();
+    }
+    
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delay * NSEC_PER_SEC)));
+    XCTAssertTrue(handlerCalled);
+}
+
+- (void)object:(CENEventEmitter *)object
+  shouldHandle:(BOOL)shouldHandle
+        events:(NSArray<NSString *> *)events
+withinInterval:(NSTimeInterval)interval
+  withHandlers:(NSArray<CENEventHandlerBlock (^)(dispatch_block_t handler)> *)handlers
+    afterBlock:(void(^)(void))initialBlock {
+    
+    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
+    dispatch_group_t handleGroup = dispatch_group_create();
+    __block BOOL handlerCalled = NO;
+    
+    __weak __typeof__(object) weakObject = object;
+    [events enumerateObjectsUsingBlock:^(NSString *event, NSUInteger eventIdx, BOOL *stop) {
+        CENEventHandlerBlock(^handler)(dispatch_block_t) = handlers[eventIdx];
+        __block BOOL handlerCalled = NO;
+        
+        dispatch_group_enter(handleGroup);
+        [object handleEvent:event withHandlerBlock:handler(^{
+            if (!handlerCalled) {
+                handlerCalled = YES;
+                [weakObject removeAllHandlersForEvent:event];
+                dispatch_group_leave(handleGroup);
+            }
+        })];
+    }];
+    
+    
+    if (initialBlock) {
+        initialBlock();
+    }
+    
+    
+    dispatch_queue_t queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
+    dispatch_group_notify(handleGroup, queue, ^{
+        handlerCalled = YES;
+        dispatch_semaphore_signal(semaphore);
+    });
+    
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(interval * NSEC_PER_SEC)));
+    if (shouldHandle) {
+        XCTAssertTrue(handlerCalled, @"Not called for events: %@", events);
+    } else {
+        XCTAssertFalse(handlerCalled);
+    }
+}
+
+- (void)object:(CENEventEmitter *)object
+    shouldHandleEvent:(NSString *)event
+           afterBlock:(void(^)(void))initialBlock {
+
+    [self object:object shouldHandleEvent:event withHandler:^CENEventHandlerBlock(dispatch_block_t handler) {
+        return ^(CENEmittedEvent *__unused event) {
+            handler();
+        };
+    } afterBlock:initialBlock];
+}
+
+- (void)object:(CENEventEmitter *)object
+  shouldHandleEvent:(NSString *)event
+       withHandler:(CENEventHandlerBlock (^)(dispatch_block_t handler))handler
+        afterBlock:(void(^)(void))initialBlock {
+    
+    [self object:object shouldHandleEvent:event withinInterval:self.testCompletionDelay
+     withHandler:handler afterBlock:initialBlock];
+}
+
+- (void)object:(CENEventEmitter *)object
+  shouldHandleEvent:(NSString *)event
+     withinInterval:(NSTimeInterval)interval
+        withHandler:(CENEventHandlerBlock (^)(dispatch_block_t handler))handler
+         afterBlock:(void(^)(void))initialBlock {
+    
+    [self object:object shouldHandleEvents:@[event] withinInterval:interval withHandlers:@[handler]
+      afterBlock:initialBlock];
+}
+
+- (void)object:(CENEventEmitter *)object
+  shouldHandleEvents:(NSArray<NSString *> *)events
+      withinInterval:(NSTimeInterval)interval
+        withHandlers:(NSArray<CENEventHandlerBlock (^)(dispatch_block_t handler)> *)handlers
+          afterBlock:(void(^)(void))initialBlock {
+    
+    [self object:object shouldHandle:YES events:events withinInterval:interval withHandlers:handlers
+      afterBlock:initialBlock];
+}
+
+- (void)waitForObject:(id)object recordedInvocationNotCall:(id)invocation
+       withinInterval:(NSTimeInterval)interval afterBlock:(nullable void(^)(void))initialBlock {
+    
+    [self waitForObject:object recordedInvocation:invocation call:NO withinInterval:interval
+             afterBlock:initialBlock];
+}
+
+- (void)waitToNotCompleteIn:(NSTimeInterval)delay
+                  codeBlock:(void(^)(dispatch_block_t handler))codeBlock {
+    
+    [self waitToNotCompleteIn:delay codeBlock:codeBlock afterBlock:nil];
+}
+
+- (void)waitToNotCompleteIn:(NSTimeInterval)delay
+                  codeBlock:(void(^)(dispatch_block_t handler))codeBlock
+                 afterBlock:(void(^)(void))initialBlock {
+    
+    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
+    __block BOOL handlerCalled = NO;
+    
+    codeBlock(^{
+        handlerCalled = YES;
+        dispatch_semaphore_signal(semaphore);
+    });
+    
+    if (initialBlock) {
+        initialBlock();
+    }
+    
+    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delay * NSEC_PER_SEC)));
+    XCTAssertFalse(handlerCalled);
+}
+
+- (void)object:(CENEventEmitter *)object
+    shouldNotHandleEvent:(NSString *)event
+             withHandler:(CENEventHandlerBlock (^)(dispatch_block_t handler))handler
+              afterBlock:(void(^)(void))initialBlock {
+    
+    [self object:object shouldNotHandleEvent:event withinInterval:self.falseTestCompletionDelay
+     withHandler:handler afterBlock:initialBlock];
+}
+
+- (void)object:(CENEventEmitter *)object
+  shouldNotHandleEvent:(NSString *)event
+        withinInterval:(NSTimeInterval)interval
+           withHandler:(CENEventHandlerBlock (^)(dispatch_block_t handler))handler
+            afterBlock:(void(^)(void))initialBlock {
+    
+    [self object:object shouldNotHandleEvents:@[event] withinInterval:interval
+    withHandlers:@[handler] afterBlock:initialBlock];
+}
+
+- (void)object:(CENEventEmitter *)object
+  shouldNotHandleEvents:(NSArray<NSString *> *)events
+         withinInterval:(NSTimeInterval)interval
+           withHandlers:(NSArray<CENEventHandlerBlock (^)(dispatch_block_t handler)> *)handlers
+             afterBlock:(void(^)(void))initialBlock {
+    
+    [self object:object shouldHandle:NO events:events withinInterval:interval withHandlers:handlers
+      afterBlock:initialBlock];
+}
+
 - (XCTestExpectation *)waitTask:(NSString *)taskName completionFor:(NSTimeInterval)seconds {
     
     if (seconds <= 0.f) {
@@ -605,6 +1115,18 @@
     [self waitForExpectations:@[waitExpectation] timeout:(seconds + 0.3f)];
     
     return waitExpectation;
+}
+
+
+#pragma mark - Helpers
+
+- (id)objectForInvocation:(NSInvocation *)invocation argumentAtIndex:(NSUInteger)index {
+    
+    __strong id object = [invocation objectForArgumentAtIndex:(index + 1)];
+    
+    [[CENTestCase invocationObjects] addObject:object];
+    
+    return object;
 }
 
 

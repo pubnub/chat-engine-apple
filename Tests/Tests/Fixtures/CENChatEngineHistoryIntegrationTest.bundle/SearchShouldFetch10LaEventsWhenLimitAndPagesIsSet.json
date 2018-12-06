@@ -1,6 +1,6 @@
 [
   {
-    "id" : "30014C06-D4BD-485C-95C6-750A75FA0CC7",
+    "id" : "26D99302-2EF8-49F5-ACA8-B2908F023E8C",
     "data" : {
       "method" : "post",
       "cls" : "NSURLRequest",
@@ -11,23 +11,22 @@
       "cookies" : true,
       "headers" : {
         "Accept" : "*\/*",
-        "Content-Length" : "90",
+        "Content-Length" : "108",
         "Connection" : "keep-alive",
         "Accept-Encoding" : "gzip,deflate",
         "Content-Type" : "application\/json;charset=UTF-8"
       },
       "body" : {
         "cls" : "NSData",
-        "base64" : "eyJnbG9iYWwiOiJjaGF0RW5naW5lIiwiYXV0aEtleSI6InN0ZXBoZW4iLCJ1dWlkIjoic3RlcGhlbiJ9"
+        "base64" : "eyJuYW1lc3BhY2UiOiJuYW1lc3BhY2UiLCJhdXRoS2V5Ijoicm9ib3Qtc3RlcGhlbiIsInV1aWQiOiJyb2JvdC1zdGVwaGVuIn0="
       },
       "pipeline" : false,
       "url" : "https:\/\/pubsub.pubnub.com\/v1\/blocks\/sub-key\/demo-36\/chat-engine-server?route=bootstrap"
     },
-    "type" : 0,
-    "outOfOrder" : false
+    "type" : 0
   },
   {
-    "id" : "30014C06-D4BD-485C-95C6-750A75FA0CC7",
+    "id" : "26D99302-2EF8-49F5-ACA8-B2908F023E8C",
     "data" : {
       "status" : 200,
       "cls" : "NSHTTPURLResponse",
@@ -37,31 +36,28 @@
         "Content-Type" : "text\/plain; charset=utf-8",
         "Access-Control-Expose-Headers" : "Access-Control-Allow-Origin, Access-Control-Allow-Headers, Access-Control-Allow-Methods",
         "Access-Control-Allow-Methods" : "GET, POST, OPTIONS, PUT, DELETE",
-        "Date" : "Mon, 13 Aug 2018 19:39:59 GMT",
+        "Date" : "Tue, 04 Dec 2018 18:49:23 GMT",
         "Access-Control-Allow-Headers" : "Origin, X-Requested-With, Content-Type, Accept",
         "Content-Length" : "0",
         "Connection" : "keep-alive"
       }
     },
-    "type" : 1,
-    "outOfOrder" : false
+    "type" : 1
   },
   {
-    "id" : "30014C06-D4BD-485C-95C6-750A75FA0CC7",
+    "id" : "26D99302-2EF8-49F5-ACA8-B2908F023E8C",
     "data" : {
       "cls" : "NSData",
       "base64" : ""
     },
-    "type" : 2,
-    "outOfOrder" : false
+    "type" : 2
   },
   {
-    "id" : "30014C06-D4BD-485C-95C6-750A75FA0CC7",
-    "type" : 4,
-    "outOfOrder" : false
+    "id" : "26D99302-2EF8-49F5-ACA8-B2908F023E8C",
+    "type" : 4
   },
   {
-    "id" : "6542C001-C080-4CA6-9B1E-C7AFB18DE55E",
+    "id" : "28C029B8-ABCD-4C16-8F2F-F0F5DB435198",
     "data" : {
       "method" : "post",
       "cls" : "NSURLRequest",
@@ -72,23 +68,22 @@
       "cookies" : true,
       "headers" : {
         "Accept" : "*\/*",
-        "Content-Length" : "90",
+        "Content-Length" : "108",
         "Connection" : "keep-alive",
         "Accept-Encoding" : "gzip,deflate",
         "Content-Type" : "application\/json;charset=UTF-8"
       },
       "body" : {
         "cls" : "NSData",
-        "base64" : "eyJnbG9iYWwiOiJjaGF0RW5naW5lIiwiYXV0aEtleSI6InN0ZXBoZW4iLCJ1dWlkIjoic3RlcGhlbiJ9"
+        "base64" : "eyJuYW1lc3BhY2UiOiJuYW1lc3BhY2UiLCJhdXRoS2V5Ijoicm9ib3Qtc3RlcGhlbiIsInV1aWQiOiJyb2JvdC1zdGVwaGVuIn0="
       },
       "pipeline" : false,
       "url" : "https:\/\/pubsub.pubnub.com\/v1\/blocks\/sub-key\/demo-36\/chat-engine-server?route=user_read"
     },
-    "type" : 0,
-    "outOfOrder" : false
+    "type" : 0
   },
   {
-    "id" : "6542C001-C080-4CA6-9B1E-C7AFB18DE55E",
+    "id" : "28C029B8-ABCD-4C16-8F2F-F0F5DB435198",
     "data" : {
       "status" : 200,
       "cls" : "NSHTTPURLResponse",
@@ -98,31 +93,28 @@
         "Content-Type" : "text\/plain; charset=utf-8",
         "Access-Control-Expose-Headers" : "Access-Control-Allow-Origin, Access-Control-Allow-Headers, Access-Control-Allow-Methods",
         "Access-Control-Allow-Methods" : "GET, POST, OPTIONS, PUT, DELETE",
-        "Date" : "Mon, 13 Aug 2018 19:40:00 GMT",
+        "Date" : "Tue, 04 Dec 2018 18:49:23 GMT",
         "Access-Control-Allow-Headers" : "Origin, X-Requested-With, Content-Type, Accept",
         "Content-Length" : "0",
         "Connection" : "keep-alive"
       }
     },
-    "type" : 1,
-    "outOfOrder" : false
+    "type" : 1
   },
   {
-    "id" : "6542C001-C080-4CA6-9B1E-C7AFB18DE55E",
+    "id" : "28C029B8-ABCD-4C16-8F2F-F0F5DB435198",
     "data" : {
       "cls" : "NSData",
       "base64" : ""
     },
-    "type" : 2,
-    "outOfOrder" : false
+    "type" : 2
   },
   {
-    "id" : "6542C001-C080-4CA6-9B1E-C7AFB18DE55E",
-    "type" : 4,
-    "outOfOrder" : false
+    "id" : "28C029B8-ABCD-4C16-8F2F-F0F5DB435198",
+    "type" : 4
   },
   {
-    "id" : "EAB48030-D54A-4BFF-8DE0-1036F7D211A0",
+    "id" : "A6E8A82E-44D8-4CAE-8956-35356E7762CB",
     "data" : {
       "method" : "post",
       "cls" : "NSURLRequest",
@@ -133,23 +125,22 @@
       "cookies" : true,
       "headers" : {
         "Accept" : "*\/*",
-        "Content-Length" : "90",
+        "Content-Length" : "108",
         "Connection" : "keep-alive",
         "Accept-Encoding" : "gzip,deflate",
         "Content-Type" : "application\/json;charset=UTF-8"
       },
       "body" : {
         "cls" : "NSData",
-        "base64" : "eyJnbG9iYWwiOiJjaGF0RW5naW5lIiwiYXV0aEtleSI6InN0ZXBoZW4iLCJ1dWlkIjoic3RlcGhlbiJ9"
+        "base64" : "eyJuYW1lc3BhY2UiOiJuYW1lc3BhY2UiLCJhdXRoS2V5Ijoicm9ib3Qtc3RlcGhlbiIsInV1aWQiOiJyb2JvdC1zdGVwaGVuIn0="
       },
       "pipeline" : false,
       "url" : "https:\/\/pubsub.pubnub.com\/v1\/blocks\/sub-key\/demo-36\/chat-engine-server?route=user_write"
     },
-    "type" : 0,
-    "outOfOrder" : false
+    "type" : 0
   },
   {
-    "id" : "EAB48030-D54A-4BFF-8DE0-1036F7D211A0",
+    "id" : "A6E8A82E-44D8-4CAE-8956-35356E7762CB",
     "data" : {
       "status" : 200,
       "cls" : "NSHTTPURLResponse",
@@ -159,31 +150,28 @@
         "Content-Type" : "text\/plain; charset=utf-8",
         "Access-Control-Expose-Headers" : "Access-Control-Allow-Origin, Access-Control-Allow-Headers, Access-Control-Allow-Methods",
         "Access-Control-Allow-Methods" : "GET, POST, OPTIONS, PUT, DELETE",
-        "Date" : "Mon, 13 Aug 2018 19:40:00 GMT",
+        "Date" : "Tue, 04 Dec 2018 18:49:23 GMT",
         "Access-Control-Allow-Headers" : "Origin, X-Requested-With, Content-Type, Accept",
         "Content-Length" : "0",
         "Connection" : "keep-alive"
       }
     },
-    "type" : 1,
-    "outOfOrder" : false
+    "type" : 1
   },
   {
-    "id" : "EAB48030-D54A-4BFF-8DE0-1036F7D211A0",
+    "id" : "A6E8A82E-44D8-4CAE-8956-35356E7762CB",
     "data" : {
       "cls" : "NSData",
       "base64" : ""
     },
-    "type" : 2,
-    "outOfOrder" : false
+    "type" : 2
   },
   {
-    "id" : "EAB48030-D54A-4BFF-8DE0-1036F7D211A0",
-    "type" : 4,
-    "outOfOrder" : false
+    "id" : "A6E8A82E-44D8-4CAE-8956-35356E7762CB",
+    "type" : 4
   },
   {
-    "id" : "6B39579F-AA53-4562-B294-B6E1EA2440C2",
+    "id" : "29716EA7-EF00-4309-AFA7-F1892C8C47AC",
     "data" : {
       "method" : "post",
       "cls" : "NSURLRequest",
@@ -194,23 +182,22 @@
       "cookies" : true,
       "headers" : {
         "Accept" : "*\/*",
-        "Content-Length" : "90",
+        "Content-Length" : "108",
         "Connection" : "keep-alive",
         "Accept-Encoding" : "gzip,deflate",
         "Content-Type" : "application\/json;charset=UTF-8"
       },
       "body" : {
         "cls" : "NSData",
-        "base64" : "eyJnbG9iYWwiOiJjaGF0RW5naW5lIiwiYXV0aEtleSI6InN0ZXBoZW4iLCJ1dWlkIjoic3RlcGhlbiJ9"
+        "base64" : "eyJuYW1lc3BhY2UiOiJuYW1lc3BhY2UiLCJhdXRoS2V5Ijoicm9ib3Qtc3RlcGhlbiIsInV1aWQiOiJyb2JvdC1zdGVwaGVuIn0="
       },
       "pipeline" : false,
       "url" : "https:\/\/pubsub.pubnub.com\/v1\/blocks\/sub-key\/demo-36\/chat-engine-server?route=group"
     },
-    "type" : 0,
-    "outOfOrder" : false
+    "type" : 0
   },
   {
-    "id" : "6B39579F-AA53-4562-B294-B6E1EA2440C2",
+    "id" : "29716EA7-EF00-4309-AFA7-F1892C8C47AC",
     "data" : {
       "status" : 200,
       "cls" : "NSHTTPURLResponse",
@@ -220,275 +207,28 @@
         "Content-Type" : "text\/plain; charset=utf-8",
         "Access-Control-Expose-Headers" : "Access-Control-Allow-Origin, Access-Control-Allow-Headers, Access-Control-Allow-Methods",
         "Access-Control-Allow-Methods" : "GET, POST, OPTIONS, PUT, DELETE",
-        "Date" : "Mon, 13 Aug 2018 19:40:02 GMT",
+        "Date" : "Tue, 04 Dec 2018 18:49:23 GMT",
         "Access-Control-Allow-Headers" : "Origin, X-Requested-With, Content-Type, Accept",
         "Content-Length" : "0",
         "Connection" : "keep-alive"
       }
     },
-    "type" : 1,
-    "outOfOrder" : false
+    "type" : 1
   },
   {
-    "id" : "6B39579F-AA53-4562-B294-B6E1EA2440C2",
+    "id" : "29716EA7-EF00-4309-AFA7-F1892C8C47AC",
     "data" : {
       "cls" : "NSData",
       "base64" : ""
     },
-    "type" : 2,
-    "outOfOrder" : false
+    "type" : 2
   },
   {
-    "id" : "6B39579F-AA53-4562-B294-B6E1EA2440C2",
-    "type" : 4,
-    "outOfOrder" : false
+    "id" : "29716EA7-EF00-4309-AFA7-F1892C8C47AC",
+    "type" : 4
   },
   {
-    "id" : "B90E8094-045A-44E7-B996-D593F67D47A5",
-    "data" : {
-      "method" : "post",
-      "cls" : "NSURLRequest",
-      "cellular" : true,
-      "network" : 0,
-      "cache" : 1,
-      "timeout" : 60,
-      "cookies" : true,
-      "headers" : {
-        "Accept" : "*\/*",
-        "Content-Length" : "161",
-        "Connection" : "keep-alive",
-        "Accept-Encoding" : "gzip,deflate",
-        "Content-Type" : "application\/json;charset=UTF-8"
-      },
-      "body" : {
-        "cls" : "NSData",
-        "base64" : "eyJnbG9iYWwiOiJjaGF0RW5naW5lIiwiY2hhdCI6eyJncm91cCI6InN5c3RlbSIsInByaXZhdGUiOmZhbHNlLCJtZXRhIjp7fSwiY2hhbm5lbCI6ImNoYXRFbmdpbmUifSwiYXV0aEtleSI6InN0ZXBoZW4iLCJ1dWlkIjoic3RlcGhlbiJ9"
-      },
-      "pipeline" : false,
-      "url" : "https:\/\/pubsub.pubnub.com\/v1\/blocks\/sub-key\/demo-36\/chat-engine-server?route=grant"
-    },
-    "type" : 0,
-    "outOfOrder" : false
-  },
-  {
-    "id" : "B90E8094-045A-44E7-B996-D593F67D47A5",
-    "data" : {
-      "status" : 200,
-      "cls" : "NSHTTPURLResponse",
-      "url" : "https:\/\/pubsub.pubnub.com\/v1\/blocks\/sub-key\/demo-36\/chat-engine-server?route=grant",
-      "headers" : {
-        "Access-Control-Allow-Credentials" : "true",
-        "Content-Type" : "text\/plain; charset=utf-8",
-        "Access-Control-Expose-Headers" : "Access-Control-Allow-Origin, Access-Control-Allow-Headers, Access-Control-Allow-Methods",
-        "Access-Control-Allow-Methods" : "GET, POST, OPTIONS, PUT, DELETE",
-        "Date" : "Mon, 13 Aug 2018 19:40:02 GMT",
-        "Access-Control-Allow-Headers" : "Origin, X-Requested-With, Content-Type, Accept",
-        "Content-Length" : "0",
-        "Connection" : "keep-alive"
-      }
-    },
-    "type" : 1,
-    "outOfOrder" : false
-  },
-  {
-    "id" : "B90E8094-045A-44E7-B996-D593F67D47A5",
-    "data" : {
-      "cls" : "NSData",
-      "base64" : ""
-    },
-    "type" : 2,
-    "outOfOrder" : false
-  },
-  {
-    "id" : "B90E8094-045A-44E7-B996-D593F67D47A5",
-    "type" : 4,
-    "outOfOrder" : false
-  },
-  {
-    "id" : "6CCAC5A1-E2A0-4D8D-A775-6CA470E279E1",
-    "data" : {
-      "method" : "post",
-      "cls" : "NSURLRequest",
-      "cellular" : true,
-      "network" : 0,
-      "cache" : 1,
-      "timeout" : 60,
-      "cookies" : true,
-      "headers" : {
-        "Accept" : "*\/*",
-        "Content-Length" : "161",
-        "Connection" : "keep-alive",
-        "Accept-Encoding" : "gzip,deflate",
-        "Content-Type" : "application\/json;charset=UTF-8"
-      },
-      "body" : {
-        "cls" : "NSData",
-        "base64" : "eyJnbG9iYWwiOiJjaGF0RW5naW5lIiwiY2hhdCI6eyJncm91cCI6InN5c3RlbSIsInByaXZhdGUiOmZhbHNlLCJtZXRhIjp7fSwiY2hhbm5lbCI6ImNoYXRFbmdpbmUifSwiYXV0aEtleSI6InN0ZXBoZW4iLCJ1dWlkIjoic3RlcGhlbiJ9"
-      },
-      "pipeline" : false,
-      "url" : "https:\/\/pubsub.pubnub.com\/v1\/blocks\/sub-key\/demo-36\/chat-engine-server?route=join"
-    },
-    "type" : 0,
-    "outOfOrder" : false
-  },
-  {
-    "id" : "6CCAC5A1-E2A0-4D8D-A775-6CA470E279E1",
-    "data" : {
-      "status" : 200,
-      "cls" : "NSHTTPURLResponse",
-      "url" : "https:\/\/pubsub.pubnub.com\/v1\/blocks\/sub-key\/demo-36\/chat-engine-server?route=join",
-      "headers" : {
-        "Access-Control-Allow-Credentials" : "true",
-        "Content-Type" : "text\/plain; charset=utf-8",
-        "Access-Control-Expose-Headers" : "Access-Control-Allow-Origin, Access-Control-Allow-Headers, Access-Control-Allow-Methods",
-        "Access-Control-Allow-Methods" : "GET, POST, OPTIONS, PUT, DELETE",
-        "Date" : "Mon, 13 Aug 2018 19:40:02 GMT",
-        "Access-Control-Allow-Headers" : "Origin, X-Requested-With, Content-Type, Accept",
-        "Content-Length" : "0",
-        "Connection" : "keep-alive"
-      }
-    },
-    "type" : 1,
-    "outOfOrder" : false
-  },
-  {
-    "id" : "6CCAC5A1-E2A0-4D8D-A775-6CA470E279E1",
-    "data" : {
-      "cls" : "NSData",
-      "base64" : ""
-    },
-    "type" : 2,
-    "outOfOrder" : false
-  },
-  {
-    "id" : "6CCAC5A1-E2A0-4D8D-A775-6CA470E279E1",
-    "type" : 4,
-    "outOfOrder" : false
-  },
-  {
-    "id" : "B296A82D-FF4E-49AC-9922-CC83E636B69A",
-    "data" : {
-      "method" : "post",
-      "cls" : "NSURLRequest",
-      "cellular" : true,
-      "network" : 0,
-      "cache" : 1,
-      "timeout" : 60,
-      "cookies" : true,
-      "headers" : {
-        "Accept" : "*\/*",
-        "Content-Length" : "205",
-        "Connection" : "keep-alive",
-        "Accept-Encoding" : "gzip,deflate",
-        "Content-Type" : "application\/json;charset=UTF-8"
-      },
-      "body" : {
-        "cls" : "NSData",
-        "base64" : "eyJnbG9iYWwiOiJjaGF0RW5naW5lIiwiY2hhdCI6eyJncm91cCI6InN5c3RlbSIsInByaXZhdGUiOmZhbHNlLCJtZXRhIjp7fSwiY2hhbm5lbCI6ImNoYXRFbmdpbmUjdXNlciNzdGVwaGVuI3dyaXRlLiNkaXJlY3QifSwiYXV0aEtleSI6InN0ZXBoZW4iLCJ1dWlkIjoic3RlcGhlbiJ9"
-      },
-      "pipeline" : false,
-      "url" : "https:\/\/pubsub.pubnub.com\/v1\/blocks\/sub-key\/demo-36\/chat-engine-server?route=grant"
-    },
-    "type" : 0,
-    "outOfOrder" : false
-  },
-  {
-    "id" : "B296A82D-FF4E-49AC-9922-CC83E636B69A",
-    "data" : {
-      "status" : 200,
-      "cls" : "NSHTTPURLResponse",
-      "url" : "https:\/\/pubsub.pubnub.com\/v1\/blocks\/sub-key\/demo-36\/chat-engine-server?route=grant",
-      "headers" : {
-        "Access-Control-Allow-Credentials" : "true",
-        "Content-Type" : "text\/plain; charset=utf-8",
-        "Access-Control-Expose-Headers" : "Access-Control-Allow-Origin, Access-Control-Allow-Headers, Access-Control-Allow-Methods",
-        "Access-Control-Allow-Methods" : "GET, POST, OPTIONS, PUT, DELETE",
-        "Date" : "Mon, 13 Aug 2018 19:40:02 GMT",
-        "Access-Control-Allow-Headers" : "Origin, X-Requested-With, Content-Type, Accept",
-        "Content-Length" : "0",
-        "Connection" : "keep-alive"
-      }
-    },
-    "type" : 1,
-    "outOfOrder" : false
-  },
-  {
-    "id" : "B296A82D-FF4E-49AC-9922-CC83E636B69A",
-    "data" : {
-      "cls" : "NSData",
-      "base64" : ""
-    },
-    "type" : 2,
-    "outOfOrder" : false
-  },
-  {
-    "id" : "B296A82D-FF4E-49AC-9922-CC83E636B69A",
-    "type" : 4,
-    "outOfOrder" : false
-  },
-  {
-    "id" : "C8F743BA-3896-4C3C-A72B-0C878468DA1F",
-    "data" : {
-      "method" : "post",
-      "cls" : "NSURLRequest",
-      "cellular" : true,
-      "network" : 0,
-      "cache" : 1,
-      "timeout" : 60,
-      "cookies" : true,
-      "headers" : {
-        "Accept" : "*\/*",
-        "Content-Length" : "205",
-        "Connection" : "keep-alive",
-        "Accept-Encoding" : "gzip,deflate",
-        "Content-Type" : "application\/json;charset=UTF-8"
-      },
-      "body" : {
-        "cls" : "NSData",
-        "base64" : "eyJnbG9iYWwiOiJjaGF0RW5naW5lIiwiY2hhdCI6eyJncm91cCI6InN5c3RlbSIsInByaXZhdGUiOmZhbHNlLCJtZXRhIjp7fSwiY2hhbm5lbCI6ImNoYXRFbmdpbmUjdXNlciNzdGVwaGVuI3dyaXRlLiNkaXJlY3QifSwiYXV0aEtleSI6InN0ZXBoZW4iLCJ1dWlkIjoic3RlcGhlbiJ9"
-      },
-      "pipeline" : false,
-      "url" : "https:\/\/pubsub.pubnub.com\/v1\/blocks\/sub-key\/demo-36\/chat-engine-server?route=join"
-    },
-    "type" : 0,
-    "outOfOrder" : false
-  },
-  {
-    "id" : "C8F743BA-3896-4C3C-A72B-0C878468DA1F",
-    "data" : {
-      "status" : 200,
-      "cls" : "NSHTTPURLResponse",
-      "url" : "https:\/\/pubsub.pubnub.com\/v1\/blocks\/sub-key\/demo-36\/chat-engine-server?route=join",
-      "headers" : {
-        "Access-Control-Allow-Credentials" : "true",
-        "Content-Type" : "text\/plain; charset=utf-8",
-        "Access-Control-Expose-Headers" : "Access-Control-Allow-Origin, Access-Control-Allow-Headers, Access-Control-Allow-Methods",
-        "Access-Control-Allow-Methods" : "GET, POST, OPTIONS, PUT, DELETE",
-        "Date" : "Mon, 13 Aug 2018 19:40:02 GMT",
-        "Access-Control-Allow-Headers" : "Origin, X-Requested-With, Content-Type, Accept",
-        "Content-Length" : "0",
-        "Connection" : "keep-alive"
-      }
-    },
-    "type" : 1,
-    "outOfOrder" : false
-  },
-  {
-    "id" : "C8F743BA-3896-4C3C-A72B-0C878468DA1F",
-    "data" : {
-      "cls" : "NSData",
-      "base64" : ""
-    },
-    "type" : 2,
-    "outOfOrder" : false
-  },
-  {
-    "id" : "C8F743BA-3896-4C3C-A72B-0C878468DA1F",
-    "type" : 4,
-    "outOfOrder" : false
-  },
-  {
-    "id" : "8B8A509A-3CDD-463C-8190-57BB6BB1B087",
+    "id" : "E7660D99-81A9-4F1D-BAD6-BE4EB5766579",
     "data" : {
       "method" : "post",
       "cls" : "NSURLRequest",
@@ -506,16 +246,15 @@
       },
       "body" : {
         "cls" : "NSData",
-        "base64" : "eyJnbG9iYWwiOiJjaGF0RW5naW5lIiwiY2hhdCI6eyJncm91cCI6InN5c3RlbSIsInByaXZhdGUiOmZhbHNlLCJtZXRhIjp7fSwiY2hhbm5lbCI6ImNoYXRFbmdpbmUjdXNlciNzdGVwaGVuI3JlYWQuI2ZlZWQifSwiYXV0aEtleSI6InN0ZXBoZW4iLCJ1dWlkIjoic3RlcGhlbiJ9"
+        "base64" : "eyJjaGF0Ijp7Imdyb3VwIjoiY3VzdG9tIiwicHJpdmF0ZSI6ZmFsc2UsIm1ldGEiOnt9LCJjaGFubmVsIjoibmFtZXNwYWNlI2NoYXQjcHVibGljLiNjaGF0LWVuZ2luZSJ9LCJuYW1lc3BhY2UiOiJuYW1lc3BhY2UiLCJhdXRoS2V5Ijoicm9ib3Qtc3RlcGhlbiIsInV1aWQiOiJyb2JvdC1zdGVwaGVuIn0="
       },
       "pipeline" : false,
       "url" : "https:\/\/pubsub.pubnub.com\/v1\/blocks\/sub-key\/demo-36\/chat-engine-server?route=grant"
     },
-    "type" : 0,
-    "outOfOrder" : false
+    "type" : 0
   },
   {
-    "id" : "8B8A509A-3CDD-463C-8190-57BB6BB1B087",
+    "id" : "E7660D99-81A9-4F1D-BAD6-BE4EB5766579",
     "data" : {
       "status" : 200,
       "cls" : "NSHTTPURLResponse",
@@ -525,31 +264,28 @@
         "Content-Type" : "text\/plain; charset=utf-8",
         "Access-Control-Expose-Headers" : "Access-Control-Allow-Origin, Access-Control-Allow-Headers, Access-Control-Allow-Methods",
         "Access-Control-Allow-Methods" : "GET, POST, OPTIONS, PUT, DELETE",
-        "Date" : "Mon, 13 Aug 2018 19:40:02 GMT",
+        "Date" : "Tue, 04 Dec 2018 18:49:24 GMT",
         "Access-Control-Allow-Headers" : "Origin, X-Requested-With, Content-Type, Accept",
         "Content-Length" : "0",
         "Connection" : "keep-alive"
       }
     },
-    "type" : 1,
-    "outOfOrder" : false
+    "type" : 1
   },
   {
-    "id" : "8B8A509A-3CDD-463C-8190-57BB6BB1B087",
+    "id" : "E7660D99-81A9-4F1D-BAD6-BE4EB5766579",
     "data" : {
       "cls" : "NSData",
       "base64" : ""
     },
-    "type" : 2,
-    "outOfOrder" : false
+    "type" : 2
   },
   {
-    "id" : "8B8A509A-3CDD-463C-8190-57BB6BB1B087",
-    "type" : 4,
-    "outOfOrder" : false
+    "id" : "E7660D99-81A9-4F1D-BAD6-BE4EB5766579",
+    "type" : 4
   },
   {
-    "id" : "C54D1E18-0109-490D-9245-E87E893A06AB",
+    "id" : "2FF904D3-A981-4CBB-BC2C-1DFD50319A17",
     "data" : {
       "method" : "post",
       "cls" : "NSURLRequest",
@@ -567,16 +303,15 @@
       },
       "body" : {
         "cls" : "NSData",
-        "base64" : "eyJnbG9iYWwiOiJjaGF0RW5naW5lIiwiY2hhdCI6eyJncm91cCI6InN5c3RlbSIsInByaXZhdGUiOmZhbHNlLCJtZXRhIjp7fSwiY2hhbm5lbCI6ImNoYXRFbmdpbmUjdXNlciNzdGVwaGVuI3JlYWQuI2ZlZWQifSwiYXV0aEtleSI6InN0ZXBoZW4iLCJ1dWlkIjoic3RlcGhlbiJ9"
+        "base64" : "eyJjaGF0Ijp7Imdyb3VwIjoiY3VzdG9tIiwicHJpdmF0ZSI6ZmFsc2UsIm1ldGEiOnt9LCJjaGFubmVsIjoibmFtZXNwYWNlI2NoYXQjcHVibGljLiNjaGF0LWVuZ2luZSJ9LCJuYW1lc3BhY2UiOiJuYW1lc3BhY2UiLCJhdXRoS2V5Ijoicm9ib3Qtc3RlcGhlbiIsInV1aWQiOiJyb2JvdC1zdGVwaGVuIn0="
       },
       "pipeline" : false,
       "url" : "https:\/\/pubsub.pubnub.com\/v1\/blocks\/sub-key\/demo-36\/chat-engine-server?route=join"
     },
-    "type" : 0,
-    "outOfOrder" : false
+    "type" : 0
   },
   {
-    "id" : "C54D1E18-0109-490D-9245-E87E893A06AB",
+    "id" : "2FF904D3-A981-4CBB-BC2C-1DFD50319A17",
     "data" : {
       "status" : 200,
       "cls" : "NSHTTPURLResponse",
@@ -586,86 +321,256 @@
         "Content-Type" : "text\/plain; charset=utf-8",
         "Access-Control-Expose-Headers" : "Access-Control-Allow-Origin, Access-Control-Allow-Headers, Access-Control-Allow-Methods",
         "Access-Control-Allow-Methods" : "GET, POST, OPTIONS, PUT, DELETE",
-        "Date" : "Mon, 13 Aug 2018 19:40:02 GMT",
+        "Date" : "Tue, 04 Dec 2018 18:49:24 GMT",
         "Access-Control-Allow-Headers" : "Origin, X-Requested-With, Content-Type, Accept",
         "Content-Length" : "0",
         "Connection" : "keep-alive"
       }
     },
-    "type" : 1,
-    "outOfOrder" : false
+    "type" : 1
   },
   {
-    "id" : "C54D1E18-0109-490D-9245-E87E893A06AB",
+    "id" : "2FF904D3-A981-4CBB-BC2C-1DFD50319A17",
     "data" : {
       "cls" : "NSData",
       "base64" : ""
     },
-    "type" : 2,
-    "outOfOrder" : false
+    "type" : 2
   },
   {
-    "id" : "C54D1E18-0109-490D-9245-E87E893A06AB",
-    "type" : 4,
-    "outOfOrder" : false
+    "id" : "2FF904D3-A981-4CBB-BC2C-1DFD50319A17",
+    "type" : 4
   },
   {
-    "id" : "FE355EC2-89EE-4739-B8EA-4C23E4BF3EC6",
+    "id" : "0024E186-BF29-4338-8439-4D24B194AAE4",
     "data" : {
-      "method" : "get",
+      "method" : "post",
       "cls" : "NSURLRequest",
       "cellular" : true,
+      "network" : 0,
       "cache" : 1,
       "timeout" : 60,
       "cookies" : true,
       "headers" : {
-        "Accept-Encoding" : "gzip,deflate",
+        "Accept" : "*\/*",
+        "Content-Length" : "232",
         "Connection" : "keep-alive",
-        "Accept" : "*\/*"
+        "Accept-Encoding" : "gzip,deflate",
+        "Content-Type" : "application\/json;charset=UTF-8"
+      },
+      "body" : {
+        "cls" : "NSData",
+        "base64" : "eyJjaGF0Ijp7Imdyb3VwIjoic3lzdGVtIiwicHJpdmF0ZSI6ZmFsc2UsIm1ldGEiOnt9LCJjaGFubmVsIjoibmFtZXNwYWNlI3VzZXIjcm9ib3Qtc3RlcGhlbiN3cml0ZS4jZGlyZWN0In0sIm5hbWVzcGFjZSI6Im5hbWVzcGFjZSIsImF1dGhLZXkiOiJyb2JvdC1zdGVwaGVuIiwidXVpZCI6InJvYm90LXN0ZXBoZW4ifQ=="
       },
       "pipeline" : false,
-      "network" : 0,
-      "url" : "https:\/\/pubsub.pubnub.com\/v1\/blocks\/sub-key\/demo-36\/chat-engine-server?global=chatEngine&user=stephen&route=user_state&authKey=stephen&uuid=stephen"
+      "url" : "https:\/\/pubsub.pubnub.com\/v1\/blocks\/sub-key\/demo-36\/chat-engine-server?route=grant"
     },
-    "type" : 0,
-    "outOfOrder" : false
+    "type" : 0
   },
   {
-    "id" : "FE355EC2-89EE-4739-B8EA-4C23E4BF3EC6",
+    "id" : "0024E186-BF29-4338-8439-4D24B194AAE4",
     "data" : {
       "status" : 200,
       "cls" : "NSHTTPURLResponse",
-      "url" : "https:\/\/pubsub.pubnub.com\/v1\/blocks\/sub-key\/demo-36\/chat-engine-server?global=chatEngine&user=stephen&route=user_state&authKey=stephen&uuid=stephen",
+      "url" : "https:\/\/pubsub.pubnub.com\/v1\/blocks\/sub-key\/demo-36\/chat-engine-server?route=grant",
       "headers" : {
         "Access-Control-Allow-Credentials" : "true",
-        "Content-Type" : "application\/json; charset=utf-8",
+        "Content-Type" : "text\/plain; charset=utf-8",
         "Access-Control-Expose-Headers" : "Access-Control-Allow-Origin, Access-Control-Allow-Headers, Access-Control-Allow-Methods",
         "Access-Control-Allow-Methods" : "GET, POST, OPTIONS, PUT, DELETE",
-        "Date" : "Mon, 13 Aug 2018 19:40:03 GMT",
+        "Date" : "Tue, 04 Dec 2018 18:49:24 GMT",
         "Access-Control-Allow-Headers" : "Origin, X-Requested-With, Content-Type, Accept",
-        "Content-Length" : "2",
+        "Content-Length" : "0",
         "Connection" : "keep-alive"
       }
     },
-    "type" : 1,
-    "outOfOrder" : false
+    "type" : 1
   },
   {
-    "id" : "FE355EC2-89EE-4739-B8EA-4C23E4BF3EC6",
+    "id" : "0024E186-BF29-4338-8439-4D24B194AAE4",
     "data" : {
       "cls" : "NSData",
-      "base64" : "e30="
+      "base64" : ""
     },
-    "type" : 2,
-    "outOfOrder" : false
+    "type" : 2
   },
   {
-    "id" : "FE355EC2-89EE-4739-B8EA-4C23E4BF3EC6",
-    "type" : 4,
-    "outOfOrder" : false
+    "id" : "0024E186-BF29-4338-8439-4D24B194AAE4",
+    "type" : 4
   },
   {
-    "id" : "BFB73ED1-E2DD-4022-857E-94278407CDD9",
+    "id" : "4E92072F-FF8E-4CD2-A335-D785500B3ECC",
+    "data" : {
+      "method" : "post",
+      "cls" : "NSURLRequest",
+      "cellular" : true,
+      "network" : 0,
+      "cache" : 1,
+      "timeout" : 60,
+      "cookies" : true,
+      "headers" : {
+        "Accept" : "*\/*",
+        "Content-Length" : "232",
+        "Connection" : "keep-alive",
+        "Accept-Encoding" : "gzip,deflate",
+        "Content-Type" : "application\/json;charset=UTF-8"
+      },
+      "body" : {
+        "cls" : "NSData",
+        "base64" : "eyJjaGF0Ijp7Imdyb3VwIjoic3lzdGVtIiwicHJpdmF0ZSI6ZmFsc2UsIm1ldGEiOnt9LCJjaGFubmVsIjoibmFtZXNwYWNlI3VzZXIjcm9ib3Qtc3RlcGhlbiN3cml0ZS4jZGlyZWN0In0sIm5hbWVzcGFjZSI6Im5hbWVzcGFjZSIsImF1dGhLZXkiOiJyb2JvdC1zdGVwaGVuIiwidXVpZCI6InJvYm90LXN0ZXBoZW4ifQ=="
+      },
+      "pipeline" : false,
+      "url" : "https:\/\/pubsub.pubnub.com\/v1\/blocks\/sub-key\/demo-36\/chat-engine-server?route=join"
+    },
+    "type" : 0
+  },
+  {
+    "id" : "4E92072F-FF8E-4CD2-A335-D785500B3ECC",
+    "data" : {
+      "status" : 200,
+      "cls" : "NSHTTPURLResponse",
+      "url" : "https:\/\/pubsub.pubnub.com\/v1\/blocks\/sub-key\/demo-36\/chat-engine-server?route=join",
+      "headers" : {
+        "Access-Control-Allow-Credentials" : "true",
+        "Content-Type" : "text\/plain; charset=utf-8",
+        "Access-Control-Expose-Headers" : "Access-Control-Allow-Origin, Access-Control-Allow-Headers, Access-Control-Allow-Methods",
+        "Access-Control-Allow-Methods" : "GET, POST, OPTIONS, PUT, DELETE",
+        "Date" : "Tue, 04 Dec 2018 18:49:24 GMT",
+        "Access-Control-Allow-Headers" : "Origin, X-Requested-With, Content-Type, Accept",
+        "Content-Length" : "0",
+        "Connection" : "keep-alive"
+      }
+    },
+    "type" : 1
+  },
+  {
+    "id" : "4E92072F-FF8E-4CD2-A335-D785500B3ECC",
+    "data" : {
+      "cls" : "NSData",
+      "base64" : ""
+    },
+    "type" : 2
+  },
+  {
+    "id" : "4E92072F-FF8E-4CD2-A335-D785500B3ECC",
+    "type" : 4
+  },
+  {
+    "id" : "5BA62FF0-9C2C-49C2-A5E0-B1E9429DF2E6",
+    "data" : {
+      "method" : "post",
+      "cls" : "NSURLRequest",
+      "cellular" : true,
+      "network" : 0,
+      "cache" : 1,
+      "timeout" : 60,
+      "cookies" : true,
+      "headers" : {
+        "Accept" : "*\/*",
+        "Content-Length" : "229",
+        "Connection" : "keep-alive",
+        "Accept-Encoding" : "gzip,deflate",
+        "Content-Type" : "application\/json;charset=UTF-8"
+      },
+      "body" : {
+        "cls" : "NSData",
+        "base64" : "eyJjaGF0Ijp7Imdyb3VwIjoic3lzdGVtIiwicHJpdmF0ZSI6ZmFsc2UsIm1ldGEiOnt9LCJjaGFubmVsIjoibmFtZXNwYWNlI3VzZXIjcm9ib3Qtc3RlcGhlbiNyZWFkLiNmZWVkIn0sIm5hbWVzcGFjZSI6Im5hbWVzcGFjZSIsImF1dGhLZXkiOiJyb2JvdC1zdGVwaGVuIiwidXVpZCI6InJvYm90LXN0ZXBoZW4ifQ=="
+      },
+      "pipeline" : false,
+      "url" : "https:\/\/pubsub.pubnub.com\/v1\/blocks\/sub-key\/demo-36\/chat-engine-server?route=grant"
+    },
+    "type" : 0
+  },
+  {
+    "id" : "5BA62FF0-9C2C-49C2-A5E0-B1E9429DF2E6",
+    "data" : {
+      "status" : 200,
+      "cls" : "NSHTTPURLResponse",
+      "url" : "https:\/\/pubsub.pubnub.com\/v1\/blocks\/sub-key\/demo-36\/chat-engine-server?route=grant",
+      "headers" : {
+        "Access-Control-Allow-Credentials" : "true",
+        "Content-Type" : "text\/plain; charset=utf-8",
+        "Access-Control-Expose-Headers" : "Access-Control-Allow-Origin, Access-Control-Allow-Headers, Access-Control-Allow-Methods",
+        "Access-Control-Allow-Methods" : "GET, POST, OPTIONS, PUT, DELETE",
+        "Date" : "Tue, 04 Dec 2018 18:49:24 GMT",
+        "Access-Control-Allow-Headers" : "Origin, X-Requested-With, Content-Type, Accept",
+        "Content-Length" : "0",
+        "Connection" : "keep-alive"
+      }
+    },
+    "type" : 1
+  },
+  {
+    "id" : "5BA62FF0-9C2C-49C2-A5E0-B1E9429DF2E6",
+    "data" : {
+      "cls" : "NSData",
+      "base64" : ""
+    },
+    "type" : 2
+  },
+  {
+    "id" : "5BA62FF0-9C2C-49C2-A5E0-B1E9429DF2E6",
+    "type" : 4
+  },
+  {
+    "id" : "58CD863E-AE71-4F44-814F-169C15EFFA69",
+    "data" : {
+      "method" : "post",
+      "cls" : "NSURLRequest",
+      "cellular" : true,
+      "network" : 0,
+      "cache" : 1,
+      "timeout" : 60,
+      "cookies" : true,
+      "headers" : {
+        "Accept" : "*\/*",
+        "Content-Length" : "229",
+        "Connection" : "keep-alive",
+        "Accept-Encoding" : "gzip,deflate",
+        "Content-Type" : "application\/json;charset=UTF-8"
+      },
+      "body" : {
+        "cls" : "NSData",
+        "base64" : "eyJjaGF0Ijp7Imdyb3VwIjoic3lzdGVtIiwicHJpdmF0ZSI6ZmFsc2UsIm1ldGEiOnt9LCJjaGFubmVsIjoibmFtZXNwYWNlI3VzZXIjcm9ib3Qtc3RlcGhlbiNyZWFkLiNmZWVkIn0sIm5hbWVzcGFjZSI6Im5hbWVzcGFjZSIsImF1dGhLZXkiOiJyb2JvdC1zdGVwaGVuIiwidXVpZCI6InJvYm90LXN0ZXBoZW4ifQ=="
+      },
+      "pipeline" : false,
+      "url" : "https:\/\/pubsub.pubnub.com\/v1\/blocks\/sub-key\/demo-36\/chat-engine-server?route=join"
+    },
+    "type" : 0
+  },
+  {
+    "id" : "58CD863E-AE71-4F44-814F-169C15EFFA69",
+    "data" : {
+      "status" : 200,
+      "cls" : "NSHTTPURLResponse",
+      "url" : "https:\/\/pubsub.pubnub.com\/v1\/blocks\/sub-key\/demo-36\/chat-engine-server?route=join",
+      "headers" : {
+        "Access-Control-Allow-Credentials" : "true",
+        "Content-Type" : "text\/plain; charset=utf-8",
+        "Access-Control-Expose-Headers" : "Access-Control-Allow-Origin, Access-Control-Allow-Headers, Access-Control-Allow-Methods",
+        "Access-Control-Allow-Methods" : "GET, POST, OPTIONS, PUT, DELETE",
+        "Date" : "Tue, 04 Dec 2018 18:49:24 GMT",
+        "Access-Control-Allow-Headers" : "Origin, X-Requested-With, Content-Type, Accept",
+        "Content-Length" : "0",
+        "Connection" : "keep-alive"
+      }
+    },
+    "type" : 1
+  },
+  {
+    "id" : "58CD863E-AE71-4F44-814F-169C15EFFA69",
+    "data" : {
+      "cls" : "NSData",
+      "base64" : ""
+    },
+    "type" : 2
+  },
+  {
+    "id" : "58CD863E-AE71-4F44-814F-169C15EFFA69",
+    "type" : 4
+  },
+  {
+    "id" : "B5A9CBBF-FA7C-4B5B-AB2D-03F407D8C4E5",
     "data" : {
       "method" : "get",
       "cls" : "NSURLRequest",
@@ -674,127 +579,255 @@
       "timeout" : 60,
       "cookies" : true,
       "headers" : {
-        "User-Agent" : "iPhone; CPU iPhone OS 11.4.0 Version",
+        "User-Agent" : "iPhone; CPU iPhone OS 12.1.0 Version",
         "Accept" : "*\/*",
         "Connection" : "keep-alive",
         "Accept-Encoding" : "gzip,deflate"
       },
       "pipeline" : false,
       "network" : 0,
-      "url" : "https:\/\/ps.pndsn.com\/v2\/presence\/sub-key\/demo-36\/channel\/chatEngine\/uuid\/stephen\/data?pnsdk=PubNub-ObjC-iOS\/4.x.x&uuid=stephen&auth=stephen&state=%7B%22works%22:true%7D"
+      "url" : "https:\/\/ps.pndsn.com\/v2\/subscribe\/demo-36\/,\/0?uuid=robot-stephen&channel-group=namespace%23robot-stephen%23custom,namespace%23robot-stephen%23custom-pnpres,namespace%23robot-stephen%23rooms,namespace%23robot-stephen%23rooms-pnpres,namespace%23robot-stephen%23system,namespace%23robot-stephen%23system-pnpres&pnsdk=PubNub-ObjC-iOS\/4.x.x&tt=0&auth=robot-stephen&heartbeat=300"
     },
-    "type" : 0,
-    "outOfOrder" : false
+    "type" : 0
   },
   {
-    "id" : "BFB73ED1-E2DD-4022-857E-94278407CDD9",
+    "id" : "02F0649D-EEDE-4670-923A-34DF4F0F1AAA",
+    "data" : {
+      "method" : "get",
+      "cls" : "NSURLRequest",
+      "cellular" : true,
+      "cache" : 1,
+      "timeout" : 60,
+      "cookies" : true,
+      "headers" : {
+        "User-Agent" : "iPhone; CPU iPhone OS 12.1.0 Version",
+        "Accept" : "*\/*",
+        "Connection" : "keep-alive",
+        "Accept-Encoding" : "gzip,deflate"
+      },
+      "pipeline" : false,
+      "network" : 0,
+      "url" : "https:\/\/ps.pndsn.com\/v2\/presence\/sub-key\/demo-36\/channel\/namespace%23chat%23public.%23chat-engine?disable_uuids=0&uuid=robot-stephen&pnsdk=PubNub-ObjC-iOS\/4.x.x&auth=robot-stephen&state=1"
+    },
+    "type" : 0
+  },
+  {
+    "id" : "B5A9CBBF-FA7C-4B5B-AB2D-03F407D8C4E5",
     "data" : {
       "status" : 200,
       "cls" : "NSHTTPURLResponse",
-      "url" : "https:\/\/ps.pndsn.com\/v2\/presence\/sub-key\/demo-36\/channel\/chatEngine\/uuid\/stephen\/data?pnsdk=PubNub-ObjC-iOS\/4.x.x&uuid=stephen&auth=stephen&state=%7B%22works%22:true%7D",
+      "url" : "https:\/\/ps.pndsn.com\/v2\/subscribe\/demo-36\/,\/0?uuid=robot-stephen&channel-group=namespace%23robot-stephen%23custom,namespace%23robot-stephen%23custom-pnpres,namespace%23robot-stephen%23rooms,namespace%23robot-stephen%23rooms-pnpres,namespace%23robot-stephen%23system,namespace%23robot-stephen%23system-pnpres&pnsdk=PubNub-ObjC-iOS\/4.x.x&tt=0&auth=robot-stephen&heartbeat=300",
+      "headers" : {
+        "Access-Control-Allow-Methods" : "GET",
+        "Content-Type" : "text\/javascript; charset=\"UTF-8\"",
+        "Access-Control-Allow-Origin" : "*",
+        "Date" : "Tue, 04 Dec 2018 18:49:25 GMT",
+        "Content-Length" : "45",
+        "Cache-Control" : "no-cache",
+        "Connection" : "keep-alive"
+      }
+    },
+    "type" : 1
+  },
+  {
+    "id" : "B5A9CBBF-FA7C-4B5B-AB2D-03F407D8C4E5",
+    "data" : {
+      "cls" : "NSData",
+      "base64" : "eyJ0Ijp7InQiOiIxNTQzOTQ5MzY1MzQwMTUxMyIsInIiOjEyfSwibSI6W119"
+    },
+    "type" : 2
+  },
+  {
+    "id" : "B5A9CBBF-FA7C-4B5B-AB2D-03F407D8C4E5",
+    "type" : 4
+  },
+  {
+    "id" : "00729288-C06D-4561-9C7A-E5E7F5DA7EA4",
+    "data" : {
+      "method" : "get",
+      "cls" : "NSURLRequest",
+      "cellular" : true,
+      "cache" : 1,
+      "timeout" : 60,
+      "cookies" : true,
+      "headers" : {
+        "User-Agent" : "iPhone; CPU iPhone OS 12.1.0 Version",
+        "Accept" : "*\/*",
+        "Connection" : "keep-alive",
+        "Accept-Encoding" : "gzip,deflate"
+      },
+      "pipeline" : false,
+      "network" : 0,
+      "url" : "https:\/\/ps.pndsn.com\/v2\/subscribe\/demo-36\/,\/0?tr=12&uuid=robot-stephen&channel-group=namespace%23robot-stephen%23custom,namespace%23robot-stephen%23custom-pnpres,namespace%23robot-stephen%23rooms,namespace%23robot-stephen%23rooms-pnpres,namespace%23robot-stephen%23system,namespace%23robot-stephen%23system-pnpres&pnsdk=PubNub-ObjC-iOS\/4.x.x&tt=15439493653401513&auth=robot-stephen&heartbeat=300"
+    },
+    "type" : 0
+  },
+  {
+    "id" : "02F0649D-EEDE-4670-923A-34DF4F0F1AAA",
+    "data" : {
+      "status" : 200,
+      "cls" : "NSHTTPURLResponse",
+      "url" : "https:\/\/ps.pndsn.com\/v2\/presence\/sub-key\/demo-36\/channel\/namespace%23chat%23public.%23chat-engine?disable_uuids=0&uuid=robot-stephen&pnsdk=PubNub-ObjC-iOS\/4.x.x&auth=robot-stephen&state=1",
       "headers" : {
         "Access-Control-Allow-Methods" : "OPTIONS, GET, POST",
         "Content-Type" : "text\/javascript; charset=\"UTF-8\"",
         "Server" : "Pubnub Presence",
         "Access-Control-Allow-Origin" : "*",
         "Age" : "0",
-        "Date" : "Mon, 13 Aug 2018 19:40:04 GMT",
+        "Date" : "Tue, 04 Dec 2018 18:49:26 GMT",
+        "Accept-Ranges" : "bytes",
+        "Content-Length" : "152",
+        "Cache-Control" : "no-cache",
+        "Connection" : "keep-alive"
+      }
+    },
+    "type" : 1
+  },
+  {
+    "id" : "02F0649D-EEDE-4670-923A-34DF4F0F1AAA",
+    "data" : {
+      "cls" : "NSData",
+      "base64" : "eyJzdGF0dXMiOjIwMCwibWVzc2FnZSI6Ik9LIiwib2NjdXBhbmN5IjoxLCJ1dWlkcyI6W3sic3RhdGUiOnsid29ya3MiOnRydWV9LCJ1dWlkIjoicm9ib3Qtc3RlcGhlbi0wLTktMi0xNTQzOTQ5MzQ5In1dLCJzZXJ2aWNlIjoiUHJlc2VuY2UifQ=="
+    },
+    "type" : 2
+  },
+  {
+    "id" : "02F0649D-EEDE-4670-923A-34DF4F0F1AAA",
+    "type" : 4
+  },
+  {
+    "id" : "30B741D2-1A01-419C-9C48-5074B3018A56",
+    "data" : {
+      "method" : "get",
+      "cls" : "NSURLRequest",
+      "cellular" : true,
+      "cache" : 1,
+      "timeout" : 60,
+      "cookies" : true,
+      "headers" : {
+        "User-Agent" : "iPhone; CPU iPhone OS 12.1.0 Version",
+        "Accept" : "*\/*",
+        "Connection" : "keep-alive",
+        "Accept-Encoding" : "gzip,deflate"
+      },
+      "pipeline" : false,
+      "network" : 0,
+      "url" : "https:\/\/ps.pndsn.com\/v2\/presence\/sub-key\/demo-36\/channel\/namespace%23chat%23public.%23chat-engine\/uuid\/robot-stephen\/data?uuid=robot-stephen&pnsdk=PubNub-ObjC-iOS\/4.x.x&auth=robot-stephen&state=%7B%22works%22:true%7D"
+    },
+    "type" : 0
+  },
+  {
+    "id" : "00729288-C06D-4561-9C7A-E5E7F5DA7EA4",
+    "data" : {
+      "status" : 200,
+      "cls" : "NSHTTPURLResponse",
+      "url" : "https:\/\/ps.pndsn.com\/v2\/subscribe\/demo-36\/,\/0?tr=12&uuid=robot-stephen&channel-group=namespace%23robot-stephen%23custom,namespace%23robot-stephen%23custom-pnpres,namespace%23robot-stephen%23rooms,namespace%23robot-stephen%23rooms-pnpres,namespace%23robot-stephen%23system,namespace%23robot-stephen%23system-pnpres&pnsdk=PubNub-ObjC-iOS\/4.x.x&tt=15439493653401513&auth=robot-stephen&heartbeat=300",
+      "headers" : {
+        "Access-Control-Allow-Methods" : "GET",
+        "Content-Type" : "text\/javascript; charset=\"UTF-8\"",
+        "Access-Control-Allow-Origin" : "*",
+        "Date" : "Tue, 04 Dec 2018 18:49:26 GMT",
+        "Content-Length" : "378",
+        "Cache-Control" : "no-cache",
+        "Connection" : "keep-alive"
+      }
+    },
+    "type" : 1
+  },
+  {
+    "id" : "00729288-C06D-4561-9C7A-E5E7F5DA7EA4",
+    "data" : {
+      "cls" : "NSData",
+      "base64" : "eyJ0Ijp7InQiOiIxNTQzOTQ5MzY2ODMyNjk5NiIsInIiOjEyfSwibSI6W3siayI6ImRlbW8tMzYiLCJwIjp7InQiOiIxNTQzOTQ5MzY2NzU4NDA1NSIsInIiOjF9LCJjIjoibmFtZXNwYWNlI2NoYXQjcHVibGljLiNjaGF0LWVuZ2luZS1wbnByZXMiLCJkIjp7InV1aWQiOiJyb2JvdC1zdGVwaGVuIiwiZGF0YSI6eyJ3b3JrcyI6dHJ1ZX0sInRpbWVzdGFtcCI6MTU0Mzk0OTM2Niwib2NjdXBhbmN5IjoxLCJhY3Rpb24iOiJzdGF0ZS1jaGFuZ2UifSwiYSI6IjIiLCJmIjowLCJiIjoibmFtZXNwYWNlI3JvYm90LXN0ZXBoZW4jY3VzdG9tLXBucHJlcyJ9XX0="
+    },
+    "type" : 2
+  },
+  {
+    "id" : "00729288-C06D-4561-9C7A-E5E7F5DA7EA4",
+    "type" : 4
+  },
+  {
+    "id" : "768F5DB3-CDCF-4362-9226-4E2D753BFFB5",
+    "data" : {
+      "method" : "get",
+      "cls" : "NSURLRequest",
+      "cellular" : true,
+      "cache" : 1,
+      "timeout" : 60,
+      "cookies" : true,
+      "headers" : {
+        "User-Agent" : "iPhone; CPU iPhone OS 12.1.0 Version",
+        "Accept" : "*\/*",
+        "Connection" : "keep-alive",
+        "Accept-Encoding" : "gzip,deflate"
+      },
+      "pipeline" : false,
+      "network" : 0,
+      "url" : "https:\/\/ps.pndsn.com\/v2\/subscribe\/demo-36\/,\/0?tr=12&uuid=robot-stephen&channel-group=namespace%23robot-stephen%23custom,namespace%23robot-stephen%23custom-pnpres,namespace%23robot-stephen%23rooms,namespace%23robot-stephen%23rooms-pnpres,namespace%23robot-stephen%23system,namespace%23robot-stephen%23system-pnpres&pnsdk=PubNub-ObjC-iOS\/4.x.x&tt=15439493668326996&auth=robot-stephen&heartbeat=300"
+    },
+    "type" : 0
+  },
+  {
+    "id" : "A96683A3-07EB-40C1-8824-25F26496EB69",
+    "data" : {
+      "method" : "post",
+      "cls" : "NSURLRequest",
+      "cellular" : true,
+      "network" : 0,
+      "cache" : 1,
+      "timeout" : 60,
+      "cookies" : true,
+      "headers" : {
+        "Accept" : "*\/*",
+        "Content-Length" : "208",
+        "Connection" : "keep-alive",
+        "Accept-Encoding" : "gzip,deflate",
+        "Content-Type" : "application\/json;charset=UTF-8"
+      },
+      "body" : {
+        "cls" : "NSData",
+        "base64" : "eyJjaGF0Ijp7Imdyb3VwIjoiY3VzdG9tIiwicHJpdmF0ZSI6ZmFsc2UsIm1ldGEiOnt9LCJjaGFubmVsIjoibmFtZXNwYWNlI2NoYXQjcHVibGljLiNjaGF0LWhpc3RvcnkifSwibmFtZXNwYWNlIjoibmFtZXNwYWNlIiwiYXV0aEtleSI6InJvYm90LXN0ZXBoZW4iLCJ1dWlkIjoicm9ib3Qtc3RlcGhlbiJ9"
+      },
+      "pipeline" : false,
+      "url" : "https:\/\/pubsub.pubnub.com\/v1\/blocks\/sub-key\/demo-36\/chat-engine-server?route=grant"
+    },
+    "type" : 0
+  },
+  {
+    "id" : "30B741D2-1A01-419C-9C48-5074B3018A56",
+    "data" : {
+      "status" : 200,
+      "cls" : "NSHTTPURLResponse",
+      "url" : "https:\/\/ps.pndsn.com\/v2\/presence\/sub-key\/demo-36\/channel\/namespace%23chat%23public.%23chat-engine\/uuid\/robot-stephen\/data?uuid=robot-stephen&pnsdk=PubNub-ObjC-iOS\/4.x.x&auth=robot-stephen&state=%7B%22works%22:true%7D",
+      "headers" : {
+        "Access-Control-Allow-Methods" : "OPTIONS, GET, POST",
+        "Content-Type" : "text\/javascript; charset=\"UTF-8\"",
+        "Server" : "Pubnub Presence",
+        "Access-Control-Allow-Origin" : "*",
+        "Age" : "0",
+        "Date" : "Tue, 04 Dec 2018 18:49:27 GMT",
         "Accept-Ranges" : "bytes",
         "Content-Length" : "83",
         "Cache-Control" : "no-cache",
         "Connection" : "keep-alive"
       }
     },
-    "type" : 1,
-    "outOfOrder" : false
+    "type" : 1
   },
   {
-    "id" : "BFB73ED1-E2DD-4022-857E-94278407CDD9",
+    "id" : "30B741D2-1A01-419C-9C48-5074B3018A56",
     "data" : {
       "cls" : "NSData",
       "base64" : "eyJzdGF0dXMiOjIwMCwibWVzc2FnZSI6Ik9LIiwicGF5bG9hZCI6eyJ3b3JrcyI6dHJ1ZX0sInNlcnZpY2UiOiJQcmVzZW5jZSJ9"
     },
-    "type" : 2,
-    "outOfOrder" : false
+    "type" : 2
   },
   {
-    "id" : "BFB73ED1-E2DD-4022-857E-94278407CDD9",
-    "type" : 4,
-    "outOfOrder" : false
+    "id" : "30B741D2-1A01-419C-9C48-5074B3018A56",
+    "type" : 4
   },
   {
-    "id" : "576A5DCE-D020-47EA-95AF-75986D73887F",
-    "data" : {
-      "method" : "post",
-      "cls" : "NSURLRequest",
-      "cellular" : true,
-      "network" : 0,
-      "cache" : 1,
-      "timeout" : 60,
-      "cookies" : true,
-      "headers" : {
-        "Accept" : "*\/*",
-        "Content-Length" : "187",
-        "Connection" : "keep-alive",
-        "Accept-Encoding" : "gzip,deflate",
-        "Content-Type" : "application\/json;charset=UTF-8"
-      },
-      "body" : {
-        "cls" : "NSData",
-        "base64" : "eyJnbG9iYWwiOiJjaGF0RW5naW5lIiwiY2hhdCI6eyJncm91cCI6ImN1c3RvbSIsInByaXZhdGUiOmZhbHNlLCJtZXRhIjp7fSwiY2hhbm5lbCI6ImNoYXRFbmdpbmUjY2hhdCNwdWJsaWMuI2NoYXQtaGlzdG9yeSJ9LCJhdXRoS2V5Ijoic3RlcGhlbiIsInV1aWQiOiJzdGVwaGVuIn0="
-      },
-      "pipeline" : false,
-      "url" : "https:\/\/pubsub.pubnub.com\/v1\/blocks\/sub-key\/demo-36\/chat-engine-server?route=grant"
-    },
-    "type" : 0,
-    "outOfOrder" : false
-  },
-  {
-    "id" : "E5EB7545-76A7-45BD-B5A9-32B2C5DB0611",
-    "data" : {
-      "method" : "get",
-      "cls" : "NSURLRequest",
-      "cellular" : true,
-      "cache" : 1,
-      "timeout" : 60,
-      "cookies" : true,
-      "headers" : {
-        "User-Agent" : "iPhone; CPU iPhone OS 11.4.0 Version",
-        "Accept" : "*\/*",
-        "Connection" : "keep-alive",
-        "Accept-Encoding" : "gzip,deflate"
-      },
-      "pipeline" : false,
-      "network" : 0,
-      "url" : "https:\/\/ps.pndsn.com\/v2\/subscribe\/demo-36\/,\/0?channel-group=chatEngine%23stephen%23custom,chatEngine%23stephen%23custom-pnpres,chatEngine%23stephen%23rooms,chatEngine%23stephen%23rooms-pnpres,chatEngine%23stephen%23system,chatEngine%23stephen%23system-pnpres&pnsdk=PubNub-ObjC-iOS\/4.x.x&auth=stephen&uuid=stephen&tt=0&heartbeat=300"
-    },
-    "type" : 0,
-    "outOfOrder" : false
-  },
-  {
-    "id" : "832C0BB0-1A69-426D-8AB0-652476A545A0",
-    "data" : {
-      "method" : "get",
-      "cls" : "NSURLRequest",
-      "cellular" : true,
-      "cache" : 1,
-      "timeout" : 60,
-      "cookies" : true,
-      "headers" : {
-        "User-Agent" : "iPhone; CPU iPhone OS 11.4.0 Version",
-        "Accept" : "*\/*",
-        "Connection" : "keep-alive",
-        "Accept-Encoding" : "gzip,deflate"
-      },
-      "pipeline" : false,
-      "network" : 0,
-      "url" : "https:\/\/ps.pndsn.com\/v2\/presence\/sub-key\/demo-36\/channel\/chatEngine?disable_uuids=0&pnsdk=PubNub-ObjC-iOS\/4.x.x&uuid=stephen&auth=stephen&state=1"
-    },
-    "type" : 0,
-    "outOfOrder" : false
-  },
-  {
-    "id" : "576A5DCE-D020-47EA-95AF-75986D73887F",
+    "id" : "A96683A3-07EB-40C1-8824-25F26496EB69",
     "data" : {
       "status" : 200,
       "cls" : "NSHTTPURLResponse",
@@ -804,31 +837,28 @@
         "Content-Type" : "text\/plain; charset=utf-8",
         "Access-Control-Expose-Headers" : "Access-Control-Allow-Origin, Access-Control-Allow-Headers, Access-Control-Allow-Methods",
         "Access-Control-Allow-Methods" : "GET, POST, OPTIONS, PUT, DELETE",
-        "Date" : "Mon, 13 Aug 2018 19:40:04 GMT",
+        "Date" : "Tue, 04 Dec 2018 18:49:27 GMT",
         "Access-Control-Allow-Headers" : "Origin, X-Requested-With, Content-Type, Accept",
         "Content-Length" : "0",
         "Connection" : "keep-alive"
       }
     },
-    "type" : 1,
-    "outOfOrder" : false
+    "type" : 1
   },
   {
-    "id" : "576A5DCE-D020-47EA-95AF-75986D73887F",
+    "id" : "A96683A3-07EB-40C1-8824-25F26496EB69",
     "data" : {
       "cls" : "NSData",
       "base64" : ""
     },
-    "type" : 2,
-    "outOfOrder" : false
+    "type" : 2
   },
   {
-    "id" : "576A5DCE-D020-47EA-95AF-75986D73887F",
-    "type" : 4,
-    "outOfOrder" : false
+    "id" : "A96683A3-07EB-40C1-8824-25F26496EB69",
+    "type" : 4
   },
   {
-    "id" : "2A63C15E-2B7B-4120-8DD8-1DA316BE1DB4",
+    "id" : "743B5442-F5AE-46B2-AC93-2938708C2BBF",
     "data" : {
       "method" : "post",
       "cls" : "NSURLRequest",
@@ -839,23 +869,52 @@
       "cookies" : true,
       "headers" : {
         "Accept" : "*\/*",
-        "Content-Length" : "187",
+        "Content-Length" : "208",
         "Connection" : "keep-alive",
         "Accept-Encoding" : "gzip,deflate",
         "Content-Type" : "application\/json;charset=UTF-8"
       },
       "body" : {
         "cls" : "NSData",
-        "base64" : "eyJnbG9iYWwiOiJjaGF0RW5naW5lIiwiY2hhdCI6eyJncm91cCI6ImN1c3RvbSIsInByaXZhdGUiOmZhbHNlLCJtZXRhIjp7fSwiY2hhbm5lbCI6ImNoYXRFbmdpbmUjY2hhdCNwdWJsaWMuI2NoYXQtaGlzdG9yeSJ9LCJhdXRoS2V5Ijoic3RlcGhlbiIsInV1aWQiOiJzdGVwaGVuIn0="
+        "base64" : "eyJjaGF0Ijp7Imdyb3VwIjoiY3VzdG9tIiwicHJpdmF0ZSI6ZmFsc2UsIm1ldGEiOnt9LCJjaGFubmVsIjoibmFtZXNwYWNlI2NoYXQjcHVibGljLiNjaGF0LWhpc3RvcnkifSwibmFtZXNwYWNlIjoibmFtZXNwYWNlIiwiYXV0aEtleSI6InJvYm90LXN0ZXBoZW4iLCJ1dWlkIjoicm9ib3Qtc3RlcGhlbiJ9"
       },
       "pipeline" : false,
       "url" : "https:\/\/pubsub.pubnub.com\/v1\/blocks\/sub-key\/demo-36\/chat-engine-server?route=join"
     },
-    "type" : 0,
-    "outOfOrder" : false
+    "type" : 0
   },
   {
-    "id" : "2A63C15E-2B7B-4120-8DD8-1DA316BE1DB4",
+    "id" : "768F5DB3-CDCF-4362-9226-4E2D753BFFB5",
+    "data" : {
+      "status" : 200,
+      "cls" : "NSHTTPURLResponse",
+      "url" : "https:\/\/ps.pndsn.com\/v2\/subscribe\/demo-36\/,\/0?tr=12&uuid=robot-stephen&channel-group=namespace%23robot-stephen%23custom,namespace%23robot-stephen%23custom-pnpres,namespace%23robot-stephen%23rooms,namespace%23robot-stephen%23rooms-pnpres,namespace%23robot-stephen%23system,namespace%23robot-stephen%23system-pnpres&pnsdk=PubNub-ObjC-iOS\/4.x.x&tt=15439493668326996&auth=robot-stephen&heartbeat=300",
+      "headers" : {
+        "Access-Control-Allow-Methods" : "GET",
+        "Content-Type" : "text\/javascript; charset=\"UTF-8\"",
+        "Access-Control-Allow-Origin" : "*",
+        "Date" : "Tue, 04 Dec 2018 18:49:27 GMT",
+        "Content-Length" : "348",
+        "Cache-Control" : "no-cache",
+        "Connection" : "keep-alive"
+      }
+    },
+    "type" : 1
+  },
+  {
+    "id" : "768F5DB3-CDCF-4362-9226-4E2D753BFFB5",
+    "data" : {
+      "cls" : "NSData",
+      "base64" : "eyJ0Ijp7InQiOiIxNTQzOTQ5MzY3MzA2MzAwOSIsInIiOjEyfSwibSI6W3siayI6ImRlbW8tMzYiLCJwIjp7InQiOiIxNTQzOTQ5MzY3MjY1NTU1MSIsInIiOjJ9LCJjIjoibmFtZXNwYWNlI2NoYXQjcHVibGljLiNjaGF0LWVuZ2luZS1wbnByZXMiLCJkIjp7InV1aWQiOiJyb2JvdC1zdGVwaGVuIiwidGltZXN0YW1wIjoxNTQzOTQ5MzY3LCJvY2N1cGFuY3kiOjIsImFjdGlvbiI6ImpvaW4ifSwiYSI6IjIiLCJmIjowLCJiIjoibmFtZXNwYWNlI3JvYm90LXN0ZXBoZW4jY3VzdG9tLXBucHJlcyJ9XX0="
+    },
+    "type" : 2
+  },
+  {
+    "id" : "768F5DB3-CDCF-4362-9226-4E2D753BFFB5",
+    "type" : 4
+  },
+  {
+    "id" : "743B5442-F5AE-46B2-AC93-2938708C2BBF",
     "data" : {
       "status" : 200,
       "cls" : "NSHTTPURLResponse",
@@ -865,31 +924,28 @@
         "Content-Type" : "text\/plain; charset=utf-8",
         "Access-Control-Expose-Headers" : "Access-Control-Allow-Origin, Access-Control-Allow-Headers, Access-Control-Allow-Methods",
         "Access-Control-Allow-Methods" : "GET, POST, OPTIONS, PUT, DELETE",
-        "Date" : "Mon, 13 Aug 2018 19:40:04 GMT",
+        "Date" : "Tue, 04 Dec 2018 18:49:27 GMT",
         "Access-Control-Allow-Headers" : "Origin, X-Requested-With, Content-Type, Accept",
         "Content-Length" : "0",
         "Connection" : "keep-alive"
       }
     },
-    "type" : 1,
-    "outOfOrder" : false
+    "type" : 1
   },
   {
-    "id" : "2A63C15E-2B7B-4120-8DD8-1DA316BE1DB4",
+    "id" : "743B5442-F5AE-46B2-AC93-2938708C2BBF",
     "data" : {
       "cls" : "NSData",
       "base64" : ""
     },
-    "type" : 2,
-    "outOfOrder" : false
+    "type" : 2
   },
   {
-    "id" : "2A63C15E-2B7B-4120-8DD8-1DA316BE1DB4",
-    "type" : 4,
-    "outOfOrder" : false
+    "id" : "743B5442-F5AE-46B2-AC93-2938708C2BBF",
+    "type" : 4
   },
   {
-    "id" : "29B712A7-B94B-4C3D-A522-01B33F7B982F",
+    "id" : "411730CF-6A92-4303-ADFC-4079AD025786",
     "data" : {
       "method" : "get",
       "cls" : "NSURLRequest",
@@ -898,53 +954,19 @@
       "timeout" : 60,
       "cookies" : true,
       "headers" : {
-        "User-Agent" : "iPhone; CPU iPhone OS 11.4.0 Version",
+        "User-Agent" : "iPhone; CPU iPhone OS 12.1.0 Version",
         "Accept" : "*\/*",
         "Connection" : "keep-alive",
         "Accept-Encoding" : "gzip,deflate"
       },
       "pipeline" : false,
       "network" : 0,
-      "url" : "https:\/\/ps.pndsn.com\/v2\/history\/sub-key\/demo-36\/channel\/chatEngine%23chat%23public.%23chat-history?reverse=0&count=100&uuid=stephen&pnsdk=PubNub-ObjC-iOS\/4.x.x&include_token=1&auth=stephen"
+      "url" : "https:\/\/ps.pndsn.com\/v2\/history\/sub-key\/demo-36\/channel\/namespace%23chat%23public.%23chat-history?reverse=0&count=100&uuid=robot-stephen&pnsdk=PubNub-ObjC-iOS\/4.x.x&include_token=1&auth=robot-stephen"
     },
-    "type" : 0,
-    "outOfOrder" : false
+    "type" : 0
   },
   {
-    "id" : "E5EB7545-76A7-45BD-B5A9-32B2C5DB0611",
-    "data" : {
-      "status" : 200,
-      "cls" : "NSHTTPURLResponse",
-      "url" : "https:\/\/ps.pndsn.com\/v2\/subscribe\/demo-36\/,\/0?channel-group=chatEngine%23stephen%23custom,chatEngine%23stephen%23custom-pnpres,chatEngine%23stephen%23rooms,chatEngine%23stephen%23rooms-pnpres,chatEngine%23stephen%23system,chatEngine%23stephen%23system-pnpres&pnsdk=PubNub-ObjC-iOS\/4.x.x&auth=stephen&uuid=stephen&tt=0&heartbeat=300",
-      "headers" : {
-        "Access-Control-Allow-Methods" : "GET",
-        "Content-Type" : "text\/javascript; charset=\"UTF-8\"",
-        "Access-Control-Allow-Origin" : "*",
-        "Date" : "Mon, 13 Aug 2018 19:40:04 GMT",
-        "Content-Length" : "45",
-        "Cache-Control" : "no-cache",
-        "Connection" : "keep-alive"
-      }
-    },
-    "type" : 1,
-    "outOfOrder" : false
-  },
-  {
-    "id" : "E5EB7545-76A7-45BD-B5A9-32B2C5DB0611",
-    "data" : {
-      "cls" : "NSData",
-      "base64" : "eyJ0Ijp7InQiOiIxNTM0MTg5MjA0NDI3Mjk1MCIsInIiOjEyfSwibSI6W119"
-    },
-    "type" : 2,
-    "outOfOrder" : false
-  },
-  {
-    "id" : "E5EB7545-76A7-45BD-B5A9-32B2C5DB0611",
-    "type" : 4,
-    "outOfOrder" : false
-  },
-  {
-    "id" : "649061D4-7CA2-424C-B905-B2AFFD7252A1",
+    "id" : "6087C1E5-E34A-471C-BE40-06148336D1E7",
     "data" : {
       "method" : "get",
       "cls" : "NSURLRequest",
@@ -953,60 +975,23 @@
       "timeout" : 60,
       "cookies" : true,
       "headers" : {
-        "User-Agent" : "iPhone; CPU iPhone OS 11.4.0 Version",
+        "User-Agent" : "iPhone; CPU iPhone OS 12.1.0 Version",
         "Accept" : "*\/*",
         "Connection" : "keep-alive",
         "Accept-Encoding" : "gzip,deflate"
       },
       "pipeline" : false,
       "network" : 0,
-      "url" : "https:\/\/ps.pndsn.com\/v2\/subscribe\/demo-36\/,\/0?heartbeat=300&tr=12&uuid=stephen&channel-group=chatEngine%23stephen%23custom,chatEngine%23stephen%23custom-pnpres,chatEngine%23stephen%23rooms,chatEngine%23stephen%23rooms-pnpres,chatEngine%23stephen%23system,chatEngine%23stephen%23system-pnpres&pnsdk=PubNub-ObjC-iOS\/4.x.x&tt=15341892044272950&auth=stephen"
+      "url" : "https:\/\/ps.pndsn.com\/v2\/subscribe\/demo-36\/,\/0?tr=12&uuid=robot-stephen&channel-group=namespace%23robot-stephen%23custom,namespace%23robot-stephen%23custom-pnpres,namespace%23robot-stephen%23rooms,namespace%23robot-stephen%23rooms-pnpres,namespace%23robot-stephen%23system,namespace%23robot-stephen%23system-pnpres&pnsdk=PubNub-ObjC-iOS\/4.x.x&tt=15439493673063009&auth=robot-stephen&heartbeat=300"
     },
-    "type" : 0,
-    "outOfOrder" : false
+    "type" : 0
   },
   {
-    "id" : "832C0BB0-1A69-426D-8AB0-652476A545A0",
+    "id" : "411730CF-6A92-4303-ADFC-4079AD025786",
     "data" : {
       "status" : 200,
       "cls" : "NSHTTPURLResponse",
-      "url" : "https:\/\/ps.pndsn.com\/v2\/presence\/sub-key\/demo-36\/channel\/chatEngine?disable_uuids=0&pnsdk=PubNub-ObjC-iOS\/4.x.x&uuid=stephen&auth=stephen&state=1",
-      "headers" : {
-        "Access-Control-Allow-Methods" : "OPTIONS, GET, POST",
-        "Content-Type" : "text\/javascript; charset=\"UTF-8\"",
-        "Server" : "Pubnub Presence",
-        "Access-Control-Allow-Origin" : "*",
-        "Age" : "0",
-        "Date" : "Mon, 13 Aug 2018 19:40:04 GMT",
-        "Accept-Ranges" : "bytes",
-        "Content-Length" : "84",
-        "Cache-Control" : "no-cache",
-        "Connection" : "keep-alive"
-      }
-    },
-    "type" : 1,
-    "outOfOrder" : false
-  },
-  {
-    "id" : "832C0BB0-1A69-426D-8AB0-652476A545A0",
-    "data" : {
-      "cls" : "NSData",
-      "base64" : "eyJzdGF0dXMiOjIwMCwibWVzc2FnZSI6Ik9LIiwib2NjdXBhbmN5IjowLCJ1dWlkcyI6W10sInNlcnZpY2UiOiJQcmVzZW5jZSJ9"
-    },
-    "type" : 2,
-    "outOfOrder" : false
-  },
-  {
-    "id" : "832C0BB0-1A69-426D-8AB0-652476A545A0",
-    "type" : 4,
-    "outOfOrder" : false
-  },
-  {
-    "id" : "29B712A7-B94B-4C3D-A522-01B33F7B982F",
-    "data" : {
-      "status" : 200,
-      "cls" : "NSHTTPURLResponse",
-      "url" : "https:\/\/ps.pndsn.com\/v2\/history\/sub-key\/demo-36\/channel\/chatEngine%23chat%23public.%23chat-history?reverse=0&count=100&uuid=stephen&pnsdk=PubNub-ObjC-iOS\/4.x.x&include_token=1&auth=stephen",
+      "url" : "https:\/\/ps.pndsn.com\/v2\/history\/sub-key\/demo-36\/channel\/namespace%23chat%23public.%23chat-history?reverse=0&count=100&uuid=robot-stephen&pnsdk=PubNub-ObjC-iOS\/4.x.x&include_token=1&auth=robot-stephen",
       "headers" : {
         "Access-Control-Allow-Methods" : "GET, DELETE, OPTIONS",
         "Content-Type" : "text\/javascript; charset=\"UTF-8\"",
@@ -1014,110 +999,66 @@
         "Server" : "Pubnub",
         "Age" : "0",
         "Access-Control-Allow-Origin" : "*",
-        "Date" : "Mon, 13 Aug 2018 19:40:04 GMT",
+        "Date" : "Tue, 04 Dec 2018 18:49:27 GMT",
         "Content-Encoding" : "gzip",
         "Cache-Control" : "no-cache",
         "Transfer-Encoding" : "Identity"
       }
     },
-    "type" : 1,
-    "outOfOrder" : false
+    "type" : 1
   },
   {
-    "id" : "29B712A7-B94B-4C3D-A522-01B33F7B982F",
+    "id" : "411730CF-6A92-4303-ADFC-4079AD025786",
     "data" : {
       "cls" : "NSData",
-      "base64" : "W1t7Im1lc3NhZ2UiOiB7ImNoYXRlbmdpbmVTREsiOiAiMC45LjEwIiwgImRhdGEiOiB7InRleHQiOiAiaGVsbG8gd29ybGQgMTg2In0sICJzZW5kZXIiOiAic3RlcGhlbi12Ny0xMC0xLTIwMTUyMzkwMjQ1NTAwMiIsICJldmVudCI6ICJub3QtdGVzdGVyIn0sICJ0aW1ldG9rZW4iOiAxNTIzOTAyNDU3MjExNTU5M30seyJtZXNzYWdlIjogeyJjaGF0ZW5naW5lU0RLIjogIjAuOS4xMCIsICJkYXRhIjogeyJ0ZXh0IjogImhlbGxvIHdvcmxkIDE1MiJ9LCAic2VuZGVyIjogInN0ZXBoZW4tdjctMTAtMS0yMDE1MjM5MDI0NTUwMDIiLCAiZXZlbnQiOiAibm90LXRlc3RlciJ9LCAidGltZXRva2VuIjogMTUyMzkwMjQ1NzIxMTU3Mjd9LHsibWVzc2FnZSI6IHsiY2hhdGVuZ2luZVNESyI6ICIwLjkuMTAiLCAiZGF0YSI6IHsidGV4dCI6ICJoZWxsbyB3b3JsZCAxOTkifSwgInNlbmRlciI6ICJzdGVwaGVuLXY3LTEwLTEtMjAxNTIzOTAyNDU1MDAyIiwgImV2ZW50IjogInRlc3RlciJ9LCAidGltZXRva2VuIjogMTUyMzkwMjQ1NzIxNDE3NDZ9LHsibWVzc2FnZSI6IHsiY2hhdGVuZ2luZVNESyI6ICIwLjkuMTAiLCAiZGF0YSI6IHsidGV4dCI6ICJoZWxsbyB3b3JsZCAzNSJ9LCAic2VuZGVyIjogInN0ZXBoZW4tdjctMTAtMS0yMDE1MjM5MDI0NTUwMDIiLCAiZXZlbnQiOiAibm90LXRlc3RlciJ9LCAidGltZXRva2VuIjogMTUyMzkwMjQ1ODk3MDMxMTZ9LHsibWVzc2FnZSI6IHsiY2hhdGVuZ2luZVNESyI6ICIwLjkuMTAiLCAiZGF0YSI6IHsidGV4dCI6ICJoZWxsbyB3b3JsZCAzMyJ9LCAic2VuZGVyIjogInN0ZXBoZW4tdjctMTAtMS0yMDE1MjM5MDI0NTUwMDIiLCAiZXZlbnQiOiAibm90LXRlc3RlciJ9LCAidGltZXRva2VuIjogMTUyMzkwMjQ1ODk3MDk5ODl9LHsibWVzc2FnZSI6IHsiY2hhdGVuZ2luZVNESyI6ICIwLjkuMTAiLCAiZGF0YSI6IHsidGV4dCI6ICJoZWxsbyB3b3JsZCAxOCJ9LCAic2VuZGVyIjogInN0ZXBoZW4tdjctMTAtMS0yMDE1MjM5MDI0NTUwMDIiLCAiZXZlbnQiOiAidGVzdGVyIn0sICJ0aW1ldG9rZW4iOiAxNTIzOTAyNDU4OTcyMTA3NX0seyJtZXNzYWdlIjogeyJjaGF0ZW5naW5lU0RLIjogIjAuOS4xMCIsICJkYXRhIjogeyJ0ZXh0IjogImhlbGxvIHdvcmxkIDU5In0sICJzZW5kZXIiOiAic3RlcGhlbi12Ny0xMC0xLTIwMTUyMzkwMjQ1NTAwMiIsICJldmVudCI6ICJub3QtdGVzdGVyIn0sICJ0aW1ldG9rZW4iOiAxNTIzOTAyNDU4OTcyMTc4MH0seyJtZXNzYWdlIjogeyJjaGF0ZW5naW5lU0RLIjogIjAuOS4xMCIsICJkYXRhIjogeyJ0ZXh0IjogImhlbGxvIHdvcmxkIDQ1In0sICJzZW5kZXIiOiAic3RlcGhlbi12Ny0xMC0xLTIwMTUyMzkwMjQ1NTAwMiIsICJldmVudCI6ICJub3QtdGVzdGVyIn0sICJ0aW1ldG9rZW4iOiAxNTIzOTAyNDU4OTc1NjY4OH0seyJtZXNzYWdlIjogeyJjaGF0ZW5naW5lU0RLIjogIjAuOS4xMCIsICJkYXRhIjogeyJ0ZXh0IjogImhlbGxvIHdvcmxkIDQxIn0sICJzZW5kZXIiOiAic3RlcGhlbi12Ny0xMC0xLTIwMTUyMzkwMjQ1NTAwMiIsICJldmVudCI6ICJub3QtdGVzdGVyIn0sICJ0aW1ldG9rZW4iOiAxNTIzOTAyNDU4OTc3NjA2OX0seyJtZXNzYWdlIjogeyJjaGF0ZW5naW5lU0RLIjogIjAuOS4xMCIsICJkYXRhIjogeyJ0ZXh0IjogImhlbGxvIHdvcmxkIDE3In0sICJzZW5kZXIiOiAic3RlcGhlbi12Ny0xMC0xLTIwMTUyMzkwMjQ1NTAwMiIsICJldmVudCI6ICJub3QtdGVzdGVyIn0sICJ0aW1ldG9rZW4iOiAxNTIzOTAyNDU4OTgxMjE1OH0seyJtZXNzYWdlIjogeyJjaGF0ZW5naW5lU0RLIjogIjAuOS4xMCIsICJkYXRhIjogeyJ0ZXh0IjogImhlbGxvIHdvcmxkIDEyIn0sICJzZW5kZXIiOiAic3RlcGhlbi12Ny0xMC0xLTIwMTUyMzkwMjQ1NTAwMiIsICJldmVudCI6ICJub3QtdGVzdGVyIn0sICJ0aW1ldG9rZW4iOiAxNTIzOTAyNDU4OTkwMzQwN30seyJtZXNzYWdlIjogeyJjaGF0ZW5naW5lU0RLIjogIjAuOS4xMCIsICJkYXRhIjogeyJ0ZXh0IjogImhlbGxvIHdvcmxkIDI4In0sICJzZW5kZXIiOiAic3RlcGhlbi12Ny0xMC0xLTIwMTUyMzkwMjQ1NTAwMiIsICJldmVudCI6ICJub3QtdGVzdGVyIn0sICJ0aW1ldG9rZW4iOiAxNTIzOTAyNDU5MDExNDY2N30seyJtZXNzYWdlIjogeyJjaGF0ZW5naW5lU0RLIjogIjAuOS4xMCIsICJkYXRhIjogeyJ0ZXh0IjogImhlbGxvIHdvcmxkIDQwIn0sICJzZW5kZXIiOiAic3RlcGhlbi12Ny0xMC0xLTIwMTUyMzkwMjQ1NTAwMiIsICJldmVudCI6ICJub3QtdGVzdGVyIn0sICJ0aW1ldG9rZW4iOiAxNTIzOTAyNDU5MDM5NTEzOX0seyJtZXNzYWdlIjogeyJjaGF0ZW5naW5lU0RLIjogIjAuOS4xMCIsICJkYXRhIjogeyJ0ZXh0IjogImhlbGxvIHdvcmxkIDE0In0sICJzZW5kZXIiOiAic3RlcGhlbi12Ny0xMC0xLTIwMTUyMzkwMjQ1NTAwMiIsICJldmVudCI6ICJ0ZXN0ZXIifSwgInRpbWV0b2tlbiI6IDE1MjM5MDI0NTkwNDAzOTgxfSx7Im1lc3NhZ2UiOiB7ImNoYXRlbmdpbmVTREsiOiAiMC45LjEwIiwgImRhdGEiOiB7InRleHQiOiAiaGVsbG8gd29ybGQgMzgifSwgInNlbmRlciI6ICJzdGVwaGVuLXY3LTEwLTEtMjAxNTIzOTAyNDU1MDAyIiwgImV2ZW50IjogInRlc3RlciJ9LCAidGltZXRva2VuIjogMTUyMzkwMjQ1OTA0MDY4NjZ9LHsibWVzc2FnZSI6IHsiY2hhdGVuZ2luZVNESyI6ICIwLjkuMTAiLCAiZGF0YSI6IHsidGV4dCI6ICJoZWxsbyB3b3JsZCAzNCJ9LCAic2VuZGVyIjogInN0ZXBoZW4tdjctMTAtMS0yMDE1MjM5MDI0NTUwMDIiLCAiZXZlbnQiOiAidGVzdGVyIn0sICJ0aW1ldG9rZW4iOiAxNTIzOTAyNDU5MDQwNzI3NX0seyJtZXNzYWdlIjogeyJjaGF0ZW5naW5lU0RLIjogIjAuOS4xMCIsICJkYXRhIjogeyJ0ZXh0IjogImhlbGxvIHdvcmxkIDI0In0sICJzZW5kZXIiOiAic3RlcGhlbi12Ny0xMC0xLTIwMTUyMzkwMjQ1NTAwMiIsICJldmVudCI6ICJub3QtdGVzdGVyIn0sICJ0aW1ldG9rZW4iOiAxNTIzOTAyNDU5MDQxMjUwOH0seyJtZXNzYWdlIjogeyJjaGF0ZW5naW5lU0RLIjogIjAuOS4xMCIsICJkYXRhIjogeyJ0ZXh0IjogImhlbGxvIHdvcmxkIDIwIn0sICJzZW5kZXIiOiAic3RlcGhlbi12Ny0xMC0xLTIwMTUyMzkwMjQ1NTAwMiIsICJldmVudCI6ICJub3QtdGVzdGVyIn0sICJ0aW1ldG9rZW4iOiAxNTIzOTAyNDU5MDQxMzYwOH0seyJtZXNzYWdlIjogeyJjaGF0ZW5naW5lU0RLIjogIjAuOS4xMCIsICJkYXRhIjogeyJ0ZXh0IjogImhlbGxvIHdvcmxkIDMxIn0sICJzZW5kZXIiOiAic3RlcGhlbi12Ny0xMC0xLTIwMTUyMzkwMjQ1NTAwMiIsICJldmVudCI6ICJub3QtdGVzdGVyIn0sICJ0aW1ldG9rZW4iOiAxNTIzOTAyNDU5MDQyODA1Nn0seyJtZXNzYWdlIjogeyJjaGF0ZW5naW5lU0RLIjogIjAuOS4xMCIsICJkYXRhIjogeyJ0ZXh0IjogImhlbGxvIHdvcmxkIDI5In0sICJzZW5kZXIiOiAic3RlcGhlbi12Ny0xMC0xLTIwMTUyMzkwMjQ1NTAwMiIsICJldmVudCI6ICJub3QtdGVzdGVyIn0sICJ0aW1ldG9rZW4iOiAxNTIzOTAyNDU5MDQyODY0OH0seyJtZXNzYWdlIjogeyJjaGF0ZW5naW5lU0RLIjogIjAuOS4xMCIsICJkYXRhIjogeyJ0ZXh0IjogImhlbGxvIHdvcmxkIDIyIn0sICJzZW5kZXIiOiAic3RlcGhlbi12Ny0xMC0xLTIwMTUyMzkwMjQ1NTAwMiIsICJldmVudCI6ICJub3QtdGVzdGVyIn0sICJ0aW1ldG9rZW4iOiAxNTIzOTAyNDU5MDQzNDU5N30seyJtZXNzYWdlIjogeyJjaGF0ZW5naW5lU0RLIjogIjAuOS4xMCIsICJkYXRhIjogeyJ0ZXh0IjogImhlbGxvIHdvcmxkIDI1In0sICJzZW5kZXIiOiAic3RlcGhlbi12Ny0xMC0xLTIwMTUyMzkwMjQ1NTAwMiIsICJldmVudCI6ICJ0ZXN0ZXIifSwgInRpbWV0b2tlbiI6IDE1MjM5MDI0NTkwNDM1ODk2fSx7Im1lc3NhZ2UiOiB7ImNoYXRlbmdpbmVTREsiOiAiMC45LjEwIiwgImRhdGEiOiB7InRleHQiOiAiaGVsbG8gd29ybGQgMjYifSwgInNlbmRlciI6ICJzdGVwaGVuLXY3LTEwLTEtMjAxNTIzOTAyNDU1MDAyIiwgImV2ZW50IjogIm5vdC10ZXN0ZXIifSwgInRpbWV0b2tlbiI6IDE1MjM5MDI0NTkwNDUwNjA0fSx7Im1lc3NhZ2UiOiB7ImNoYXRlbmdpbmVTREsiOiAiMC45LjEwIiwgImRhdGEiOiB7InRleHQiOiAiaGVsbG8gd29ybGQgNiJ9LCAic2VuZGVyIjogInN0ZXBoZW4tdjctMTAtMS0yMDE1MjM5MDI0NTUwMDIiLCAiZXZlbnQiOiAibm90LXRlc3RlciJ9LCAidGltZXRva2VuIjogMTUyMzkwMjQ1OTA0NTM3MzV9LHsibWVzc2FnZSI6IHsiY2hhdGVuZ2luZVNESyI6ICIwLjkuMTAiLCAiZGF0YSI6IHsidGV4dCI6ICJoZWxsbyB3b3JsZCAyMSJ9LCAic2VuZGVyIjogInN0ZXBoZW4tdjctMTAtMS0yMDE1MjM5MDI0NTUwMDIiLCAiZXZlbnQiOiAidGVzdGVyIn0sICJ0aW1ldG9rZW4iOiAxNTIzOTAyNDU5MDQ1NDAwNH0seyJtZXNzYWdlIjogeyJjaGF0ZW5naW5lU0RLIjogIjAuOS4xMCIsICJkYXRhIjogeyJ0ZXh0IjogImhlbGxvIHdvcmxkIDE3In0sICJzZW5kZXIiOiAic3RlcGhlbi12Ny0xMC0xLTIwMTUyMzkwMjQ1NTAwMiIsICJldmVudCI6ICJ0ZXN0ZXIifSwgInRpbWV0b2tlbiI6IDE1MjM5MDI0NTkwNDY0NzU4fSx7Im1lc3NhZ2UiOiB7ImNoYXRlbmdpbmVTREsiOiAiMC45LjEwIiwgImRhdGEiOiB7InRleHQiOiAiaGVsbG8gd29ybGQgMzEifSwgInNlbmRlciI6ICJzdGVwaGVuLXY3LTEwLTEtMjAxNTIzOTAyNDU1MDAyIiwgImV2ZW50IjogInRlc3RlciJ9LCAidGltZXRva2VuIjogMTUyMzkwMjQ1OTA0NjYyMTl9LHsibWVzc2FnZSI6IHsiY2hhdGVuZ2luZVNESyI6ICIwLjkuMTAiLCAiZGF0YSI6IHsidGV4dCI6ICJoZWxsbyB3b3JsZCAxNSJ9LCAic2VuZGVyIjogInN0ZXBoZW4tdjctMTAtMS0yMDE1MjM5MDI0NTUwMDIiLCAiZXZlbnQiOiAidGVzdGVyIn0sICJ0aW1ldG9rZW4iOiAxNTIzOTAyNDU5MDQ2NjQ2M30seyJtZXNzYWdlIjogeyJjaGF0ZW5naW5lU0RLIjogIjAuOS4xMCIsICJkYXRhIjogeyJ0ZXh0IjogImhlbGxvIHdvcmxkIDI1In0sICJzZW5kZXIiOiAic3RlcGhlbi12Ny0xMC0xLTIwMTUyMzkwMjQ1NTAwMiIsICJldmVudCI6ICJub3QtdGVzdGVyIn0sICJ0aW1ldG9rZW4iOiAxNTIzOTAyNDU5MDQ2NzI2M30seyJtZXNzYWdlIjogeyJjaGF0ZW5naW5lU0RLIjogIjAuOS4xMCIsICJkYXRhIjogeyJ0ZXh0IjogImhlbGxvIHdvcmxkIDExIn0sICJzZW5kZXIiOiAic3RlcGhlbi12Ny0xMC0xLTIwMTUyMzkwMjQ1NTAwMiIsICJldmVudCI6ICJ0ZXN0ZXIifSwgInRpbWV0b2tlbiI6IDE1MjM5MDI0NTkwNDcyNTQyfSx7Im1lc3NhZ2UiOiB7ImNoYXRlbmdpbmVTREsiOiAiMC45LjEwIiwgImRhdGEiOiB7InRleHQiOiAiaGVsbG8gd29ybGQgMTkifSwgInNlbmRlciI6ICJzdGVwaGVuLXY3LTEwLTEtMjAxNTIzOTAyNDU1MDAyIiwgImV2ZW50IjogInRlc3RlciJ9LCAidGltZXRva2VuIjogMTUyMzkwMjQ1OTA0NzI2MTB9LHsibWVzc2FnZSI6IHsiY2hhdGVuZ2luZVNESyI6ICIwLjkuMTAiLCAiZGF0YSI6IHsidGV4dCI6ICJoZWxsbyB3b3JsZCAyMyJ9LCAic2VuZGVyIjogInN0ZXBoZW4tdjctMTAtMS0yMDE1MjM5MDI0NTUwMDIiLCAiZXZlbnQiOiAibm90LXRlc3RlciJ9LCAidGltZXRva2VuIjogMTUyMzkwMjQ1OTA1MjA2MjN9LHsibWVzc2FnZSI6IHsiY2hhdGVuZ2luZVNESyI6ICIwLjkuMTAiLCAiZGF0YSI6IHsidGV4dCI6ICJoZWxsbyB3b3JsZCAxMiJ9LCAic2VuZGVyIjogInN0ZXBoZW4tdjctMTAtMS0yMDE1MjM5MDI0NTUwMDIiLCAiZXZlbnQiOiAidGVzdGVyIn0sICJ0aW1ldG9rZW4iOiAxNTIzOTAyNDU5MDU0NTI4OX0seyJtZXNzYWdlIjogeyJjaGF0ZW5naW5lU0RLIjogIjAuOS4xMCIsICJkYXRhIjogeyJ0ZXh0IjogImhlbGxvIHdvcmxkIDEyNSJ9LCAic2VuZGVyIjogInN0ZXBoZW4tdjctMTAtMS0yMDE1MjM5MDI0NTUwMDIiLCAiZXZlbnQiOiAibm90LXRlc3RlciJ9LCAidGltZXRva2VuIjogMTUyMzkwMjQ1OTE3ODQxMDh9LHsibWVzc2FnZSI6IHsiY2hhdGVuZ2luZVNESyI6ICIwLjkuMTAiLCAiZGF0YSI6IHsidGV4dCI6ICJoZWxsbyB3b3JsZCAxMzEifSwgInNlbmRlciI6ICJzdGVwaGVuLXY3LTEwLTEtMjAxNTIzOTAyNDU1MDAyIiwgImV2ZW50IjogInRlc3RlciJ9LCAidGltZXRva2VuIjogMTUyMzkwMjQ1OTE4MzU3ODd9LHsibWVzc2FnZSI6IHsiY2hhdGVuZ2luZVNESyI6ICIwLjkuMTAiLCAiZGF0YSI6IHsidGV4dCI6ICJoZWxsbyB3b3JsZCAxNDMifSwgInNlbmRlciI6ICJzdGVwaGVuLXY3LTEwLTEtMjAxNTIzOTAyNDU1MDAyIiwgImV2ZW50IjogInRlc3RlciJ9LCAidGltZXRva2VuIjogMTUyMzkwMjQ1OTE4MzczMjZ9LHsibWVzc2FnZSI6IHsiY2hhdGVuZ2luZVNESyI6ICIwLjkuMTAiLCAiZGF0YSI6IHsidGV4dCI6ICJoZWxsbyB3b3JsZCAxNzAifSwgInNlbmRlciI6ICJzdGVwaGVuLXY3LTEwLTEtMjAxNTIzOTAyNDU1MDAyIiwgImV2ZW50IjogIm5vdC10ZXN0ZXIifSwgInRpbWV0b2tlbiI6IDE1MjM5MDI0NTkxODQ0ODI3fSx7Im1lc3NhZ2UiOiB7ImNoYXRlbmdpbmVTREsiOiAiMC45LjEwIiwgImRhdGEiOiB7InRleHQiOiAiaGVsbG8gd29ybGQgMTQ4In0sICJzZW5kZXIiOiAic3RlcGhlbi12Ny0xMC0xLTIwMTUyMzkwMjQ1NTAwMiIsICJldmVudCI6ICJub3QtdGVzdGVyIn0sICJ0aW1ldG9rZW4iOiAxNTIzOTAyNDU5MTg0OTM3M30seyJtZXNzYWdlIjogeyJjaGF0ZW5naW5lU0RLIjogIjAuOS4xMCIsICJkYXRhIjogeyJ0ZXh0IjogImhlbGxvIHdvcmxkIDE0MiJ9LCAic2VuZGVyIjogInN0ZXBoZW4tdjctMTAtMS0yMDE1MjM5MDI0NTUwMDIiLCAiZXZlbnQiOiAibm90LXRlc3RlciJ9LCAidGltZXRva2VuIjogMTUyMzkwMjQ1OTE4NjQ2ODJ9LHsibWVzc2FnZSI6IHsiY2hhdGVuZ2luZVNESyI6ICIwLjkuMTAiLCAiZGF0YSI6IHsidGV4dCI6ICJoZWxsbyB3b3JsZCAxNTAifSwgInNlbmRlciI6ICJzdGVwaGVuLXY3LTEwLTEtMjAxNTIzOTAyNDU1MDAyIiwgImV2ZW50IjogIm5vdC10ZXN0ZXIifSwgInRpbWV0b2tlbiI6IDE1MjM5MDI0NTkxODc0MDAwfSx7Im1lc3NhZ2UiOiB7ImNoYXRlbmdpbmVTREsiOiAiMC45LjEwIiwgImRhdGEiOiB7InRleHQiOiAiaGVsbG8gd29ybGQgMTM5In0sICJzZW5kZXIiOiAic3RlcGhlbi12Ny0xMC0xLTIwMTUyMzkwMjQ1NTAwMiIsICJldmVudCI6ICJub3QtdGVzdGVyIn0sICJ0aW1ldG9rZW4iOiAxNTIzOTAyNDU5MTg3NTcyOH0seyJtZXNzYWdlIjogeyJjaGF0ZW5naW5lU0RLIjogIjAuOS4xMCIsICJkYXRhIjogeyJ0ZXh0IjogImhlbGxvIHdvcmxkIDEyNCJ9LCAic2VuZGVyIjogInN0ZXBoZW4tdjctMTAtMS0yMDE1MjM5MDI0NTUwMDIiLCAiZXZlbnQiOiAidGVzdGVyIn0sICJ0aW1ldG9rZW4iOiAxNTIzOTAyNDU5MTg4NzIxMX0seyJtZXNzYWdlIjogeyJjaGF0ZW5naW5lU0RLIjogIjAuOS4xMCIsICJkYXRhIjogeyJ0ZXh0IjogImhlbGxvIHdvcmxkIDMwIn0sICJzZW5kZXIiOiAic3RlcGhlbi12Ny0xMC0xLTIwMTUyMzkwMjQ1NTAwMiIsICJldmVudCI6ICJub3QtdGVzdGVyIn0sICJ0aW1ldG9rZW4iOiAxNTIzOTAyNDU5MTkxOTI3NX0seyJtZXNzYWdlIjogeyJjaGF0ZW5naW5lU0RLIjogIjAuOS4xMCIsICJkYXRhIjogeyJ0ZXh0IjogImhlbGxvIHdvcmxkIDEzMiJ9LCAic2VuZGVyIjogInN0ZXBoZW4tdjctMTAtMS0yMDE1MjM5MDI0NTUwMDIiLCAiZXZlbnQiOiAibm90LXRlc3RlciJ9LCAidGltZXRva2VuIjogMTUyMzkwMjQ1OTE5MzgyMDF9LHsibWVzc2FnZSI6IHsiY2hhdGVuZ2luZVNESyI6ICIwLjkuMTAiLCAiZGF0YSI6IHsidGV4dCI6ICJoZWxsbyB3b3JsZCAzMiJ9LCAic2VuZGVyIjogInN0ZXBoZW4tdjctMTAtMS0yMDE1MjM5MDI0NTUwMDIiLCAiZXZlbnQiOiAibm90LXRlc3RlciJ9LCAidGltZXRva2VuIjogMTUyMzkwMjQ1OTIwNTQzNTV9LHsibWVzc2FnZSI6IHsiY2hhdGVuZ2luZVNESyI6ICIwLjkuMTAiLCAiZGF0YSI6IHsidGV4dCI6ICJoZWxsbyB3b3JsZCA0NCJ9LCAic2VuZGVyIjogInN0ZXBoZW4tdjctMTAtMS0yMDE1MjM5MDI0NTUwMDIiLCAiZXZlbnQiOiAibm90LXRlc3RlciJ9LCAidGltZXRva2VuIjogMTUyMzkwMjQ1OTIwOTY3Mjd9LHsibWVzc2FnZSI6IHsiY2hhdGVuZ2luZVNESyI6ICIwLjkuMTAiLCAiZGF0YSI6IHsidGV4dCI6ICJoZWxsbyB3b3JsZCAxNTMifSwgInNlbmRlciI6ICJzdGVwaGVuLXY3LTEwLTEtMjAxNTIzOTAyNDU1MDAyIiwgImV2ZW50IjogIm5vdC10ZXN0ZXIifSwgInRpbWV0b2tlbiI6IDE1MjM5MDI0NTkyMTAxNjM5fSx7Im1lc3NhZ2UiOiB7ImNoYXRlbmdpbmVTREsiOiAiMC45LjEwIiwgImRhdGEiOiB7InRleHQiOiAiaGVsbG8gd29ybGQgMTQ3In0sICJzZW5kZXIiOiAic3RlcGhlbi12Ny0xMC0xLTIwMTUyMzkwMjQ1NTAwMiIsICJldmVudCI6ICJub3QtdGVzdGVyIn0sICJ0aW1ldG9rZW4iOiAxNTIzOTAyNDU5MjEyMjMwNX0seyJtZXNzYWdlIjogeyJjaGF0ZW5naW5lU0RLIjogIjAuOS4xMCIsICJkYXRhIjogeyJ0ZXh0IjogImhlbGxvIHdvcmxkIDE1OCJ9LCAic2VuZGVyIjogInN0ZXBoZW4tdjctMTAtMS0yMDE1MjM5MDI0NTUwMDIiLCAiZXZlbnQiOiAibm90LXRlc3RlciJ9LCAidGltZXRva2VuIjogMTUyMzkwMjQ1OTIxMjIzNzl9LHsibWVzc2FnZSI6IHsiY2hhdGVuZ2luZVNESyI6ICIwLjkuMTAiLCAiZGF0YSI6IHsidGV4dCI6ICJoZWxsbyB3b3JsZCAxNTYifSwgInNlbmRlciI6ICJzdGVwaGVuLXY3LTEwLTEtMjAxNTIzOTAyNDU1MDAyIiwgImV2ZW50IjogIm5vdC10ZXN0ZXIifSwgInRpbWV0b2tlbiI6IDE1MjM5MDI0NTkyMTM4MTk3fSx7Im1lc3NhZ2UiOiB7ImNoYXRlbmdpbmVTREsiOiAiMC45LjEwIiwgImRhdGEiOiB7InRleHQiOiAiaGVsbG8gd29ybGQgMTQzIn0sICJzZW5kZXIiOiAic3RlcGhlbi12Ny0xMC0xLTIwMTUyMzkwMjQ1NTAwMiIsICJldmVudCI6ICJub3QtdGVzdGVyIn0sICJ0aW1ldG9rZW4iOiAxNTIzOTAyNDU5MjE1NDMzNn0seyJtZXNzYWdlIjogeyJjaGF0ZW5naW5lU0RLIjogIjAuOS4xMCIsICJkYXRhIjogeyJ0ZXh0IjogImhlbGxvIHdvcmxkIDEyNiJ9LCAic2VuZGVyIjogInN0ZXBoZW4tdjctMTAtMS0yMDE1MjM5MDI0NTUwMDIiLCAiZXZlbnQiOiAidGVzdGVyIn0sICJ0aW1ldG9rZW4iOiAxNTIzOTAyNDU5MjE3MTgwN30seyJtZXNzYWdlIjogeyJjaGF0ZW5naW5lU0RLIjogIjAuOS4xMCIsICJkYXRhIjogeyJ0ZXh0IjogImhlbGxvIHdvcmxkIDE5MSJ9LCAic2VuZGVyIjogInN0ZXBoZW4tdjctMTAtMS0yMDE1MjM5MDI0NTUwMDIiLCAiZXZlbnQiOiAibm90LXRlc3RlciJ9LCAidGltZXRva2VuIjogMTUyMzkwMjQ1OTIxNzk2OTZ9LHsibWVzc2FnZSI6IHsiY2hhdGVuZ2luZVNESyI6ICIwLjkuMTAiLCAiZGF0YSI6IHsidGV4dCI6ICJoZWxsbyB3b3JsZCAxNDYifSwgInNlbmRlciI6ICJzdGVwaGVuLXY3LTEwLTEtMjAxNTIzOTAyNDU1MDAyIiwgImV2ZW50IjogIm5vdC10ZXN0ZXIifSwgInRpbWV0b2tlbiI6IDE1MjM5MDI0NTkyMjAzNjQ1fSx7Im1lc3NhZ2UiOiB7ImNoYXRlbmdpbmVTREsiOiAiMC45LjEwIiwgImRhdGEiOiB7InRleHQiOiAiaGVsbG8gd29ybGQgMTgzIn0sICJzZW5kZXIiOiAic3RlcGhlbi12Ny0xMC0xLTIwMTUyMzkwMjQ1NTAwMiIsICJldmVudCI6ICJub3QtdGVzdGVyIn0sICJ0aW1ldG9rZW4iOiAxNTIzOTAyNDU5MjIwNjY1NX0seyJtZXNzYWdlIjogeyJjaGF0ZW5naW5lU0RLIjogIjAuOS4xMCIsICJkYXRhIjogeyJ0ZXh0IjogImhlbGxvIHdvcmxkIDE0MSJ9LCAic2VuZGVyIjogInN0ZXBoZW4tdjctMTAtMS0yMDE1MjM5MDI0NTUwMDIiLCAiZXZlbnQiOiAibm90LXRlc3RlciJ9LCAidGltZXRva2VuIjogMTUyMzkwMjQ1OTIyMTY5MTZ9LHsibWVzc2FnZSI6IHsiY2hhdGVuZ2luZVNESyI6ICIwLjkuMTAiLCAiZGF0YSI6IHsidGV4dCI6ICJoZWxsbyB3b3JsZCAxNDkifSwgInNlbmRlciI6ICJzdGVwaGVuLXY3LTEwLTEtMjAxNTIzOTAyNDU1MDAyIiwgImV2ZW50IjogIm5vdC10ZXN0ZXIifSwgInRpbWV0b2tlbiI6IDE1MjM5MDI0NTkyMjkwMzQ5fSx7Im1lc3NhZ2UiOiB7ImNoYXRlbmdpbmVTREsiOiAiMC45LjEwIiwgImRhdGEiOiB7InRleHQiOiAiaGVsbG8gd29ybGQgMTM5In0sICJzZW5kZXIiOiAic3RlcGhlbi12Ny0xMC0xLTIwMTUyMzkwMjQ1NTAwMiIsICJldmVudCI6ICJ0ZXN0ZXIifSwgInRpbWV0b2tlbiI6IDE1MjM5MDI0NTkyMzAxMzQ4fSx7Im1lc3NhZ2UiOiB7ImNoYXRlbmdpbmVTREsiOiAiMC45LjEwIiwgImRhdGEiOiB7InRleHQiOiAiaGVsbG8gd29ybGQgMTIzIn0sICJzZW5kZXIiOiAic3RlcGhlbi12Ny0xMC0xLTIwMTUyMzkwMjQ1NTAwMiIsICJldmVudCI6ICJub3QtdGVzdGVyIn0sICJ0aW1ldG9rZW4iOiAxNTIzOTAyNDU5MjMxMTYzM30seyJtZXNzYWdlIjogeyJjaGF0ZW5naW5lU0RLIjogIjAuOS4xMCIsICJkYXRhIjogeyJ0ZXh0IjogImhlbGxvIHdvcmxkIDE2MSJ9LCAic2VuZGVyIjogInN0ZXBoZW4tdjctMTAtMS0yMDE1MjM5MDI0NTUwMDIiLCAiZXZlbnQiOiAibm90LXRlc3RlciJ9LCAidGltZXRva2VuIjogMTUyMzkwMjQ1OTIzMTYwMjl9LHsibWVzc2FnZSI6IHsiY2hhdGVuZ2luZVNESyI6ICIwLjkuMTAiLCAiZGF0YSI6IHsidGV4dCI6ICJoZWxsbyB3b3JsZCAxMzEifSwgInNlbmRlciI6ICJzdGVwaGVuLXY3LTEwLTEtMjAxNTIzOTAyNDU1MDAyIiwgImV2ZW50IjogIm5vdC10ZXN0ZXIifSwgInRpbWV0b2tlbiI6IDE1MjM5MDI0NTkyMzE4MTc4fSx7Im1lc3NhZ2UiOiB7ImNoYXRlbmdpbmVTREsiOiAiMC45LjEwIiwgImRhdGEiOiB7InRleHQiOiAiaGVsbG8gd29ybGQgMTQxIn0sICJzZW5kZXIiOiAic3RlcGhlbi12Ny0xMC0xLTIwMTUyMzkwMjQ1NTAwMiIsICJldmVudCI6ICJ0ZXN0ZXIifSwgInRpbWV0b2tlbiI6IDE1MjM5MDI0NTkyMzIxNDEyfSx7Im1lc3NhZ2UiOiB7ImNoYXRlbmdpbmVTREsiOiAiMC45LjEwIiwgImRhdGEiOiB7InRleHQiOiAiaGVsbG8gd29ybGQgMTcyIn0sICJzZW5kZXIiOiAic3RlcGhlbi12Ny0xMC0xLTIwMTUyMzkwMjQ1NTAwMiIsICJldmVudCI6ICJub3QtdGVzdGVyIn0sICJ0aW1ldG9rZW4iOiAxNTIzOTAyNDU5MjM0NTg5OX0seyJtZXNzYWdlIjogeyJjaGF0ZW5naW5lU0RLIjogIjAuOS4xMCIsICJkYXRhIjogeyJ0ZXh0IjogImhlbGxvIHdvcmxkIDEzNiJ9LCAic2VuZGVyIjogInN0ZXBoZW4tdjctMTAtMS0yMDE1MjM5MDI0NTUwMDIiLCAiZXZlbnQiOiAidGVzdGVyIn0sICJ0aW1ldG9rZW4iOiAxNTIzOTAyNDU5MjM1Nzc5M30seyJtZXNzYWdlIjogeyJjaGF0ZW5naW5lU0RLIjogIjAuOS4xMCIsICJkYXRhIjogeyJ0ZXh0IjogImhlbGxvIHdvcmxkIDEyNSJ9LCAic2VuZGVyIjogInN0ZXBoZW4tdjctMTAtMS0yMDE1MjM5MDI0NTUwMDIiLCAiZXZlbnQiOiAidGVzdGVyIn0sICJ0aW1ldG9rZW4iOiAxNTIzOTAyNDU5MjM3NDQ5NH0seyJtZXNzYWdlIjogeyJjaGF0ZW5naW5lU0RLIjogIjAuOS4xMCIsICJkYXRhIjogeyJ0ZXh0IjogImhlbGxvIHdvcmxkIDEzNiJ9LCAic2VuZGVyIjogInN0ZXBoZW4tdjctMTAtMS0yMDE1MjM5MDI0NTUwMDIiLCAiZXZlbnQiOiAibm90LXRlc3RlciJ9LCAidGltZXRva2VuIjogMTUyMzkwMjQ1OTI0NTYwODl9LHsibWVzc2FnZSI6IHsiY2hhdGVuZ2luZVNESyI6ICIwLjkuMTAiLCAiZGF0YSI6IHsidGV4dCI6ICJoZWxsbyB3b3JsZCAxMzQifSwgInNlbmRlciI6ICJzdGVwaGVuLXY3LTEwLTEtMjAxNTIzOTAyNDU1MDAyIiwgImV2ZW50IjogInRlc3RlciJ9LCAidGltZXRva2VuIjogMTUyMzkwMjQ1OTI2NDg5NDR9LHsibWVzc2FnZSI6IHsiY2hhdGVuZ2luZVNESyI6ICIwLjkuMTAiLCAiZGF0YSI6IHsidGV4dCI6ICJoZWxsbyB3b3JsZCAxMzcifSwgInNlbmRlciI6ICJzdGVwaGVuLXY3LTEwLTEtMjAxNTIzOTAyNDU1MDAyIiwgImV2ZW50IjogInRlc3RlciJ9LCAidGltZXRva2VuIjogMTUyMzkwMjQ1OTI2NjAwODF9LHsibWVzc2FnZSI6IHsiY2hhdGVuZ2luZVNESyI6ICIwLjkuMTAiLCAiZGF0YSI6IHsidGV4dCI6ICJoZWxsbyB3b3JsZCA3MCJ9LCAic2VuZGVyIjogInN0ZXBoZW4tdjctMTAtMS0yMDE1MjM5MDI0NTUwMDIiLCAiZXZlbnQiOiAibm90LXRlc3RlciJ9LCAidGltZXRva2VuIjogMTUyMzkwMjQ2MzI3MDgwNjF9LHsibWVzc2FnZSI6IHsiY2hhdGVuZ2luZVNESyI6ICIwLjkuMTAiLCAiZGF0YSI6IHsidGV4dCI6ICJoZWxsbyB3b3JsZCAxOTAifSwgInNlbmRlciI6ICJzdGVwaGVuLXY3LTEwLTEtMjAxNTIzOTAyNDU1MDAyIiwgImV2ZW50IjogIm5vdC10ZXN0ZXIifSwgInRpbWV0b2tlbiI6IDE1MjM5MDI0NjMyNzQ5NjU2fSx7Im1lc3NhZ2UiOiB7ImNoYXRlbmdpbmVTREsiOiAiMC45LjEwIiwgImRhdGEiOiB7InRleHQiOiAiaGVsbG8gd29ybGQgMTgwIn0sICJzZW5kZXIiOiAic3RlcGhlbi12Ny0xMC0xLTIwMTUyMzkwMjQ1NTAwMiIsICJldmVudCI6ICJub3QtdGVzdGVyIn0sICJ0aW1ldG9rZW4iOiAxNTIzOTAyNDYzMjc4MTYwM30seyJtZXNzYWdlIjogeyJjaGF0ZW5naW5lU0RLIjogIjAuOS4xMCIsICJkYXRhIjogeyJ0ZXh0IjogImhlbGxvIHdvcmxkIDE4NSJ9LCAic2VuZGVyIjogInN0ZXBoZW4tdjctMTAtMS0yMDE1MjM5MDI0NTUwMDIiLCAiZXZlbnQiOiAibm90LXRlc3RlciJ9LCAidGltZXRva2VuIjogMTUyMzkwMjQ2MzI3ODM0MjV9LHsibWVzc2FnZSI6IHsiY2hhdGVuZ2luZVNESyI6ICIwLjkuMTAiLCAiZGF0YSI6IHsidGV4dCI6ICJoZWxsbyB3b3JsZCAxNzQifSwgInNlbmRlciI6ICJzdGVwaGVuLXY3LTEwLTEtMjAxNTIzOTAyNDU1MDAyIiwgImV2ZW50IjogIm5vdC10ZXN0ZXIifSwgInRpbWV0b2tlbiI6IDE1MjM5MDI0NjMyNzg3NjI2fSx7Im1lc3NhZ2UiOiB7ImNoYXRlbmdpbmVTREsiOiAiMC45LjEwIiwgImRhdGEiOiB7InRleHQiOiAiaGVsbG8gd29ybGQgMTAxIn0sICJzZW5kZXIiOiAic3RlcGhlbi12Ny0xMC0xLTIwMTUyMzkwMjQ1NTAwMiIsICJldmVudCI6ICJ0ZXN0ZXIifSwgInRpbWV0b2tlbiI6IDE1MjM5MDI0NjMyODUzOTg5fSx7Im1lc3NhZ2UiOiB7ImNoYXRlbmdpbmVTREsiOiAiMC45LjEwIiwgImRhdGEiOiB7InRleHQiOiAiaGVsbG8gd29ybGQgMTg4In0sICJzZW5kZXIiOiAic3RlcGhlbi12Ny0xMC0xLTIwMTUyMzkwMjQ1NTAwMiIsICJldmVudCI6ICJ0ZXN0ZXIifSwgInRpbWV0b2tlbiI6IDE1MjM5MDI0NjM0OTgwNDYxfSx7Im1lc3NhZ2UiOiB7ImNoYXRlbmdpbmVTREsiOiAiMC45LjEwIiwgImRhdGEiOiB7InRleHQiOiAiaGVsbG8gd29ybGQgMTU5In0sICJzZW5kZXIiOiAic3RlcGhlbi12Ny0xMC0xLTIwMTUyMzkwMjQ1NTAwMiIsICJldmVudCI6ICJub3QtdGVzdGVyIn0sICJ0aW1ldG9rZW4iOiAxNTIzOTAyNDYzNDk5Mzg1NH0seyJtZXNzYWdlIjogeyJjaGF0ZW5naW5lU0RLIjogIjAuOS4xMCIsICJkYXRhIjogeyJ0ZXh0IjogImhlbGxvIHdvcmxkIDE4NiJ9LCAic2VuZGVyIjogInN0ZXBoZW4tdjctMTAtMS0yMDE1MjM5MDI0NTUwMDIiLCAiZXZlbnQiOiAidGVzdGVyIn0sICJ0aW1ldG9rZW4iOiAxNTIzOTAyNDYzNTAwNjMyN30seyJtZXNzYWdlIjogeyJjaGF0ZW5naW5lU0RLIjogIjAuOS4xMCIsICJkYXRhIjogeyJ0ZXh0IjogImhlbGxvIHdvcmxkIDE3NiJ9LCAic2VuZGVyIjogInN0ZXBoZW4tdjctMTAtMS0yMDE1MjM5MDI0NTUwMDIiLCAiZXZlbnQiOiAidGVzdGVyIn0sICJ0aW1ldG9rZW4iOiAxNTIzOTAyNDYzNTA3MjU5M30seyJtZXNzYWdlIjogeyJjaGF0ZW5naW5lU0RLIjogIjAuOS4xMCIsICJkYXRhIjogeyJ0ZXh0IjogImhlbGxvIHdvcmxkIDE2MiJ9LCAic2VuZGVyIjogInN0ZXBoZW4tdjctMTAtMS0yMDE1MjM5MDI0NTUwMDIiLCAiZXZlbnQiOiAibm90LXRlc3RlciJ9LCAidGltZXRva2VuIjogMTUyMzkwMjQ2MzUwOTgzMTB9LHsibWVzc2FnZSI6IHsiY2hhdGVuZ2luZVNESyI6ICIwLjkuMTAiLCAiZGF0YSI6IHsidGV4dCI6ICJoZWxsbyB3b3JsZCAxODIifSwgInNlbmRlciI6ICJzdGVwaGVuLXY3LTEwLTEtMjAxNTIzOTAyNDU1MDAyIiwgImV2ZW50IjogIm5vdC10ZXN0ZXIifSwgInRpbWV0b2tlbiI6IDE1MjM5MDI0NjM1MTA1MTcwfSx7Im1lc3NhZ2UiOiB7ImNoYXRlbmdpbmVTREsiOiAiMC45LjEwIiwgImRhdGEiOiB7InRleHQiOiAiaGVsbG8gd29ybGQgODEifSwgInNlbmRlciI6ICJzdGVwaGVuLXY3LTEwLTEtMjAxNTIzOTAyNDU1MDAyIiwgImV2ZW50IjogIm5vdC10ZXN0ZXIifSwgInRpbWV0b2tlbiI6IDE1MjM5MDI0NjM1"
+      "base64" : "W1t7Im1lc3NhZ2UiOnsiZGF0YSI6eyJ3b3JrcyI6ZmFsc2UsImNvdW50IjoxOTd9LCJzZW5kZXIiOiJyb2JvdC1zdGVwaGVuIiwiZWlkIjoiNDQ4OEZEOUYtOTUzOC00MDY2LTkzQTctNjNGMzE4QjlCRTgwIiwiZXZlbnQiOiJub3QtdGVzdGVyIiwiY2hhdGVuZ2luZVNESyI6Im9iamNcLzAuOS4yIn0sInRpbWV0b2tlbiI6MTU0Mzk0OTM0Nzc5Mjg0ODB9LHsibWVzc2FnZSI6eyJkYXRhIjp7IndvcmtzIjpmYWxzZSwiY291bnQiOjIwNH0sInNlbmRlciI6InJvYm90LXN0ZXBoZW4iLCJlaWQiOiIxQkM4NUU1RS0wRjI1LTQzNjgtQjBBOC00MkIxNTdDN0UyRDQiLCJldmVudCI6Im5vdC10ZXN0ZXIiLCJjaGF0ZW5naW5lU0RLIjoib2JqY1wvMC45LjIifSwidGltZXRva2VuIjoxNTQzOTQ5MzQ3Nzk5MTQ4M30seyJtZXNzYWdlIjp7ImRhdGEiOnsid29ya3MiOnRydWUsImNvdW50IjoyMDN9LCJzZW5kZXIiOiJyb2JvdC1zdGVwaGVuIiwiZWlkIjoiNzBEMjhCODctQzlCMy00MDk1LUJDOEItMkZCQUM5RkU5QTkxIiwiZXZlbnQiOiJ0ZXN0ZXIiLCJjaGF0ZW5naW5lU0RLIjoib2JqY1wvMC45LjIifSwidGltZXRva2VuIjoxNTQzOTQ5MzQ3Nzk5MzkxMX0seyJtZXNzYWdlIjp7ImRhdGEiOnsid29ya3MiOnRydWUsImNvdW50IjoxOTV9LCJzZW5kZXIiOiJyb2JvdC1zdGVwaGVuIiwiZWlkIjoiQTE4MEZDQzctOEMzNC00NTgxLUI5M0YtQ0ZCRkFBRDBFQjQ1IiwiZXZlbnQiOiJ0ZXN0ZXIiLCJjaGF0ZW5naW5lU0RLIjoib2JqY1wvMC45LjIifSwidGltZXRva2VuIjoxNTQzOTQ5MzQ3ODQ5MDg5NH0seyJtZXNzYWdlIjp7ImRhdGEiOnsid29ya3MiOmZhbHNlLCJjb3VudCI6MjAzfSwic2VuZGVyIjoicm9ib3Qtc3RlcGhlbiIsImVpZCI6IkQxMUFCQjA3LUE3RTktNDY5OS04Qzk1LTY2NTU2REI0QjU3NCIsImV2ZW50Ijoibm90LXRlc3RlciIsImNoYXRlbmdpbmVTREsiOiJvYmpjXC8wLjkuMiJ9LCJ0aW1ldG9rZW4iOjE1NDM5NDkzNDc4NTQyNjY4fSx7Im1lc3NhZ2UiOnsiZGF0YSI6eyJ3b3JrcyI6dHJ1ZSwiY291bnQiOjIwN30sInNlbmRlciI6InJvYm90LXN0ZXBoZW4iLCJlaWQiOiI4RUI3ODE3Ny1EOUY2LTQ2NDQtOEJDMS1EQjJENDk0RDYwQTQiLCJldmVudCI6InRlc3RlciIsImNoYXRlbmdpbmVTREsiOiJvYmpjXC8wLjkuMiJ9LCJ0aW1ldG9rZW4iOjE1NDM5NDkzNDc5MDI0MDkwfSx7Im1lc3NhZ2UiOnsiZGF0YSI6eyJ3b3JrcyI6dHJ1ZSwiY291bnQiOjIwNX0sInNlbmRlciI6InJvYm90LXN0ZXBoZW4iLCJlaWQiOiJDMEQ2NzA5Ni1CQkNCLTQ2NTctOTFGQS02MkE1NjY3MUI4QjIiLCJldmVudCI6InRlc3RlciIsImNoYXRlbmdpbmVTREsiOiJvYmpjXC8wLjkuMiJ9LCJ0aW1ldG9rZW4iOjE1NDM5NDkzNDc5MDMwMTE1fSx7Im1lc3NhZ2UiOnsiZGF0YSI6eyJ3b3JrcyI6ZmFsc2UsImNvdW50IjoyMDh9LCJzZW5kZXIiOiJyb2JvdC1zdGVwaGVuIiwiZWlkIjoiRkZBQkFGRkMtOUI4Qy00QTM0LUI5QkItQTBCNzJFRjI1RjMwIiwiZXZlbnQiOiJub3QtdGVzdGVyIiwiY2hhdGVuZ2luZVNESyI6Im9iamNcLzAuOS4yIn0sInRpbWV0b2tlbiI6MTU0Mzk0OTM0NzkyMDg2Nzd9LHsibWVzc2FnZSI6eyJkYXRhIjp7IndvcmtzIjpmYWxzZSwiY291bnQiOjIxMH0sInNlbmRlciI6InJvYm90LXN0ZXBoZW4iLCJlaWQiOiJEMEFDQzNGOC03M0QxLTRGMzUtOURGOS1GN0E3QjNCQzY1MTIiLCJldmVudCI6Im5vdC10ZXN0ZXIiLCJjaGF0ZW5naW5lU0RLIjoib2JqY1wvMC45LjIifSwidGltZXRva2VuIjoxNTQzOTQ5MzQ3OTUxMzk2N30seyJtZXNzYWdlIjp7ImRhdGEiOnsid29ya3MiOnRydWUsImNvdW50IjoxOTd9LCJzZW5kZXIiOiJyb2JvdC1zdGVwaGVuIiwiZWlkIjoiMjBDNTUwNzYtNDgzRi00MjNFLTkxNzgtRDZGNkQwNTMwNDRDIiwiZXZlbnQiOiJ0ZXN0ZXIiLCJjaGF0ZW5naW5lU0RLIjoib2JqY1wvMC45LjIifSwidGltZXRva2VuIjoxNTQzOTQ5MzQ3OTUxNjM5M30seyJtZXNzYWdlIjp7ImRhdGEiOnsid29ya3MiOnRydWUsImNvdW50IjoyMTF9LCJzZW5kZXIiOiJyb2JvdC1zdGVwaGVuIiwiZWlkIjoiNDM3REYxRDItQ0I2MC00N0EzLTk1RjMtM0M2M0ExQUU2QTg3IiwiZXZlbnQiOiJ0ZXN0ZXIiLCJjaGF0ZW5naW5lU0RLIjoib2JqY1wvMC45LjIifSwidGltZXRva2VuIjoxNTQzOTQ5MzQ3OTc1NTQ3MH0seyJtZXNzYWdlIjp7ImRhdGEiOnsid29ya3MiOmZhbHNlLCJjb3VudCI6MjA5fSwic2VuZGVyIjoicm9ib3Qtc3RlcGhlbiIsImVpZCI6IjFDQzlEODVFLUFBRDQtNDFENi1CMkVBLUQ3QkVBMzY4MDQ5OSIsImV2ZW50Ijoibm90LXRlc3RlciIsImNoYXRlbmdpbmVTREsiOiJvYmpjXC8wLjkuMiJ9LCJ0aW1ldG9rZW4iOjE1NDM5NDkzNDgwMDE3MjA0fSx7Im1lc3NhZ2UiOnsiZGF0YSI6eyJ3b3JrcyI6ZmFsc2UsImNvdW50IjoyMTF9LCJzZW5kZXIiOiJyb2JvdC1zdGVwaGVuIiwiZWlkIjoiQTVFQUVEMjctMUIzNi00OEFELUJEN0QtMkY5MEJCNkFEQzdGIiwiZXZlbnQiOiJub3QtdGVzdGVyIiwiY2hhdGVuZ2luZVNESyI6Im9iamNcLzAuOS4yIn0sInRpbWV0b2tlbiI6MTU0Mzk0OTM0ODAwMjQyMjB9LHsibWVzc2FnZSI6eyJkYXRhIjp7IndvcmtzIjp0cnVlLCJjb3VudCI6MjA5fSwic2VuZGVyIjoicm9ib3Qtc3RlcGhlbiIsImVpZCI6IjBBNTMyRTA0LTY3N0UtNDcxOS04MzhBLTUwOTQ0QzU5NDM3MyIsImV2ZW50IjoidGVzdGVyIiwiY2hhdGVuZ2luZVNESyI6Im9iamNcLzAuOS4yIn0sInRpbWV0b2tlbiI6MTU0Mzk0OTM0ODAyNjI4ODF9LHsibWVzc2FnZSI6eyJkYXRhIjp7IndvcmtzIjp0cnVlLCJjb3VudCI6MjEyfSwic2VuZGVyIjoicm9ib3Qtc3RlcGhlbiIsImVpZCI6IjI4NkIxRDMyLTMzMTEtNDJERC04MDkyLTRCMDUzOUFDRDUwQyIsImV2ZW50IjoidGVzdGVyIiwiY2hhdGVuZ2luZVNESyI6Im9iamNcLzAuOS4yIn0sInRpbWV0b2tlbiI6MTU0Mzk0OTM0ODA1MjI2NDl9LHsibWVzc2FnZSI6eyJkYXRhIjp7IndvcmtzIjp0cnVlLCJjb3VudCI6MjEwfSwic2VuZGVyIjoicm9ib3Qtc3RlcGhlbiIsImVpZCI6IjM3NkJDQTkyLTkwNzItNDg4Qi1CQkY2LUYzMjAxNUU3RDJCOCIsImV2ZW50IjoidGVzdGVyIiwiY2hhdGVuZ2luZVNESyI6Im9iamNcLzAuOS4yIn0sInRpbWV0b2tlbiI6MTU0Mzk0OTM0ODA2MDc4MTZ9LHsibWVzc2FnZSI6eyJkYXRhIjp7IndvcmtzIjp0cnVlLCJjb3VudCI6MjE0fSwic2VuZGVyIjoicm9ib3Qtc3RlcGhlbiIsImVpZCI6IjkyMEEwNjA1LTEwMEEtNEI0RC1CMTY5LTM5QTQ5RUM1MTQwRiIsImV2ZW50IjoidGVzdGVyIiwiY2hhdGVuZ2luZVNESyI6Im9iamNcLzAuOS4yIn0sInRpbWV0b2tlbiI6MTU0Mzk0OTM0ODA3NTI1OTJ9LHsibWVzc2FnZSI6eyJkYXRhIjp7IndvcmtzIjp0cnVlLCJjb3VudCI6MTk4fSwic2VuZGVyIjoicm9ib3Qtc3RlcGhlbiIsImVpZCI6IkNGOEE4QzYwLUYzNjktNDYwRS04QTU3LTdFQUEzMTFDOUREMSIsImV2ZW50IjoidGVzdGVyIiwiY2hhdGVuZ2luZVNESyI6Im9iamNcLzAuOS4yIn0sInRpbWV0b2tlbiI6MTU0Mzk0OTM0ODA5OTk5NDF9LHsibWVzc2FnZSI6eyJkYXRhIjp7IndvcmtzIjp0cnVlLCJjb3VudCI6MjEzfSwic2VuZGVyIjoicm9ib3Qtc3RlcGhlbiIsImVpZCI6IjFBQUJGMjA0LTQyNDktNDgwQy1BRjcxLTk4MEIxOTdBOEY0MiIsImV2ZW50IjoidGVzdGVyIiwiY2hhdGVuZ2luZVNESyI6Im9iamNcLzAuOS4yIn0sInRpbWV0b2tlbiI6MTU0Mzk0OTM0ODExMDQ3MTN9LHsibWVzc2FnZSI6eyJkYXRhIjp7IndvcmtzIjp0cnVlLCJjb3VudCI6MjE1fSwic2VuZGVyIjoicm9ib3Qtc3RlcGhlbiIsImVpZCI6IkM2NjUwQzhCLUNDNUItNDAyOC05RjZGLUIxOTZENjQyMTJEMCIsImV2ZW50IjoidGVzdGVyIiwiY2hhdGVuZ2luZVNESyI6Im9iamNcLzAuOS4yIn0sInRpbWV0b2tlbiI6MTU0Mzk0OTM0ODE0MzU3NTF9LHsibWVzc2FnZSI6eyJkYXRhIjp7IndvcmtzIjpmYWxzZSwiY291bnQiOjIwNX0sInNlbmRlciI6InJvYm90LXN0ZXBoZW4iLCJlaWQiOiI3QUY1NzQ2Mi0xMTg2LTQ0Q0ItOUY3My01NEM3NjBGODQ0REEiLCJldmVudCI6Im5vdC10ZXN0ZXIiLCJjaGF0ZW5naW5lU0RLIjoib2JqY1wvMC45LjIifSwidGltZXRva2VuIjoxNTQzOTQ5MzQ4MTU0NTk3N30seyJtZXNzYWdlIjp7ImRhdGEiOnsid29ya3MiOmZhbHNlLCJjb3VudCI6MjE1fSwic2VuZGVyIjoicm9ib3Qtc3RlcGhlbiIsImVpZCI6IkVDNzMxOTY0LUUwQzctNDZGMC05OEFELTMyRTM5QkFFRDQwRiIsImV2ZW50Ijoibm90LXRlc3RlciIsImNoYXRlbmdpbmVTREsiOiJvYmpjXC8wLjkuMiJ9LCJ0aW1ldG9rZW4iOjE1NDM5NDkzNDgxNjg5ODY0fSx7Im1lc3NhZ2UiOnsiZGF0YSI6eyJ3b3JrcyI6ZmFsc2UsImNvdW50IjoyMTZ9LCJzZW5kZXIiOiJyb2JvdC1zdGVwaGVuIiwiZWlkIjoiNTY1RjhBRjgtMEM3Ri00MDdCLUIzM0QtOTc4NzZGNzcxMjM1IiwiZXZlbnQiOiJub3QtdGVzdGVyIiwiY2hhdGVuZ2luZVNESyI6Im9iamNcLzAuOS4yIn0sInRpbWV0b2tlbiI6MTU0Mzk0OTM0ODE5MTg2MjF9LHsibWVzc2FnZSI6eyJkYXRhIjp7IndvcmtzIjp0cnVlLCJjb3VudCI6MjE3fSwic2VuZGVyIjoicm9ib3Qtc3RlcGhlbiIsImVpZCI6IjNFQzNBRDJGLTQ1ODEtNDBFQi04NTQ1LUI5OUNFRjk4MEIxRCIsImV2ZW50IjoidGVzdGVyIiwiY2hhdGVuZ2luZVNESyI6Im9iamNcLzAuOS4yIn0sInRpbWV0b2tlbiI6MTU0Mzk0OTM0ODIxMjY0NTd9LHsibWVzc2FnZSI6eyJkYXRhIjp7IndvcmtzIjpmYWxzZSwiY291bnQiOjIxN30sInNlbmRlciI6InJvYm90LXN0ZXBoZW4iLCJlaWQiOiIxRTI3NDJEMS01NjU3LTRBN0UtQTIwNS04MkEwQjYxRDYwMEQiLCJldmVudCI6Im5vdC10ZXN0ZXIiLCJjaGF0ZW5naW5lU0RLIjoib2JqY1wvMC45LjIifSwidGltZXRva2VuIjoxNTQzOTQ5MzQ4MjE5MjI1OX0seyJtZXNzYWdlIjp7ImRhdGEiOnsid29ya3MiOnRydWUsImNvdW50IjoyMTh9LCJzZW5kZXIiOiJyb2JvdC1zdGVwaGVuIiwiZWlkIjoiMTI1Qzk5MkQtQzk3Qi00NjJDLUI4MEUtQjI0ODdEOTRDMjUzIiwiZXZlbnQiOiJ0ZXN0ZXIiLCJjaGF0ZW5naW5lU0RLIjoib2JqY1wvMC45LjIifSwidGltZXRva2VuIjoxNTQzOTQ5MzQ4MjQwNjQ1Mn0seyJtZXNzYWdlIjp7ImRhdGEiOnsid29ya3MiOnRydWUsImNvdW50IjoyMTZ9LCJzZW5kZXIiOiJyb2JvdC1zdGVwaGVuIiwiZWlkIjoiMzAyQzdCMTUtRTk4MC00NTE5LUI2OUEtRjczQjI2NkRGQ0I4IiwiZXZlbnQiOiJ0ZXN0ZXIiLCJjaGF0ZW5naW5lU0RLIjoib2JqY1wvMC45LjIifSwidGltZXRva2VuIjoxNTQzOTQ5MzQ4MjY5NDU4MX0seyJtZXNzYWdlIjp7ImRhdGEiOnsid29ya3MiOmZhbHNlLCJjb3VudCI6MjEzfSwic2VuZGVyIjoicm9ib3Qtc3RlcGhlbiIsImVpZCI6Ijc2NDdCODEwLUQ0Q0QtNDQ1Ri05MDhCLTBBQjFBMzJCMjBFNyIsImV2ZW50Ijoibm90LXRlc3RlciIsImNoYXRlbmdpbmVTREsiOiJvYmpjXC8wLjkuMiJ9LCJ0aW1ldG9rZW4iOjE1NDM5NDkzNDgyNzEyMDA2fSx7Im1lc3NhZ2UiOnsiZGF0YSI6eyJ3b3JrcyI6ZmFsc2UsImNvdW50IjoyMTR9LCJzZW5kZXIiOiJyb2JvdC1zdGVwaGVuIiwiZWlkIjoiMjc2MDNDNzMtQTk1NS00QjI2LUE4OUMtNzlBQkIzRDhGQTg5IiwiZXZlbnQiOiJub3QtdGVzdGVyIiwiY2hhdGVuZ2luZVNESyI6Im9iamNcLzAuOS4yIn0sInRpbWV0b2tlbiI6MTU0Mzk0OTM0ODI5MDAwMDF9LHsibWVzc2FnZSI6eyJkYXRhIjp7IndvcmtzIjp0cnVlLCJjb3VudCI6MjA4fSwic2VuZGVyIjoicm9ib3Qtc3RlcGhlbiIsImVpZCI6IjZDRjEyMjIwLUZFRTAtNDZGRi1BNDhDLTAzOTgwRjc3Q0E5NiIsImV2ZW50IjoidGVzdGVyIiwiY2hhdGVuZ2luZVNESyI6Im9iamNcLzAuOS4yIn0sInRpbWV0b2tlbiI6MTU0Mzk0OTM0ODMyNDg2OTN9LHsibWVzc2FnZSI6eyJkYXRhIjp7IndvcmtzIjpmYWxzZSwiY291bnQiOjIxOH0sInNlbmRlciI6InJvYm90LXN0ZXBoZW4iLCJlaWQiOiIwMzEzMkI1Ni05MzA3LTQ0MzAtOUNGQy04QTk4MEU2NzE5NTciLCJldmVudCI6Im5vdC10ZXN0ZXIiLCJjaGF0ZW5naW5lU0RLIjoib2JqY1wvMC45LjIifSwidGltZXRva2VuIjoxNTQzOTQ5MzQ4MzM4NzIzOX0seyJtZXNzYWdlIjp7ImRhdGEiOnsid29ya3MiOnRydWUsImNvdW50IjoyMTl9LCJzZW5kZXIiOiJyb2JvdC1zdGVwaGVuIiwiZWlkIjoiMDMxMjZCRkMtOUFGRC00Njc1LTg4NjQtQTlFOTEyRTc3NjMxIiwiZXZlbnQiOiJ0ZXN0ZXIiLCJjaGF0ZW5naW5lU0RLIjoib2JqY1wvMC45LjIifSwidGltZXRva2VuIjoxNTQzOTQ5MzQ4MzY5NTk0M30seyJtZXNzYWdlIjp7ImRhdGEiOnsid29ya3MiOmZhbHNlLCJjb3VudCI6MjE5fSwic2VuZGVyIjoicm9ib3Qtc3RlcGhlbiIsImVpZCI6IkVCMDc4RDlELUM4NTEtNEI1RS1CM0VCLTc2RkQ2NTE0QjBEMiIsImV2ZW50Ijoibm90LXRlc3RlciIsImNoYXRlbmdpbmVTREsiOiJvYmpjXC8wLjkuMiJ9LCJ0aW1ldG9rZW4iOjE1NDM5NDkzNDgzOTEzNjI1fSx7Im1lc3NhZ2UiOnsiZGF0YSI6eyJ3b3JrcyI6ZmFsc2UsImNvdW50IjoyMTJ9LCJzZW5kZXIiOiJyb2JvdC1zdGVwaGVuIiwiZWlkIjoiRDc1MEU1OTYtMURFNS00RDBBLTk4MTktNDI2NzhGRkIwRDMxIiwiZXZlbnQiOiJub3QtdGVzdGVyIiwiY2hhdGVuZ2luZVNESyI6Im9iamNcLzAuOS4yIn0sInRpbWV0b2tlbiI6MTU0Mzk0OTM0ODM5MTc1NjF9LHsibWVzc2FnZSI6eyJkYXRhIjp7IndvcmtzIjp0cnVlLCJjb3VudCI6MjA2fSwic2VuZGVyIjoicm9ib3Qtc3RlcGhlbiIsImVpZCI6IjlCNDM1NjdELTg3MTAtNDQ5My1CMUExLUUyNzA3RkE5ODAyMSIsImV2ZW50IjoidGVzdGVyIiwiY2hhdGVuZ2luZVNESyI6Im9iamNcLzAuOS4yIn0sInRpbWV0b2tlbiI6MTU0Mzk0OTM0ODQzOTE5OTN9LHsibWVzc2FnZSI6eyJkYXRhIjp7IndvcmtzIjpmYWxzZSwiY291bnQiOjIyMH0sInNlbmRlciI6InJvYm90LXN0ZXBoZW4iLCJlaWQiOiJEMkU0OUZBMi05RkIxLTQxRDktODA0MC03QTk5RjQ4MzNEOUQiLCJldmVudCI6Im5vdC10ZXN0ZXIiLCJjaGF0ZW5naW5lU0RLIjoib2JqY1wvMC45LjIifSwidGltZXRva2VuIjoxNTQzOTQ5MzQ4NDQzNTkxM30seyJtZXNzYWdlIjp7ImRhdGEiOnsid29ya3MiOmZhbHNlLCJjb3VudCI6MTkxfSwic2VuZGVyIjoicm9ib3Qtc3RlcGhlbiIsImVpZCI6IkQ2RUZGNDI4LTI0Q0YtNEEyNy1BOUQ3LUE5NjlFM0M4NzNEMiIsImV2ZW50Ijoibm90LXRlc3RlciIsImNoYXRlbmdpbmVTREsiOiJvYmpjXC8wLjkuMiJ9LCJ0aW1ldG9rZW4iOjE1NDM5NDkzNDg0NDUxNDUwfSx7Im1lc3NhZ2UiOnsiZGF0YSI6eyJ3b3JrcyI6dHJ1ZSwiY291bnQiOjIyMX0sInNlbmRlciI6InJvYm90LXN0ZXBoZW4iLCJlaWQiOiI2M0E1Q0RDNy0zRUJFLTQ1NzgtQjUyOC1CMEIyNjE1NUJFQkQiLCJldmVudCI6InRlc3RlciIsImNoYXRlbmdpbmVTREsiOiJvYmpjXC8wLjkuMiJ9LCJ0aW1ldG9rZW4iOjE1NDM5NDkzNDg0OTM2ODE1fSx7Im1lc3NhZ2UiOnsiZGF0YSI6eyJ3b3JrcyI6ZmFsc2UsImNvdW50IjoyMjJ9LCJzZW5kZXIiOiJyb2JvdC1zdGVwaGVuIiwiZWlkIjoiQTlEQURGQjktQjE1Ny00NjcwLUE5N0MtQjU3Q0ZFRjhDMjA5IiwiZXZlbnQiOiJub3QtdGVzdGVyIiwiY2hhdGVuZ2luZVNESyI6Im9iamNcLzAuOS4yIn0sInRpbWV0b2tlbiI6MTU0Mzk0OTM0ODQ5NDc3NDF9LHsibWVzc2FnZSI6eyJkYXRhIjp7IndvcmtzIjpmYWxzZSwiY291bnQiOjIwMn0sInNlbmRlciI6InJvYm90LXN0ZXBoZW4iLCJlaWQiOiJBODk1OUI4My04Mjk5LTRFRjYtQTY0My0wQjA5QzJFNzJGNzQiLCJldmVudCI6Im5vdC10ZXN0ZXIiLCJjaGF0ZW5naW5lU0RLIjoib2JqY1wvMC45LjIifSwidGltZXRva2VuIjoxNTQzOTQ5MzQ4NTA3ODA3OH0seyJtZXNzYWdlIjp7ImRhdGEiOnsid29ya3MiOnRydWUsImNvdW50IjoyMjB9LCJzZW5kZXIiOiJyb2JvdC1zdGVwaGVuIiwiZWlkIjoiNjM3MjMxNDItRDAyRi00MENCLThBMjAtMzA5MDY4RkQyNDM1IiwiZXZlbnQiOiJ0ZXN0ZXIiLCJjaGF0ZW5naW5lU0RLIjoib2JqY1wvMC45LjIifSwidGltZXRva2VuIjoxNTQzOTQ5MzQ4NTQ1NTgxOH0seyJtZXNzYWdlIjp7ImRhdGEiOnsid29ya3MiOnRydWUsImNvdW50IjoyMjJ9LCJzZW5kZXIiOiJyb2JvdC1zdGVwaGVuIiwiZWlkIjoiNEY0RjE4RDMtM0NDQi00ODQ2LUE1OEEtMzFGMzMzM0NFNjg5IiwiZXZlbnQiOiJ0ZXN0ZXIiLCJjaGF0ZW5naW5lU0RLIjoib2JqY1wvMC45LjIifSwidGltZXRva2VuIjoxNTQzOTQ5MzQ4NTQ5MjI0N30seyJtZXNzYWdlIjp7ImRhdGEiOnsid29ya3MiOnRydWUsImNvdW50IjoyMjN9LCJzZW5kZXIiOiJyb2JvdC1zdGVwaGVuIiwiZWlkIjoiNUFDQjczNTAtMUYwOS00Q0RFLUI1NEYtNjQzQkQ5NTU2MUMxIiwiZXZlbnQiOiJ0ZXN0ZXIiLCJjaGF0ZW5naW5lU0RLIjoib2JqY1wvMC45LjIifSwidGltZXRva2VuIjoxNTQzOTQ5MzQ4NTc1MzQxOH0seyJtZXNzYWdlIjp7ImRhdGEiOnsid29ya3MiOnRydWUsImNvdW50IjoyMDR9LCJzZW5kZXIiOiJyb2JvdC1zdGVwaGVuIiwiZWlkIjoiQUE4Q0EyQzItOUE5MC00MjEzLUEwNzQtMjgzNkE2MkMyOUVBIiwiZXZlbnQiOiJ0ZXN0ZXIiLCJjaGF0ZW5naW5lU0RLIjoib2JqY1wvMC45LjIifSwidGltZXRva2VuIjoxNTQzOTQ5MzQ4NjE3Nzk3N30seyJtZXNzYWdlIjp7ImRhdGEiOnsid29ya3MiOmZhbHNlLCJjb3VudCI6MjA3fSwic2VuZGVyIjoicm9ib3Qtc3RlcGhlbiIsImVpZCI6IkVFRTMyMjI1LURGM0ItNDgyRS1CRUNBLUJFNDJGQkVCQzJCNCIsImV2ZW50Ijoibm90LXRlc3RlciIsImNoYXRlbmdpbmVTREsiOiJvYmpjXC8wLjkuMiJ9LCJ0aW1ldG9rZW4iOjE1NDM5NDkzNDg2MjQxNDAwfSx7Im1lc3NhZ2UiOnsiZGF0YSI6eyJ3b3JrcyI6ZmFsc2UsImNvdW50IjoyMjF9LCJzZW5kZXIiOiJyb2JvdC1zdGVwaGVuIiwiZWlkIjoiMTFCNTM3QjUtOUMzQS00NUY2LUJCREMtOTZCODlFOTYyRjUyIiwiZXZlbnQiOiJub3QtdGVzdGVyIiwiY2hhdGVuZ2luZVNESyI6Im9iamNcLzAuOS4yIn0sInRpbWV0b2tlbiI6MTU0Mzk0OTM0ODYzMDE1Mjd9LHsibWVzc2FnZSI6eyJkYXRhIjp7IndvcmtzIjp0cnVlLCJjb3VudCI6MjI3fSwic2VuZGVyIjoicm9ib3Qtc3RlcGhlbiIsImVpZCI6IjBBMjA4ODhFLTNGODAtNEM2RC1BMDUzLUI2RjA5ODc3ODI4NiIsImV2ZW50IjoidGVzdGVyIiwiY2hhdGVuZ2luZVNESyI6Im9iamNcLzAuOS4yIn0sInRpbWV0b2tlbiI6MTU0Mzk0OTM0ODY3NzM3NjF9LHsibWVzc2FnZSI6eyJkYXRhIjp7IndvcmtzIjp0cnVlLCJjb3VudCI6MjI1fSwic2VuZGVyIjoicm9ib3Qtc3RlcGhlbiIsImVpZCI6Ijc2Q0IxNzhELTNDNEEtNEVBMS1BN0EwLUY2MEMxMjcwMjkxRiIsImV2ZW50IjoidGVzdGVyIiwiY2hhdGVuZ2luZVNESyI6Im9iamNcLzAuOS4yIn0sInRpbWV0b2tlbiI6MTU0Mzk0OTM0ODY4NDA0ODB9LHsibWVzc2FnZSI6eyJkYXRhIjp7IndvcmtzIjp0cnVlLCJjb3VudCI6MjI2fSwic2VuZGVyIjoicm9ib3Qtc3RlcGhlbiIsImVpZCI6IjZBRDdERUMzLTVFRkUtNDNCOC05RjRCLTY5MjY3REMzMUFFNyIsImV2ZW50IjoidGVzdGVyIiwiY2hhdGVuZ2luZVNESyI6Im9iamNcLzAuOS4yIn0sInRpbWV0b2tlbiI6MTU0Mzk0OTM0ODY4ODk5Njl9LHsibWVzc2FnZSI6eyJkYXRhIjp7IndvcmtzIjp0cnVlLCJjb3VudCI6MTkxfSwic2VuZGVyIjoicm9ib3Qtc3RlcGhlbiIsImVpZCI6IkIzOEM2ODA2LUFCMzktNDYwOS05NjQ3LTg3NDMyQjA3Qzg1OCIsImV2ZW50IjoidGVzdGVyIiwiY2hhdGVuZ2luZVNESyI6Im9iamNcLzAuOS4yIn0sInRpbWV0b2tlbiI6MTU0Mzk0OTM0ODc0MDcxNDJ9LHsibWVzc2FnZSI6eyJkYXRhIjp7IndvcmtzIjp0cnVlLCJjb3VudCI6MjI4fSwic2VuZGVyIjoicm9ib3Qtc3RlcGhlbiIsImVpZCI6IkUxQTZCRkVCLUE2NTktNEY2MC04REEyLUU2NThDQjRERDZBOSIsImV2ZW50IjoidGVzdGVyIiwiY2hhdGVuZ2luZVNESyI6Im9iamNcLzAuOS4yIn0sInRpbWV0b2tlbiI6MTU0Mzk0OTM0ODc0Mjc5NjJ9LHsibWVzc2FnZSI6eyJkYXRhIjp7IndvcmtzIjpmYWxzZSwiY291bnQiOjIyM30sInNlbmRlciI6InJvYm90LXN0ZXBoZW4iLCJlaWQiOiIwRUM4QjQzQy02NjlCLTQ5RDQtQjVEMy01QUQyNjI2NkU2MDYiLCJldmVudCI6Im5vdC10ZXN0ZXIiLCJjaGF0ZW5naW5lU0RLIjoib2JqY1wvMC45LjIifSwidGltZXRva2VuIjoxNTQzOTQ5MzQ4NzYxOTYyMn0seyJtZXNzYWdlIjp7ImRhdGEiOnsid29ya3MiOmZhbHNlLCJjb3VudCI6MjA2fSwic2VuZGVyIjoicm9ib3Qtc3RlcGhlbiIsImVpZCI6IkUyN0JBNDNFLTIwNjUtNDZDOC1CNTk0LUZGODgzNzNDRTM0RSIsImV2ZW50Ijoibm90LXRlc3RlciIsImNoYXRlbmdpbmVTREsiOiJvYmpjXC8wLjkuMiJ9LCJ0aW1ldG9rZW4iOjE1NDM5NDkzNDg3OTQ3MzYzfSx7Im1lc3NhZ2UiOnsiZGF0YSI6eyJ3b3JrcyI6ZmFsc2UsImNvdW50IjoyMjh9LCJzZW5kZXIiOiJyb2JvdC1zdGVwaGVuIiwiZWlkIjoiMDdBQzkwNDktQzlCNC00QkNDLUJCRkMtNjgxQkJGNDQ3RkQ2IiwiZXZlbnQiOiJub3QtdGVzdGVyIiwiY2hhdGVuZ2luZVNESyI6Im9iamNcLzAuOS4yIn0sInRpbWV0b2tlbiI6MTU0Mzk0OTM0ODc5NTAzMzl9LHsibWVzc2FnZSI6eyJkYXRhIjp7IndvcmtzIjp0cnVlLCJjb3VudCI6MjI0fSwic2VuZGVyIjoicm9ib3Qtc3RlcGhlbiIsImVpZCI6IkY3NjRGNjI5LUVFNzUtNDNBQi04NERELTZDQzg1NDY5RDFDMiIsImV2ZW50IjoidGVzdGVyIiwiY2hhdGVuZ2luZVNESyI6Im9iamNcLzAuOS4yIn0sInRpbWV0b2tlbiI6MTU0Mzk0OTM0ODgxMzk2OTd9LHsibWVzc2FnZSI6eyJkYXRhIjp7IndvcmtzIjpmYWxzZSwiY291bnQiOjIyNX0sInNlbmRlciI6InJvYm90LXN0ZXBoZW4iLCJlaWQiOiI4NjM0NzFCRi0zNDE4LTQ2MkQtQUE3Mi1DOERENzE5OTUyMUQiLCJldmVudCI6Im5vdC10ZXN0ZXIiLCJjaGF0ZW5naW5lU0RLIjoib2JqY1wvMC45LjIifSwidGltZXRva2VuIjoxNTQzOTQ5MzQ4ODQ4NjY0NX0seyJtZXNzYWdlIjp7ImRhdGEiOnsid29ya3MiOnRydWUsImNvdW50IjoyMjl9LCJzZW5kZXIiOiJyb2JvdC1zdGVwaGVuIiwiZWlkIjoiMDZFMkJERUEtMTg2MS00NjFGLUI5OTItNDUyQzhDMjYyRDExIiwiZXZlbnQiOiJ0ZXN0ZXIiLCJjaGF0ZW5naW5lU0RLIjoib2JqY1wvMC45LjIifSwidGltZXRva2VuIjoxNTQzOTQ5MzQ4ODU0ODEyMH0seyJtZXNzYWdlIjp7ImRhdGEiOnsid29ya3MiOnRydWUsImNvdW50IjoyMzB9LCJzZW5kZXIiOiJyb2JvdC1zdGVwaGVuIiwiZWlkIjoiQ0Y4OTYwMjctM0Y3MC00NUJFLTlFMjU="
     },
-    "type" : 2,
-    "outOfOrder" : false
+    "type" : 2
   },
   {
-    "id" : "29B712A7-B94B-4C3D-A522-01B33F7B982F",
+    "id" : "411730CF-6A92-4303-ADFC-4079AD025786",
     "data" : {
       "cls" : "NSData",
-      "base64" : "MjU0MTc1fSx7Im1lc3NhZ2UiOiB7ImNoYXRlbmdpbmVTREsiOiAiMC45LjEwIiwgImRhdGEiOiB7InRleHQiOiAiaGVsbG8gd29ybGQgMTc0In0sICJzZW5kZXIiOiAic3RlcGhlbi12Ny0xMC0xLTIwMTUyMzkwMjQ1NTAwMiIsICJldmVudCI6ICJ0ZXN0ZXIifSwgInRpbWV0b2tlbiI6IDE1MjM5MDI0NjM1MjU2MjIxfSx7Im1lc3NhZ2UiOiB7ImNoYXRlbmdpbmVTREsiOiAiMC45LjEwIiwgImRhdGEiOiB7InRleHQiOiAiaGVsbG8gd29ybGQgMTY3In0sICJzZW5kZXIiOiAic3RlcGhlbi12Ny0xMC0xLTIwMTUyMzkwMjQ1NTAwMiIsICJldmVudCI6ICJ0ZXN0ZXIifSwgInRpbWV0b2tlbiI6IDE1MjM5MDI0NjM1MjU4NjkyfSx7Im1lc3NhZ2UiOiB7ImNoYXRlbmdpbmVTREsiOiAiMC45LjEwIiwgImRhdGEiOiB7InRleHQiOiAiaGVsbG8gd29ybGQgMTc5In0sICJzZW5kZXIiOiAic3RlcGhlbi12Ny0xMC0xLTIwMTUyMzkwMjQ1NTAwMiIsICJldmVudCI6ICJ0ZXN0ZXIifSwgInRpbWV0b2tlbiI6IDE1MjM5MDI0NjM1MjYzMDUwfSx7Im1lc3NhZ2UiOiB7ImNoYXRlbmdpbmVTREsiOiAiMC45LjEwIiwgImRhdGEiOiB7InRleHQiOiAiaGVsbG8gd29ybGQgMzQifSwgInNlbmRlciI6ICJzdGVwaGVuLXY3LTEwLTEtMjAxNTIzOTAyNDU1MDAyIiwgImV2ZW50IjogIm5vdC10ZXN0ZXIifSwgInRpbWV0b2tlbiI6IDE1MjM5MDI0NjM1MjY0NjA4fSx7Im1lc3NhZ2UiOiB7ImNoYXRlbmdpbmVTREsiOiAiMC45LjEwIiwgImRhdGEiOiB7InRleHQiOiAiaGVsbG8gd29ybGQgMTkwIn0sICJzZW5kZXIiOiAic3RlcGhlbi12Ny0xMC0xLTIwMTUyMzkwMjQ1NTAwMiIsICJldmVudCI6ICJ0ZXN0ZXIifSwgInRpbWV0b2tlbiI6IDE1MjM5MDI0NjM1MjY5MjI1fSx7Im1lc3NhZ2UiOiB7ImNoYXRlbmdpbmVTREsiOiAiMC45LjEwIiwgImRhdGEiOiB7InRleHQiOiAiaGVsbG8gd29ybGQgMTc2In0sICJzZW5kZXIiOiAic3RlcGhlbi12Ny0xMC0xLTIwMTUyMzkwMjQ1NTAwMiIsICJldmVudCI6ICJub3QtdGVzdGVyIn0sICJ0aW1ldG9rZW4iOiAxNTIzOTAyNDYzNTI3Mzc0Nn0seyJtZXNzYWdlIjogeyJjaGF0ZW5naW5lU0RLIjogIjAuOS4xMCIsICJkYXRhIjogeyJ0ZXh0IjogImhlbGxvIHdvcmxkIDUxIn0sICJzZW5kZXIiOiAic3RlcGhlbi12Ny0xMC0xLTIwMTUyMzkwMjQ1NTAwMiIsICJldmVudCI6ICJub3QtdGVzdGVyIn0sICJ0aW1ldG9rZW4iOiAxNTIzOTAyNDYzNTMxODE2M30seyJtZXNzYWdlIjogeyJjaGF0ZW5naW5lU0RLIjogIjAuOS4xMCIsICJkYXRhIjogeyJ0ZXh0IjogImhlbGxvIHdvcmxkIDE1NyJ9LCAic2VuZGVyIjogInN0ZXBoZW4tdjctMTAtMS0yMDE1MjM5MDI0NTUwMDIiLCAiZXZlbnQiOiAibm90LXRlc3RlciJ9LCAidGltZXRva2VuIjogMTUyMzkwMjQ2MzUzNTM0NTd9LHsibWVzc2FnZSI6IHsiY2hhdGVuZ2luZVNESyI6ICIwLjkuMTAiLCAiZGF0YSI6IHsidGV4dCI6ICJoZWxsbyB3b3JsZCAxODUifSwgInNlbmRlciI6ICJzdGVwaGVuLXY3LTEwLTEtMjAxNTIzOTAyNDU1MDAyIiwgImV2ZW50IjogInRlc3RlciJ9LCAidGltZXRva2VuIjogMTUyMzkwMjQ2MzUzNTcxMzV9LHsibWVzc2FnZSI6IHsiY2hhdGVuZ2luZVNESyI6ICIwLjkuMTAiLCAiZGF0YSI6IHsidGV4dCI6ICJoZWxsbyB3b3JsZCAxOTMifSwgInNlbmRlciI6ICJzdGVwaGVuLXY3LTEwLTEtMjAxNTIzOTAyNDU1MDAyIiwgImV2ZW50IjogInRlc3RlciJ9LCAidGltZXRva2VuIjogMTUyMzkwMjQ2MzUzNjY2ODJ9LHsibWVzc2FnZSI6IHsiY2hhdGVuZ2luZVNESyI6ICIwLjkuMTAiLCAiZGF0YSI6IHsidGV4dCI6ICJoZWxsbyB3b3JsZCA4NCJ9LCAic2VuZGVyIjogInN0ZXBoZW4tdjctMTAtMS0yMDE1MjM5MDI0NTUwMDIiLCAiZXZlbnQiOiAibm90LXRlc3RlciJ9LCAidGltZXRva2VuIjogMTUyMzkwMjQ2MzUzNzMzNTF9LHsibWVzc2FnZSI6IHsiY2hhdGVuZ2luZVNESyI6ICIwLjkuMTAiLCAiZGF0YSI6IHsidGV4dCI6ICJoZWxsbyB3b3JsZCAxNjMifSwgInNlbmRlciI6ICJzdGVwaGVuLXY3LTEwLTEtMjAxNTIzOTAyNDU1MDAyIiwgImV2ZW50IjogIm5vdC10ZXN0ZXIifSwgInRpbWV0b2tlbiI6IDE1MjM5MDI0NjM1Mzc2NzQxfSx7Im1lc3NhZ2UiOiB7ImNoYXRlbmdpbmVTREsiOiAiMC45LjEwIiwgImRhdGEiOiB7InRleHQiOiAiaGVsbG8gd29ybGQgMTcwIn0sICJzZW5kZXIiOiAic3RlcGhlbi12Ny0xMC0xLTIwMTUyMzkwMjQ1NTAwMiIsICJldmVudCI6ICJ0ZXN0ZXIifSwgInRpbWV0b2tlbiI6IDE1MjM5MDI0NjM1Mzc5NjExfSx7Im1lc3NhZ2UiOiB7ImNoYXRlbmdpbmVTREsiOiAiMC45LjEwIiwgImRhdGEiOiB7InRleHQiOiAiaGVsbG8gd29ybGQgMTU0In0sICJzZW5kZXIiOiAic3RlcGhlbi12Ny0xMC0xLTIwMTUyMzkwMjQ1NTAwMiIsICJldmVudCI6ICJub3QtdGVzdGVyIn0sICJ0aW1ldG9rZW4iOiAxNTIzOTAyNDYzNTM5MzI1Nn0seyJtZXNzYWdlIjogeyJjaGF0ZW5naW5lU0RLIjogIjAuOS4xMCIsICJkYXRhIjogeyJ0ZXh0IjogImhlbGxvIHdvcmxkIDE2NyJ9LCAic2VuZGVyIjogInN0ZXBoZW4tdjctMTAtMS0yMDE1MjM5MDI0NTUwMDIiLCAiZXZlbnQiOiAibm90LXRlc3RlciJ9LCAidGltZXRva2VuIjogMTUyMzkwMjQ2MzU0MDMwOTF9LHsibWVzc2FnZSI6IHsiY2hhdGVuZ2luZVNESyI6ICIwLjkuMTAiLCAiZGF0YSI6IHsidGV4dCI6ICJoZWxsbyB3b3JsZCAxNjkifSwgInNlbmRlciI6ICJzdGVwaGVuLXY3LTEwLTEtMjAxNTIzOTAyNDU1MDAyIiwgImV2ZW50IjogIm5vdC10ZXN0ZXIifSwgInRpbWV0b2tlbiI6IDE1MjM5MDI0NjM1NDI2NzA2fSx7Im1lc3NhZ2UiOiB7ImNoYXRlbmdpbmVTREsiOiAiMC45LjEwIiwgImRhdGEiOiB7InRleHQiOiAiaGVsbG8gd29ybGQgOTkifSwgInNlbmRlciI6ICJzdGVwaGVuLXY3LTEwLTEtMjAxNTIzOTAyNDU1MDAyIiwgImV2ZW50IjogIm5vdC10ZXN0ZXIifSwgInRpbWV0b2tlbiI6IDE1MjM5MDI0NjM1NDgxOTc1fSx7Im1lc3NhZ2UiOiB7ImNoYXRlbmdpbmVTREsiOiAiMC45LjEwIiwgImRhdGEiOiB7InRleHQiOiAiaGVsbG8gd29ybGQgOTQifSwgInNlbmRlciI6ICJzdGVwaGVuLXY3LTEwLTEtMjAxNTIzOTAyNDU1MDAyIiwgImV2ZW50IjogInRlc3RlciJ9LCAidGltZXRva2VuIjogMTUyMzkwMjQ2MzU0ODQ0Nzl9LHsibWVzc2FnZSI6IHsiY2hhdGVuZ2luZVNESyI6ICIwLjkuMTAiLCAiZGF0YSI6IHsidGV4dCI6ICJoZWxsbyB3b3JsZCAxNjUifSwgInNlbmRlciI6ICJzdGVwaGVuLXY3LTEwLTEtMjAxNTIzOTAyNDU1MDAyIiwgImV2ZW50IjogIm5vdC10ZXN0ZXIifSwgInRpbWV0b2tlbiI6IDE1MjM5MDI0NjM1NTA2NTkxfV0sMTUyMzkwMjQ1NzIxMTU1OTMsMTUyMzkwMjQ2MzU1MDY1OTFd"
+      "base64" : "LUMzODQ2RDc1MTg5NyIsImV2ZW50IjoidGVzdGVyIiwiY2hhdGVuZ2luZVNESyI6Im9iamNcLzAuOS4yIn0sInRpbWV0b2tlbiI6MTU0Mzk0OTM0ODg2NDY5NzV9LHsibWVzc2FnZSI6eyJkYXRhIjp7IndvcmtzIjpmYWxzZSwiY291bnQiOjIzMX0sInNlbmRlciI6InJvYm90LXN0ZXBoZW4iLCJlaWQiOiJBMjdCOTUwMC01MThELTRFN0QtODUzMC1DOUNFQzE0Qjk4RTMiLCJldmVudCI6Im5vdC10ZXN0ZXIiLCJjaGF0ZW5naW5lU0RLIjoib2JqY1wvMC45LjIifSwidGltZXRva2VuIjoxNTQzOTQ5MzQ4ODk4NzI3MX0seyJtZXNzYWdlIjp7ImRhdGEiOnsid29ya3MiOmZhbHNlLCJjb3VudCI6MjMyfSwic2VuZGVyIjoicm9ib3Qtc3RlcGhlbiIsImVpZCI6IkMxRDc5RDA0LTUyQkEtNDJEMS04MTdGLTg0RDlEOTE0OTU3RCIsImV2ZW50Ijoibm90LXRlc3RlciIsImNoYXRlbmdpbmVTREsiOiJvYmpjXC8wLjkuMiJ9LCJ0aW1ldG9rZW4iOjE1NDM5NDkzNDg5MDE4NDQxfSx7Im1lc3NhZ2UiOnsiZGF0YSI6eyJ3b3JrcyI6ZmFsc2UsImNvdW50IjoyMzB9LCJzZW5kZXIiOiJyb2JvdC1zdGVwaGVuIiwiZWlkIjoiQ0E3RDNCMTItMUJEMy00MDEzLUJBQjEtQzcyN0JFQTFBOUMxIiwiZXZlbnQiOiJub3QtdGVzdGVyIiwiY2hhdGVuZ2luZVNESyI6Im9iamNcLzAuOS4yIn0sInRpbWV0b2tlbiI6MTU0Mzk0OTM0ODkzOTc2NDd9LHsibWVzc2FnZSI6eyJkYXRhIjp7IndvcmtzIjp0cnVlLCJjb3VudCI6MjMyfSwic2VuZGVyIjoicm9ib3Qtc3RlcGhlbiIsImVpZCI6IjQxNUZFOURELUJGMDYtNDJGMS1BMzg4LTBFRDIyQkY3QjUzMCIsImV2ZW50IjoidGVzdGVyIiwiY2hhdGVuZ2luZVNESyI6Im9iamNcLzAuOS4yIn0sInRpbWV0b2tlbiI6MTU0Mzk0OTM0ODk0ODg1OTl9LHsibWVzc2FnZSI6eyJkYXRhIjp7IndvcmtzIjpmYWxzZSwiY291bnQiOjIyNn0sInNlbmRlciI6InJvYm90LXN0ZXBoZW4iLCJlaWQiOiI1QkU4NkUyRC1FNjEzLTQ0MTAtQTA2Qi0xNDZCQzg1RDhCM0UiLCJldmVudCI6Im5vdC10ZXN0ZXIiLCJjaGF0ZW5naW5lU0RLIjoib2JqY1wvMC45LjIifSwidGltZXRva2VuIjoxNTQzOTQ5MzQ4OTUzNDM3Mn0seyJtZXNzYWdlIjp7ImRhdGEiOnsid29ya3MiOnRydWUsImNvdW50IjoyMzV9LCJzZW5kZXIiOiJyb2JvdC1zdGVwaGVuIiwiZWlkIjoiQzg1QTZBNjItRjdGRi00NUNBLTlBNzktQ0ZEMTExRTI4Qzg4IiwiZXZlbnQiOiJ0ZXN0ZXIiLCJjaGF0ZW5naW5lU0RLIjoib2JqY1wvMC45LjIifSwidGltZXRva2VuIjoxNTQzOTQ5MzQ5MDAyNjUzOH0seyJtZXNzYWdlIjp7ImRhdGEiOnsid29ya3MiOnRydWUsImNvdW50IjoyMzN9LCJzZW5kZXIiOiJyb2JvdC1zdGVwaGVuIiwiZWlkIjoiRTVCMThCQkEtNTEzMi00NzkxLUEyNzMtRTRGRjRDNjIyNTEyIiwiZXZlbnQiOiJ0ZXN0ZXIiLCJjaGF0ZW5naW5lU0RLIjoib2JqY1wvMC45LjIifSwidGltZXRva2VuIjoxNTQzOTQ5MzQ5MDA2NzI1NH0seyJtZXNzYWdlIjp7ImRhdGEiOnsid29ya3MiOmZhbHNlLCJjb3VudCI6MjM0fSwic2VuZGVyIjoicm9ib3Qtc3RlcGhlbiIsImVpZCI6Ijg1M0ZFQTY0LUY4N0MtNDJBRi04RjlGLTM5N0Q2RjQxOTI5NSIsImV2ZW50Ijoibm90LXRlc3RlciIsImNoYXRlbmdpbmVTREsiOiJvYmpjXC8wLjkuMiJ9LCJ0aW1ldG9rZW4iOjE1NDM5NDkzNDkwMDk2MDgyfSx7Im1lc3NhZ2UiOnsiZGF0YSI6eyJ3b3JrcyI6ZmFsc2UsImNvdW50IjoyMjd9LCJzZW5kZXIiOiJyb2JvdC1zdGVwaGVuIiwiZWlkIjoiMjMzNEQ1NDktOTlBMi00RTQxLTgzOEEtMUZENDc2MkI3MjhCIiwiZXZlbnQiOiJub3QtdGVzdGVyIiwiY2hhdGVuZ2luZVNESyI6Im9iamNcLzAuOS4yIn0sInRpbWV0b2tlbiI6MTU0Mzk0OTM0OTA2MjM0MjR9LHsibWVzc2FnZSI6eyJkYXRhIjp7IndvcmtzIjp0cnVlLCJjb3VudCI6MjM0fSwic2VuZGVyIjoicm9ib3Qtc3RlcGhlbiIsImVpZCI6IkE5OEEzRUU3LTVBNjctNEI3My04RjZFLTdCODJDRjM0ODM5MCIsImV2ZW50IjoidGVzdGVyIiwiY2hhdGVuZ2luZVNESyI6Im9iamNcLzAuOS4yIn0sInRpbWV0b2tlbiI6MTU0Mzk0OTM0OTA2MjYxNzl9LHsibWVzc2FnZSI6eyJkYXRhIjp7IndvcmtzIjpmYWxzZSwiY291bnQiOjIzNn0sInNlbmRlciI6InJvYm90LXN0ZXBoZW4iLCJlaWQiOiJBRUVGMTk2Ni01NzNFLTQ3MzgtOUMwOC1FQUNDNUI2QjMzODAiLCJldmVudCI6Im5vdC10ZXN0ZXIiLCJjaGF0ZW5naW5lU0RLIjoib2JqY1wvMC45LjIifSwidGltZXRva2VuIjoxNTQzOTQ5MzQ5MDY1NTk2MH0seyJtZXNzYWdlIjp7ImRhdGEiOnsid29ya3MiOmZhbHNlLCJjb3VudCI6MjMzfSwic2VuZGVyIjoicm9ib3Qtc3RlcGhlbiIsImVpZCI6IjlGMUU4NUFBLTBFOTYtNEE3NC1CNkY2LTlCQUQxODE0ODI3MyIsImV2ZW50Ijoibm90LXRlc3RlciIsImNoYXRlbmdpbmVTREsiOiJvYmpjXC8wLjkuMiJ9LCJ0aW1ldG9rZW4iOjE1NDM5NDkzNDkxMTg2NDg0fSx7Im1lc3NhZ2UiOnsiZGF0YSI6eyJ3b3JrcyI6dHJ1ZSwiY291bnQiOjIzOH0sInNlbmRlciI6InJvYm90LXN0ZXBoZW4iLCJlaWQiOiI3NDNDRENEMi1GODk1LTRBMzktQkNGQS1BQjNFQTU0MTkwMTUiLCJldmVudCI6InRlc3RlciIsImNoYXRlbmdpbmVTREsiOiJvYmpjXC8wLjkuMiJ9LCJ0aW1ldG9rZW4iOjE1NDM5NDkzNDkxMjAwNDUwfSx7Im1lc3NhZ2UiOnsiZGF0YSI6eyJ3b3JrcyI6ZmFsc2UsImNvdW50IjoyMzd9LCJzZW5kZXIiOiJyb2JvdC1zdGVwaGVuIiwiZWlkIjoiRkM4NEZFQUItMzZCMC00NkI3LUIyNjQtQkIyMEM0N0QxRjkzIiwiZXZlbnQiOiJub3QtdGVzdGVyIiwiY2hhdGVuZ2luZVNESyI6Im9iamNcLzAuOS4yIn0sInRpbWV0b2tlbiI6MTU0Mzk0OTM0OTEyMjMzMDl9LHsibWVzc2FnZSI6eyJkYXRhIjp7IndvcmtzIjp0cnVlLCJjb3VudCI6MjM5fSwic2VuZGVyIjoicm9ib3Qtc3RlcGhlbiIsImVpZCI6Ijc3N0Y2QUEwLTU4ODUtNDJFNy05Q0JDLUQ0RkMzQTFCODMyNiIsImV2ZW50IjoidGVzdGVyIiwiY2hhdGVuZ2luZVNESyI6Im9iamNcLzAuOS4yIn0sInRpbWV0b2tlbiI6MTU0Mzk0OTM0OTE3MjMzMzh9LHsibWVzc2FnZSI6eyJkYXRhIjp7IndvcmtzIjp0cnVlLCJjb3VudCI6MjM3fSwic2VuZGVyIjoicm9ib3Qtc3RlcGhlbiIsImVpZCI6IjY5RDQ2MTdGLTg3OTYtNERFNi05OEI2LUY1QzFDNEU3NDgxRiIsImV2ZW50IjoidGVzdGVyIiwiY2hhdGVuZ2luZVNESyI6Im9iamNcLzAuOS4yIn0sInRpbWV0b2tlbiI6MTU0Mzk0OTM0OTE3NDgzNzh9LHsibWVzc2FnZSI6eyJkYXRhIjp7IndvcmtzIjpmYWxzZSwiY291bnQiOjIyOX0sInNlbmRlciI6InJvYm90LXN0ZXBoZW4iLCJlaWQiOiIzNTlCMDk2NS1BNDc2LTREMzctQUNCNS05N0REQTYxNEUzRDQiLCJldmVudCI6Im5vdC10ZXN0ZXIiLCJjaGF0ZW5naW5lU0RLIjoib2JqY1wvMC45LjIifSwidGltZXRva2VuIjoxNTQzOTQ5MzQ5MTc3NzU1OX0seyJtZXNzYWdlIjp7ImRhdGEiOnsid29ya3MiOnRydWUsImNvdW50IjoyNDJ9LCJzZW5kZXIiOiJyb2JvdC1zdGVwaGVuIiwiZWlkIjoiMzFBQjlFMDAtRjQzQS00MjIzLTk4OUYtOTRENDk4NTJGQjM2IiwiZXZlbnQiOiJ0ZXN0ZXIiLCJjaGF0ZW5naW5lU0RLIjoib2JqY1wvMC45LjIifSwidGltZXRva2VuIjoxNTQzOTQ5MzQ5MjIxNDUyNn0seyJtZXNzYWdlIjp7ImRhdGEiOnsid29ya3MiOmZhbHNlLCJjb3VudCI6MjM4fSwic2VuZGVyIjoicm9ib3Qtc3RlcGhlbiIsImVpZCI6IjVDOTAzODcyLTFBRjEtNEYzOC05RDA0LTI5NEE5Q0VGMjAxMCIsImV2ZW50Ijoibm90LXRlc3RlciIsImNoYXRlbmdpbmVTREsiOiJvYmpjXC8wLjkuMiJ9LCJ0aW1ldG9rZW4iOjE1NDM5NDkzNDkyMzA5NDU5fSx7Im1lc3NhZ2UiOnsiZGF0YSI6eyJ3b3JrcyI6dHJ1ZSwiY291bnQiOjI0MH0sInNlbmRlciI6InJvYm90LXN0ZXBoZW4iLCJlaWQiOiIwOUFGQkI2Ny1EODU0LTQwMTgtQjhERi03MDBDRTIzM0YwRkQiLCJldmVudCI6InRlc3RlciIsImNoYXRlbmdpbmVTREsiOiJvYmpjXC8wLjkuMiJ9LCJ0aW1ldG9rZW4iOjE1NDM5NDkzNDkyNjQ1Njk1fSx7Im1lc3NhZ2UiOnsiZGF0YSI6eyJ3b3JrcyI6ZmFsc2UsImNvdW50IjoyMjR9LCJzZW5kZXIiOiJyb2JvdC1zdGVwaGVuIiwiZWlkIjoiQTcwRjYzNTEtRDZGQi00RDQ1LUE4RjgtNkJDQzdGQThCNkY2IiwiZXZlbnQiOiJub3QtdGVzdGVyIiwiY2hhdGVuZ2luZVNESyI6Im9iamNcLzAuOS4yIn0sInRpbWV0b2tlbiI6MTU0Mzk0OTM0OTI2OTMyODF9LHsibWVzc2FnZSI6eyJkYXRhIjp7IndvcmtzIjp0cnVlLCJjb3VudCI6MjM2fSwic2VuZGVyIjoicm9ib3Qtc3RlcGhlbiIsImVpZCI6Ijc1ODMyNkRBLUE5RDQtNDk3Ri04NTQ1LTIyQTlGRjg4ODBEQyIsImV2ZW50IjoidGVzdGVyIiwiY2hhdGVuZ2luZVNESyI6Im9iamNcLzAuOS4yIn0sInRpbWV0b2tlbiI6MTU0Mzk0OTM0OTI4MDc3MzV9LHsibWVzc2FnZSI6eyJkYXRhIjp7IndvcmtzIjpmYWxzZSwiY291bnQiOjI0Mn0sInNlbmRlciI6InJvYm90LXN0ZXBoZW4iLCJlaWQiOiJCRjI3QjUyRS04MDZCLTQ5NzgtOTE4RC0yMDQ1ODM1RDgzNDciLCJldmVudCI6Im5vdC10ZXN0ZXIiLCJjaGF0ZW5naW5lU0RLIjoib2JqY1wvMC45LjIifSwidGltZXRva2VuIjoxNTQzOTQ5MzQ5MzIzNDI4OH0seyJtZXNzYWdlIjp7ImRhdGEiOnsid29ya3MiOnRydWUsImNvdW50IjoyNDN9LCJzZW5kZXIiOiJyb2JvdC1zdGVwaGVuIiwiZWlkIjoiNjgyQzQ5MzgtRkJEMi00Rjg4LUJFQzItMDhCRUUyNjQyNzQ5IiwiZXZlbnQiOiJ0ZXN0ZXIiLCJjaGF0ZW5naW5lU0RLIjoib2JqY1wvMC45LjIifSwidGltZXRva2VuIjoxNTQzOTQ5MzQ5MzM0NDg5OX0seyJtZXNzYWdlIjp7ImRhdGEiOnsid29ya3MiOmZhbHNlLCJjb3VudCI6MjM5fSwic2VuZGVyIjoicm9ib3Qtc3RlcGhlbiIsImVpZCI6IkVENDY4REJFLTZCMjUtNEQ1Qy1CNEU4LTM0OUQ4NUNBQUQzOCIsImV2ZW50Ijoibm90LXRlc3RlciIsImNoYXRlbmdpbmVTREsiOiJvYmpjXC8wLjkuMiJ9LCJ0aW1ldG9rZW4iOjE1NDM5NDkzNDkzMzk3ODM3fSx7Im1lc3NhZ2UiOnsiZGF0YSI6eyJ3b3JrcyI6dHJ1ZSwiY291bnQiOjI0NH0sInNlbmRlciI6InJvYm90LXN0ZXBoZW4iLCJlaWQiOiI4RUVERTY4OC00RTAyLTQ4QTUtOTYyMS05M0JEQjg2MDQ3N0IiLCJldmVudCI6InRlc3RlciIsImNoYXRlbmdpbmVTREsiOiJvYmpjXC8wLjkuMiJ9LCJ0aW1ldG9rZW4iOjE1NDM5NDkzNDkzODU0OTM5fSx7Im1lc3NhZ2UiOnsiZGF0YSI6eyJ3b3JrcyI6ZmFsc2UsImNvdW50IjoyNDB9LCJzZW5kZXIiOiJyb2JvdC1zdGVwaGVuIiwiZWlkIjoiMzM2Njg1NEItNTg4Ni00RjdELUEwRTYtMjdBQTEyMTVERDA5IiwiZXZlbnQiOiJub3QtdGVzdGVyIiwiY2hhdGVuZ2luZVNESyI6Im9iamNcLzAuOS4yIn0sInRpbWV0b2tlbiI6MTU0Mzk0OTM0OTM5MDEzMjd9LHsibWVzc2FnZSI6eyJkYXRhIjp7IndvcmtzIjp0cnVlLCJjb3VudCI6MjQxfSwic2VuZGVyIjoicm9ib3Qtc3RlcGhlbiIsImVpZCI6IkE1RjE3ODAwLTZEQjQtNDg4Ri1CNEZBLTIxRjY2QTM4OTk4RCIsImV2ZW50IjoidGVzdGVyIiwiY2hhdGVuZ2luZVNESyI6Im9iamNcLzAuOS4yIn0sInRpbWV0b2tlbiI6MTU0Mzk0OTM0OTQxMjA0NDB9LHsibWVzc2FnZSI6eyJkYXRhIjp7IndvcmtzIjpmYWxzZSwiY291bnQiOjI0M30sInNlbmRlciI6InJvYm90LXN0ZXBoZW4iLCJlaWQiOiIzREJBN0RFMS1GNDdFLTQwNkEtOEEzRC1BQTYyQzJFOTAyRkEiLCJldmVudCI6Im5vdC10ZXN0ZXIiLCJjaGF0ZW5naW5lU0RLIjoib2JqY1wvMC45LjIifSwidGltZXRva2VuIjoxNTQzOTQ5MzQ5NDM4NzkxMH0seyJtZXNzYWdlIjp7ImRhdGEiOnsid29ya3MiOnRydWUsImNvdW50IjoyNDZ9LCJzZW5kZXIiOiJyb2JvdC1zdGVwaGVuIiwiZWlkIjoiNUZFQTg1MUMtRUI3Ny00MUFDLTg1NjItNjZEMThFOEIwOTgyIiwiZXZlbnQiOiJ0ZXN0ZXIiLCJjaGF0ZW5naW5lU0RLIjoib2JqY1wvMC45LjIifSwidGltZXRva2VuIjoxNTQzOTQ5MzQ5NDQ0NDQ0OH0seyJtZXNzYWdlIjp7ImRhdGEiOnsid29ya3MiOmZhbHNlLCJjb3VudCI6MjQ1fSwic2VuZGVyIjoicm9ib3Qtc3RlcGhlbiIsImVpZCI6IkZCMDhEREIxLTQzNTUtNEU5RC04NjRDLTNEMThDN0EyMUU3RCIsImV2ZW50Ijoibm90LXRlc3RlciIsImNoYXRlbmdpbmVTREsiOiJvYmpjXC8wLjkuMiJ9LCJ0aW1ldG9rZW4iOjE1NDM5NDkzNDk0ODI5NTQ2fSx7Im1lc3NhZ2UiOnsiZGF0YSI6eyJ3b3JrcyI6ZmFsc2UsImNvdW50IjoyNDd9LCJzZW5kZXIiOiJyb2JvdC1zdGVwaGVuIiwiZWlkIjoiMThEQURGRkMtOTlERS00MTE1LTgyQTItNTY4QUYwQUJEQzEzIiwiZXZlbnQiOiJub3QtdGVzdGVyIiwiY2hhdGVuZ2luZVNESyI6Im9iamNcLzAuOS4yIn0sInRpbWV0b2tlbiI6MTU0Mzk0OTM0OTQ5MTE1MTd9LHsibWVzc2FnZSI6eyJkYXRhIjp7IndvcmtzIjp0cnVlLCJjb3VudCI6MjMxfSwic2VuZGVyIjoicm9ib3Qtc3RlcGhlbiIsImVpZCI6IjU3RjY3OURDLUNDREYtNEZEQy04NDg3LTMzNTNBRjFENEI0MyIsImV2ZW50IjoidGVzdGVyIiwiY2hhdGVuZ2luZVNESyI6Im9iamNcLzAuOS4yIn0sInRpbWV0b2tlbiI6MTU0Mzk0OTM0OTUwMzI3NzV9LHsibWVzc2FnZSI6eyJkYXRhIjp7IndvcmtzIjp0cnVlLCJjb3VudCI6MjQ4fSwic2VuZGVyIjoicm9ib3Qtc3RlcGhlbiIsImVpZCI6IjEyRDkyMUVELUM3NzEtNDA2Qi05MTdDLUQ3MDVCMjUyMzc3RSIsImV2ZW50IjoidGVzdGVyIiwiY2hhdGVuZ2luZVNESyI6Im9iamNcLzAuOS4yIn0sInRpbWV0b2tlbiI6MTU0Mzk0OTM0OTU0MTYwMzF9LHsibWVzc2FnZSI6eyJkYXRhIjp7IndvcmtzIjp0cnVlLCJjb3VudCI6MjQ1fSwic2VuZGVyIjoicm9ib3Qtc3RlcGhlbiIsImVpZCI6IkE2REFEQTg5LUYyRTQtNDhFMC04NkMyLTU4NjA2NkZCQjAzRCIsImV2ZW50IjoidGVzdGVyIiwiY2hhdGVuZ2luZVNESyI6Im9iamNcLzAuOS4yIn0sInRpbWV0b2tlbiI6MTU0Mzk0OTM0OTU0NDM0MjZ9LHsibWVzc2FnZSI6eyJkYXRhIjp7IndvcmtzIjpmYWxzZSwiY291bnQiOjI0MX0sInNlbmRlciI6InJvYm90LXN0ZXBoZW4iLCJlaWQiOiI0RDZBMDJGMy04RjdBLTQxMUUtQTVFRC00MkVFNjUxOThFNzMiLCJldmVudCI6Im5vdC10ZXN0ZXIiLCJjaGF0ZW5naW5lU0RLIjoib2JqY1wvMC45LjIifSwidGltZXRva2VuIjoxNTQzOTQ5MzQ5NTU1NjczNX0seyJtZXNzYWdlIjp7ImRhdGEiOnsid29ya3MiOmZhbHNlLCJjb3VudCI6MjM1fSwic2VuZGVyIjoicm9ib3Qtc3RlcGhlbiIsImVpZCI6IjFGOUM5RTdDLTA1RDMtNEU0Ri1BMzhFLTBFOTk4NEE2MzE2QiIsImV2ZW50Ijoibm90LXRlc3RlciIsImNoYXRlbmdpbmVTREsiOiJvYmpjXC8wLjkuMiJ9LCJ0aW1ldG9rZW4iOjE1NDM5NDkzNDk1OTAxNzAwfSx7Im1lc3NhZ2UiOnsiZGF0YSI6eyJ3b3JrcyI6dHJ1ZSwiY291bnQiOjI0N30sInNlbmRlciI6InJvYm90LXN0ZXBoZW4iLCJlaWQiOiI3MTU1MDRFNy0xMjcyLTRGMUEtODIzMC1EQzkzQkM4OTQ3MTciLCJldmVudCI6InRlc3RlciIsImNoYXRlbmdpbmVTREsiOiJvYmpjXC8wLjkuMiJ9LCJ0aW1ldG9rZW4iOjE1NDM5NDkzNDk1OTU5NTI4fSx7Im1lc3NhZ2UiOnsiZGF0YSI6eyJ3b3JrcyI6dHJ1ZSwiY291bnQiOjI0OX0sInNlbmRlciI6InJvYm90LXN0ZXBoZW4iLCJlaWQiOiI0REMzMDlEMi0xMDkwLTRBQUQtOTNDNC1BMjE0NzZBNzJCRTciLCJldmVudCI6InRlc3RlciIsImNoYXRlbmdpbmVTREsiOiJvYmpjXC8wLjkuMiJ9LCJ0aW1ldG9rZW4iOjE1NDM5NDkzNDk2MDY1MjYxfSx7Im1lc3NhZ2UiOnsiZGF0YSI6eyJ3b3JrcyI6ZmFsc2UsImNvdW50IjoyNDh9LCJzZW5kZXIiOiJyb2JvdC1zdGVwaGVuIiwiZWlkIjoiRDZFQUM3QzMtRTEzQS00N0VCLUFCMkUtMUIxM0RGQjk5MTQ5IiwiZXZlbnQiOiJub3QtdGVzdGVyIiwiY2hhdGVuZ2luZVNESyI6Im9iamNcLzAuOS4yIn0sInRpbWV0b2tlbiI6MTU0Mzk0OTM0OTY0NzgyMjN9LHsibWVzc2FnZSI6eyJkYXRhIjp7IndvcmtzIjpmYWxzZSwiY291bnQiOjI0OX0sInNlbmRlciI6InJvYm90LXN0ZXBoZW4iLCJlaWQiOiIwNzQxN0E4Qy1EODdCLTREODUtODA5NC0zMjJEQTMyRjRGOTQiLCJldmVudCI6Im5vdC10ZXN0ZXIiLCJjaGF0ZW5naW5lU0RLIjoib2JqY1wvMC45LjIifSwidGltZXRva2VuIjoxNTQzOTQ5MzQ5NjU0OTI4MX0seyJtZXNzYWdlIjp7ImRhdGEiOnsid29ya3MiOmZhbHNlLCJjb3VudCI6MjQ2fSwic2VuZGVyIjoicm9ib3Qtc3RlcGhlbiIsImVpZCI6IjE2NjBGQzBELTFCMDktNDhDOS04MTE5LTMxMUIzMkUyQjY1RSIsImV2ZW50Ijoibm90LXRlc3RlciIsImNoYXRlbmdpbmVTREsiOiJvYmpjXC8wLjkuMiJ9LCJ0aW1ldG9rZW4iOjE1NDM5NDkzNDk2NjIwODQ4fV0sMTU0Mzk0OTM0Nzc5Mjg0ODAsMTU0Mzk0OTM0OTY2MjA4NDhd"
     },
-    "type" : 2,
-    "outOfOrder" : false
+    "type" : 2
   },
   {
-    "id" : "29B712A7-B94B-4C3D-A522-01B33F7B982F",
-    "type" : 4,
-    "outOfOrder" : false
+    "id" : "411730CF-6A92-4303-ADFC-4079AD025786",
+    "type" : 4
   },
   {
-    "id" : "5F10AB55-38F7-47CD-B37E-380AB4E6826B",
-    "data" : {
-      "method" : "get",
-      "cls" : "NSURLRequest",
-      "cellular" : true,
-      "cache" : 1,
-      "timeout" : 60,
-      "cookies" : true,
-      "headers" : {
-        "Accept-Encoding" : "gzip,deflate",
-        "Connection" : "keep-alive",
-        "Accept" : "*\/*"
-      },
-      "pipeline" : false,
-      "network" : 0,
-      "url" : "https:\/\/pubsub.pubnub.com\/v1\/blocks\/sub-key\/demo-36\/chat-engine-server?global=chatEngine&user=stephen&route=user_state&authKey=stephen&uuid=stephen"
-    },
-    "type" : 0,
-    "outOfOrder" : false
-  },
-  {
-    "id" : "5F10AB55-38F7-47CD-B37E-380AB4E6826B",
+    "id" : "6087C1E5-E34A-471C-BE40-06148336D1E7",
     "data" : {
       "status" : 200,
       "cls" : "NSHTTPURLResponse",
-      "url" : "https:\/\/pubsub.pubnub.com\/v1\/blocks\/sub-key\/demo-36\/chat-engine-server?global=chatEngine&user=stephen&route=user_state&authKey=stephen&uuid=stephen",
+      "url" : "https:\/\/ps.pndsn.com\/v2\/subscribe\/demo-36\/,\/0?tr=12&uuid=robot-stephen&channel-group=namespace%23robot-stephen%23custom,namespace%23robot-stephen%23custom-pnpres,namespace%23robot-stephen%23rooms,namespace%23robot-stephen%23rooms-pnpres,namespace%23robot-stephen%23system,namespace%23robot-stephen%23system-pnpres&pnsdk=PubNub-ObjC-iOS\/4.x.x&tt=15439493673063009&auth=robot-stephen&heartbeat=300",
       "headers" : {
-        "Access-Control-Allow-Credentials" : "true",
-        "Content-Type" : "application\/json; charset=utf-8",
-        "Access-Control-Expose-Headers" : "Access-Control-Allow-Origin, Access-Control-Allow-Headers, Access-Control-Allow-Methods",
-        "Access-Control-Allow-Methods" : "GET, POST, OPTIONS, PUT, DELETE",
-        "Date" : "Mon, 13 Aug 2018 19:40:04 GMT",
-        "Access-Control-Allow-Headers" : "Origin, X-Requested-With, Content-Type, Accept",
-        "Content-Length" : "14",
+        "Access-Control-Allow-Methods" : "GET",
+        "Content-Type" : "text\/javascript; charset=\"UTF-8\"",
+        "Access-Control-Allow-Origin" : "*",
+        "Date" : "Tue, 04 Dec 2018 18:49:27 GMT",
+        "Content-Length" : "709",
+        "Cache-Control" : "no-cache",
         "Connection" : "keep-alive"
       }
     },
-    "type" : 1,
-    "outOfOrder" : false
+    "type" : 1
   },
   {
-    "id" : "5F10AB55-38F7-47CD-B37E-380AB4E6826B",
+    "id" : "6087C1E5-E34A-471C-BE40-06148336D1E7",
     "data" : {
       "cls" : "NSData",
-      "base64" : "eyJ3b3JrcyI6dHJ1ZX0="
+      "base64" : "eyJ0Ijp7InQiOiIxNTQzOTQ5MzY3NDQwODg5NSIsInIiOjEyfSwibSI6W3siayI6ImRlbW8tMzYiLCJwIjp7InQiOiIxNTQzOTQ5MzY3Mjg1Njg1OSIsInIiOjJ9LCJjIjoibmFtZXNwYWNlI3VzZXIjcm9ib3Qtc3RlcGhlbiNyZWFkLiNmZWVkLXBucHJlcyIsImQiOnsidXVpZCI6InJvYm90LXN0ZXBoZW4iLCJ0aW1lc3RhbXAiOjE1NDM5NDkzNjcsIm9jY3VwYW5jeSI6MSwiYWN0aW9uIjoiam9pbiJ9LCJhIjoiMiIsImYiOjAsImIiOiJuYW1lc3BhY2Ujcm9ib3Qtc3RlcGhlbiNzeXN0ZW0tcG5wcmVzIn0seyJrIjoiZGVtby0zNiIsInAiOnsidCI6IjE1NDM5NDkzNjczOTI5ODYyIiwiciI6Mn0sImMiOiJuYW1lc3BhY2UjdXNlciNyb2JvdC1zdGVwaGVuI3dyaXRlLiNkaXJlY3QtcG5wcmVzIiwiZCI6eyJ1dWlkIjoicm9ib3Qtc3RlcGhlbiIsInRpbWVzdGFtcCI6MTU0Mzk0OTM2Nywib2NjdXBhbmN5IjoxLCJhY3Rpb24iOiJqb2luIn0sImEiOiIyIiwiZiI6MCwiYiI6Im5hbWVzcGFjZSNyb2JvdC1zdGVwaGVuI3N5c3RlbS1wbnByZXMifV19"
     },
-    "type" : 2,
-    "outOfOrder" : false
+    "type" : 2
   },
   {
-    "id" : "5F10AB55-38F7-47CD-B37E-380AB4E6826B",
-    "type" : 4,
-    "outOfOrder" : false
+    "id" : "6087C1E5-E34A-471C-BE40-06148336D1E7",
+    "type" : 4
   },
   {
-    "id" : "649061D4-7CA2-424C-B905-B2AFFD7252A1",
-    "data" : {
-      "code" : -999,
-      "info" : {
-        "NSErrorFailingURLStringKey" : "https:\/\/ps.pndsn.com\/v2\/subscribe\/demo-36\/,\/0?heartbeat=300&tr=12&uuid=stephen&channel-group=chatEngine%23stephen%23custom,chatEngine%23stephen%23custom-pnpres,chatEngine%23stephen%23rooms,chatEngine%23stephen%23rooms-pnpres,chatEngine%23stephen%23system,chatEngine%23stephen%23system-pnpres&pnsdk=PubNub-ObjC-iOS\/4.x.x&tt=15341892044272950&auth=stephen",
-        "NSLocalizedDescription" : "cancelled",
-        "NSErrorFailingURLKey" : "https:\/\/ps.pndsn.com\/v2\/subscribe\/demo-36\/,\/0?heartbeat=300&tr=12&uuid=stephen&channel-group=chatEngine%23stephen%23custom,chatEngine%23stephen%23custom-pnpres,chatEngine%23stephen%23rooms,chatEngine%23stephen%23rooms-pnpres,chatEngine%23stephen%23system,chatEngine%23stephen%23system-pnpres&pnsdk=PubNub-ObjC-iOS\/4.x.x&tt=15341892044272950&auth=stephen"
-      },
-      "cls" : "NSError",
-      "domain" : "NSURLErrorDomain"
-    },
-    "type" : 3,
-    "outOfOrder" : false
-  },
-  {
-    "id" : "59680297-9218-42C7-9513-CB6E6728B8FF",
+    "id" : "3C605CA3-148C-41BF-8318-6D26BC0B63E1",
     "data" : {
       "method" : "get",
       "cls" : "NSURLRequest",
@@ -1126,52 +1067,222 @@
       "timeout" : 60,
       "cookies" : true,
       "headers" : {
-        "User-Agent" : "iPhone; CPU iPhone OS 11.4.0 Version",
+        "User-Agent" : "iPhone; CPU iPhone OS 12.1.0 Version",
         "Accept" : "*\/*",
         "Connection" : "keep-alive",
         "Accept-Encoding" : "gzip,deflate"
       },
       "pipeline" : false,
       "network" : 0,
-      "url" : "https:\/\/ps.pndsn.com\/v2\/presence\/sub_key\/demo-36\/channel\/,\/leave?uuid=stephen&channel-group=chatEngine%23stephen%23custom,chatEngine%23stephen%23rooms,chatEngine%23stephen%23system&pnsdk=PubNub-ObjC-iOS\/4.x.x&auth=stephen"
+      "url" : "https:\/\/ps.pndsn.com\/v2\/subscribe\/demo-36\/,\/0?tr=12&uuid=robot-stephen&channel-group=namespace%23robot-stephen%23custom,namespace%23robot-stephen%23custom-pnpres,namespace%23robot-stephen%23rooms,namespace%23robot-stephen%23rooms-pnpres,namespace%23robot-stephen%23system,namespace%23robot-stephen%23system-pnpres&pnsdk=PubNub-ObjC-iOS\/4.x.x&tt=15439493674408895&auth=robot-stephen&heartbeat=300"
     },
-    "type" : 0,
-    "outOfOrder" : false
+    "type" : 0
   },
   {
-    "id" : "59680297-9218-42C7-9513-CB6E6728B8FF",
+    "id" : "3C605CA3-148C-41BF-8318-6D26BC0B63E1",
     "data" : {
       "status" : 200,
       "cls" : "NSHTTPURLResponse",
-      "url" : "https:\/\/ps.pndsn.com\/v2\/presence\/sub_key\/demo-36\/channel\/,\/leave?uuid=stephen&channel-group=chatEngine%23stephen%23custom,chatEngine%23stephen%23rooms,chatEngine%23stephen%23system&pnsdk=PubNub-ObjC-iOS\/4.x.x&auth=stephen",
+      "url" : "https:\/\/ps.pndsn.com\/v2\/subscribe\/demo-36\/,\/0?tr=12&uuid=robot-stephen&channel-group=namespace%23robot-stephen%23custom,namespace%23robot-stephen%23custom-pnpres,namespace%23robot-stephen%23rooms,namespace%23robot-stephen%23rooms-pnpres,namespace%23robot-stephen%23system,namespace%23robot-stephen%23system-pnpres&pnsdk=PubNub-ObjC-iOS\/4.x.x&tt=15439493674408895&auth=robot-stephen&heartbeat=300",
+      "headers" : {
+        "Access-Control-Allow-Methods" : "GET",
+        "Content-Type" : "text\/javascript; charset=\"UTF-8\"",
+        "Access-Control-Allow-Origin" : "*",
+        "Date" : "Tue, 04 Dec 2018 18:49:27 GMT",
+        "Content-Length" : "45",
+        "Cache-Control" : "no-cache",
+        "Connection" : "keep-alive"
+      }
+    },
+    "type" : 1
+  },
+  {
+    "id" : "3C605CA3-148C-41BF-8318-6D26BC0B63E1",
+    "data" : {
+      "cls" : "NSData",
+      "base64" : "eyJ0Ijp7InQiOiIxNTQzOTQ5MzY3NDQwODg5NSIsInIiOjEyfSwibSI6W119"
+    },
+    "type" : 2
+  },
+  {
+    "id" : "3C605CA3-148C-41BF-8318-6D26BC0B63E1",
+    "type" : 4
+  },
+  {
+    "id" : "B253D051-ECF9-45DD-916A-641BDA531F41",
+    "data" : {
+      "method" : "get",
+      "cls" : "NSURLRequest",
+      "cellular" : true,
+      "cache" : 1,
+      "timeout" : 60,
+      "cookies" : true,
+      "headers" : {
+        "User-Agent" : "iPhone; CPU iPhone OS 12.1.0 Version",
+        "Accept" : "*\/*",
+        "Connection" : "keep-alive",
+        "Accept-Encoding" : "gzip,deflate"
+      },
+      "pipeline" : false,
+      "network" : 0,
+      "url" : "https:\/\/ps.pndsn.com\/v2\/subscribe\/demo-36\/,\/0?tr=12&uuid=robot-stephen&channel-group=namespace%23robot-stephen%23custom,namespace%23robot-stephen%23custom-pnpres,namespace%23robot-stephen%23rooms,namespace%23robot-stephen%23rooms-pnpres,namespace%23robot-stephen%23system,namespace%23robot-stephen%23system-pnpres&pnsdk=PubNub-ObjC-iOS\/4.x.x&tt=15439493674408895&auth=robot-stephen&heartbeat=300"
+    },
+    "type" : 0
+  },
+  {
+    "id" : "0E61206B-9221-4A9F-A7E8-42D3A4A261ED",
+    "data" : {
+      "method" : "get",
+      "cls" : "NSURLRequest",
+      "cellular" : true,
+      "cache" : 1,
+      "timeout" : 60,
+      "cookies" : true,
+      "headers" : {
+        "User-Agent" : "iPhone; CPU iPhone OS 12.1.0 Version",
+        "Accept" : "*\/*",
+        "Connection" : "keep-alive",
+        "Accept-Encoding" : "gzip,deflate"
+      },
+      "pipeline" : false,
+      "network" : 0,
+      "url" : "https:\/\/ps.pndsn.com\/v2\/presence\/sub-key\/demo-36\/channel\/namespace%23chat%23public.%23chat-history?disable_uuids=0&uuid=robot-stephen&pnsdk=PubNub-ObjC-iOS\/4.x.x&auth=robot-stephen&state=1"
+    },
+    "type" : 0
+  },
+  {
+    "id" : "B253D051-ECF9-45DD-916A-641BDA531F41",
+    "data" : {
+      "status" : 200,
+      "cls" : "NSHTTPURLResponse",
+      "url" : "https:\/\/ps.pndsn.com\/v2\/subscribe\/demo-36\/,\/0?tr=12&uuid=robot-stephen&channel-group=namespace%23robot-stephen%23custom,namespace%23robot-stephen%23custom-pnpres,namespace%23robot-stephen%23rooms,namespace%23robot-stephen%23rooms-pnpres,namespace%23robot-stephen%23system,namespace%23robot-stephen%23system-pnpres&pnsdk=PubNub-ObjC-iOS\/4.x.x&tt=15439493674408895&auth=robot-stephen&heartbeat=300",
+      "headers" : {
+        "Access-Control-Allow-Methods" : "GET",
+        "Content-Type" : "text\/javascript; charset=\"UTF-8\"",
+        "Access-Control-Allow-Origin" : "*",
+        "Date" : "Tue, 04 Dec 2018 18:49:28 GMT",
+        "Content-Length" : "45",
+        "Cache-Control" : "no-cache",
+        "Connection" : "keep-alive"
+      }
+    },
+    "type" : 1
+  },
+  {
+    "id" : "B253D051-ECF9-45DD-916A-641BDA531F41",
+    "data" : {
+      "cls" : "NSData",
+      "base64" : "eyJ0Ijp7InQiOiIxNTQzOTQ5MzY3NDQwODg5NSIsInIiOjEyfSwibSI6W119"
+    },
+    "type" : 2
+  },
+  {
+    "id" : "B253D051-ECF9-45DD-916A-641BDA531F41",
+    "type" : 4
+  },
+  {
+    "id" : "107C92A5-478A-4954-BFCD-7B51D0678558",
+    "data" : {
+      "method" : "get",
+      "cls" : "NSURLRequest",
+      "cellular" : true,
+      "cache" : 1,
+      "timeout" : 60,
+      "cookies" : true,
+      "headers" : {
+        "User-Agent" : "iPhone; CPU iPhone OS 12.1.0 Version",
+        "Accept" : "*\/*",
+        "Connection" : "keep-alive",
+        "Accept-Encoding" : "gzip,deflate"
+      },
+      "pipeline" : false,
+      "network" : 0,
+      "url" : "https:\/\/ps.pndsn.com\/v2\/subscribe\/demo-36\/,\/0?tr=12&uuid=robot-stephen&channel-group=namespace%23robot-stephen%23custom,namespace%23robot-stephen%23custom-pnpres,namespace%23robot-stephen%23rooms,namespace%23robot-stephen%23rooms-pnpres,namespace%23robot-stephen%23system,namespace%23robot-stephen%23system-pnpres&pnsdk=PubNub-ObjC-iOS\/4.x.x&tt=15439493674408895&auth=robot-stephen&heartbeat=300"
+    },
+    "type" : 0
+  },
+  {
+    "id" : "0E61206B-9221-4A9F-A7E8-42D3A4A261ED",
+    "data" : {
+      "status" : 200,
+      "cls" : "NSHTTPURLResponse",
+      "url" : "https:\/\/ps.pndsn.com\/v2\/presence\/sub-key\/demo-36\/channel\/namespace%23chat%23public.%23chat-history?disable_uuids=0&uuid=robot-stephen&pnsdk=PubNub-ObjC-iOS\/4.x.x&auth=robot-stephen&state=1",
       "headers" : {
         "Access-Control-Allow-Methods" : "OPTIONS, GET, POST",
         "Content-Type" : "text\/javascript; charset=\"UTF-8\"",
         "Server" : "Pubnub Presence",
         "Access-Control-Allow-Origin" : "*",
         "Age" : "0",
-        "Date" : "Mon, 13 Aug 2018 19:40:06 GMT",
+        "Date" : "Tue, 04 Dec 2018 18:49:28 GMT",
         "Accept-Ranges" : "bytes",
-        "Content-Length" : "74",
+        "Content-Length" : "153",
         "Cache-Control" : "no-cache",
         "Connection" : "keep-alive"
       }
     },
-    "type" : 1,
-    "outOfOrder" : false
+    "type" : 1
   },
   {
-    "id" : "59680297-9218-42C7-9513-CB6E6728B8FF",
+    "id" : "0E61206B-9221-4A9F-A7E8-42D3A4A261ED",
     "data" : {
       "cls" : "NSData",
-      "base64" : "eyJzdGF0dXMiOjIwMCwibWVzc2FnZSI6Ik9LIiwic2VydmljZSI6IlByZXNlbmNlIiwiYWN0aW9uIjoibGVhdmUifQ=="
+      "base64" : "eyJzdGF0dXMiOjIwMCwibWVzc2FnZSI6Ik9LIiwib2NjdXBhbmN5IjoyLCJ1dWlkcyI6W3sidXVpZCI6InJvYm90LXN0ZXBoZW4ifSx7InV1aWQiOiJyb2JvdC1zdGVwaGVuLTAtOS0yLTE1NDM5NDkzNDkifV0sInNlcnZpY2UiOiJQcmVzZW5jZSJ9"
     },
-    "type" : 2,
-    "outOfOrder" : false
+    "type" : 2
   },
   {
-    "id" : "59680297-9218-42C7-9513-CB6E6728B8FF",
-    "type" : 4,
-    "outOfOrder" : false
+    "id" : "0E61206B-9221-4A9F-A7E8-42D3A4A261ED",
+    "type" : 4
+  },
+  {
+    "id" : "107C92A5-478A-4954-BFCD-7B51D0678558",
+    "data" : {
+      "status" : 200,
+      "cls" : "NSHTTPURLResponse",
+      "url" : "https:\/\/ps.pndsn.com\/v2\/subscribe\/demo-36\/,\/0?tr=12&uuid=robot-stephen&channel-group=namespace%23robot-stephen%23custom,namespace%23robot-stephen%23custom-pnpres,namespace%23robot-stephen%23rooms,namespace%23robot-stephen%23rooms-pnpres,namespace%23robot-stephen%23system,namespace%23robot-stephen%23system-pnpres&pnsdk=PubNub-ObjC-iOS\/4.x.x&tt=15439493674408895&auth=robot-stephen&heartbeat=300",
+      "headers" : {
+        "Access-Control-Allow-Methods" : "GET",
+        "Content-Type" : "text\/javascript; charset=\"UTF-8\"",
+        "Access-Control-Allow-Origin" : "*",
+        "Date" : "Tue, 04 Dec 2018 18:49:29 GMT",
+        "Content-Length" : "354",
+        "Cache-Control" : "no-cache",
+        "Connection" : "keep-alive"
+      }
+    },
+    "type" : 1
+  },
+  {
+    "id" : "107C92A5-478A-4954-BFCD-7B51D0678558",
+    "data" : {
+      "cls" : "NSData",
+      "base64" : "eyJ0Ijp7InQiOiIxNTQzOTQ5MzY5MTY4NzUyOSIsInIiOjEyfSwibSI6W3siayI6ImRlbW8tMzYiLCJwIjp7InQiOiIxNTQzOTQ5MzY5MTIzNzIwOCIsInIiOjJ9LCJjIjoibmFtZXNwYWNlI2NoYXQjcHVibGljLiNjaGF0LWhpc3RvcnktcG5wcmVzIiwiZCI6eyJ1dWlkIjoicm9ib3Qtc3RlcGhlbiIsInRpbWVzdGFtcCI6MTU0Mzk0OTM2OSwib2NjdXBhbmN5IjozLCJhY3Rpb24iOiJqb2luIn0sImEiOiIyIiwiZiI6MCwiYiI6Im5hbWVzcGFjZSNyb2JvdC1zdGVwaGVuI2N1c3RvbS1wbnByZXMifV19"
+    },
+    "type" : 2
+  },
+  {
+    "id" : "107C92A5-478A-4954-BFCD-7B51D0678558",
+    "type" : 4
+  },
+  {
+    "id" : "05A0380B-363E-4ADB-B435-CB46698929F2",
+    "data" : {
+      "method" : "get",
+      "cls" : "NSURLRequest",
+      "cellular" : true,
+      "cache" : 1,
+      "timeout" : 60,
+      "cookies" : true,
+      "headers" : {
+        "User-Agent" : "iPhone; CPU iPhone OS 12.1.0 Version",
+        "Accept" : "*\/*",
+        "Connection" : "keep-alive",
+        "Accept-Encoding" : "gzip,deflate"
+      },
+      "pipeline" : false,
+      "network" : 0,
+      "url" : "https:\/\/ps.pndsn.com\/v2\/subscribe\/demo-36\/,\/0?tr=12&uuid=robot-stephen&channel-group=namespace%23robot-stephen%23custom,namespace%23robot-stephen%23custom-pnpres,namespace%23robot-stephen%23rooms,namespace%23robot-stephen%23rooms-pnpres,namespace%23robot-stephen%23system,namespace%23robot-stephen%23system-pnpres&pnsdk=PubNub-ObjC-iOS\/4.x.x&tt=15439493691687529&auth=robot-stephen&heartbeat=300"
+    },
+    "type" : 0
   }
 ]

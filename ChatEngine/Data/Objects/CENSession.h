@@ -3,19 +3,17 @@
 
 #pragma mark Class forward
 
-@class CENChatEngine, CENChat;
+@class CENChat;
 
 
 NS_ASSUME_NONNULL_BEGIN
 
 /**
- * @brief      \c Local user session.
- * @discussion Session allow to synchronize user's subscriptions and events between different devices from which he has been
- *             authorized and active at this moment.
+ * @brief \b {Local user CENMe} \b {chats CENChat} list synchronization session.
  *
  * @author Serhii Mamontov
- * @version 0.9.0
- * @copyright © 2009-2018 PubNub, Inc.
+ * @version 0.10.0
+ * @copyright © 2010-2018 PubNub, Inc.
  */
 @interface CENSession : CENObject
 
@@ -23,11 +21,11 @@ NS_ASSUME_NONNULL_BEGIN
 #pragma mark - Information
 
 /**
- * @brief Stores reference on dictionary where key represent chats group and value represent key/value pairs of chat's channel
- *        to their \b CENChat instances.
+ * @brief Map of synchronized chat channel names to \b {chats CENChat} which they represent.
+ *
+ * @ref abf41f0a-6393-4d5f-9777-9699ea4250fa
  */
-@property (nonatomic, nullable, readonly, strong) NSDictionary<NSString *, NSDictionary<NSString *, CENChat *> *> *chats;
-
+@property (nonatomic, nullable, readonly, strong) NSDictionary<NSString *, CENChat *> *chats;
 
 #pragma mark -
 

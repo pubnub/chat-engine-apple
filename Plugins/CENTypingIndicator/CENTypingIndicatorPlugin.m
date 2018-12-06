@@ -11,7 +11,12 @@
 
 #pragma mark Externs
 
-CENTypingIndicatorConfigurationKeys CENTypingIndicatorConfiguration = { .timeout = @"t" };
+/**
+ * @brief Typedef structure fields assignment.
+ */
+CENTypingIndicatorConfigurationKeys CENTypingIndicatorConfiguration = {
+    .timeout = @"t"
+};
 
 
 #pragma mark - Interface implementation
@@ -42,7 +47,9 @@ CENTypingIndicatorConfigurationKeys CENTypingIndicatorConfiguration = { .timeout
 
 + (void)setTyping:(BOOL)isTyping inChat:(CENChat *)chat {
     
-    [chat extensionWithIdentifier:[self identifier] context:^(CENTypingIndicatorExtension *extension) {
+    [chat extensionWithIdentifier:[self identifier]
+                          context:^(CENTypingIndicatorExtension *extension) {
+                              
         if (isTyping) {
             [extension startTyping];
         } else {
@@ -53,7 +60,9 @@ CENTypingIndicatorConfigurationKeys CENTypingIndicatorConfiguration = { .timeout
 
 + (void)checkIsTypingInChat:(CENChat *)chat withCompletion:(void(^)(BOOL isTyping))block {
     
-    [chat extensionWithIdentifier:[self identifier] context:^(CENTypingIndicatorExtension *extension) {
+    [chat extensionWithIdentifier:[self identifier]
+                          context:^(CENTypingIndicatorExtension *extension) {
+                              
         block(extension.isTyping);
     }];
 }
@@ -63,7 +72,7 @@ CENTypingIndicatorConfigurationKeys CENTypingIndicatorConfiguration = { .timeout
 
 - (void)onCreate {
     
-    NSMutableDictionary *configuration = [NSMutableDictionary dictionaryWithDictionary:self.configuration];
+    NSMutableDictionary *configuration = [(self.configuration ?: @{}) mutableCopy];
     
     if (!configuration[CENTypingIndicatorConfiguration.timeout]) {
         configuration[CENTypingIndicatorConfiguration.timeout] = @(1.f);

@@ -1,9 +1,9 @@
-#import <CENChatEngine/CEPPlugablePropertyStorage+Private.h>
+#import <Foundation/Foundation.h>
 
 
 #pragma mark Interface declaration
 
-@interface CENDummyWithPluggablePropertyStorage : CEPPlugablePropertyStorage
+@interface CENDummyWithPluggablePropertyStorage : NSObject
 
 
 #pragma mark - Information

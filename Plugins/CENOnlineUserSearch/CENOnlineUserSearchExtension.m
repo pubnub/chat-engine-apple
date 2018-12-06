@@ -1,13 +1,13 @@
 /**
  * @author Serhii Mamontov
- * @version 1.0.0
+ * @version 1.1.0
  * @copyright © 2009-2018 PubNub, Inc.
  */
 #import "CENOnlineUserSearchExtension.h"
 #import <CENChatEngine/CEPExtension+Developer.h>
+#import <CENChatEngine/CENUser+Interface.h>
 #import "CENOnlineUserSearchPlugin.h"
 #import <CENChatEngine/CENChat.h>
-#import <CENChatEngine/CENUser.h>
 
 
 #pragma mark Interface implementation
@@ -20,23 +20,33 @@
 - (void)searchFor:(NSString *)criteria withCompletion:(void(^)(NSArray<CENUser *> *users))block {
     
     NSString *propertyName = self.configuration[CENOnlineUserSearchConfiguration.propertyName];
-    BOOL isState = [[propertyName componentsSeparatedByString:@"."].firstObject isEqualToString:@"state"];
+    NSString *propertyNameRootPath = [propertyName componentsSeparatedByString:@"."].firstObject;
+    NSNumber *caseSensitive = self.configuration[CENOnlineUserSearchConfiguration.caseSensitive];
+    CENChat *stateChat = self.configuration[CENOnlineUserSearchConfiguration.chat];
     NSDictionary<NSString *, CENUser *> *users = ((CENChat *)self.object).users;
     NSMutableArray<CENUser *> *filteredUsers = [NSMutableArray new];
+    BOOL isState = [propertyNameRootPath isEqualToString:@"state"];
     
     if (isState) {
-        propertyName = [propertyName substringFromIndex:([propertyName rangeOfString:@"."].location + 1)];
+        NSUInteger nameLocation = [propertyName rangeOfString:@"."].location + 1;
+        propertyName = [propertyName substringFromIndex:nameLocation];
     }
     
-    if (!((NSNumber *)self.configuration[CENOnlineUserSearchConfiguration.caseSensitive]).boolValue) {
+    if (!caseSensitive.boolValue) {
         criteria = criteria.lowercaseString;
     }
     
     for (NSString *uuid in users) {
         CENUser *user = users[uuid];
-        NSString *data = !isState ? [user valueForKey:propertyName] : [user.state valueForKeyPath:propertyName];
+        NSString *data = nil;
         
-        if (!((NSNumber *)self.configuration[CENOnlineUserSearchConfiguration.caseSensitive]).boolValue) {
+        if (isState) {
+            data = [[user stateForChat:stateChat] valueForKeyPath:propertyName];
+        } else {
+            data = [user valueForKey:propertyName];
+        }
+        
+        if (!caseSensitive.boolValue) {
             data = data.lowercaseString;
         }
         

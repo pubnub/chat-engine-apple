@@ -1,6 +1,6 @@
 /**
  * @author Serhii Mamontov
- * @version 1.0.0
+ * @version 1.1.0
  * @copyright © 2009-2018 PubNub, Inc.
  */
 #import "CENPushNotificationsPlugin.h"
@@ -15,10 +15,29 @@
 
 #pragma mark Externs
 
+/**
+ * @brief Key under which in error's \c userInfo stored list of \b {chats CENChat} for which plugin
+ * wasn't able to change push notification state (enable / disable).
+ */
 NSString * const kCENNotificationsErrorChatsKey = @"CENNotificationsErrorChatsKey";
 
-CENPushNotificationsConfigurationKeys CENPushNotificationsConfiguration = { .events = @"e", .services = @"s", .formatter = @"f" };
-CENPushNotificationsServices CENPushNotificationsService = { .apns = @"apns", .fcm = @"gcm" };
+/**
+ * @brief Configuration keys structure values assignment.
+ */
+CENPushNotificationsConfigurationKeys CENPushNotificationsConfiguration = {
+    .debug = @"d",
+    .events = @"e",
+    .services = @"s",
+    .formatter = @"f"
+};
+
+/**
+ * @brief Notification services structure values assignment.
+ */
+CENPushNotificationsServices CENPushNotificationsService = {
+    .apns = @"apns",
+    .fcm = @"gcm"
+};
 
 
 NS_ASSUME_NONNULL_BEGIN
@@ -31,20 +50,19 @@ NS_ASSUME_NONNULL_BEGIN
 #pragma mark - Management notifications state
 
 /**
- * @brief      Enable/disable push notifications on specified list of chats.
- * @discussion \b ChatEngine will subscribe for remote notifications from specified set of \c chats.
- * @note       It is required to call this method each time when application launch and receive device push token.
+ * @brief Enable / disable push notifications on specified list of \b {chats CENChat}.
  *
- * @param shouldEnabled Whether notifications should be enabled or disabled.
- * @param chats         Reference on list of chats for which \b ChatEngine service should start remote notification triggering.
- * @param token         Reference on device token which has been provided by APNS.
- * @param block         Reference on block which will be called at the end of registration process. Block pass only one argument - request
- *                      processing error (if any error happened during request).
+ * @param enable Whether notifications should be enabled or disabled.
+ * @param chats List of \b {chats CENChat} for which remote notification \c enable state should be
+ *     changed.
+ * @param token Device token which has been provided by APNS.
+ * @param block Block which will be called at the end of state change process and pass
+ *     error (if any).
  */
-+ (void)enablePushNotifications:(BOOL)shouldEnabled
++ (void)enablePushNotifications:(BOOL)enable
                        forChats:(NSArray<CENChat *> *)chats
                 withDeviceToken:(NSData *)token
-                     completion:(void(^)(NSError * __nullable error))block;
+                     completion:(void(^ __nullable)(NSError * __nullable error))block;
 
 #pragma mark -
 
@@ -81,19 +99,52 @@ NS_ASSUME_NONNULL_END
 }
 
 
+#pragma mark - Middleware
+
+- (Class)middlewareClassForLocation:(NSString *)location object:(CENObject *)object {
+    
+    BOOL isEmitLocation = [location isEqualToString:CEPMiddlewareLocation.emit];
+    Class middleware = nil;
+    
+    if (isEmitLocation && [object isKindOfClass:[CENChat class]]) {
+        middleware = [CENPushNotificationsMiddleware class];
+    }
+    
+    return middleware;
+}
+
+
 #pragma mark - Management notifications state
 
-+ (void)enablePushNotificationsForChats:(NSArray<CENChat *> *)chats withDeviceToken:(NSData *)token completion:(void(^)(NSError *error))block {
++ (void)enableForChats:(NSArray<CENChat *> *)chats
+       withDeviceToken:(NSData *)token
+            completion:(void(^)(NSError *error))block {
     
     [self enablePushNotifications:YES forChats:chats withDeviceToken:token completion:block];
 }
 
-+ (void)disablePushNotificationsForChats:(NSArray<CENChat *> *)chats withDeviceToken:(NSData *)token completion:(void(^)(NSError *error))block {
++ (void)enablePushNotificationsForChats:(NSArray<CENChat *> *)chats
+                        withDeviceToken:(NSData *)token
+                             completion:(void(^)(NSError *error))block {
+    
+    [self enableForChats:chats withDeviceToken:token completion:block];
+}
+
++ (void)disableForChats:(NSArray<CENChat *> *)chats
+        withDeviceToken:(NSData *)token
+             completion:(void(^ __nullable)(NSError * __nullable error))block {
     
     [self enablePushNotifications:NO forChats:chats withDeviceToken:token completion:block];
 }
 
-+ (void)enablePushNotifications:(BOOL)shouldEnabled
++ (void)disablePushNotificationsForChats:(NSArray<CENChat *> *)chats
+                         withDeviceToken:(NSData *)token
+                              completion:(void(^)(NSError *error))block {
+    
+    [self disableForChats:chats withDeviceToken:token completion:block];
+}
+
++ (void)enablePushNotifications:(BOOL)enable
                        forChats:(NSArray<CENChat *> *)chats
                 withDeviceToken:(NSData *)token
                      completion:(void(^)(NSError *error))block {
@@ -103,52 +154,77 @@ NS_ASSUME_NONNULL_END
     }
     
     CENMe *me = chats.firstObject.chatEngine.me;
+    NSString *identifier = self.identifier;
     
-    [me extensionWithIdentifier:self.identifier context:^(CENPushNotificationsExtension *extension) {
-        [extension enablePushNotifications:shouldEnabled forChats:chats withDeviceToken:token completion:block];
+    [me extensionWithIdentifier:identifier context:^(CENPushNotificationsExtension *extension) {
+        [extension enable:enable forChats:chats withDeviceToken:token completion:block];
     }];
 }
 
-+ (void)disableAllPushNotificationsForUser:(CENMe *)user withDeviceToken:(NSData *)token completion:(void(^)(NSError *error))block {
++ (void)disableAllForUser:(CENMe *)user
+          withDeviceToken:(NSData *)token
+               completion:(void(^)(NSError *error))block {
     
-    if (!token.length) {
+    NSString *identifier = self.identifier;
+    
+    if (!token.length || ![user isKindOfClass:[CENMe class]]) {
         return;
     }
     
-    [user extensionWithIdentifier:self.identifier context:^(CENPushNotificationsExtension *extension) {
-        [extension enablePushNotifications:NO forChats:nil withDeviceToken:token completion:block];
+    [user extensionWithIdentifier:identifier context:^(CENPushNotificationsExtension *extension) {
+        [extension enable:NO forChats:nil withDeviceToken:token completion:block];
     }];
+}
+
++ (void)disableAllPushNotificationsForUser:(CENMe *)user
+                           withDeviceToken:(NSData *)token
+                                completion:(void(^)(NSError *error))block {
+    
+    [self disableAllForUser:user withDeviceToken:token completion:block];
 }
 
 
 #pragma mark - Notifications management
 
-+ (void)markNotificationAsSeen:(NSNotification *)notification forUser:(CENMe *)user withCompletion:(void (^)(NSError *error))block {
++ (void)markAsSeen:(NSNotification *)notification
+           forUser:(CENMe *)user
+    withCompletion:(void(^)(NSError *error))block {
     
-    [user extensionWithIdentifier:self.identifier context:^(CENPushNotificationsExtension *extension) {
-        [extension markNotificationAsSeen:notification withCompletion:block];
-    }];
-}
-
-+ (void)markAllNotificationAsSeenForUser:(CENMe *)user withCompletion:(void (^)(NSError *error))block {
+    NSString *identifier = self.identifier;
     
-    [user extensionWithIdentifier:self.identifier context:^(CENPushNotificationsExtension *extension) {
-        [extension markAllNotificationAsSeenWithCompletion:block];
-    }];
-}
-
-
-#pragma mark - Middleware
-
-- (Class)middlewareClassForLocation:(NSString *)location object:(CENObject *)object {
-    
-    Class middleware = nil;
-    
-    if ([location isEqualToString:CEPMiddlewareLocation.emit] && [object isKindOfClass:[CENChat class]]) {
-        middleware = [CENPushNotificationsMiddleware class];
+    if (![user isKindOfClass:[CENMe class]]) {
+        return;
     }
     
-    return middleware;
+    [user extensionWithIdentifier:identifier context:^(CENPushNotificationsExtension *extension) {
+        [extension markAsSeen:notification withCompletion:block];
+    }];
+}
+
++ (void)markNotificationAsSeen:(NSNotification *)notification
+                       forUser:(CENMe *)user
+                withCompletion:(void (^)(NSError *error))block {
+    
+    [self markAsSeen:notification forUser:user withCompletion:block];
+}
+
++ (void)markAllAsSeenForUser:(CENMe *)user withCompletion:(void (^)(NSError *error))block {
+    
+    NSString *identifier = self.identifier;
+    
+    if (![user isKindOfClass:[CENMe class]]) {
+        return;
+    }
+    
+    [user extensionWithIdentifier:identifier context:^(CENPushNotificationsExtension *extension) {
+        [extension markAllAsSeenWithCompletion:block];
+    }];
+}
+
++ (void)markAllNotificationAsSeenForUser:(CENMe *)user
+                          withCompletion:(void (^)(NSError *error))block {
+    
+    [self markAllAsSeenForUser:user withCompletion:block];
 }
 
 
@@ -156,8 +232,9 @@ NS_ASSUME_NONNULL_END
 
 - (void)onCreate {
     
-    NSMutableDictionary *configuration = [NSMutableDictionary dictionaryWithDictionary:self.configuration];
-    NSMutableArray<NSString *> *events = [NSMutableArray arrayWithArray:configuration[CENPushNotificationsConfiguration.events]];
+    NSMutableDictionary *configuration = [(self.configuration ?: @{}) mutableCopy];
+    NSArray *userEvents = configuration[CENPushNotificationsConfiguration.events];
+    NSMutableArray<NSString *> *events = [(userEvents ?: @[]) mutableCopy];
     
     if (![events containsObject:@"$notifications.seen"]) {
         [events addObject:@"$notifications.seen"];
@@ -168,7 +245,7 @@ NS_ASSUME_NONNULL_END
     self.configuration = configuration;
     
     // Override events list with user-provided values.
-    [CENPushNotificationsMiddleware replaceEventsWith:self.configuration[CENPushNotificationsConfiguration.events]];
+    [CENPushNotificationsMiddleware replaceEventsWith:events];
 }
 
 #pragma mark -

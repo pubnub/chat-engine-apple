@@ -1,149 +1,154 @@
 /**
- * @brief Set of types and structures which is used as part of API calls in \b ChatEngine client.
+ * @brief Set of types and structures which is used as part of API calls in
+ * \b {ChatEngine CENChatEngine} client.
  *
  * @author Serhii Mamontov
- * @version 0.9.0
- * @copyright © 2009-2018 PubNub, Inc.
+ * @version 0.10.0
+ * @copyright © 2010-2018 PubNub, Inc.
  */
 #ifndef CENStructures_h
 #define CENStructures_h
 
-
 /**
- * @brief  \b ChatEngine client logging levels available for manipulations.
+ * @brief Enum which provides levels for \b {ChatEngine CENChatEngine} logging verbosity
+ * configuration.
  */
-typedef NS_OPTIONS(NSUInteger, CELogLevel) {
-    
+typedef NS_OPTIONS(NSUInteger, CENLogLevel) {
     /**
-     * @brief      \b CELog level which allow to disable all active logging levels.
-     * @discussion This log level can be set with \b PNLLogger instance method \c -setLogLevel:
+     * @brief \b CENLog level which allow to disable all active logging levels.
      */
     CENSilentLogLevel = 0,
     
     /**
-     * @brief  \b CELog level which allow to print out client information data.
+     * @brief \b CENLog level which allow to print out client information data.
      */
     CENInfoLogLevel = (1 << 1),
     
     /**
-     * @brief  \b CELog level which allow to print out all API call request URI which has been passed to communicate with \b PubNub Function.
+     * @brief \b CENLog level which allow to print out all API call request URI which has been
+     * passed to communicate with \b PubNub Function.
      *
      * @since 0.9.2
      */
     CENRequestLogLevel = (1 << 2),
     
     /**
-     * @brief  \b CELog level which allow to print out request processing errors.
+     * @brief \b CENLog level which allow to print out request processing errors.
      *
      * @since 0.9.2
      */
     CENRequestErrorLogLevel = (1 << 3),
     
     /**
-     * @brief  \b CELog level which allow to print out API execution results.
+     * @brief \b CENLog level which allow to print out API execution results.
      *
      * @since 0.9.2
      */
     CENResponseLogLevel = (1 << 4),
     
     /**
-     * @brief  \b CELog level which allow to print out all service exception messages (before they will raise).
+     * @brief \b CENLog level which allow to print out all service exception messages (before they
+     * will raise).
      */
     CENExceptionsLogLevel = (1 << 5),
     
     /**
-     * @brief  \b CELog level which allow to print out data which is emitted by \b CENEvent to remote chat's participants.
+     * @brief \b CENLog level which allow to print out data which is emitted by \b {CENEvent} to
+     * remote chat's participants.
      */
     CENEventEmitLogLevel = (1 << 6),
     
     /**
-     * @brief      \b CELog level which allow to print out resources allocation/deallocation information.
-     * @discussion This is developer debug logger level to profile client behavior and resources release (no leaks).
+     * @brief \b CENLog level which allow to print out resources allocation / deallocation
+     * information.
+     *
+     * @discussion This is debug logger level to profile client behavior and resources release
+     * (no leaks).
      */
     CENResourcesAllocationLogLevel = (1 << 7),
     
     /**
-     * @brief      \b CELog level which allow to print out all API calls with passed parameters.
-     * @discussion This log level allow with debug to find out when API has been called and what parameters should be passed.
+     * @brief \b CENLog level which allow to print out all API calls with passed parameters.
+     *
+     * @discussion This log level allow to find out when API has been called and what parameters
+     * has been passed.
      *
      * @since 0.9.2
      */
     CENAPICallLogLevel = (1 << 8),
     
     /**
-     * @brief  Log every message from \b PubNub client.
+     * @brief Log every message from \b {ChatEngine CENChatEngine} client.
      */
-    CENVerboseLogLevel = (CENInfoLogLevel | CENRequestLogLevel | CENRequestErrorLogLevel | CENResponseLogLevel | CENExceptionsLogLevel |
-                          CENEventEmitLogLevel | CENAPICallLogLevel)
+    CENVerboseLogLevel = (CENInfoLogLevel | CENRequestLogLevel | CENRequestErrorLogLevel |
+                          CENResponseLogLevel | CENExceptionsLogLevel | CENEventEmitLogLevel |
+                          CENAPICallLogLevel)
 };
 
 
 /**
- * @brief  Structure wich describe available chat groups.
- */
-typedef struct CENChatGroups {
-    
-    /**
-     * @brief  Stores reference on name of chat(s) group which unify system (\b ChatEngine service)
-     *         chats.
-     */
-    __unsafe_unretained NSString *system;
-    
-    /**
-     * @brief  Stores reference on name of chat(s) group which unify chat(s) created by user(s).
-     */
-    __unsafe_unretained NSString *custom;
-} CENChatGroups;
-
-extern CENChatGroups CENChatGroup;
-
-
-/**
- * @brief  Structure which describe keys under which stored \b ChatEngine data passed with emitted
- *         event.
+ * @brief Structure which provides keys under which stored \b {ChatEngine CENChatEngine} data passed
+*  with emitted event.
  */
 typedef struct CENEventDataKeys {
-    
     /**
-     * @brief  Stores reference on name of key under which stored data emitted by \c sender.
+     * @brief \a NSDictionary with data emitted by \c sender.
      */
     __unsafe_unretained NSString *data;
     
     /**
-     * @brief  Stores reference on name of key under which stored \c CENUser instance which represent
-     *         user which sent this event.
+     * @brief \b {CENUser} which represent event sender.
      */
     __unsafe_unretained NSString *sender;
     
     /**
-     * @brief  Stores reference on name of key under which stored \c CENChat instance which received
-     *         \c event.
+     * @brief \b {CENChat} on which \c event has been received.
      */
     __unsafe_unretained NSString *chat;
     
     /**
-     * @brief  Stores reference on name of key under which stored name of emitted event.
+     * @brief Name of emitted event.
      */
     __unsafe_unretained NSString *event;
     
     /**
-     * @brief  Stores reference on name of key under which stored unique event identifier.
+     * @brief Unique event identifier.
      */
     __unsafe_unretained NSString *eventID;
     
     /**
-     * @brief  Stores reference on name of key under which stored timetoken representing date when
-     *         event has been emitted.
+     * @briefTimetoken representing date when event has been emitted.
      */
     __unsafe_unretained NSString *timetoken;
     
     /**
-     * @brief  Stores reference on name of key under which stored version of \b ChatEngine SDK which
-     *         emitted this \c event.
+     * @brief Version of \b {ChatEngine CENChatEngine} SDK which emitted this \c event.
      */
     __unsafe_unretained NSString *sdk;
 } CENEventDataKeys;
 
 extern CENEventDataKeys CENEventData;
+
+
+#pragma mark Class forward
+
+@class CENEmittedEvent;
+
+
+#pragma mark - Block / Closures
+
+NS_ASSUME_NONNULL_BEGIN
+
+/**
+ * @brief Emitted events handling block / closure.
+ *
+ * @param event Object which hold information about actual event name, data and it's emitted
+ *     information.
+ *
+ * @since 0.10.0
+ */
+typedef void(^CENEventHandlerBlock)(CENEmittedEvent *event);
+
+NS_ASSUME_NONNULL_END
 
 #endif // CENStructures_h

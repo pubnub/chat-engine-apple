@@ -4,17 +4,27 @@
 #pragma mark Structures
 
 /**
- * @brief  Structure wich describe available configuration option key names.
+ * @brief Structure which provides available configuration option keys.
  */
 typedef struct CENGravatarPluginConfigurationKeys {
+    /**
+     * @brief \b {Chat CENChat} which will store user's gravatar information.
+     *
+     * \b Default: \b {CENChatEngine.global}
+     */
+    __unsafe_unretained NSString *chat;
     
     /**
-     * @brief  Stores reference on name of key under which stored name of key in user's \a state where email addres stored.
+     * @brief Key or key-path in user's \b {CENMe.state} where email address is stored.
+     *
+     * \b Default: \c email
      */
     __unsafe_unretained NSString *emailKey;
     
     /**
-     * @brief  Stores reference on name of key under which stored name of key in user's \a state where Gravatar URL should be stored.
+     * @brief Key or key-path in user's \b {CENMe.state} where Gravatar URL should be stored.
+     *
+     * \b Default: \c gravatar
      */
     __unsafe_unretained NSString *gravatarURLKey;
 } CENGravatarPluginConfigurationKeys;
@@ -22,37 +32,55 @@ typedef struct CENGravatarPluginConfigurationKeys {
 extern CENGravatarPluginConfigurationKeys CENGravatarPluginConfiguration;
 
 
+NS_ASSUME_NONNULL_BEGIN
+
 /**
- * @brief      \b CENUser gravatar support extension.
- * @discussion This plugin adds the ability to get Gravatars basing on local user \c email address and update his state.
+ * @brief \b {Local user CENMe} email gravatar plugin.
  *
- * @discussion Register plugin which has default key ('email') under which stored user email which should be used for Gravatar resolution:
- * @code
- * CENConfiguration *configuration = [CENConfiguration configurationWithPublishKey:@"demo-36" subscribeKey:@"demo-36"];
- * self.client = [CENChatEngine clientWithConfiguration:configuration];
- * self.client.proto(@"Me", [CENGravatarPlugin class]).store();
- * @endcode
+ * @discussion Plugin allow automatically generate Gravatar URI using \b {local user CENMe}
+ * \c email.
  *
- * @discussion Register plugin which has custom key under which Gravatar URL should be stored after email resolution:
+ * @note Plugin should be registered on \b {local user CENMe} instance after
+ * \b {ChatEngine CENChatEngine} connection (can't be used as proto plugin).
+ *
+ * @discussion Setup with default configuration:
  * @code
- * CENConfiguration *configuration = [CENConfiguration configurationWithPublishKey:@"demo-36" subscribeKey:@"demo-36"];
- * self.client = [CENChatEngine clientWithConfiguration:configuration];
- * self.client.proto(@"Me", [CENGravatarPlugin class]).configuration(@{
- *     CENGravatarPluginConfiguration.gravatarURLKey = @"imgURL"
+ * // objc
+ * self.client.connect(@"ChatEngine").perform();
+ *
+ * self.client.me.plugin([CENGravatarPlugin class]).store();
+ *
+ * self.client.on(@"$.state", ^(CENEmittedEvent *event) {
+ *     CENUser *user = event.data;
+ *
+ *     if (user.state(nil)[@"gravatar"])) {
+ *         // Update user's icon in users list.
+ *     }
  * });
  * @endcode
  *
- * @discussion Listen for users' state change event:
+ * @discussion Setup with custom keys and \b {chat CENChat}:
  * @code
- * self.client.on(@"$.state", ^(CENUser *user) {
- *     if (user.state[@"imgURL"]) {
- *         NSLog(@"'%@' profile image can be downloaded here: %@", user.uuid, user.state[@"imgURL"]);
+ * // objc
+ * self.client.connect(@"ChatEngine").perform();
+ *
+ * self.client.me.plugin(@"Me", [CENGravatarPlugin class]).configuration(@{
+ *     CENGravatarPluginConfiguration.gravatarURLKey = @"profile.imgURL",
+ *     CENGravatarPluginConfiguration.emailKey = @"contacts.email",
+ *     CENGravatarPluginConfiguration.chat = self.chat
+ * }).store();
+ *
+ * self.client.on(@"$.state", ^(CENEmittedEvent *event) {
+ *     CENUser *user = event.data;
+ *
+ *     if (user.state(self.chat)[@"profile"][@"imgURL"])) {
+ *         // Update user's icon in users list.
  *     }
  * });
  * @endcode
  *
  * @author Serhii Mamontov
- * @version 1.0.0
+ * @version 1.1.0
  * @copyright © 2009-2018 PubNub, Inc.
  */
 @interface CENGravatarPlugin : CEPPlugin
@@ -62,3 +90,5 @@ extern CENGravatarPluginConfigurationKeys CENGravatarPluginConfiguration;
 
 
 @end
+
+NS_ASSUME_NONNULL_END

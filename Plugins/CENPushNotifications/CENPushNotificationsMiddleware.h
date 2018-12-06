@@ -1,13 +1,13 @@
 #import <CENChatEngine/CEPMiddleware.h>
 
 
+NS_ASSUME_NONNULL_BEGIN
+
 /**
- * @brief      \b CENChat events push notification support.
- * @discussion Middleware pre-process emitted event to add push notification payloads using defaults or user-provided \c formatter through
- *             plugin configuraiton object.
+ * @brief \b {Chat CENChat} events augmentation for push notification support.
  *
  * @author Serhii Mamontov
- * @version 1.0.0
+ * @version 1.1.0
  * @copyright © 2009-2018 PubNub, Inc.
  */
 @interface CENPushNotificationsMiddleware : CEPMiddleware
@@ -17,3 +17,5 @@
 
 
 @end
+
+NS_ASSUME_NONNULL_END

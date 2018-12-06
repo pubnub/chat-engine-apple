@@ -1,7 +1,7 @@
 /**
  * author Serhii Mamontov
- * @version 0.9.0
- * @copyright © 2009-2017 PubNub, Inc.
+ * @version 0.10.0
+ * @copyright © 2010-2017 PubNub, Inc.
  */
 #import "CENUserConnectBuilderInterface.h"
 #import "CENInterfaceBuilder+Private.h"
@@ -16,20 +16,27 @@
 
 - (CENUserConnectBuilderInterface * (^)(NSDictionary *state))state {
     
-    return ^CENUserConnectBuilderInterface * (NSDictionary *state) {
-        if ([state isKindOfClass:[NSDictionary class]]) {
-            [self setArgument:state forParameter:NSStringFromSelector(_cmd)];
+    return ^CENUserConnectBuilderInterface * (NSDictionary *__unused state) {
+        return self;
+    };
+}
+
+- (CENUserConnectBuilderInterface * (^)(id authKey))authKey {
+    
+    return ^CENUserConnectBuilderInterface * (id authKey) {
+        if ([authKey isKindOfClass:[NSString class]] || [authKey isKindOfClass:[NSNumber class]]) {
+            [self setArgument:authKey forParameter:NSStringFromSelector(_cmd)];
         }
         
         return self;
     };
 }
 
-- (CENUserConnectBuilderInterface * (^)(NSString *authKey))authKey {
+- (CENUserConnectBuilderInterface * (^)(NSString * globalChannel))globalChannel {
     
-    return ^CENUserConnectBuilderInterface * (NSString *authKey) {
-        if ([authKey isKindOfClass:[NSString class]]) {
-            [self setArgument:authKey forParameter:NSStringFromSelector(_cmd)];
+    return ^CENUserConnectBuilderInterface * (NSString *globalChannel) {
+        if ([globalChannel isKindOfClass:[NSString class]]) {
+            [self setArgument:globalChannel forParameter:NSStringFromSelector(_cmd)];
         }
         
         return self;

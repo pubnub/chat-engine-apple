@@ -1,14 +1,13 @@
 /**
  * @author Serhii Mamontov
- * @version 0.9.0
- * @copyright © 2009-2018 PubNub, Inc.
+ * @version 0.10.0
+ * @copyright © 2010-2018 PubNub, Inc.
  */
 #import "CENInterfaceBuilder+Private.h"
 #import <objc/runtime.h>
 
 
 NS_ASSUME_NONNULL_BEGIN
-
 
 #pragma mark Protected interface declaration
 
@@ -17,14 +16,35 @@ NS_ASSUME_NONNULL_BEGIN
 
 #pragma mark - Properties
 
+/**
+ * @brief List of user-configured API call flags.
+ *
+ * @discussion Usually stores flags which allow to identify API type (if there is group of API
+ * available for single endpoint). Flags also used in cased when default state should be adjusted.
+ */
 @property (nonatomic, strong) NSMutableArray<NSString *> *flags;
+
+/**
+ * @brief \a NSDictionary with key / value pairs which should be passed to API.
+ */
 @property (nonatomic, strong) NSMutableDictionary<NSString *, id> *arguments;
-@property (nonatomic, strong) CEInterfaceCallCompletionBlock executionBlock;
+
+/**
+ * @brief Block which will be called in response \c -performWithBlock: method call.
+ */
+@property (nonatomic, strong) CENInterfaceCallCompletionBlock executionBlock;
 
 
 #pragma mark - Initialization and Configuration
 
-- (instancetype)initWithExecutionBlock:(CEInterfaceCallCompletionBlock)block;
+/**
+ * @brief Initialize API access builder.
+ *
+ * @param block Block which will be called when user confirm API call with configured options.
+ *
+ * @return Initialized and ready to use API access builder.
+ */
+- (instancetype)initWithExecutionBlock:(CENInterfaceCallCompletionBlock)block;
 
 #pragma mark -
 
@@ -41,31 +61,12 @@ NS_ASSUME_NONNULL_END
 
 #pragma mark - Initialization and Configuration
 
-+ (void)copyMethodsFromClasses:(NSArray<Class> *)classes {
-    
-    unsigned int methodsCount = 0;
-    
-    for (NSUInteger classIdx = 0; classIdx < classes.count; classIdx++) {
-        Method *methods = class_copyMethodList(classes[classIdx], &methodsCount);
-        
-        for (unsigned int methodIdx = 0; methodIdx < methodsCount; methodIdx++) {
-            Method method = methods[methodIdx];
-            SEL selector = method_getName(method);
-            
-            if (!class_getInstanceMethod(self, selector)) {
-                IMP implementation = method_getImplementation(method);
-                
-                class_addMethod(self, selector, implementation, method_getTypeEncoding(method));
-            }
-        }
-        free(methods);
-    }
-}
-
-+ (instancetype)builderWithExecutionBlock:(CEInterfaceCallCompletionBlock)block {
++ (instancetype)builderWithExecutionBlock:(CENInterfaceCallCompletionBlock)block {
     
     if (!block) {
-        [NSException raise:NSInternalInconsistencyException format:@"%@ instance can't be created w/o execution block", NSStringFromClass(self)];
+        [NSException raise:NSInternalInconsistencyException
+                    format:@"%@ instance can't be created w/o execution block",
+                           NSStringFromClass(self)];
     }
     
     return [[self alloc] initWithExecutionBlock:block];
@@ -73,12 +74,13 @@ NS_ASSUME_NONNULL_END
 
 - (instancetype)init {
     
-    [NSException raise:NSDestinationInvalidException format:@"-init not implemented, please use: +builderWithExecutionBlock:"];
+    [NSException raise:NSDestinationInvalidException
+                format:@"-init not implemented, please use: +builderWithExecutionBlock:"];
     
     return nil;
 }
 
-- (instancetype)initWithExecutionBlock:(CEInterfaceCallCompletionBlock)block {
+- (instancetype)initWithExecutionBlock:(CENInterfaceCallCompletionBlock)block {
     
     if ((self = [super init])) {
         _flags = [NSMutableArray new];

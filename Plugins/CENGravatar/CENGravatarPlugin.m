@@ -1,6 +1,6 @@
 /**
  * @author Serhii Mamontov
- * @version 1.0.0
+ * @version 1.1.0
  * @copyright © 2009-2018 PubNub, Inc.
  */
 #import "CENGravatarPlugin.h"
@@ -11,7 +11,14 @@
 
 #pragma mark Externs
 
-CENGravatarPluginConfigurationKeys CENGravatarPluginConfiguration = { .emailKey = @"ek", .gravatarURLKey = @"gk" };
+/**
+ * @brief Typedef structure fields assignment.
+ */
+CENGravatarPluginConfigurationKeys CENGravatarPluginConfiguration = {
+    .chat = @"ct",
+    .emailKey = @"ek",
+    .gravatarURLKey = @"gk"
+};
 
 
 #pragma mark - Interface implementation
@@ -45,7 +52,7 @@ CENGravatarPluginConfigurationKeys CENGravatarPluginConfiguration = { .emailKey 
 
 - (void)onCreate {
     
-    NSMutableDictionary *configuration = [NSMutableDictionary dictionaryWithDictionary:self.configuration];
+    NSMutableDictionary *configuration = [(self.configuration ?: @{}) mutableCopy];
     
     if (!configuration[CENGravatarPluginConfiguration.emailKey]) {
         configuration[CENGravatarPluginConfiguration.emailKey] = @"email";

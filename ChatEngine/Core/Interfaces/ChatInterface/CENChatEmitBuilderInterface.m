@@ -1,7 +1,7 @@
 /**
  * @author Serhii Mamontov
- * @version 0.9.0
- * @copyright © 2009-2017 PubNub, Inc.
+ * @version 0.10.0
+ * @copyright © 2010-2017 PubNub, Inc.
  */
 #import "CENChatEmitBuilderInterface.h"
 #import "CENInterfaceBuilder+Private.h"

@@ -1,7 +1,7 @@
 /**
  * @author Serhii Mamontov
- * @version 0.9.0
- * @copyright © 2009-2018 PubNub, Inc.
+ * @version 0.10.0
+ * @copyright © 2010-2018 PubNub, Inc.
  */
 #import "CENEvent.h"
 
@@ -13,7 +13,6 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-
 #pragma mark - Private interface declaration
 
 @interface CENEvent (Private)
@@ -21,11 +20,29 @@ NS_ASSUME_NONNULL_BEGIN
 
 #pragma mark - Initialization and Configuration
 
-+ (instancetype)eventWithName:(NSString *)event chat:(CENChat *)chat chatEngine:(CENChatEngine *)chatEngine;
+/**
+ * @brief Create and configure event emitter.
+ *
+ * @param event Name of event which should be emitted.
+ * @param chat \b {Chat CENChat} to which \c event should be emitted.
+ * @param chatEngine \b {ChatEngine CENChatEngine} which manage \b {chat CENChat} to which event
+ *     should be emitted.
+ *
+ * @return Configured and ready to use event emitter.
+ */
++ (instancetype)eventWithName:(NSString *)event
+                         chat:(CENChat *)chat
+                   chatEngine:(CENChatEngine *)chatEngine;
 
 
 #pragma mark - Publishing
 
+/**
+ * @brief Pre-process with middlewares and emit passed \c data.
+ *
+ * @param data \a NSMutableDictionary with default \b {ChatEngine CENChatEngine} event payload which
+ *     will be passed through middlewares and emitted.
+ */
 - (void)publish:(NSMutableDictionary *)data;
 
 #pragma mark -

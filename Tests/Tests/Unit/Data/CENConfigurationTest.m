@@ -39,12 +39,6 @@
     self.configuration = [CENConfiguration configurationWithPublishKey:@"test-36" subscribeKey:@"test-36"];
 }
 
-- (void)tearDown {
-    
-    [super tearDown];
-    
-}
-
 
 #pragma mark - Tests :: Constructor
 
@@ -52,12 +46,12 @@
     
     XCTAssertNotNil(self.configuration.publishKey);
     XCTAssertNotNil(self.configuration.subscribeKey);
-    XCTAssertEqual(self.configuration.presenceHeartbeatValue, kCEDefaultPresenceHeartbeatValue);
-    XCTAssertEqual(self.configuration.presenceHeartbeatInterval, kCEDefaultPresenceHeartbeatInterval);
-    XCTAssertEqualObjects(self.configuration.globalChannel, kCEDefaultGlobalChannel);
-    XCTAssertEqual(self.configuration.shouldSynchronizeSession, kCEDefaultShouldSynchronizeSession);
+    XCTAssertEqual(self.configuration.presenceHeartbeatValue, kCENDefaultPresenceHeartbeatValue);
+    XCTAssertEqual(self.configuration.presenceHeartbeatInterval, kCENDefaultPresenceHeartbeatInterval);
+    XCTAssertEqualObjects(self.configuration.namespace, kCENDefaultNamespace);
+    XCTAssertEqual(self.configuration.shouldSynchronizeSession, kCENDefaultShouldSynchronizeSession);
     XCTAssertNotNil(self.configuration.functionEndpoint);
-    XCTAssertTrue([self.configuration.functionEndpoint hasPrefix:kCEPNFunctionsBaseURI]);
+    XCTAssertTrue([self.configuration.functionEndpoint hasPrefix:kCENPNFunctionsBaseURI]);
 }
 
 - (void)testNew_ShouldThrow_WhenUsed {

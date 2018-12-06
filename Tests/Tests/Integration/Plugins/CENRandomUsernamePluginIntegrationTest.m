@@ -11,6 +11,12 @@
 @interface CENRandomUsernamePluginIntegrationTest : CENTestCase
 
 
+#pragma mark - Information
+
+@property (nonatomic, strong) NSDictionary *configuration;
+@property (nonatomic, strong) NSString *globalChannel;
+@property (nonatomic, strong) NSString *namespace;
+
 #pragma mark -
 
 
@@ -23,6 +29,33 @@
 
 
 #pragma mark - Setup / Tear down
+
+- (BOOL)shouldConnectChatEngineForTestCaseWithName:(NSString *)name {
+    
+    return NO;
+}
+
+- (NSString *)globalChatChannelForTestCaseWithName:(NSString *)name {
+    
+    NSString *channel = [super globalChatChannelForTestCaseWithName:name];
+    
+    if (!self.globalChannel) {
+        self.globalChannel = channel;
+    }
+    
+    return self.globalChannel ?: channel;
+}
+
+- (NSString *)namespaceForTestCaseWithName:(NSString *)name {
+    
+    NSString *namespace = [super namespaceForTestCaseWithName:name];
+    
+    if (!self.namespace) {
+        self.namespace = namespace;
+    }
+    
+    return self.namespace ?: namespace;
+}
 
 - (void)updateVCRConfigurationFromDefaultConfiguration:(YHVConfiguration *)configuration {
     
@@ -50,16 +83,13 @@
     
     [super setUp];
     
-    NSDictionary *configuration = nil;
     
     if ([self.name rangeOfString:@"WhenConfigurationPassed"].location != NSNotFound) {
-        configuration = @{ CENRandomUsernameConfiguration.propertyName: @"innerAnimal" };
+        self.configuration = @{ CENRandomUsernameConfiguration.propertyName: @"innerAnimal" };
     }
     
-    NSString *global = [@[@"test", [NSUUID UUID].UUIDString] componentsJoinedByString:@"-"];
-    [self setupChatEngineWithGlobal:global forUser:@"ian" synchronization:NO meta:NO state:@{ @"works": @YES }];
-    
-    [self chatEngineForUser:@"ian"].me.plugin([CENRandomUsernamePlugin class]).configuration(configuration).store();
+    [self setupChatEngineForUser:@"ian"];
+    [self setupChatEngineForUser:@"ian"];
 }
 
 
@@ -67,36 +97,40 @@
 
 - (void)testRandomName_ShouldAssignNameToDefaultStateKey_WhenConfigurationNotPassed {
     
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    CENChatEngine *client = [self chatEngineForUser:@"ian"];
-    __block BOOL hanlderCalled = NO;
+    CENChatEngine *client1 = [self chatEngineForUser:@"ian"];
+    CENChatEngine *client2 = [self chatEngineCloneForUser:@"ian"];
     
-    client.once(@"$.state", ^(CENUser *user) {
-        hanlderCalled = YES;
-        
-        XCTAssertNotNil(user.state[@"username"]);
-        dispatch_semaphore_signal(semaphore);
-    });
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
-    XCTAssertTrue(hanlderCalled);
+    [self object:client2 shouldHandleEvent:@"$.state" withHandler:^CENEventHandlerBlock (dispatch_block_t handler) {
+        return ^(CENEmittedEvent *emittedEvent) {
+            CENUser *user = emittedEvent.data;
+            
+            XCTAssertNotNil(user.state(nil)[@"username"]);
+            handler();
+        };
+    } afterBlock:^{
+        [self connectUser:@"ian" usingClient:client1];
+        [self connectUser:@"ian" usingClient:client2];
+        client1.me.plugin([CENRandomUsernamePlugin class]).configuration(self.configuration).store();
+    }];
 }
 
 - (void)testRandomName_ShouldAssignNameToCustomStateKey_WhenConfigurationPassed {
     
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    CENChatEngine *client = [self chatEngineForUser:@"ian"];
-    __block BOOL hanlderCalled = NO;
+    CENChatEngine *client1 = [self chatEngineForUser:@"ian"];
+    CENChatEngine *client2 = [self chatEngineCloneForUser:@"ian"];
     
-    client.once(@"$.state", ^(CENUser *user) {
-        hanlderCalled = YES;
-        
-        XCTAssertNotNil(user.state[@"innerAnimal"]);
-        dispatch_semaphore_signal(semaphore);
-    });
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
-    XCTAssertTrue(hanlderCalled);
+    [self object:client2 shouldHandleEvent:@"$.state" withHandler:^CENEventHandlerBlock (dispatch_block_t handler) {
+        return ^(CENEmittedEvent *emittedEvent) {
+            CENUser *user = emittedEvent.data;
+            
+            XCTAssertNotNil(user.state(nil)[@"innerAnimal"]);
+            handler();
+        };
+    } afterBlock:^{
+        [self connectUser:@"ian" usingClient:client1];
+        [self connectUser:@"ian" usingClient:client2];
+        client1.me.plugin([CENRandomUsernamePlugin class]).configuration(self.configuration).store();
+    }];
 }
 
 #pragma mark -

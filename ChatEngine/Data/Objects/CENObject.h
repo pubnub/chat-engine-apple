@@ -1,13 +1,16 @@
 #import "CENEventEmitter.h"
 
 
+NS_ASSUME_NONNULL_BEGIN
+
 /**
- * @brief      Base \b ChatEngine data object.
- * @discussion This class used by all publicly visible data object like: \b CENChat , \b CENUser, \b CENMe, \b CENSearch.
+ * @brief Generic \b {ChatEngine CENChatEngine} class which provide ability to use event emitter and
+ * plugins functionality on it's subclasses like: \b {CENChat} , \b {CENUser}, \b {CENMe} and
+ * \b {CENSearch}.
  *
  * @author Serhii Mamontov
- * @version 0.9.0
- * @copyright © 2009-2018 PubNub, Inc.
+ * @version 0.10.0
+ * @copyright © 2010-2018 PubNub, Inc.
  */
 @interface CENObject : CENEventEmitter
 
@@ -16,3 +19,5 @@
 
 
 @end
+
+NS_ASSUME_NONNULL_END

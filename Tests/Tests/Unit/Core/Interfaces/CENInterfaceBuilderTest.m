@@ -32,25 +32,8 @@
     
     id executionBlock = nil;
     
-    XCTAssertThrowsSpecificNamed([CENInterfaceBuilder builderWithExecutionBlock:executionBlock], NSException, NSInternalInconsistencyException);
-}
-
-
-#pragma mark - Tests :: copyMethodsFromClasses
-
-- (void)testCopyInstanceMethodsFromClasses_ShouldCopyNSArrayAndNSStringMethods_WhenListOfNSArrayAndNSStringClassesPassed {
-    
-    Class interfaceSubclass = objc_allocateClassPair([CENInterfaceBuilder class], "InterfaceSubclass1", 0);
-    CEInterfaceCallCompletionBlock block = ^id (NSArray<NSString *> *flags, NSDictionary *arguments) {
-        return @0;
-    };
-    
-    [interfaceSubclass copyMethodsFromClasses:@[[NSArray class], [NSString class]]];
-    CENInterfaceBuilder *builder = [interfaceSubclass builderWithExecutionBlock:block];
-    
-    
-    XCTAssertTrue([builder respondsToSelector:@selector(subarrayWithRange:)]);
-    XCTAssertTrue([builder respondsToSelector:@selector(hasPrefix:)]);
+    XCTAssertThrowsSpecificNamed([CENInterfaceBuilder builderWithExecutionBlock:executionBlock], NSException,
+                                 NSInternalInconsistencyException);
 }
 
 
@@ -60,7 +43,7 @@
     
     __block BOOL blockCalled = NO;
     NSString *expected = @"PubNub";
-    CEInterfaceCallCompletionBlock block = ^id (NSArray<NSString *> *flags, NSDictionary *arguments) {
+    CENInterfaceCallCompletionBlock block = ^id (NSArray<NSString *> *flags, NSDictionary *arguments) {
         blockCalled = YES;
         
         XCTAssertGreaterThan(flags.count, 0);
@@ -80,7 +63,7 @@
     
     __block BOOL blockCalled = NO;
     NSString *expected = (id)@2010;
-    CEInterfaceCallCompletionBlock block = ^id (NSArray<NSString *> *flags, NSDictionary *arguments) {
+    CENInterfaceCallCompletionBlock block = ^id (NSArray<NSString *> *flags, NSDictionary *arguments) {
         blockCalled = YES;
         
         XCTAssertEqual(flags.count, 0);
@@ -102,7 +85,7 @@
     
     __block BOOL blockCalled = NO;
     NSString *expected = (id)@2010;
-    CEInterfaceCallCompletionBlock block = ^id (NSArray<NSString *> *flags, NSDictionary *arguments) {
+    CENInterfaceCallCompletionBlock block = ^id (NSArray<NSString *> *flags, NSDictionary *arguments) {
         blockCalled = YES;
         
         XCTAssertGreaterThan(arguments.count, 0);
@@ -122,7 +105,7 @@
     
     __block BOOL blockCalled = NO;
     NSString *expected = (id)@2010;
-    CEInterfaceCallCompletionBlock block = ^id (NSArray<NSString *> *flags, NSDictionary *arguments) {
+    CENInterfaceCallCompletionBlock block = ^id (NSArray<NSString *> *flags, NSDictionary *arguments) {
         blockCalled = YES;
         
         XCTAssertEqual(arguments.count, 0);
@@ -145,7 +128,7 @@
 - (void)testPerformWithReturnValue_ShouldReturnValue_WhenCalled {
     
     NSNumber *expected = @2010;
-    CEInterfaceCallCompletionBlock block = ^id (NSArray<NSString *> *flags, NSDictionary *arguments) {
+    CENInterfaceCallCompletionBlock block = ^id (NSArray<NSString *> *flags, NSDictionary *arguments) {
         return expected;
     };
     
@@ -161,7 +144,7 @@
     
     __block BOOL blockCalled = NO;
     __block BOOL completionBlockCalled = NO;
-    CEInterfaceCallCompletionBlock block = ^id (NSArray<NSString *> *flags, NSDictionary *arguments) {
+    CENInterfaceCallCompletionBlock block = ^id (NSArray<NSString *> *flags, NSDictionary *arguments) {
         dispatch_block_t completionBlock = arguments[@"block"];
         blockCalled = YES;
         

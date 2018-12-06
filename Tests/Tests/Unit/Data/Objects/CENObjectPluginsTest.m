@@ -22,12 +22,8 @@
 
 #pragma mark - Information
 
-@property (nonatomic, nullable, weak) CENChatEngine *client;
-@property (nonatomic, nullable, weak) CENChatEngine *clientMock;
-
 @property (nonatomic, nullable, strong) NSString *defaultObjectType;
 @property (nonatomic, nullable, strong) id objectClassMock;
-@property (nonatomic, nullable, strong) CENObject *object;
 
 #pragma mark -
 
@@ -51,112 +47,186 @@
     
     [super setUp];
     
-    self.client = [self chatEngineWithConfiguration:[CENConfiguration configurationWithPublishKey:@"test-36" subscribeKey:@"test-36"]];
-    self.clientMock = [self partialMockForObject:self.client];
-    
-    self.defaultObjectType = CENObjectType.search;
-    self.objectClassMock = [self mockForClass:[CENObject class]];
-    OCMStub([self.objectClassMock objectType]).andReturn(self.defaultObjectType);
-    
-    self.object = [[CENObject alloc] initWithChatEngine:self.client];
-    
-    OCMStub([self.clientMock fetchParticipantsForChat:[OCMArg any]]).andDo(nil);
-}
-
-- (void)tearDown {
-
-    [self.object destruct];
-    self.object = nil;
+    self.usesMockedObjects = YES;
     
     CEDummyPlugin.classesWithExtensions = nil;
     CEDummyPlugin.middlewareLocationClasses = nil;
     
-    [super tearDown];
+    self.defaultObjectType = CENObjectType.search;
+    self.objectClassMock = [self mockForObject:[CENObject class]];
+    OCMStub([self.objectClassMock objectType]).andReturn(self.defaultObjectType);
 }
 
 
 #pragma mark - Tests :: plugin / hasPlugin / hasPluginWithIdentifier
 
-- (void)testPluginHasPlugin_ShouldCheckByClassAndReturnYes_WhenObjectHasRegisteredPlugin {
+- (void)testPluginHasPlugin_ShouldCheckByClass {
     
-    [self.object registerPlugin:[CENSearchFilterPlugin class] withConfiguration:nil];
+    CENObject *object = [[CENObject alloc] initWithChatEngine:self.client];
     
-    XCTAssertTrue(self.object.plugin([CENSearchFilterPlugin class]).exists());
-    XCTAssertTrue([self.object hasPlugin:[CENSearchFilterPlugin class]]);
+    
+    id recorded = OCMExpect([self.client hasPluginWithIdentifier:CENSearchFilterPlugin.identifier forObject:object]);
+    [self waitForObject:self.client recordedInvocationCall:recorded withinInterval:self.testCompletionDelay afterBlock:^{
+        object.plugin([CENSearchFilterPlugin class]).exists();
+    }];
+    
+    recorded = OCMExpect([self.client hasPluginWithIdentifier:CENSearchFilterPlugin.identifier forObject:object]);
+    [self waitForObject:self.client recordedInvocationCall:recorded withinInterval:self.testCompletionDelay afterBlock:^{
+        [object hasPlugin:[CENSearchFilterPlugin class]];
+    }];
 }
 
-- (void)testPluginHasPlugin_ShouldCheckByClassAndReturnNo_WhenUnsupportedClassPassed {
+- (void)testPluginHasPlugin_ShouldNotCheckByClass_WhenUnsupportedClassPassed {
     
-    [self.object registerPlugin:[CENSearchFilterPlugin class] withConfiguration:nil];
+    CENObject *object = [[CENObject alloc] initWithChatEngine:self.client];
     
-    XCTAssertFalse(self.object.plugin([NSArray class]).exists());
-    XCTAssertFalse([self.object hasPlugin:[NSArray class]]);
+    
+    id falseExpect = [(id)self.client reject];
+    id recorded = OCMExpect([falseExpect hasPluginWithIdentifier:[OCMArg any] forObject:[OCMArg any]]);
+    [self waitForObject:self.client recordedInvocationNotCall:recorded withinInterval:self.falseTestCompletionDelay afterBlock:^{
+        object.plugin([NSArray class]).exists();
+    }];
+    
+    recorded = OCMExpect([falseExpect hasPluginWithIdentifier:[OCMArg any] forObject:[OCMArg any]]);
+    [self waitForObject:self.client recordedInvocationNotCall:recorded withinInterval:self.falseTestCompletionDelay afterBlock:^{
+        [object hasPlugin:[NSArray class]];
+    }];
 }
 
-- (void)testPluginHasPlugin_ShouldCheckByIdentifierAndReturnYes_WhenObjectHasRegisteredPlugin {
+- (void)testPluginHasPlugin_ShouldCheckByIdentifier {
     
-    NSString *identifier = CENSearchFilterPlugin.identifier;
-    [self.object registerPlugin:[CENSearchFilterPlugin class] withConfiguration:nil];
+    NSString *identifier = @"test-identifier";
+    CENObject *object = [[CENObject alloc] initWithChatEngine:self.client];
     
-    XCTAssertTrue(self.object.plugin(identifier).exists());
-    XCTAssertTrue([self.object hasPluginWithIdentifier:identifier]);
+    
+    id recorded = OCMExpect([self.client hasPluginWithIdentifier:identifier forObject:object]);
+    [self waitForObject:self.client recordedInvocationCall:recorded withinInterval:self.testCompletionDelay afterBlock:^{
+        object.plugin(identifier).exists();
+    }];
+    
+    recorded = OCMExpect([self.client hasPluginWithIdentifier:identifier forObject:object]);
+    [self waitForObject:self.client recordedInvocationCall:recorded withinInterval:self.testCompletionDelay afterBlock:^{
+        [object hasPluginWithIdentifier:identifier];
+    }];
 }
 
-- (void)testPluginHasPlugin_ShouldCheckByIdentifierAndReturnNo_WhenUnsupportedIdentifierPassed {
+- (void)testPluginHasPlugin_ShouldNotCheckByIdentifier_WhenUnsupportedIdentifierPassed {
     
     NSString *identifier = (id)@2010;
-    [self.object registerPlugin:[CENSearchFilterPlugin class] withConfiguration:nil];
+    CENObject *object = [[CENObject alloc] initWithChatEngine:self.client];
     
-    XCTAssertFalse(self.object.plugin(identifier).exists());
-    XCTAssertFalse([self.object hasPluginWithIdentifier:identifier]);
+    
+    id falseExpect = [(id)self.client reject];
+    id recorded = OCMExpect([falseExpect hasPluginWithIdentifier:[OCMArg any] forObject:[OCMArg any]]);
+    [self waitForObject:self.client recordedInvocationNotCall:recorded withinInterval:self.falseTestCompletionDelay afterBlock:^{
+        object.plugin(identifier).exists();
+    }];
+    
+    recorded = OCMExpect([falseExpect hasPluginWithIdentifier:[OCMArg any] forObject:[OCMArg any]]);
+    [self waitForObject:self.client recordedInvocationNotCall:recorded withinInterval:self.falseTestCompletionDelay afterBlock:^{
+        [object hasPluginWithIdentifier:identifier];
+    }];
 }
 
 
 #pragma mark - Tests :: plugin / registerPlugin / registerPluginWithIdentifier
 
-- (void)testPluginRegisterPlugin_ShouldRegisterPluginWithDefaultIdentifier_WhenOnlyClassPassed {
+- (void)testPluginRegisterPlugin_ShouldRegisterPluginByClass {
     
-    self.object.plugin([CENSearchFilterPlugin class]).store();
+    CENObject *object = [[CENObject alloc] initWithChatEngine:self.client];
+    NSString *identifier = CENSearchFilterPlugin.identifier;
+    Class cls = [CENSearchFilterPlugin class];
     
-    XCTAssertTrue(self.object.plugin([CENSearchFilterPlugin class]).exists());
-    XCTAssertTrue(self.object.plugin(CENSearchFilterPlugin.identifier).exists());
+    
+    id recorded = OCMExpect([self.client registerPlugin:cls withIdentifier:identifier configuration:[OCMArg any]
+                                              forObject:object firstInList:NO completion:[OCMArg any]]);
+    [self waitForObject:self.client recordedInvocationCall:recorded withinInterval:self.testCompletionDelay afterBlock:^{
+        object.plugin(cls).store();
+    }];
 }
 
-- (void)testPluginRegisterPlugin_ShouldNotRegisterPluginWithDefaultIdentifier_WhenUnsupportedClassPassed {
+- (void)testPluginRegisterPlugin_ShouldRegisterPluginByClassWithConfiguration {
     
-    OCMExpect([[(id)self.clientMock reject] registerPlugin:[OCMArg any] withIdentifier:[OCMArg any] configuration:[OCMArg any]
-                                                 forObject:[OCMArg any] firstInList:NO completion:[OCMArg any]]);
+    CENObject *object = [[CENObject alloc] initWithChatEngine:self.client];
+    NSDictionary *configuration = @{ @"plugin": @"configuration" };
+    NSString *identifier = CENSearchFilterPlugin.identifier;
+    Class cls = [CENSearchFilterPlugin class];
     
-    [self.object registerPlugin:[NSArray class] withConfiguration:nil];
     
-    OCMVerifyAll((id)self.clientMock);
+    id recorded = OCMExpect([self.client registerPlugin:cls withIdentifier:identifier configuration:configuration
+                                              forObject:object firstInList:NO completion:[OCMArg any]]);
+    [self waitForObject:self.client recordedInvocationCall:recorded withinInterval:self.testCompletionDelay afterBlock:^{
+        [object registerPlugin:cls withConfiguration:configuration];
+    }];
 }
 
-- (void)testPluginRegisterPlugin_ShouldRegisterPluginWithCustomIdentifier_WhenPassedDuringRegistration {
+- (void)testPluginRegisterPlugin_ShouldNotRegisterPluginByClass_WhenUnsupportedClassPassed {
     
-    self.object.plugin([CENSearchFilterPlugin class]).identifier(@"test-identifier").store();
+    CENObject *object = [[CENObject alloc] initWithChatEngine:self.client];
     
-    XCTAssertTrue(self.object.plugin(@"test-identifier").exists());
+    
+    id falseExpect = [(id)self.client reject];
+    id recorded = OCMExpect([falseExpect registerPlugin:[OCMArg any] withIdentifier:[OCMArg any] configuration:[OCMArg any]
+                                              forObject:[OCMArg any] firstInList:NO completion:[OCMArg any]]);
+    [self waitForObject:self.client recordedInvocationNotCall:recorded withinInterval:self.falseTestCompletionDelay afterBlock:^{
+        [object registerPlugin:[NSArray class] withConfiguration:nil];
+    }];
 }
 
-- (void)testPluginRegisterPlugin_ShouldNotRegisterPluginWithCustomIdentifier_WhenUnsupportedClassPassed {
+- (void)testPluginRegisterPlugin_ShouldNotRegisterPluginByClassWithConfiguration_WhenUnsupportedClassPassed {
     
-    OCMExpect([[(id)self.clientMock reject] registerPlugin:[OCMArg any] withIdentifier:[OCMArg any] configuration:[OCMArg any]
-                                                 forObject:[OCMArg any] firstInList:NO completion:[OCMArg any]]);
+    CENObject *object = [[CENObject alloc] initWithChatEngine:self.client];
+    NSDictionary *configuration = @{ @"plugin": @"configuration" };
     
-    [self.object registerPlugin:[NSArray class] withIdentifier:@"test-identifier" configuration:nil];
     
-    OCMVerifyAll((id)self.clientMock);
+    id falseExpect = [(id)self.client reject];
+    id recorded = OCMExpect([falseExpect registerPlugin:[OCMArg any] withIdentifier:[OCMArg any] configuration:[OCMArg any]
+                                              forObject:[OCMArg any] firstInList:NO completion:[OCMArg any]]);
+    [self waitForObject:self.client recordedInvocationNotCall:recorded withinInterval:self.falseTestCompletionDelay afterBlock:^{
+        [object registerPlugin:[NSArray class] withConfiguration:configuration];
+    }];
 }
 
-- (void)testPluginRegisterPlugin_ShouldNotRegisterPluginWithCustomIdentifier_WhenUnsupportedIdentifierPassed {
+- (void)testPluginRegisterPlugin_ShouldRegisterPluginByIdentifier {
     
-    OCMExpect([[(id)self.clientMock reject] registerPlugin:[OCMArg any] withIdentifier:[OCMArg any] configuration:[OCMArg any]
-                                                 forObject:[OCMArg any] firstInList:NO completion:[OCMArg any]]);
+    self.usesMockedObjects = YES;
+    CENObject *object = [[CENObject alloc] initWithChatEngine:self.client];
+    NSString *identifier = @"test-identifier";
     
-    [self.object registerPlugin:[CENSearchFilterPlugin class] withIdentifier:(id)@2010 configuration:nil];
     
-    OCMVerifyAll((id)self.clientMock);
+    id recorded = OCMExpect([self.client registerPlugin:[OCMArg any] withIdentifier:identifier configuration:[OCMArg any]
+                                              forObject:object firstInList:NO completion:[OCMArg any]]);
+    [self waitForObject:self.client recordedInvocationCall:recorded withinInterval:self.testCompletionDelay afterBlock:^{
+        object.plugin([CENSearchFilterPlugin class]).identifier(identifier).store();
+    }];
+}
+
+- (void)testPluginRegisterPlugin_ShouldNotRegisterPluginByIdentifier_WhenUnsupportedClassPassed {
+    
+    self.usesMockedObjects = YES;
+    CENObject *object = [[CENObject alloc] initWithChatEngine:self.client];
+    
+    
+    id falseExpect = [(id)self.client reject];
+    id recorded = OCMExpect([falseExpect registerPlugin:[OCMArg any] withIdentifier:[OCMArg any] configuration:[OCMArg any]
+                                              forObject:[OCMArg any] firstInList:NO completion:[OCMArg any]]);
+    [self waitForObject:self.client recordedInvocationNotCall:recorded withinInterval:self.falseTestCompletionDelay afterBlock:^{
+        [object registerPlugin:[NSArray class] withIdentifier:@"test-identifier" configuration:nil];
+    }];
+}
+
+- (void)testPluginRegisterPlugin_ShouldNotRegisterPluginByIdentifier_WhenUnsupportedIdentifierPassed {
+    
+    self.usesMockedObjects = YES;
+    CENObject *object = [[CENObject alloc] initWithChatEngine:self.client];
+    
+    
+    id falseExpect = [(id)self.client reject];
+    id recorded = OCMExpect([falseExpect registerPlugin:[OCMArg any] withIdentifier:[OCMArg any] configuration:[OCMArg any]
+                                              forObject:[OCMArg any] firstInList:NO completion:[OCMArg any]]);
+    [self waitForObject:self.client recordedInvocationNotCall:recorded withinInterval:self.falseTestCompletionDelay afterBlock:^{
+        [object registerPlugin:[CENSearchFilterPlugin class] withIdentifier:(id)@2010 configuration:nil];
+    }];
 }
 
 
@@ -164,204 +234,161 @@
 
 - (void)testPluginUnregisterPlugin_ShouldUnregisterPluginByClass {
     
-    self.object.plugin([CENSearchFilterPlugin class]).store();
-    XCTAssertTrue(self.object.plugin([CENSearchFilterPlugin class]).exists());
+    self.usesMockedObjects = YES;
+    CENObject *object = [[CENObject alloc] initWithChatEngine:self.client];
     
-    [self.object unregisterPlugin:[CENSearchFilterPlugin class]];
     
-    XCTAssertFalse(self.object.plugin(CENSearchFilterPlugin.identifier).exists());
+    id recorded = OCMExpect([self.client unregisterObjects:object pluginWithIdentifier:CENSearchFilterPlugin.identifier]);
+    [self waitForObject:self.client recordedInvocationCall:recorded withinInterval:self.testCompletionDelay afterBlock:^{
+        [object unregisterPlugin:[CENSearchFilterPlugin class]];
+    }];
 }
 
-- (void)testPluginUnregisterPlugin_ShouldUnregisterPluginByClassWithDefaultIdentifier {
+- (void)testPluginUnregisterPlugin_ShouldUnregisterPluginByIdentifier {
     
-    self.object.plugin([CENSearchFilterPlugin class]).store();
-    XCTAssertTrue(self.object.plugin([CENSearchFilterPlugin class]).exists());
+    self.usesMockedObjects = YES;
+    NSString *identifier = @"test-identifier";
+    CENObject *object = [[CENObject alloc] initWithChatEngine:self.client];
     
-    self.object.plugin([CENSearchFilterPlugin class]).remove();
     
-    XCTAssertFalse(self.object.plugin(CENSearchFilterPlugin.identifier).exists());
+    id recorded = OCMExpect([self.client unregisterObjects:object pluginWithIdentifier:identifier]);
+    [self waitForObject:self.client recordedInvocationCall:recorded withinInterval:self.testCompletionDelay afterBlock:^{
+        object.plugin(identifier).remove();
+    }];
 }
 
 - (void)testPluginUnregisterPlugin_ShouldNotUnregisterPluginByClass_WhenUnsupportedClassPassed {
     
-    self.object.plugin([CENSearchFilterPlugin class]).store();
-    XCTAssertTrue(self.object.plugin([CENSearchFilterPlugin class]).exists());
+    CENObject *object = [[CENObject alloc] initWithChatEngine:self.client];
     
-    [self.object unregisterPlugin:[NSArray class]];
     
-    XCTAssertTrue(self.object.plugin(CENSearchFilterPlugin.identifier).exists());
+    id falseExpect = [(id)self.client reject];
+    id recorded = OCMExpect([falseExpect unregisterObjects:[OCMArg any] pluginWithIdentifier:[OCMArg any]]);
+    [self waitForObject:self.client recordedInvocationNotCall:recorded withinInterval:self.falseTestCompletionDelay afterBlock:^{
+        [object unregisterPlugin:[NSArray class]];
+    }];
 }
 
-- (void)testPluginUnregisterPlugin_ShouldUnregisterPluginByIdcentifier {
+- (void)testPluginUnregisterPlugin_ShouldNotUnregisterPluginByIdentifier_WhenUnsupportedIdentifierPassed {
     
-    CEDummyPlugin.middlewareLocationClasses = @{ CEPMiddlewareLocation.on: @[[CENObject class]] };
-    CEDummyPlugin.classesWithExtensions = @[[CENObject class]];
+    CENObject *object = [[CENObject alloc] initWithChatEngine:self.client];
     
-    self.object.plugin([CEDummyPlugin class]).identifier(@"test-identifier").store();
-    XCTAssertTrue(self.object.plugin(@"test-identifier").exists());
     
-    self.object.plugin(@"test-identifier").remove();
-    
-    XCTAssertFalse(self.object.plugin(@"test-identifier").exists());
-}
-
-- (void)testPluginUnregisterPlugin_ShouldNotUnregisterPluginByIdcentifier_WhenUnsupportedIdentifierPassed {
-    
-    self.object.plugin([CENSearchFilterPlugin class]).identifier(@"test-identifier").store();
-    XCTAssertTrue(self.object.plugin(@"test-identifier").exists());
-    
-    [self.object unregisterPluginWithIdentifier:(id)@2010];
-    
-    XCTAssertTrue(self.object.plugin(@"test-identifier").exists());
+    id falseExpect = [(id)self.client reject];
+    id recorded = OCMExpect([falseExpect unregisterObjects:[OCMArg any] pluginWithIdentifier:[OCMArg any]]);
+    [self waitForObject:self.client recordedInvocationNotCall:recorded withinInterval:self.falseTestCompletionDelay afterBlock:^{
+        [object unregisterPluginWithIdentifier:(id)@2010];
+    }];
 }
 
 
 #pragma mark - Tests :: extension / extensionWithContext / extensionWithIdentifier
 
-- (void)testExtension_ShouldReturnRegisteredExtensionWithDefaultIdentifier {
+- (void)testExtensionWithContext_ShouldRequestExtensionByClass {
     
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    CEDummyPlugin.classesWithExtensions = @[[CENObject class]];
-    __block BOOL handlerCalled = NO;
+    CENObject *object = [[CENObject alloc] initWithChatEngine:self.client];
+    NSString *identifier = CEDummyPlugin.identifier;
     
-    self.object.plugin([CEDummyPlugin class]).store();
     
-   self.object.extension([CEDummyPlugin class], ^(CEDummyExtension *extension) {
-        handlerCalled = YES;
-        
-        XCTAssertNotNil(extension);
-        dispatch_semaphore_signal(semaphore);
-    });
+    id objectMock = [self mockForObject:object];
+    OCMStub([objectMock hasPluginWithIdentifier:[OCMArg any]]).andReturn(YES);
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
-    XCTAssertTrue(handlerCalled);
-}
-
-- (void)testExtensionWithContext_ShouldReturnRegisteredExtensionWithDefaultIdentifier {
     
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    CEDummyPlugin.classesWithExtensions = @[[CENObject class]];
-    __block BOOL handlerCalled = NO;
-    
-    self.object.plugin([CEDummyPlugin class]).store();
-    
-    [self.object extension:[CEDummyPlugin class] withContext:^(CEDummyExtension *extension) {
-        handlerCalled = YES;
-        
-        XCTAssertNotNil(extension);
-        dispatch_semaphore_signal(semaphore);
+    id recorded = OCMExpect([self.client extensionForObject:object withIdentifier:identifier context:[OCMArg any]]);
+    [self waitForObject:self.client recordedInvocationCall:recorded withinInterval:self.testCompletionDelay afterBlock:^{
+        [object extension:[CEDummyPlugin class] withContext:^(CEDummyExtension *extension) { }];
     }];
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
-    XCTAssertTrue(handlerCalled);
 }
 
-- (void)testExtensionWithContext_ShouldReturnNil_WhenUnsupportedClassPassed {
+- (void)testExtensionWithContext_ShouldRequestExtensionByIdentifier {
     
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    CEDummyPlugin.classesWithExtensions = @[[CENObject class]];
-    __block BOOL handlerCalled = NO;
+    CENObject *object = [[CENObject alloc] initWithChatEngine:self.client];
+    NSString *identifier = CEDummyPlugin.identifier;
     
-    self.object.plugin([CEDummyPlugin class]).store();
     
-    [self.object extension:[NSArray class] withContext:^(CEDummyExtension *extension) {
-        handlerCalled = YES;
-        
-        XCTAssertNil(extension);
-        dispatch_semaphore_signal(semaphore);
+    id objectMock = [self mockForObject:object];
+    OCMStub([objectMock hasPluginWithIdentifier:[OCMArg any]]).andReturn(YES);
+    
+    id recorded = OCMExpect([self.client extensionForObject:object withIdentifier:identifier context:[OCMArg any]]);
+    [self waitForObject:self.client recordedInvocationCall:recorded withinInterval:self.testCompletionDelay afterBlock:^{
+        object.extension(identifier, ^(CEDummyExtension *extension) { });
     }];
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
-    XCTAssertTrue(handlerCalled);
 }
 
-- (void)testExtensionWithContext_ShouldNotReturnNil_WhenUnsupportedClassAndNotContextBlockPassed {
+- (void)testExtensionWithContext_ShouldNotRequestExtensionByClass_WhenUnsupportedClassPassed {
     
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    CEDummyPlugin.classesWithExtensions = @[[CENObject class]];
+    CENObject *object = [[CENObject alloc] initWithChatEngine:self.client];
+    
+    
+    id falseExpect = [(id)self.client reject];
+    id recorded = OCMExpect([falseExpect extensionForObject:[OCMArg any] withIdentifier:[OCMArg any] context:[OCMArg any]]);
+    [self waitForObject:self.client recordedInvocationNotCall:recorded withinInterval:self.falseTestCompletionDelay afterBlock:^{
+        [object extension:[NSArray class] withContext:^(CEDummyExtension *extension) { }];
+    }];
+}
+
+- (void)testExtensionWithContext_ShouldNotRequestExtensionByIdentifier_WhenUnsupportedIdentifierPassed {
+    
+    CENObject *object = [[CENObject alloc] initWithChatEngine:self.client];
+    
+    
+    id falseExpect = [(id)self.client reject];
+    id recorded = OCMExpect([falseExpect extensionForObject:[OCMArg any] withIdentifier:[OCMArg any] context:[OCMArg any]]);
+    [self waitForObject:self.client recordedInvocationNotCall:recorded withinInterval:self.falseTestCompletionDelay afterBlock:^{
+        object.extension((id)@2010, ^(CEDummyExtension *extension) { });
+    }];
+}
+
+- (void)testExtensionWithContext_ShouldRequestExtensionByClassAndReturnNil_WhenUnsupportedClassPassed {
+    
+    CENObject *object = [[CENObject alloc] initWithChatEngine:self.client];
+    
+    
+    [self waitToCompleteIn:self.testCompletionDelay codeBlock:^(dispatch_block_t handler) {
+        [object extension:[NSArray class] withContext:^(CEDummyExtension *extension) {
+            XCTAssertNil(extension);
+            handler();
+        }];
+    }];
+}
+
+- (void)testExtensionWithContext_ShouldRequestExtensionByIdentifierAndReturnNil_WhenUnsupportedIdentifierPassed {
+    
+    CENObject *object = [[CENObject alloc] initWithChatEngine:self.client];
+    
+    
+    [self waitToCompleteIn:self.testCompletionDelay codeBlock:^(dispatch_block_t handler) {
+        object.extension((id)@2010, ^(CEDummyExtension *extension) {
+            XCTAssertNil(extension);
+            handler();
+        });
+    }];
+}
+
+- (void)testExtensionWithContext_ShouldNotRequestExtension_WhenContextBlockNotPassed {
+    
+    CENObject *object = [[CENObject alloc] initWithChatEngine:self.client];
     void(^handlerBlock)(id extension) = nil;
     
-    OCMExpect([[(id)self.objectClassMock reject] extensionWithIdentifier:[OCMArg any] context:[OCMArg any]]);
-    self.object.plugin([CEDummyPlugin class]).store();
     
-    [self.object extension:[NSArray class] withContext:handlerBlock];
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.falseTestCompletionDelay * NSEC_PER_SEC)));
-    OCMVerifyAll(self.objectClassMock);
-}
-
-- (void)testExtension_ShouldReturnRegisteredExtensionWithCustomIdentifier {
-    
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    CEDummyPlugin.classesWithExtensions = @[[CENObject class]];
-    __block BOOL handlerCalled = NO;
-    
-    self.object.plugin([CEDummyPlugin class]).identifier(@"test-identifier").store();
-    
-    self.object.extension(@"test-identifier", ^(CEDummyExtension *extension) {
-        handlerCalled = YES;
-        
-        XCTAssertNotNil(extension);
-        dispatch_semaphore_signal(semaphore);
-    });
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
-    XCTAssertTrue(handlerCalled);
-}
-
-- (void)testExtensionWithIdentifier_ShouldReturnRegisteredExtensionWithCustomIdentifier {
-    
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    CEDummyPlugin.classesWithExtensions = @[[CENObject class]];
-    __block BOOL handlerCalled = NO;
-    
-    self.object.plugin([CEDummyPlugin class]).identifier(@"test-identifier").store();
-    
-    [self.object extensionWithIdentifier:@"test-identifier" context:^(CEDummyExtension *extension) {
-        handlerCalled = YES;
-        
-        XCTAssertNotNil(extension);
-        dispatch_semaphore_signal(semaphore);
+    id falseExpect = [(id)self.client reject];
+    id recorded = OCMExpect([falseExpect extensionForObject:[OCMArg any] withIdentifier:[OCMArg any] context:[OCMArg any]]);
+    [self waitForObject:self.client recordedInvocationNotCall:recorded withinInterval:self.falseTestCompletionDelay afterBlock:^{
+        object.extension([CEDummyPlugin class], handlerBlock);
     }];
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
-    XCTAssertTrue(handlerCalled);
 }
 
-- (void)testExtensionWithIdentifier_ShouldReturnNil_WhenUnsupportedIdentifierPassed {
+- (void)testExtensionWithContext_ShouldNotRequestExtension_WhenPluginNotRegistered {
     
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    CEDummyPlugin.classesWithExtensions = @[[CENObject class]];
-    __block BOOL handlerCalled = NO;
+    CENObject *object = [[CENObject alloc] initWithChatEngine:self.client];
     
-    self.object.plugin([CEDummyPlugin class]).store();
     
-    [self.object extensionWithIdentifier:(id)@2010 context:^(CEDummyExtension *extension) {
-        handlerCalled = YES;
-        
-        XCTAssertNil(extension);
-        dispatch_semaphore_signal(semaphore);
+    id falseExpect = [(id)self.client reject];
+    id recorded = OCMExpect([falseExpect extensionForObject:[OCMArg any] withIdentifier:[OCMArg any] context:[OCMArg any]]);
+    [self waitForObject:self.client recordedInvocationNotCall:recorded withinInterval:self.falseTestCompletionDelay afterBlock:^{
+        object.extension([CEDummyPlugin class], ^(CEDummyExtension *extension) { });
     }];
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
-    XCTAssertTrue(handlerCalled);
 }
-
-- (void)testExtensionWithIdentifier_ShouldNotReturnNil_WhenUnsupportedIdentifierNotContextBlockPassed {
-    
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    CEDummyPlugin.classesWithExtensions = @[[CENObject class]];
-    void(^handlerBlock)(id extension) = nil;
-    
-    OCMExpect([[(id)self.clientMock reject] extensionForObject:[OCMArg any] withIdentifier:[OCMArg any] context:[OCMArg any]]);
-    self.object.plugin([CEDummyPlugin class]).store();
-    
-    [self.object extensionWithIdentifier:(id)@2010 context:handlerBlock];
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.falseTestCompletionDelay * NSEC_PER_SEC)));
-    OCMVerifyAll((id)self.clientMock);
-}
-
 
 #pragma mark -
 

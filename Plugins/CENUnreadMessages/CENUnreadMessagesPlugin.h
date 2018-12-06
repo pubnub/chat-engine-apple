@@ -4,28 +4,29 @@
 #pragma mark Structures
 
 /**
- * @brief  Structure wich describe keys within unread message event payload.
+ * @brief Structure which describe keys for unread message event payload.
  */
 typedef struct CENUnreadMessagesEventKeys {
-    
     /**
-     * @brief  Stores reference on name of key under which stored chat for which number of unread messages / events did
-     *         change.
+     * @brief \b {Chat CENChat} for which number of unread messages / events did change.
      */
-    __unsafe_unretained NSString *chat;
+    __unsafe_unretained NSString *chat
+        DEPRECATED_MSG_ATTRIBUTE("This field deprecated since 1.1.0. Reference on chat available "
+                                 "during registration on event or as part of local event object");
     
     /**
-     * @brief  Stores reference on name of key under which stored sender \c uuid.
+     * @brief Stores reference on name of key under which stored sender \c uuid.
      */
     __unsafe_unretained NSString *sender;
     
     /**
-     * @brief  Stores reference on name of key under which stored reference on \a raw event payload.
+     * @brief Stores reference on name of key under which stored reference on \a raw event payload.
      */
     __unsafe_unretained NSString *event;
     
     /**
-     * @brief  Stores reference on name of key under which stored current number of unread messages / events.
+     * @brief Stores reference on name of key under which stored current number of unread
+     * messages / events.
      */
     __unsafe_unretained NSString *count;
 } CENUnreadMessagesEventKeys;
@@ -33,13 +34,13 @@ typedef struct CENUnreadMessagesEventKeys {
 extern CENUnreadMessagesEventKeys CENUnreadMessagesEvent;
 
 /**
- * @brief  Structure wich describe available configuration option key names.
+ * @brief Structure which describe available configuration option key names.
  */
 typedef struct CENUnreadMessagesConfigurationKeys {
-    
     /**
-     * @brief  Stores reference on name of key under which stored list of event names which should be treated as \c message
-     *         and count.
+     * @brief List of event names which should be treated as \c message and count.
+     *
+     * @\b Default: \c @[@"message"]
      */
     __unsafe_unretained NSString *events;
 } CENUnreadMessagesConfigurationKeys;
@@ -52,39 +53,47 @@ extern CENUnreadMessagesConfigurationKeys CENUnreadMessagesConfiguration;
 @class CENChat;
 
 
+NS_ASSUME_NONNULL_BEGIN
+
 /**
- * @brief      \b CENChat unread messages counting plugin.
- * @discussion This plugin adds the ability to count unread messages for \a inactive chat instances (not focues).
+ * @brief \b {Chat CENChat} unread messages counting plugin.
  *
- * @discussion Register plugin which by default handle 'message' events to count unread:
+ * @discussion Plugin allow to count unread messages for \c inactive \b {chat CENChat}.
+ *
+ * @discussion Setup with default configuration:
  * @code
- * CENConfiguration *configuration = [CENConfiguration configurationWithPublishKey:@"demo-36" subscribeKey:@"demo-36"];
- * self.client = [CENChatEngine clientWithConfiguration:configuration];
- * [self.client registerProtoPlugin:[CENUnreadMessagesPlugin class] forObjectType:@"Chat" configuration:nil];
+ * // objc
+ * self.client.proto(@"Chat", [CENUnreadMessagesPlugin class]).store();
+ *
+ * self.chat.on(@"$unread", ^(CENEmittedEvent *event) {
+ *     NSDictionary *payload = event.data;
+ *
+ *     NSLog(@"%@ sent a message you haven't seen (there is %@ unread messages) in %@ the full "
+ *           "event is: %@", payload[CENUnreadMessagesEvent.sender],
+ *           payload[CENUnreadMessagesEvent.count], chat.name,
+ *           payload[CENUnreadMessagesEvent.event]);
+ * });
  * @endcode
  *
- * @discussion Register plugin which will hanlde custom events to count unread:
+ * @discussion Setup with custom events list:
  * @code
- * CENConfiguration *configuration = [CENConfiguration configurationWithPublishKey:@"demo-36" subscribeKey:@"demo-36"];
- * self.client = [CENChatEngine clientWithConfiguration:configuration];
+ * // objc
  * self.client.proto(@"Chat", [CENUnreadMessagesPlugin class]).configuration(@{
  *     CENUnreadMessagesConfiguration.events = @[@"ping", @"pong"]
  * }).store();
- * @endcode
  *
- * @discussion Listen for unread count change:
- * @code
- * chat.on(@"$unread", ^(NSDictionary *payload) {
- *     CENChat *chat = payload[CENUnreadMessagesEvent.chat];
+ * self.chat.on(@"$unread", ^(CENEmittedEvent *event) {
+ *     NSDictionary *payload = event.data;
  *
- *     NSLog(@"%@ sent a message you havn't seen (there is %@ unread messages) in %@ the full event is: %@",
- *           payload[CENUnreadMessagesEvent.sender], payload[CENUnreadMessagesEvent.count], chat.name,
+ *     NSLog(@"%@ sent a message you haven't seen (there is %@ unread messages) in %@ the full "
+ *           "event is: %@", payload[CENUnreadMessagesEvent.sender],
+ *           payload[CENUnreadMessagesEvent.count], chat.name,
  *           payload[CENUnreadMessagesEvent.event]);
  * });
  * @endcode
  *
  * @author Serhii Mamontov
- * @version 1.0.0
+ * @version 1.1.0
  * @copyright © 2009-2018 PubNub, Inc.
  */
 @interface CENUnreadMessagesPlugin : CEPPlugin
@@ -93,36 +102,35 @@ extern CENUnreadMessagesConfigurationKeys CENUnreadMessagesConfiguration;
 #pragma mark - Extension
 
 /**
- * @brief      Update chat activity.
- * @discussion Set whether chat currently active or not.
+ * @brief Update chat activity.
  *
- * @discussion Manage chat activity :
  * @code
- * // Focused on the chatroom.
- * [CENUnreadMessagesPlugin setChat:chat active:YES];
+ * // objc
+ * // Focused on the chat room.
+ * [CENUnreadMessagesPlugin setChat:self.chat active:YES];
  *
- * // Looking at any other chatroom.
- * [CENUnreadMessagesPlugin setChat:chat active:NO];
+ * // Looking at any other chat room.
+ * [CENUnreadMessagesPlugin setChat:self.chat active:NO];
  * @endcode
  *
- * @param chat     Reference on \c chat instance for which activity should be changed.
- * @param isActive Reference on flag which allow to specify whether \c chat active at this moment or not.
+ * @param chat \b {Chat CENChat} for which activity should be changed.
+ * @param isActive Whether \b {chat CENChat} active at this moment or not.
  */
 + (void)setChat:(CENChat *)chat active:(BOOL)isActive;
 
 /**
- * @brief  Get current unread messages count for \c chat.
+ * @brief Get current unread messages count for \c chat.
  *
- * @discussion \b Example:
  * @code
- * [CENUnreadMessagesPlugin fetchUnreadCountForChat:chat withCompletion:^(NSUInteger count) {
+ * // objc
+ * [CENUnreadMessagesPlugin fetchUnreadCountForChat:self.chat withCompletion:^(NSUInteger count) {
  *     // Handle received value.
  * }];
  * @endcode
  
- * @param chat  Reference on \c chat instance for which count should be fetched.
- * @param block Reference on block which will be called at the end of fetch process. Block pass only one argument - count of
- *              unread messages.
+ * @param chat Reference on \c chat instance for which count should be fetched.
+ * @param block Block / closure which will be called at the end of fetch process and pass number of
+ *     unread events count.
  */
 + (void)fetchUnreadCountForChat:(CENChat *)chat withCompletion:(void(^)(NSUInteger count))block;
 
@@ -130,3 +138,5 @@ extern CENUnreadMessagesConfigurationKeys CENUnreadMessagesConfiguration;
 
 
 @end
+
+NS_ASSUME_NONNULL_END

@@ -11,6 +11,12 @@
 @interface CENTypingIndicatorPluginIntegrationTest : CENTestCase
 
 
+#pragma mark - Information
+
+@property (nonatomic, strong) NSString *namespace;
+@property (nonatomic, strong) NSString *globalChannel;
+
+
 #pragma mark -
 
 
@@ -24,19 +30,39 @@
 
 #pragma mark - Setup / Tear down
 
+- (BOOL)shouldConnectChatEngineForTestCaseWithName:(NSString *)name {
+    
+    return YES;
+}
+
+- (NSString *)globalChatChannelForTestCaseWithName:(NSString *)name {
+    
+    NSString *channel = [super globalChatChannelForTestCaseWithName:name];
+    
+    if (!self.globalChannel) {
+        self.globalChannel = channel;
+    }
+    
+    return self.globalChannel ?: channel;
+}
+
+- (NSString *)namespaceForTestCaseWithName:(NSString *)name {
+    
+    NSString *namespace = [super namespaceForTestCaseWithName:name];
+    
+    if (!self.namespace) {
+        self.namespace = namespace;
+    }
+    
+    return self.namespace ?: namespace;
+}
+
 - (void)setUp {
     
     [super setUp];
     
+    
     NSTimeInterval timeout = 2.f;
-    NSString *global = [@[@"test", [NSUUID UUID].UUIDString] componentsJoinedByString:@"-"];
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    
-    [self setupChatEngineWithGlobal:global forUser:@"ian" synchronization:NO meta:NO state:@{ @"works": @YES }];
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.delayBetweenActions * NSEC_PER_SEC)));
-    
-    [self setupChatEngineWithGlobal:global forUser:@"stephen" synchronization:NO meta:NO state:@{ @"works": @YES }];
     
     if ([self.name rangeOfString:@"ShouldNotSendStartTypingEvent_WhenAlreadyCalledHelperMethod"].location == NSNotFound &&
         [self.name rangeOfString:@"ShouldSendStopTypingEvent_WhenCalledHelperMethod"].location == NSNotFound) {
@@ -48,86 +74,75 @@
     }
     
     NSDictionary *configuration = @{ CENTypingIndicatorConfiguration.timeout: @(timeout) };
+    
+    [self setupChatEngineForUser:@"ian"];
+    [self setupChatEngineForUser:@"stephen"];
     [self chatEngineForUser:@"ian"].global.plugin([CENTypingIndicatorPlugin class]).configuration(configuration).store();
     [self chatEngineForUser:@"stephen"].global.plugin([CENTypingIndicatorPlugin class]).configuration(configuration).store();
-    
-    // Give some time to connect both users.
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.delayBetweenActions * NSEC_PER_SEC)));
 }
 
 - (void)testStartTyping_ShouldSendStartTypingEvent_WhenCalledHelperMethod {
     
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     CENChatEngine *client1 = [self chatEngineForUser:@"ian"];
     CENChatEngine *client2 = [self chatEngineForUser:@"stephen"];
-    __block BOOL handlerCalled = NO;
     
-    client2.global.once(@"$typingIndicator.startTyping", ^(NSDictionary *payload) {
-        NSString *sender = ((CENUser *)payload[CENEventData.sender]).uuid;
-        
-        XCTAssertNotEqual([sender rangeOfString:@"ian"].location, NSNotFound);
-        dispatch_semaphore_signal(semaphore);
-    });
     
-    [CENTypingIndicatorPlugin setTyping:YES inChat:client1.global];
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.delayBetweenActions * NSEC_PER_SEC)));
-    
-    [CENTypingIndicatorPlugin checkIsTypingInChat:client1.global withCompletion:^(BOOL isTyping) {
-        handlerCalled = YES;
-        
-        XCTAssertTrue(isTyping);
-        dispatch_semaphore_signal(semaphore);
+    [self object:client2.global shouldHandleEvent:@"$typingIndicator.startTyping"
+     withHandler:^CENEventHandlerBlock (dispatch_block_t handler) {
+         
+        return ^(CENEmittedEvent *emittedEvent) {
+            NSDictionary *payload = emittedEvent.data;
+            NSString *sender = ((CENUser *)payload[CENEventData.sender]).uuid;
+            
+            XCTAssertNotEqual([sender rangeOfString:@"ian"].location, NSNotFound);
+            handler();
+        };
+    } afterBlock:^{
+        [CENTypingIndicatorPlugin setTyping:YES inChat:client1.global];
     }];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
-    XCTAssertTrue(handlerCalled);
+    [self waitToCompleteIn:self.testCompletionDelay codeBlock:^(dispatch_block_t handler) {
+        [CENTypingIndicatorPlugin checkIsTypingInChat:client1.global withCompletion:^(BOOL isTyping) {
+            XCTAssertTrue(isTyping);
+            handler();
+        }];
+    }];
 }
 
 - (void)testStartTyping_ShouldNotSendStartTypingEvent_WhenAlreadyCalledHelperMethod {
     
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     CENChatEngine *client1 = [self chatEngineForUser:@"ian"];
     CENChatEngine *client2 = [self chatEngineForUser:@"stephen"];
-    __block BOOL handlerCalledTwice = NO;
     
-    client2.global.once(@"$typingIndicator.startTyping", ^(NSDictionary *payload) {
+    
+    [self object:client2.global shouldHandleEvent:@"$typingIndicator.startTyping" afterBlock:^{
         [CENTypingIndicatorPlugin setTyping:YES inChat:client1.global];
-        
-        client2.global.once(@"$typingIndicator.startTyping", ^(NSDictionary *payload) {
-            handlerCalledTwice = YES;
-            
-            dispatch_semaphore_signal(semaphore);
-        });
-    });
+    }];
     
-    [CENTypingIndicatorPlugin setTyping:YES inChat:client1.global];
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.falseTestCompletionDelay * NSEC_PER_SEC)));
-    XCTAssertFalse(handlerCalledTwice);
+    [self object:client2.global shouldNotHandleEvent:@"$typingIndicator.startTyping"
+     withHandler:^CENEventHandlerBlock (dispatch_block_t handler) {
+         
+        return ^(CENEmittedEvent *emittedEvent) {
+            handler();
+        };
+    } afterBlock:^{
+        [CENTypingIndicatorPlugin setTyping:YES inChat:client1.global];
+    }];
 }
 
 - (void)teststopTyping_ShouldSendStopTypingEvent_WhenCalledHelperMethod {
     
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     CENChatEngine *client1 = [self chatEngineForUser:@"ian"];
     CENChatEngine *client2 = [self chatEngineForUser:@"stephen"];
-    __block BOOL handlerCalled = NO;
     
-    client2.global.once(@"$typingIndicator.startTyping", ^(NSDictionary *payload) {
+    
+    [self object:client2.global shouldHandleEvent:@"$typingIndicator.startTyping" afterBlock:^{
+        [CENTypingIndicatorPlugin setTyping:YES inChat:client1.global];
+    }];
+    
+    [self object:client2.global shouldHandleEvent:@"$typingIndicator.stopTyping" afterBlock:^{
         [CENTypingIndicatorPlugin setTyping:NO inChat:client1.global];
-    });
-    
-    client2.global.once(@"$typingIndicator.stopTyping", ^(NSDictionary *payload) {
-        handlerCalled = YES;
-        
-        dispatch_semaphore_signal(semaphore);
-    });
-    
-    [CENTypingIndicatorPlugin setTyping:YES inChat:client1.global];
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
-    XCTAssertTrue(handlerCalled);
+    }];
 }
 
 #pragma mark -

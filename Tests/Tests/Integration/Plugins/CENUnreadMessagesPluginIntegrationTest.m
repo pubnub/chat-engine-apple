@@ -11,6 +11,11 @@
 @interface CENUnreadMessagesPluginIntegrationTest : CENTestCase
 
 
+#pragma mark - Information
+
+@property (nonatomic, strong) NSString *namespace;
+@property (nonatomic, strong) NSString *globalChannel;
+
 #pragma mark -
 
 
@@ -24,20 +29,40 @@
 
 #pragma mark - Setup / Tear down
 
+- (BOOL)shouldConnectChatEngineForTestCaseWithName:(NSString *)name {
+    
+    return YES;
+}
+
+- (NSString *)globalChatChannelForTestCaseWithName:(NSString *)name {
+    
+    NSString *channel = [super globalChatChannelForTestCaseWithName:name];
+    
+    if (!self.globalChannel) {
+        self.globalChannel = channel;
+    }
+    
+    return self.globalChannel ?: channel;
+}
+
+- (NSString *)namespaceForTestCaseWithName:(NSString *)name {
+    
+    NSString *namespace = [super namespaceForTestCaseWithName:name];
+    
+    if (!self.namespace) {
+        self.namespace = namespace;
+    }
+    
+    return self.namespace ?: namespace;
+}
+
 - (void)setUp {
     
     [super setUp];
     
+    
     NSDictionary *configuration = nil;
     NSArray<NSString *> *eventNames = nil;
-    NSString *global = [@[@"test", [NSUUID UUID].UUIDString] componentsJoinedByString:@"-"];
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    
-    [self setupChatEngineWithGlobal:global forUser:@"ian" synchronization:NO meta:NO state:@{ @"works": @YES }];
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.delayBetweenActions * NSEC_PER_SEC)));
-        
-    [self setupChatEngineWithGlobal:global forUser:@"stephen" synchronization:NO meta:NO state:@{ @"works": @YES }];
     
     if ([self.name rangeOfString:@"testConstructor_ShouldEmitUnreadEvent_WhenPluginRegisteredOnEvent"].location != NSNotFound ||
         [self.name rangeOfString:@"ShouldNotEmitUnreadEvent_WhenPluginNotRegisteredOnEvent"].location != NSNotFound) {
@@ -48,211 +73,161 @@
         configuration = @{ CENUnreadMessagesConfiguration.events: eventNames };
     }
     
+    [self setupChatEngineForUser:@"ian"];
+    [self setupChatEngineForUser:@"stephen"];
     [self chatEngineForUser:@"ian"].global.plugin([CENUnreadMessagesPlugin class]).configuration(configuration).store();
     [self chatEngineForUser:@"stephen"].global.plugin([CENUnreadMessagesPlugin class]).configuration(configuration).store();
-    
-    // Give some time to connect both users.
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.delayBetweenActions * NSEC_PER_SEC)));
 }
 
 - (void)testConstructor_ShouldEmitUnreadEventForMessageEvent_WhenNoConfigurationPassed {
     
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     CENChatEngine *client1 = [self chatEngineForUser:@"ian"];
     CENChatEngine *client2 = [self chatEngineForUser:@"stephen"];
-    __block BOOL handlerCalled = NO;
     
-    client2.global.once(@"$unread", ^(NSDictionary *payload) {
-        handlerCalled = YES;
-        
-        XCTAssertNotNil(payload);
-        dispatch_semaphore_signal(semaphore);
-    });
     
-    client1.global.emit(@"message").data(@{ @"text": @"Hi!" }).perform();
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
-    XCTAssertTrue(handlerCalled);
+    [self object:client2.global shouldHandleEvent:@"$unread" withHandler:^CENEventHandlerBlock (dispatch_block_t handler) {
+        return ^(CENEmittedEvent *emittedEvent) {
+            NSDictionary *payload = emittedEvent.data;
+            
+            XCTAssertNotNil(payload);
+            handler();
+        };
+    } afterBlock:^{
+        client1.global.emit(@"message").data(@{ @"text": @"Hi!" }).perform();
+    }];
 }
 
 - (void)testConstructor_ShouldEmitUnreadEvent_WhenPluginRegisteredOnEvent {
     
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     CENChatEngine *client1 = [self chatEngineForUser:@"ian"];
     CENChatEngine *client2 = [self chatEngineForUser:@"stephen"];
-    __block BOOL handlerCalled = NO;
     
-    client2.global.once(@"$unread", ^(NSDictionary *payload) {
-        handlerCalled = YES;
+    
+    [self object:client2.global shouldHandleEvent:@"$unread" withHandler:^CENEventHandlerBlock (dispatch_block_t handler) {
+        return ^(CENEmittedEvent *emittedEvent) {
+            NSDictionary *payload = emittedEvent.data;
         
-        XCTAssertNotNil(payload);
-        dispatch_semaphore_signal(semaphore);
-    });
-    
-    client1.global.emit(@"ping").data(@{ @"text": @"Hi!" }).perform();
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
-    XCTAssertTrue(handlerCalled);
+            XCTAssertNotNil(payload);
+            handler();
+        };
+    } afterBlock:^{
+        client1.global.emit(@"ping").data(@{ @"text": @"Hi!" }).perform();
+    }];
 }
 
 - (void)testConstructor_ShouldNotEmitUnreadEvent_WhenPluginNotRegisteredOnEvent {
     
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     CENChatEngine *client1 = [self chatEngineForUser:@"ian"];
     CENChatEngine *client2 = [self chatEngineForUser:@"stephen"];
-    __block BOOL handlerCalled = NO;
     
-    client2.global.once(@"$unread", ^(NSDictionary *payload) {
-        handlerCalled = YES;
-        
-        dispatch_semaphore_signal(semaphore);
-    });
     
-    client1.global.emit(@"pong").data(@{ @"text": @"Hi!" }).perform();
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.falseTestCompletionDelay * NSEC_PER_SEC)));
-    XCTAssertFalse(handlerCalled);
+    [self object:client2.global shouldNotHandleEvent:@"$unread" withHandler:^CENEventHandlerBlock (dispatch_block_t handler) {
+        return ^(CENEmittedEvent *emittedEvent) {
+            handler();
+        };
+    } afterBlock:^{
+        client1.global.emit(@"pong").data(@{ @"text": @"Hi!" }).perform();
+    }];
 }
 
 - (void)testUnreadEvent_ShouldEmitUnreadEvent_WhenMessageSentToNotActiveChat {
     
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     CENChatEngine *client1 = [self chatEngineForUser:@"ian"];
     CENChatEngine *client2 = [self chatEngineForUser:@"stephen"];
-    __block BOOL handlerCalled = NO;
     
-    client2.global.once(@"$unread", ^(NSDictionary *payload) {
-        NSNumber *count = payload[CENUnreadMessagesEvent.count];
-        handlerCalled = YES;
+    
+    [self object:client2.global shouldHandleEvent:@"$unread" withHandler:^CENEventHandlerBlock (dispatch_block_t handler) {
+        return ^(CENEmittedEvent *emittedEvent) {
+            NSDictionary *payload = emittedEvent.data;
+            NSNumber *count = payload[CENUnreadMessagesEvent.count];
         
-        XCTAssertNotNil(payload);
-        XCTAssertEqual(count.unsignedIntegerValue, 1);
-        dispatch_semaphore_signal(semaphore);
-    });
-    
-    client1.global.emit(@"message").data(@{ @"text": @"Hi!" }).perform();
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
-    XCTAssertTrue(handlerCalled);
+            XCTAssertNotNil(payload);
+            XCTAssertEqual(count.unsignedIntegerValue, 1);
+            handler();
+        };
+    } afterBlock:^{
+        client1.global.emit(@"message").data(@{ @"text": @"Hi!" }).perform();
+    }];
 }
 
 - (void)testUnreadEvent_ShouldNotEmitUnreadEvent_WhenMessageSentToActiveChat {
     
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     CENChatEngine *client1 = [self chatEngineForUser:@"ian"];
     CENChatEngine *client2 = [self chatEngineForUser:@"stephen"];
-    __block BOOL handlerCalled = NO;
     
-    client2.global.once(@"$unread", ^(NSDictionary *payload) {
-        handlerCalled = YES;
-        
-        dispatch_semaphore_signal(semaphore);
-    });
     
-    [CENUnreadMessagesPlugin setChat:client2.global active:YES];
-    client1.global.emit(@"message").data(@{ @"text": @"Hi!" }).perform();
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.falseTestCompletionDelay * NSEC_PER_SEC)));
-    XCTAssertFalse(handlerCalled);
+    [self object:client2.global shouldNotHandleEvent:@"$unread" withHandler:^CENEventHandlerBlock (dispatch_block_t handler) {
+        return ^(CENEmittedEvent *emittedEvent) {
+            handler();
+        };
+    } afterBlock:^{
+        [CENUnreadMessagesPlugin setChat:client2.global active:YES];
+        client1.global.emit(@"message").data(@{ @"text": @"Hi!" }).perform();
+    }];
 }
 
 - (void)testUnreadEvent_ShouldNotEmitUnreadEvent_WhenMessageSentToChatWhichBecameNotActiveChat {
     
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     CENChatEngine *client1 = [self chatEngineForUser:@"ian"];
     CENChatEngine *client2 = [self chatEngineForUser:@"stephen"];
-    __block BOOL handlerCalledOnce = NO;
-    __block BOOL handlerCalledTwice = NO;
     
-    client2.global.on(@"$unread", ^(NSDictionary *payload) {
-        if(handlerCalledOnce) {
-            handlerCalledTwice = YES;
-            
-            dispatch_semaphore_signal(semaphore);
-        }
-        
-        if (!handlerCalledOnce) {
-        }
-        
-        handlerCalledOnce = YES;
-    });
     
-    [CENUnreadMessagesPlugin setChat:client2.global active:YES];
-    client1.global.emit(@"message").data(@{ @"text": @"Hi!" }).perform();
+    [self object:client2.global shouldNotHandleEvent:@"$unread" withHandler:^CENEventHandlerBlock (dispatch_block_t handler) {
+        return ^(CENEmittedEvent *emittedEvent) {
+            handler();
+        };
+    } afterBlock:^{
+        [CENUnreadMessagesPlugin setChat:client2.global active:YES];
+        client1.global.emit(@"message").data(@{ @"text": @"Hi!" }).perform();
+    }];
     
-    client2.global.once(@"message", ^(NSDictionary *payload) {
+    [self object:client2.global shouldHandleEvent:@"$unread" withHandler:^CENEventHandlerBlock (dispatch_block_t handler) {
+        return ^(CENEmittedEvent *emittedEvent) {
+            handler();
+        };
+    } afterBlock:^{
         [CENUnreadMessagesPlugin setChat:client2.global active:NO];
         client1.global.emit(@"message").data(@{ @"text": @"Hi there!" }).perform();
-    });
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.falseTestCompletionDelay * NSEC_PER_SEC)));
-    XCTAssertTrue(handlerCalledOnce);
-    XCTAssertFalse(handlerCalledTwice);
+    }];
 }
 
 
 - (void)testFetchUnreadCount_ShouldBeGreaterThanZero_WhenMessageSentToNotActiveChat {
     
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     CENChatEngine *client1 = [self chatEngineForUser:@"ian"];
     CENChatEngine *client2 = [self chatEngineForUser:@"stephen"];
-    __block BOOL handlerCalled = NO;
 
-    void(^countVerifyBlock)(NSDictionary *) = ^(NSDictionary *payload) {
-        [CENUnreadMessagesPlugin fetchUnreadCountForChat:client2.global withCompletion:^(NSUInteger unreadCount) {
-            handlerCalled = YES;
-            
-            XCTAssertGreaterThan(unreadCount, 0);
-            dispatch_semaphore_signal(semaphore);
-        }];
-    };
     
-    if (YHVVCR.cassette.isNewCassette) {
-        client2.global.once(@"message", countVerifyBlock);
-    }
-    
-    [CENUnreadMessagesPlugin setChat:client2.global active:NO];
-    client1.global.emit(@"message").data(@{ @"text": @"Hi!" }).perform();
-    
-    if (!YHVVCR.cassette.isNewCassette) {
-        dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.delayedCheck * NSEC_PER_SEC)));
-        countVerifyBlock(nil);
-    }
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
-    XCTAssertTrue(handlerCalled);
+    [self object:client2.global shouldHandleEvent:@"message" withHandler:^CENEventHandlerBlock (dispatch_block_t handler) {
+        return ^(CENEmittedEvent *emittedEvent) {
+            [CENUnreadMessagesPlugin fetchUnreadCountForChat:client2.global withCompletion:^(NSUInteger unreadCount) {
+                XCTAssertGreaterThan(unreadCount, 0);
+                handler();
+            }];
+        };
+    } afterBlock:^{
+        [CENUnreadMessagesPlugin setChat:client2.global active:NO];
+        client1.global.emit(@"message").data(@{ @"text": @"Hi!" }).perform();
+    }];
 }
 
 - (void)testFetchUnreadCount_ShouldBeEqualToZero_WhenMessageSentToActiveChat {
     
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     CENChatEngine *client1 = [self chatEngineForUser:@"ian"];
     CENChatEngine *client2 = [self chatEngineForUser:@"stephen"];
-    __block BOOL handlerCalled = NO;
-   
-    void(^countVerifyBlock)(NSDictionary *) = ^(NSDictionary *payload) {
-        [CENUnreadMessagesPlugin fetchUnreadCountForChat:client2.global withCompletion:^(NSUInteger unreadCount) {
-            handlerCalled = YES;
-            
-            XCTAssertEqual(unreadCount, 0);
-            dispatch_semaphore_signal(semaphore);
-        }];
-    };
     
-    if (YHVVCR.cassette.isNewCassette) {
-        client2.global.once(@"message", countVerifyBlock);
-    }
     
-    [CENUnreadMessagesPlugin setChat:client2.global active:YES];
-    client1.global.emit(@"message").data(@{ @"text": @"Hi!" }).perform();
-    
-    if (!YHVVCR.cassette.isNewCassette) {
-        dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.delayedCheck * NSEC_PER_SEC)));
-        countVerifyBlock(nil);
-    }
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
-    XCTAssertTrue(handlerCalled);
+    [self object:client2.global shouldHandleEvent:@"message" withHandler:^CENEventHandlerBlock (dispatch_block_t handler) {
+        return ^(CENEmittedEvent *emittedEvent) {
+            [CENUnreadMessagesPlugin fetchUnreadCountForChat:client2.global withCompletion:^(NSUInteger unreadCount) {
+                XCTAssertEqual(unreadCount, 0);
+                handler();
+            }];
+        };
+    } afterBlock:^{
+        [CENUnreadMessagesPlugin setChat:client2.global active:YES];
+        client1.global.emit(@"message").data(@{ @"text": @"Hi!" }).perform();
+    }];
 }
 
 #pragma mark -

@@ -2,13 +2,14 @@
 #define ChatEngine_h
 
 
-#pragma mark - Core
+#pragma mark Core
 
 #import "CENChatEngine.h"
 #import "CENChatEngine+Connection.h"
 #import "CENChatEngine+PubNub.h"
 #import "CENChatEngine+Chat.h"
 #import "CENChatEngine+User.h"
+#import "CENEmittedEvent.h"
 
 #if CHATENGINE_USE_BUILDER_INTERFACE
 

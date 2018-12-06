@@ -18,6 +18,7 @@ abstract_target 'Tests' do
   target '[Test] iOS Unit'
   target '[Test] iOS Integration'
   target '[Test] Code Coverage (Unit)'
+  target '[Test] Code Coverage (Integration)'
   target '[Test] Code Coverage (Full)'
 end
 
@@ -44,12 +45,14 @@ post_install do |installer_representation|
             if target.name =~ /PubNub/ then
                 config.build_settings['GCC_GENERATE_TEST_COVERAGE_FILES'] = 'NO'
                 config.build_settings['GCC_INSTRUMENT_PROGRAM_FLOW_ARCS'] = 'NO'
+                #config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] ||= ['$(inherited)', 'PUBNUB_DISABLE_LOGGER=1']
             end
             if target.name =~ /YAHTTPVCR/ then
                 config.build_settings['GCC_GENERATE_TEST_COVERAGE_FILES'] = 'NO'
                 config.build_settings['GCC_INSTRUMENT_PROGRAM_FLOW_ARCS'] = 'NO'
             end
             if target.name =~ /CENChatEngine/ then
+                config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '10.0'
                 config.build_settings['GCC_GENERATE_TEST_COVERAGE_FILES'] = 'NO'
                 config.build_settings['GCC_INSTRUMENT_PROGRAM_FLOW_ARCS'] = 'NO'
                 config.build_settings['CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING'] = 'YES_ERROR'

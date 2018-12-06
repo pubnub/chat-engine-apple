@@ -4,13 +4,16 @@
  */
 #import <XCTest/XCTest.h>
 #import <OCMock/OCMock.h>
+#import <CENChatEngine/CENStateRestoreAugmentationPlugin.h>
 #import <CENChatEngine/CENChatEngine+PluginsPrivate.h>
 #import <CENChatEngine/CENChatEngine+PubNubPrivate.h>
 #import <CENChatEngine/CENChatEngine+EventEmitter.h>
 #import <CENChatEngine/CENEventEmitter+Interface.h>
 #import <CENChatEngine/CENChatEngine+ChatPrivate.h>
+#import <CENChatEngine/CENChatEngine+UserPrivate.h>
 #import <CENChatEngine/CENEventEmitter+Private.h>
 #import <CENChatEngine/CENSearchFilterPlugin.h>
+#import <CENChatEngine/CENSearch+Interface.h>
 #import <CENChatEngine/CENSearch+Private.h>
 #import <CENChatEngine/CENObject+Private.h>
 #import <CENChatEngine/CENObject+Plugins.h>
@@ -23,26 +26,20 @@
 @interface CENSearchTest : CENTestCase
 
 
-#pragma mark - Information
-
-@property (nonatomic, nullable, weak) CENChatEngine *client;
-@property (nonatomic, nullable, weak) CENChatEngine *clientMock;
-
-@property (nonatomic, nullable, strong) CENSearch *searchStartDate3EndDate18;
-@property (nonatomic, nullable, strong) CENSearch *searchLimit40Count20;
-@property (nonatomic, nullable, strong) CENSearch *searchPages1Count20;
-@property (nonatomic, nullable, strong) CENSearch *searchDefault;
-
-
 #pragma mark - Misc
 
-- (void)stubFetchedMessagesWithResult:(PNHistoryResult *)result errorStatus:(PNErrorStatus *)error inInvocation:(NSInvocation *)invocation;
+- (CENSearch *)defaultSearcher;
+- (CENSearch *)searcherInChat:(CENChat *)chat;
+- (CENSearch *)searcherInChat:(CENChat *)chat forEventsFrom:(CENUser *)user;
+- (CENSearch *)searcherInChat:(CENChat *)chat forEvents:(NSString *)event sentFrom:(CENUser *)user;
 
-- (PNHistoryResult *)historyResultForEvent:(NSString *)eventName sentToChannel:(NSString *)channel fromSender:(NSString *)sender
-                                 withCount:(NSUInteger)messagesCount startDate:(NSNumber *)start endDate:(NSNumber *)end;
+- (PNHistoryResult *)resultFromSearcher:(CENSearch *)search withCount:(NSUInteger)count;
+- (PNHistoryResult *)resultForChannel:(NSString *)channel from:(NSString *)sender
+                            withCount:(NSUInteger)messagesCount start:(NSNumber *)start
+                                  end:(NSNumber *)end;
 - (PNErrorStatus *)historyErrorStatus;
 
-- (NSDictionary *)payloadForEvent:(NSString *)event withData:(id)data sentBy:(CENUser *)sender toChat:(NSString *)channel;
+- (NSDictionary *)payloadWithData:(id)data sentBy:(NSString *)sender toChat:(NSString *)channel;
 
 #pragma mark -
 
@@ -62,39 +59,9 @@
     return NO;
 }
 
-- (void)setUp {
+- (BOOL)shouldThrowExceptionForTestCaseWithName:(NSString *)name {
     
-    [super setUp];
-    
-    self.client = [self chatEngineWithConfiguration:[CENConfiguration configurationWithPublishKey:@"test-36" subscribeKey:@"test-36"]];
-    self.clientMock = [self partialMockForObject:self.client];
-    
-    OCMStub([self.clientMock fetchParticipantsForChat:[OCMArg any]]).andDo(nil);
-    OCMStub([self.clientMock createDirectChatForUser:[OCMArg any]])
-        .andReturn(self.clientMock.Chat().name(@"chat-engine#user#tester#write.#direct").autoConnect(NO).create());
-    OCMStub([self.clientMock createFeedChatForUser:[OCMArg any]])
-        .andReturn(self.clientMock.Chat().name(@"chat-engine#user#tester#read.#feed").autoConnect(NO).create());
-    OCMStub([self.clientMock me]).andReturn([CENMe userWithUUID:@"tester" state:@{} chatEngine:self.clientMock]);
-    
-    CENChat *chat = self.client.Chat().name(@"test-chat").autoConnect(NO).create();
-    self.searchStartDate3EndDate18 = [CENSearch searchForEvent:nil inChat:chat sentBy:nil withLimit:20 pages:1 count:20 start:@3 end:@18 chatEngine:self.client];
-    self.searchLimit40Count20 = [CENSearch searchForEvent:nil inChat:chat sentBy:nil withLimit:40 pages:0 count:20 start:nil end:nil chatEngine:self.client];
-    self.searchPages1Count20 = [CENSearch searchForEvent:nil inChat:chat sentBy:nil withLimit:200 pages:1 count:20 start:nil end:nil chatEngine:self.client];
-    self.searchDefault = [CENSearch searchForEvent:nil inChat:chat sentBy:nil withLimit:0 pages:0 count:0 start:nil end:nil chatEngine:self.client];
-}
-
-- (void)tearDown {
-
-    [self.searchStartDate3EndDate18 destruct];
-    [self.searchLimit40Count20 destruct];
-    [self.searchPages1Count20 destruct];
-    [self.searchDefault destruct];
-    self.searchStartDate3EndDate18 = nil;
-    self.searchLimit40Count20 = nil;
-    self.searchPages1Count20 = nil;
-    self.searchDefault = nil;
-    
-    [super tearDown];
+    return NO;
 }
 
 
@@ -102,8 +69,10 @@
 
 - (void)testConstructor_ShouldCreateWithDefaults {
     
-    CENChat *chat = self.client.Chat().name(@"test-chat").autoConnect(NO).create();
-    CENSearch *search = [CENSearch searchForEvent:nil inChat:chat sentBy:nil withLimit:0 pages:0 count:0 start:nil end:nil chatEngine:self.client];
+    CENChat *chat = [self publicChatWithChatEngine:self.client];
+    CENSearch *search = [CENSearch searchForEvent:nil inChat:chat sentBy:nil withLimit:0 pages:0 count:0
+                                            start:nil end:nil chatEngine:self.client];
+    
     
     XCTAssertNotNil(search);
     XCTAssertNotNil(search.chat);
@@ -115,45 +84,49 @@
     XCTAssertEqual(search.chatEngine, self.client);
 }
 
-- (void)testConstructor_ShouldNOtCreate_WhenNonNSStringEventNamePassed {
+- (void)testConstructor_ShouldNotCreate_WhenNonNSStringEventNamePassed {
     
-    CENChat *chat = self.client.Chat().name(@"test-chat").autoConnect(NO).create();
+    CENChat *chat = [self publicChatWithChatEngine:self.client];
     
-    XCTAssertNil([CENSearch searchForEvent:(id)@2010 inChat:chat sentBy:nil withLimit:0 pages:0 count:0 start:nil end:nil chatEngine:self.client]);
+    
+    XCTAssertNil([CENSearch searchForEvent:(id)@2010 inChat:chat sentBy:nil withLimit:0 pages:0 count:0
+                                     start:nil end:nil chatEngine:self.client]);
 }
 
-- (void)testConstructor_ShouldNOtCreate_WhenEmptyEventNamePassed {
+- (void)testConstructor_ShouldNotCreate_WhenEmptyEventNamePassed {
     
-    CENChat *chat = self.client.Chat().name(@"test-chat").autoConnect(NO).create();
+    CENChat *chat = [self publicChatWithChatEngine:self.client];
     
-    XCTAssertNil([CENSearch searchForEvent:@"" inChat:chat sentBy:nil withLimit:0 pages:0 count:0 start:nil end:nil chatEngine:self.client]);
+    
+    XCTAssertNil([CENSearch searchForEvent:@"" inChat:chat sentBy:nil withLimit:0 pages:0 count:0
+                                     start:nil end:nil chatEngine:self.client]);
 }
 
-- (void)testConstructor_ShouldNOtCreate_WhenNonCENUserSenderPassed {
+- (void)testConstructor_ShouldNotCreate_WhenNonCENUserSenderPassed {
     
-    CENChat *chat = self.client.Chat().name(@"test-chat").autoConnect(NO).create();
+    CENChat *chat = [self publicChatWithChatEngine:self.client];
     
-    XCTAssertNil([CENSearch searchForEvent:nil inChat:chat sentBy:(id)@2010 withLimit:0 pages:0 count:0 start:nil end:nil chatEngine:self.client]);
+    
+    XCTAssertNil([CENSearch searchForEvent:nil inChat:chat sentBy:(id)@2010 withLimit:0 pages:0 count:0
+                                     start:nil end:nil chatEngine:self.client]);
 }
+
 
 - (void)testConstructor_ShouldCreateWithPlugins_WhenSenderOrEventNamePassed {
     
-    NSDictionary *expectedPluginConfiguraiton = @{ @"sender": self.clientMock.me.uuid, @"event": @"test-event" };
-    CENChat *chat = self.clientMock.Chat().name(@"test-chat").autoConnect(NO).create();
+    self.usesMockedObjects = YES;
+    CENUser *user = self.client.User([NSUUID UUID].UUIDString).create();
+    NSDictionary *expectedConfiguraiton = @{ @"sender": user.uuid, @"event": @"test-event" };
+    CENChat *chat = [self publicChatWithChatEngine:self.client];
     
-    OCMExpect([self.clientMock registerPlugin:[CENSearchFilterPlugin class] withIdentifier:[OCMArg any] configuration:expectedPluginConfiguraiton
-                                    forObject:[OCMArg any] firstInList:YES completion:[OCMArg any]]).andDo(nil);
     
-    CENSearch *search = [CENSearch searchForEvent:@"test-event" inChat:chat sentBy:self.clientMock.me withLimit:0 pages:0 count:0
-                                          start:nil end:nil chatEngine:self.clientMock];
+    OCMExpect([self.client registerPlugin:[CENSearchFilterPlugin class] withIdentifier:[OCMArg any]
+                            configuration:expectedConfiguraiton forObject:[OCMArg any] firstInList:YES
+                               completion:[OCMArg any]]).andDo(nil);
     
-    OCMVerifyAll((id)self.clientMock);
-    XCTAssertNotNil(search);
-    XCTAssertNotNil(search.chat);
-    XCTAssertEqual(search.chat, chat);
-    XCTAssertEqual(search.limit, 20);
-    XCTAssertEqual(search.count, 100);
-    XCTAssertEqual(search.pages, 10);
+    [self searcherInChat:chat forEvents:@"test-event" sentFrom:user];
+    
+    OCMVerifyAll((id)self.client);
 }
 
 
@@ -161,225 +134,219 @@
 
 - (void)testSearch_ShouldEmitSearchStart_WhenStartedSearch {
     
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    __block BOOL handlerCalled = NO;
+    CENSearch *search = [self defaultSearcher];
     
-    [self.searchDefault handleEventOnce:@"$.search.start" withHandlerBlock:^{
-        handlerCalled = YES;
-        
-        dispatch_semaphore_signal(semaphore);
+    
+    [self object:search shouldHandleEvent:@"$.search.start" withHandler:^CENEventHandlerBlock (dispatch_block_t handler) {
+        return ^(CENEmittedEvent *emittedEvent) {
+            handler();
+        };
+    } afterBlock:^{
+        search.search();
     }];
-    
-    self.searchDefault.search();
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
-    XCTAssertTrue(handlerCalled);
 }
 
 - (void)testSearch_ShouldEmitPageRequest_WhenStartedSearch {
     
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    __block BOOL handlerCalled = NO;
+    CENSearch *search = [self defaultSearcher];
     
-    [self.searchDefault handleEventOnce:@"$.search.page.request" withHandlerBlock:^{
-        handlerCalled = YES;
-        
-        dispatch_semaphore_signal(semaphore);
+    
+    [self object:search shouldHandleEvent:@"$.search.page.request" withHandler:^CENEventHandlerBlock (dispatch_block_t handler) {
+        return ^(CENEmittedEvent *emittedEvent) {
+            handler();
+        };
+    } afterBlock:^{
+        search.search();
     }];
-    
-    self.searchDefault.search();
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
-    XCTAssertTrue(handlerCalled);
 }
 
 - (void)testSearch_ShouldEmitPageResponse_WhenFirstSearchResultRetrieved {
     
-    PNHistoryResult *history = [self historyResultForEvent:@"test-event" sentToChannel:@"test-chat" fromSender:@"tester" withCount:0
-                                                 startDate:@1 endDate:@2];
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    __block BOOL handlerCalled = NO;
-    NSNumber *referenceDate = nil;
+    self.usesMockedObjects = YES;
+    CENSearch *search = [self defaultSearcher];
+    PNHistoryResult *history = [self resultFromSearcher:search withCount:0];
+    NSNumber *startDate = nil;
     
-    OCMStub([self.clientMock searchMessagesIn:self.searchDefault.chat.channel withStart:referenceDate limit:self.searchDefault.count completion:[OCMArg any]])
+    
+    OCMStub([self.client searchMessagesIn:search.chat.channel withStart:startDate limit:search.count completion:[OCMArg any]])
         .andDo(^(NSInvocation *invocation) {
-            [self stubFetchedMessagesWithResult:history errorStatus:nil inInvocation:invocation];
+            void(^handlerBlock)(id, id) = [self objectForInvocation:invocation argumentAtIndex:4];
+            handlerBlock(history, nil);
         });
     
-    
-    [self.searchDefault handleEventOnce:@"$.search.page.response" withHandlerBlock:^{
-        handlerCalled = YES;
-        
-        dispatch_semaphore_signal(semaphore);
+    [self object:search shouldHandleEvent:@"$.search.page.response" withHandler:^CENEventHandlerBlock (dispatch_block_t handler) {
+        return ^(CENEmittedEvent *emittedEvent) {
+            handler();
+        };
+    } afterBlock:^{
+        search.search();
     }];
-    
-    self.searchDefault.search();
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
-    XCTAssertTrue(handlerCalled);
 }
 
 - (void)testSearch_ShouldEmitFetchedEvent_WhenSearchResultRetrieved {
     
+    self.usesMockedObjects = YES;
     NSUInteger expectedEventsCount = 20;
-    PNHistoryResult *history = [self historyResultForEvent:@"test-event" sentToChannel:@"test-chat" fromSender:@"tester"
-                                                 withCount:expectedEventsCount startDate:@1 endDate:@2];
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
+    CENSearch *search = [self defaultSearcher];
+    PNHistoryResult *history = [self resultFromSearcher:search withCount:expectedEventsCount];
     __block NSUInteger fetchedEventsCount = 0;
-    __block BOOL handlerCalled = NO;
     
-    OCMStub([self.clientMock searchMessagesIn:[OCMArg any] withStart:[OCMArg any] limit:self.searchDefault.count completion:[OCMArg any]])
+    
+    OCMStub([self.client searchMessagesIn:[OCMArg any] withStart:[OCMArg any] limit:search.count completion:[OCMArg any]])
         .andDo(^(NSInvocation *invocation) {
-            [self stubFetchedMessagesWithResult:history errorStatus:nil inInvocation:invocation];
+            void(^handlerBlock)(id, id) = [self objectForInvocation:invocation argumentAtIndex:4];
+            handlerBlock(history, nil);
         });
     
-    [self.searchDefault handleEvent:@"test-event" withHandlerBlock:^(NSDictionary *payload) {
-        fetchedEventsCount++;
-        handlerCalled = YES;
-        
-        XCTAssertNotNil(payload);
-        if (fetchedEventsCount == expectedEventsCount) {
-            dispatch_semaphore_signal(semaphore);
-        }
+    [self object:search shouldHandleEvent:@"test-event" withHandler:^CENEventHandlerBlock (dispatch_block_t handler) {
+        return ^(CENEmittedEvent *emittedEvent) {
+            NSDictionary *payload = emittedEvent.data;
+            fetchedEventsCount++;
+            
+            XCTAssertNotNil(payload);
+            if (fetchedEventsCount == expectedEventsCount) {
+                handler();
+            }
+        };
+    } afterBlock:^{
+        search.search();
     }];
-    
-    self.searchDefault.search();
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
-    XCTAssertTrue(handlerCalled);
-    XCTAssertEqual(fetchedEventsCount, expectedEventsCount);
 }
 
 - (void)testSearch_ShouldEmitError_WhenReceivedFetchErrorStatus {
     
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    __block BOOL handlerCalled = NO;
+    self.usesMockedObjects = YES;
+    CENSearch *search = [self defaultSearcher];
     
-    OCMStub([self.clientMock searchMessagesIn:[OCMArg any] withStart:[OCMArg any] limit:self.searchDefault.count completion:[OCMArg any]])
+    
+    OCMStub([self.client searchMessagesIn:[OCMArg any] withStart:[OCMArg any] limit:search.count completion:[OCMArg any]])
         .andDo(^(NSInvocation *invocation) {
-            [self stubFetchedMessagesWithResult:nil errorStatus:[self historyErrorStatus] inInvocation:invocation];
+            void(^handlerBlock)(id, id) = [self objectForInvocation:invocation argumentAtIndex:4];
+            handlerBlock(nil, [self historyErrorStatus]);
         });
     
-    [self.searchDefault handleEventOnce:@"$.error.search" withHandlerBlock:^(NSError *error) {
-        handlerCalled = YES;
-        
-        XCTAssertNotNil(error);
-        dispatch_semaphore_signal(semaphore);
+    [self object:search shouldHandleEvent:@"$.error.search" withHandler:^CENEventHandlerBlock (dispatch_block_t handler) {
+        return ^(CENEmittedEvent *emittedEvent) {
+            XCTAssertNotNil(emittedEvent.data);
+            handler();
+        };
+    } afterBlock:^{
+        search.search();
     }];
-    
-    self.searchDefault.search();
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
-    XCTAssertTrue(handlerCalled);
 }
 
 - (void)testSearch_ShouldEmitSearchFinishEvent_WhenFetchedCountIsEqualToLimit {
     
-    PNHistoryResult *history = [self historyResultForEvent:@"test-event" sentToChannel:@"test-chat" fromSender:@"tester" withCount:20
-                                                 startDate:@1 endDate:@2];
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    __block BOOL handlerCalled = NO;
+    self.usesMockedObjects = YES;
+    CENSearch *search = [self defaultSearcher];
+    PNHistoryResult *history = [self resultFromSearcher:search withCount:20];
     
-    OCMStub([self.clientMock searchMessagesIn:[OCMArg any] withStart:[OCMArg any] limit:self.searchDefault.count completion:[OCMArg any]])
+    
+    OCMStub([self.client searchMessagesIn:[OCMArg any] withStart:[OCMArg any] limit:search.count completion:[OCMArg any]])
         .andDo(^(NSInvocation *invocation) {
-            [self stubFetchedMessagesWithResult:history errorStatus:nil inInvocation:invocation];
+            void(^handlerBlock)(id, id) = [self objectForInvocation:invocation argumentAtIndex:4];
+            handlerBlock(history, nil);
         });
     
-    [self.searchDefault handleEventOnce:@"$.search.finish" withHandlerBlock:^{
-        handlerCalled = YES;
-        
-        dispatch_semaphore_signal(semaphore);
+    [self object:search shouldHandleEvent:@"$.search.finish" withHandler:^CENEventHandlerBlock (dispatch_block_t handler) {
+        return ^(CENEmittedEvent *emittedEvent) {
+            handler();
+        };
+    } afterBlock:^{
+        search.search();
     }];
-    
-    self.searchDefault.search();
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
-    XCTAssertTrue(handlerCalled);
 }
 
 - (void)testSearch_ShouldFetchMoreHistoryPages_WhenFetchedCountIsEqualToLimit {
     
-    NSUInteger expectedPagesCount = 2;
-    PNHistoryResult *history = [self historyResultForEvent:@"test-event" sentToChannel:@"test-chat" fromSender:@"tester" withCount:20
-                                                 startDate:@1 endDate:@2];
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
+    self.usesMockedObjects = YES;
+    CENChat *chat = [self publicChatWithChatEngine:self.client];
+    CENSearch *search = [CENSearch searchForEvent:nil inChat:chat sentBy:nil withLimit:40 pages:0 count:20
+                                            start:nil end:nil chatEngine:self.client];
+    PNHistoryResult *history = [self resultFromSearcher:search withCount:20];
     __block NSUInteger fetchedPagesCount = 0;
-    __block BOOL handlerCalled = NO;
+    NSUInteger expectedPagesCount = 2;
     
-    OCMStub([self.clientMock searchMessagesIn:[OCMArg any] withStart:[OCMArg any] limit:self.searchLimit40Count20.count completion:[OCMArg any]])
+    
+    OCMStub([self.client searchMessagesIn:[OCMArg any] withStart:[OCMArg any] limit:search.count completion:[OCMArg any]])
         .andDo(^(NSInvocation *invocation) {
-            [self stubFetchedMessagesWithResult:history errorStatus:nil inInvocation:invocation];
+            void(^handlerBlock)(id, id) = [self objectForInvocation:invocation argumentAtIndex:4];
+            handlerBlock(history, nil);
         });
     
-    [self.searchLimit40Count20 handleEvent:@"$.search.page.request" withHandlerBlock:^{
-        fetchedPagesCount++;
-        handlerCalled = YES;
-        
-        if (fetchedPagesCount == expectedPagesCount) {
-            dispatch_semaphore_signal(semaphore);
-        }
+    [self object:search shouldHandleEvent:@"$.search.page.request" withHandler:^CENEventHandlerBlock (dispatch_block_t handler) {
+        return ^(CENEmittedEvent *emittedEvent) {
+            fetchedPagesCount++;
+            
+            if (fetchedPagesCount == expectedPagesCount) {
+                handler();
+            }
+        };
+    } afterBlock:^{
+        search.search();
     }];
-    
-    self.searchLimit40Count20.search();
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
-    XCTAssertTrue(handlerCalled);
-    XCTAssertEqual(fetchedPagesCount, expectedPagesCount);
 }
 
 - (void)testSearch_ShouldEmitSearchPause_WhenReachedPagesCountLimit {
     
-    PNHistoryResult *history = [self historyResultForEvent:@"test-event" sentToChannel:@"test-chat" fromSender:@"tester" withCount:20
-                                                 startDate:@1 endDate:@2];
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    __block BOOL handlerCalled = NO;
+    self.usesMockedObjects = YES;
+    CENChat *chat = [self publicChatWithChatEngine:self.client];
+    CENSearch *search = [CENSearch searchForEvent:nil inChat:chat sentBy:nil withLimit:200 pages:1 count:20
+                                            start:nil end:nil chatEngine:self.client];
+    PNHistoryResult *history = [self resultFromSearcher:search withCount:20];
     
-    OCMStub([self.clientMock searchMessagesIn:[OCMArg any] withStart:[OCMArg any] limit:self.searchPages1Count20.count completion:[OCMArg any]])
+    
+    OCMStub([self.client searchMessagesIn:[OCMArg any] withStart:[OCMArg any] limit:search.count completion:[OCMArg any]])
         .andDo(^(NSInvocation *invocation) {
-            [self stubFetchedMessagesWithResult:history errorStatus:nil inInvocation:invocation];
+            void(^handlerBlock)(id, id) = [self objectForInvocation:invocation argumentAtIndex:4];
+            handlerBlock(history, nil);
         });
     
-    [self.searchPages1Count20 handleEvent:@"$.search.pause" withHandlerBlock:^{
-        handlerCalled = YES;
-        
-        dispatch_semaphore_signal(semaphore);
+    [self object:search shouldHandleEvent:@"$.search.pause" withHandler:^CENEventHandlerBlock (dispatch_block_t handler) {
+        return ^(CENEmittedEvent *emittedEvent) {
+            XCTAssertTrue(search.hasMore);
+            handler();
+        };
+    } afterBlock:^{
+        search.search();
     }];
-    
-    self.searchPages1Count20.search();
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
-    XCTAssertTrue(handlerCalled);
-    XCTAssertTrue(self.searchPages1Count20.hasMore);
 }
 
 - (void)testSearch_ShouldNotifyAboutPartOfEvents_WhenStartAndEndDateSpecified {
     
-    PNHistoryResult *history = [self historyResultForEvent:@"test-event" sentToChannel:@"test-chat" fromSender:@"tester" withCount:100
-                                                 startDate:@1 endDate:@100];
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
+    self.usesMockedObjects = YES;
+    CENChat *chat = [self publicChatWithChatEngine:self.client];
+    PNHistoryResult *history = [self resultForChannel:chat.name from:@"tester" withCount:100 start:@1 end:@100];
+    CENSearch *search = [CENSearch searchForEvent:nil inChat:chat sentBy:nil withLimit:20 pages:1 count:20
+                                            start:@3 end:@18 chatEngine:self.client];
     __block NSUInteger fetchedEventsCount = 0;
-    NSUInteger expectedEventsCount = 18;
-    __block BOOL handlerCalled = NO;
+    NSUInteger expectedEventsCount = 16;
     
-    OCMStub([self.clientMock searchMessagesIn:[OCMArg any] withStart:[OCMArg any] limit:self.searchStartDate3EndDate18.count completion:[OCMArg any]])
+    
+    OCMStub([self.client searchMessagesIn:[OCMArg any] withStart:[OCMArg any] limit:search.count completion:[OCMArg any]])
         .andDo(^(NSInvocation *invocation) {
-            [self stubFetchedMessagesWithResult:history errorStatus:nil inInvocation:invocation];
+            void(^handlerBlock)(id, id) = [self objectForInvocation:invocation argumentAtIndex:4];
+            handlerBlock(history, nil);
         });
-    
-    [self.searchStartDate3EndDate18 handleEvent:@"test-event" withHandlerBlock:^{
-        handlerCalled = YES;
-        fetchedEventsCount++;
-        
-        if (fetchedEventsCount == expectedEventsCount) {
-            dispatch_semaphore_signal(semaphore);
-        }
+
+    [self object:search shouldHandleEvent:@"test-event" withHandler:^CENEventHandlerBlock (dispatch_block_t handler) {
+        return ^(CENEmittedEvent *emittedEvent) {
+            NSDictionary *payload = emittedEvent.data;
+            fetchedEventsCount++;
+            
+            XCTAssertNotNil(payload);
+            if (fetchedEventsCount == expectedEventsCount) {
+                dispatch_queue_t queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
+                dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.1 * NSEC_PER_SEC)), queue, ^{
+                    if (fetchedEventsCount == expectedEventsCount) {
+                        handler();
+                    }
+                });
+            }
+        };
+    } afterBlock:^{
+        search.search();
     }];
-    
-    self.searchStartDate3EndDate18.search();
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
-    XCTAssertTrue(handlerCalled);
-    XCTAssertEqual(fetchedEventsCount, expectedEventsCount);
 }
 
 
@@ -387,57 +354,198 @@
 
 - (void)testNext_ShouldSearchMore_WhenThereIsMoreData {
     
-    PNHistoryResult *history = [self historyResultForEvent:@"test-event" sentToChannel:@"test-chat" fromSender:@"tester" withCount:20
-                                                 startDate:@1 endDate:@2];
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    __block BOOL handlerCalled = NO;
+    self.usesMockedObjects = YES;
+    CENChat *chat = [self publicChatWithChatEngine:self.client];
+    CENSearch *search = [CENSearch searchForEvent:nil inChat:chat sentBy:nil withLimit:200 pages:1 count:20
+                                            start:nil end:nil chatEngine:self.client];
+    PNHistoryResult *history = [self resultFromSearcher:search withCount:20];
     
-    OCMStub([self.clientMock searchMessagesIn:[OCMArg any] withStart:[OCMArg any] limit:self.searchPages1Count20.count completion:[OCMArg any]])
+    OCMStub([self.client searchMessagesIn:[OCMArg any] withStart:[OCMArg any] limit:search.count completion:[OCMArg any]])
         .andDo(^(NSInvocation *invocation) {
-            [self stubFetchedMessagesWithResult:history errorStatus:nil inInvocation:invocation];
+            void(^handlerBlock)(id, id) = [self objectForInvocation:invocation argumentAtIndex:4];
+            handlerBlock(history, nil);
         });
     
-    [self.searchPages1Count20 handleEvent:@"$.search.pause" withHandlerBlock:^{
-        [self.searchPages1Count20 handleEvent:@"$.search.page.request" withHandlerBlock:^{
-            handlerCalled = YES;
+    [self object:search shouldHandleEvent:@"$.search.pause" withHandler:^CENEventHandlerBlock (dispatch_block_t handler) {
+        return ^(CENEmittedEvent *emittedEvent) {
+            [search handleEvent:@"$.search.page.request" withHandlerBlock:^(CENEmittedEvent *event) {
+                handler();
+            }];
             
-            dispatch_semaphore_signal(semaphore);
-        }];
-        self.searchPages1Count20.next();
+            search.next();
+        };
+    } afterBlock:^{
+        search.search();
     }];
-    
-    self.searchPages1Count20.search();
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
-    XCTAssertTrue(handlerCalled);
 }
 
 - (void)testNext_ShouldNotSearch_WhenThereIsNoMoreData {
     
-    PNHistoryResult *history = [self historyResultForEvent:@"test-event" sentToChannel:@"test-chat" fromSender:@"tester" withCount:20
-                                                 startDate:@1 endDate:@2];
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    __block BOOL handlerCalled = NO;
+    self.usesMockedObjects = YES;
+    CENSearch *search = [self defaultSearcher];
+    PNHistoryResult *history = [self resultFromSearcher:search withCount:20];
     
-    OCMStub([self.clientMock searchMessagesIn:[OCMArg any] withStart:[OCMArg any] limit:self.searchDefault.count completion:[OCMArg any]])
+    
+    OCMStub([self.client searchMessagesIn:[OCMArg any] withStart:[OCMArg any] limit:search.count completion:[OCMArg any]])
         .andDo(^(NSInvocation *invocation) {
-            [self stubFetchedMessagesWithResult:history errorStatus:nil inInvocation:invocation];
+            void(^handlerBlock)(id, id) = [self objectForInvocation:invocation argumentAtIndex:4];
+            handlerBlock(history, nil);
         });
     
-    [self.searchDefault handleEventOnce:@"$.search.finish" withHandlerBlock:^{
-        [self.searchDefault handleEventOnce:@"$.search.finish" withHandlerBlock:^{
-            handlerCalled = YES;
-            
-            dispatch_semaphore_signal(semaphore);
-        }];
-        
-        self.searchDefault.next();
+    [self object:search shouldHandleEvent:@"$.search.finish" withHandler:^CENEventHandlerBlock (dispatch_block_t handler) {
+        return ^(CENEmittedEvent *emittedEvent) {
+            handler();
+        };
+    } afterBlock:^{
+        search.search();
     }];
     
-    self.searchDefault.search();
+    id searchMock = [self mockForObject:search];
+    id recorded = OCMExpect([(CENSearch *)[searchMock reject] searchEvents]);
+    [self waitForObject:searchMock recordedInvocationNotCall:recorded withinInterval:self.falseTestCompletionDelay
+             afterBlock:^{
+                 search.next();
+             }];
+}
+
+
+#pragma mark - Tests :: restoreState / restoreStateForChat
+
+- (void)testRestoreState_ShouldRegisterUserStateResolverPlugin_WhenStateRestoreCalled {
+
+    CENSearch *search = [self defaultSearcher].restoreState(nil);
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
-    XCTAssertTrue(handlerCalled);
+    
+    XCTAssertTrue(search.plugin([CENStateRestoreAugmentationPlugin class]).exists());
+}
+
+- (void)testRestoreState_ShouldUseSearchChatForStateRestore_WhenStateRestoreCalledWithNil {
+    
+    CENSearch *search = [self defaultSearcher];
+    
+    
+    id searchMock = [self mockForObject:search];
+    OCMExpect([searchMock restoreStateForChat:nil]).andForwardToRealObject();
+    OCMExpect([searchMock defaultStateChat]).andForwardToRealObject();
+    XCTAssertEqualObjects([search defaultStateChat], search.chat);
+    
+    search.restoreState(nil);
+    
+    OCMVerifyAll(searchMock);
+}
+
+- (void)testRestoreState_ShouldUseCustomChatForStateRestore_WhenStateRestoreCalledWithChat {
+    
+    CENSearch *search = [self defaultSearcher];
+    CENChat *chat = self.client.Chat().autoConnect(NO).create();
+    
+    
+    id searchMock = [self mockForObject:search];
+    OCMExpect([searchMock restoreStateForChat:chat]).andForwardToRealObject();
+    OCMExpect([[searchMock reject] defaultStateChat]).andForwardToRealObject();
+    
+    search.restoreState(chat);
+    
+    OCMVerifyAll(searchMock);
+}
+
+- (void)testRestoreState_ShouldTryRestoreState_WhenStateRestoreCalledWithNil {
+    
+    self.usesMockedObjects = YES;
+    CENSearch *search = [self defaultSearcher];
+    PNHistoryResult *history = [self resultFromSearcher:search withCount:1];
+    
+    
+    OCMStub([self.client searchMessagesIn:[OCMArg any] withStart:[OCMArg any] limit:search.count completion:[OCMArg any]])
+        .andDo(^(NSInvocation *invocation) {
+            void(^handlerBlock)(id, id) = [self objectForInvocation:invocation argumentAtIndex:4];
+            handlerBlock(history, nil);
+        });
+    
+    id recorded = OCMExpect([self.client fetchUserState:[OCMArg any] forChat:search.chat withCompletion:[OCMArg any]]);
+    [self waitForObject:self.client recordedInvocationCall:recorded withinInterval:self.testCompletionDelay afterBlock:^{
+        search.restoreState(nil).search();
+    }];
+}
+
+- (void)testRestoreState_ShouldTryRestoreState_WhenStateRestoreCalledCalledWithChat {
+    
+    self.usesMockedObjects = YES;
+    CENSearch *search = [self defaultSearcher];
+    PNHistoryResult *history = [self resultFromSearcher:search withCount:1];
+    CENChat *chat = self.client.Chat().autoConnect(NO).create();
+    
+    
+    OCMStub([self.client searchMessagesIn:[OCMArg any] withStart:[OCMArg any] limit:search.count completion:[OCMArg any]])
+        .andDo(^(NSInvocation *invocation) {
+            void(^handlerBlock)(id, id) = [self objectForInvocation:invocation argumentAtIndex:4];
+            handlerBlock(history, nil);
+        });
+    
+    id recorded = OCMExpect([self.client fetchUserState:[OCMArg any] forChat:chat withCompletion:[OCMArg any]]);
+    [self waitForObject:self.client recordedInvocationCall:recorded withinInterval:self.testCompletionDelay afterBlock:^{
+        search.restoreState(chat).search();
+    }];
+}
+
+
+#pragma mark - Tests :: augmentation
+
+- (void)testAugmentation_ShouldReplaceChatNameWithCENChatInstance {
+    
+    self.usesMockedObjects = YES;
+    CENSearch *search = [self defaultSearcher];
+    NSDictionary *event = @{
+        CENEventData.sender: @"tester",
+        CENEventData.chat: search.chat.name,
+        CENEventData.data: @{ @"message": @"Hello" },
+        CENEventData.event: @"message",
+        CENEventData.timetoken: @1234567890,
+        CENEventData.eventID: [NSUUID UUID].UUIDString
+    };
+    
+    [self object:search shouldHandleEvent:@"message" withHandler:^CENEventHandlerBlock (dispatch_block_t handler) {
+        return ^(CENEmittedEvent *emittedEvent) {
+            NSDictionary *payload = emittedEvent.data;
+            
+            XCTAssertNotNil(payload[CENEventData.chat]);
+            XCTAssertTrue([payload[CENEventData.chat] isKindOfClass:[CENChat class]]);
+            XCTAssertEqualObjects(((CENChat *)payload[CENEventData.chat]).channel, search.chat.channel);
+            
+            handler();
+        };
+    } afterBlock:^{
+        [self.client triggerEventLocallyFrom:search event:@"message", event, nil];
+    }];
+}
+
+- (void)testAugmentation_ShouldReplaceSenderUUIDWithCENUserInstance {
+    
+    self.usesMockedObjects = YES;
+    CENSearch *search = [self defaultSearcher];
+    CENUser *user = [CENUser userWithUUID:@"test-user" state:@{} chatEngine:self.client];
+    NSDictionary *event = @{
+        CENEventData.sender: user.uuid,
+        CENEventData.chat: search.chat.name,
+        CENEventData.data: @{ @"message": @"Hello" },
+        CENEventData.event: @"message",
+        CENEventData.timetoken: @1234567890,
+        CENEventData.eventID: [NSUUID UUID].UUIDString
+    };
+    
+    [self object:search shouldHandleEvent:@"message" withHandler:^CENEventHandlerBlock (dispatch_block_t handler) {
+        return ^(CENEmittedEvent *emittedEvent) {
+            NSDictionary *payload = emittedEvent.data;
+            
+            XCTAssertNotNil(payload[CENEventData.sender]);
+            XCTAssertTrue([payload[CENEventData.sender] isKindOfClass:[CENUser class]]);
+            XCTAssertEqualObjects(((CENUser *)payload[CENEventData.sender]).uuid, user.uuid);
+            
+            handler();
+        };
+    } afterBlock:^{
+        [self.client triggerEventLocallyFrom:search event:@"message", event, nil];
+    }];
 }
 
 
@@ -445,37 +553,58 @@
 
 - (void)testDescription_ShouldProvideInstanceDescription {
     
-    NSString *description = [self.searchDefault description];
+    CENSearch *search = [self defaultSearcher];
+    NSString *description = [search description];
     
     XCTAssertNotNil(description);
     XCTAssertGreaterThan(description.length, 0);
 }
 
-
 #pragma mark - Misc
 
-- (void)stubFetchedMessagesWithResult:(PNHistoryResult *)result errorStatus:(PNErrorStatus *)error inInvocation:(NSInvocation *)invocation {
-
-    void(^handlerBlock)(PNHistoryResult *result, PNErrorStatus *status);
-
-    [invocation getArgument:&handlerBlock atIndex:5];
-    handlerBlock(result, error);
+- (CENSearch *)defaultSearcher {
+    
+    return [self searcherInChat:nil];
 }
 
-- (PNHistoryResult *)historyResultForEvent:(NSString *)eventName sentToChannel:(NSString *)channel fromSender:(NSString *)sender
-                                 withCount:(NSUInteger)messagesCount startDate:(NSNumber *)start endDate:(NSNumber *)end {
+- (CENSearch *)searcherInChat:(CENChat *)chat {
     
-    CENUser *senderUser = [CENUser userWithUUID:sender state:@{} chatEngine:self.client];
+    return [self searcherInChat:chat forEventsFrom:nil];
+}
+
+- (CENSearch *)searcherInChat:(CENChat *)chat forEventsFrom:(CENUser *)user {
+    
+    return [self searcherInChat:chat forEvents:nil sentFrom:user];
+}
+
+- (CENSearch *)searcherInChat:(CENChat *)chat forEvents:(NSString *)event sentFrom:(CENUser *)user {
+    
+    return [CENSearch searchForEvent:event inChat:(chat ?: [self publicChatWithChatEngine:self.client]) sentBy:user
+                           withLimit:0 pages:0 count:0 start:nil end:nil chatEngine:self.client];
+}
+
+- (PNHistoryResult *)resultFromSearcher:(CENSearch *)search withCount:(NSUInteger)count {
+    
+    return [self resultForChannel:search.chat.name from:search.sender.uuid ?: @"tester"
+                        withCount:count start:(search.start ?: @1) end:(search.end ?: @2)];
+}
+
+- (PNHistoryResult *)resultForChannel:(NSString *)channel from:(NSString *)sender
+                            withCount:(NSUInteger)messagesCount start:(NSNumber *)start
+                                  end:(NSNumber *)end {
+    
     NSMutableArray<NSDictionary *> *messages = [NSMutableArray new];
+    
     for (NSUInteger idx = 0; idx < messagesCount; idx++) {
-        NSDictionary *event = [self payloadForEvent:eventName withData:[NSString stringWithFormat:@"Message #%@", @(idx)] sentBy:senderUser
-                                             toChat:channel];
+        NSString *data = [NSString stringWithFormat:@"Message #%@", @(idx)];
+        NSDictionary *event = [self payloadWithData:data sentBy:sender toChat:channel];
         [messages addObject:@{ @"timetoken": @(idx + 1), @"message": event }];
     }
     
     NSDictionary *serviceData = @{ @"start": start, @"end": end, @"messages": messages };
     
-    return [PNHistoryResult objectForOperation:PNHistoryOperation completedWithTask:nil processedData:serviceData processingError:nil];;
+    return [PNHistoryResult objectForOperation:PNHistoryOperation completedWithTask:nil
+                                 processedData:serviceData processingError:nil];
 }
 
 - (PNErrorStatus *)historyErrorStatus {
@@ -485,14 +614,14 @@
                              processingError:nil];
 }
 
-- (NSDictionary *)payloadForEvent:(NSString *)event withData:(id)data sentBy:(CENUser *)sender toChat:(NSString *)channel {
+- (NSDictionary *)payloadWithData:(id)data sentBy:(NSString *)sender toChat:(NSString *)channel {
     
     return @{
         CENEventData.data: data,
         CENEventData.sender: sender,
         CENEventData.chat: channel,
-        CENEventData.event: event,
-        CENEventData.eventID: @"1234567890",
+        CENEventData.event: @"test-event",
+        CENEventData.eventID: [NSUUID UUID].UUIDString,
         CENEventData.sdk: @"objc/1.0"
     };
 }

@@ -9,12 +9,11 @@
 NS_ASSUME_NONNULL_BEGIN
 
 /**
- * @brief      \b ChatEngine chat room representation model.
- * @discussion This instance can be used to invite new user(s), send messages and receive updates.
+ * @brief \b {ChatEngine CENChatEngine} chat room representation.
  *
  * @author Serhii Mamontov
- * @version 0.9.0
- * @copyright © 2009-2018 PubNub, Inc.
+ * @version 0.10.0
+ * @copyright © 2010-2018 PubNub, Inc.
  */
 @interface CENChat : CENObject
 
@@ -22,64 +21,63 @@ NS_ASSUME_NONNULL_BEGIN
 #pragma mark - Information
 
 /**
- * @brief  Stores whether chat publicly available or require owner's authoriztion to join to it.
+ * @brief Whether chat publicly available or require owner's authorization to join to it.
+ *
+ * @ref f39e3edd-4083-4370-82ca-379bc5a7e8c7
  */
 @property (nonatomic, readonly, assign, getter=isPrivate) BOOL private NS_SWIFT_NAME(private);
 
 /**
- * @brief  Reference on map of active user(s) stored under their unique identifiers.
+ * @brief List of users in this chat.
+ *
+ * @discussion Automatically kept in sync as users join and leave the chat. Use \b {$.online.join}
+ * and related events to get notified when this changes.
+ *
+ * @ref 2aca1ec9-4c73-40a9-a67b-438a0e55eeeb
  */
 @property (nonatomic, readonly, strong) NSDictionary<NSString *, CENUser *> *users;
 
 /**
- * @brief  Stores whether client was able to connect to chat at least once.
+ * @brief Whether client was able to connect to chat at least once.
+ *
+ * @ref 5a386b00-6089-4a4c-a70a-346831edb042
  */
 @property (nonatomic, readonly, assign) BOOL hasConnected;
 
 /**
- * @brief  Stores reference on \c meta chat information which has been set earlier.
- */
-@property (nonatomic, readonly, copy) NSDictionary *meta;
-
-/**
- * @brief      Stores reference on name of channel which is used internally by \b ChatEngine itself.
- * @discussion This name used to store reference on \b CENChat instance inside of \b ChatEngine client and used by \b PubNub
- *             Function to store/remove it in user's session when he join/levae it.
+ * @brief Name of channel which is used internally by \b {ChatEngine CENChatEngine} itself.
+ *
+ * @ref b5fe612d-8577-4902-a4d2-bbffe29cb711
  */
 @property (nonatomic, readonly, copy) NSString *channel;
 
 /**
- * @brief  Stores whether \b ChatEngine and \c local user currently connected to this chat or not.
+ * @brief Whether chat currently connected to the network.
+ *
+ * @ref f0abe73e-a6cf-40dc-b6e9-b813c697e835
  */
 @property (nonatomic, readonly, assign) BOOL connected;
 
 /**
- * @brief  Stores reference on name of channel which has been passed during instance initialization.
+ * @brief Name of channel which has been passed during instance initialization.
+ *
+ * @ref 26cc8da0-1a96-4fd4-8714-700521402413
  */
 @property (nonatomic, readonly, copy) NSString *name;
-
-/**
- * @brief  Stores whether chat has been manually disconnected or not.
- */
-@property (nonatomic, readonly, assign) BOOL asleep;
 
 
 #pragma mark - Helpers
 
 /**
- * @brief  Check whether passed \c chat name represent \c private \c chat or not.
+ * @brief Check whether passed name represent private chat or not.
  *
- * @param chatName Reference on name of channel for which verification should be done.
+ * @param chatName Name of channel for which verification should be done.
+ *
+ * @return Whether passed chat name from private chat or not.
+ *
+ * @ref 645ec82f-2843-4792-8650-b72d5ba55b04
  */
 + (BOOL)isPrivate:(NSString *)chatName;
-
-/**
- * @brief      Serialize \c chat instance into dictionary.
- * @discussion Serialized model used by \b PubNub function to manage access rights to it.
- *
- * @return Serialized \c chat instance.
- */
-- (NSDictionary *)dictionaryRepresentation;
 
 #pragma mark -
 

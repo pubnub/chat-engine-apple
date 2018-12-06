@@ -1,14 +1,13 @@
 /**
  * @author Serhii Mamontov
- * @version 0.9.0
- * @copyright © 2009-2018 PubNub, Inc.
+ * @version 0.10.0
+ * @copyright © 2010-2018 PubNub, Inc.
  */
 #import "CENConfiguration+Private.h"
 #import "CENConstants.h"
 
 
 NS_ASSUME_NONNULL_BEGIN
-
 
 #pragma mark Protected interface declaration
 
@@ -18,9 +17,9 @@ NS_ASSUME_NONNULL_BEGIN
 #pragma mark - Initialization and Configuration
 
 /**
- * @brief  Initialize configuration instance using minimal required data.
+ * @brief Initialize configuration instance using minimal required data.
  *
- * @param publishKey   Key which allow client to publish data to chat(s).
+ * @param publishKey Key which allow client to publish data to chat(s).
  * @param subscribeKey Key which allow client to connect and receive updates from chat(s).
  *
  * @return Configured and ready to se configuration instance.
@@ -31,12 +30,12 @@ NS_ASSUME_NONNULL_BEGIN
 #pragma mark - Misc
 
 /**
- * @brief  Compose default \b PubNub Function access endpoint URI.
+ * @brief Compose default \b PubNub Function access endpoint URI.
  *
- * @return URI which allow to get access to \b ChatEngine back-end which is running inside of \b PubNub Function.
+ * @return URI which allow to get access to \b {ChatEngine CENChatEngine} back-end inside of
+ * \b PubNub Function.
  */
 - (NSString *)defaultFunctionEndpoint;
-
 
 #pragma mark -
 
@@ -56,7 +55,8 @@ NS_ASSUME_NONNULL_END
 - (void)setPublishKey:(NSString *)publishKey {
     
     if(![publishKey isKindOfClass:[NSString class]] || !publishKey.length) {
-        [NSException raise:NSDestinationInvalidException format:@"Required information is missing or has wrong data type: publish key."];
+        [NSException raise:NSDestinationInvalidException
+                    format:@"Required information is missing or has wrong data type: publish key."];
     }
     
     _publishKey = [publishKey copy];
@@ -65,7 +65,9 @@ NS_ASSUME_NONNULL_END
 - (void)setSubscribeKey:(NSString *)subscribeKey {
     
     if(![subscribeKey isKindOfClass:[NSString class]] || !subscribeKey.length) {
-        [NSException raise:NSDestinationInvalidException format:@"Required information is missing or has wrong data type: subscribe key."];
+        [NSException raise:NSDestinationInvalidException
+                    format:@"Required information is missing or has wrong data type: "
+                            "subscribe key."];
     }
     
     _subscribeKey = [subscribeKey copy];
@@ -92,10 +94,11 @@ NS_ASSUME_NONNULL_END
 
 #pragma mark - Initialization and Configuration
 
-+ (instancetype)configurationWithPublishKey:(NSString *)publishKey subscribeKey:(NSString *)subscribeKey {
++ (instancetype)configurationWithPublishKey:(NSString *)publishKey
+                               subscribeKey:(NSString *)subscribeKey {
     
-    if (![publishKey isKindOfClass:[NSString class]] || !publishKey.length || ![subscribeKey isKindOfClass:[NSString class]] ||
-        !subscribeKey.length) {
+    if (![publishKey isKindOfClass:[NSString class]] || !publishKey.length ||
+        ![subscribeKey isKindOfClass:[NSString class]] || !subscribeKey.length) {
         
         NSMutableArray *missingKeys = [NSMutableArray new];
         
@@ -108,16 +111,18 @@ NS_ASSUME_NONNULL_END
         }
         
         [NSException raise:NSInternalInconsistencyException
-                    format:@"PNConfiguration instance can't be created because required information is missing or has "
-                            "wrong data type: %@", missingKeys];
+                    format:@"PNConfiguration instance can't be created because required "
+                            "information is missing or has wrong data type: %@", missingKeys];
     }
     
     return [[self alloc] initWithPublishKey:publishKey subscribeKey:subscribeKey];
 }
 
 - (instancetype)init {
-    
-    [NSException raise:NSDestinationInvalidException format:@"-init not implemented, please use: +configurationWithPublishKey:subscribeKey:"];
+
+    [NSException raise:NSDestinationInvalidException
+                format:@"-init not implemented, please use: "
+                        "+configurationWithPublishKey:subscribeKey:"];
     
     return nil;
 }
@@ -127,11 +132,13 @@ NS_ASSUME_NONNULL_END
     if ((self = [super init])) {
         _publishKey = [publishKey copy];
         _subscribeKey = [subscribeKey copy];
-        _presenceHeartbeatValue = kCEDefaultPresenceHeartbeatValue;
-        _presenceHeartbeatInterval = kCEDefaultPresenceHeartbeatInterval;
-        _globalChannel = [kCEDefaultGlobalChannel copy];
-        _synchronizeSession = kCEDefaultShouldSynchronizeSession;
-        _enableMeta = kCEDefaultEnableMeta;
+        _presenceHeartbeatValue = kCENDefaultPresenceHeartbeatValue;
+        _presenceHeartbeatInterval = kCENDefaultPresenceHeartbeatInterval;
+        _namespace = [kCENDefaultNamespace copy];
+        _synchronizeSession = kCENDefaultShouldSynchronizeSession;
+        _throwExceptions = kCENDefaultThrowsExceptions;
+        _enableGlobal = kCENDefaultEnableGlobal;
+        _enableMeta = kCENDefaultEnableMeta;
         _functionEndpoint = [self defaultFunctionEndpoint];
     }
     
@@ -140,12 +147,15 @@ NS_ASSUME_NONNULL_END
 
 - (id)copyWithZone:(NSZone *)__unused zone {
     
-    CENConfiguration *configuration = [CENConfiguration configurationWithPublishKey:self.publishKey subscribeKey:self.subscribeKey];
+    CENConfiguration *configuration = nil;
+    configuration = [CENConfiguration configurationWithPublishKey:self.publishKey
+                                                     subscribeKey:self.subscribeKey];
     configuration.cipherKey = self.cipherKey;
     configuration.presenceHeartbeatValue = self.presenceHeartbeatValue;
     configuration.presenceHeartbeatInterval = self.presenceHeartbeatInterval;
     configuration.functionEndpoint = self.functionEndpoint;
-    configuration.globalChannel = self.globalChannel;
+    configuration.namespace = self.namespace;
+    configuration.enableGlobal = self.enableGlobal;
     configuration.synchronizeSession = self.shouldSynchronizeSession;
     configuration.enableMeta = self.enableMeta;
     configuration.debugEvents = self.shouldDebugEvents;
@@ -159,7 +169,9 @@ NS_ASSUME_NONNULL_END
 
 - (PNConfiguration *)pubNubConfiguration {
     
-    PNConfiguration *configuration = [PNConfiguration configurationWithPublishKey:self.publishKey subscribeKey:self.subscribeKey];
+    PNConfiguration *configuration = nil;
+    configuration = [PNConfiguration configurationWithPublishKey:self.publishKey
+                                                    subscribeKey:self.subscribeKey];
     configuration.cipherKey = self.cipherKey;
     configuration.presenceHeartbeatValue = self.presenceHeartbeatValue;
     configuration.presenceHeartbeatInterval = self.presenceHeartbeatInterval;
@@ -176,7 +188,9 @@ NS_ASSUME_NONNULL_END
 
 - (NSString *)defaultFunctionEndpoint {
     
-    return [@[kCEPNFunctionsBaseURI, _subscribeKey, @"chat-engine-server"] componentsJoinedByString:@"/"];
+    NSArray *uriComponents = @[kCENPNFunctionsBaseURI, _subscribeKey, @"chat-engine-server"];
+    
+    return [uriComponents componentsJoinedByString:@"/"];
 }
 
 #pragma mark -

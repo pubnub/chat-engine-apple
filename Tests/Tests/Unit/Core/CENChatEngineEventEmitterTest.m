@@ -20,11 +20,6 @@
 @interface CENChatEngineEventEmitterTest : CENTestCase
 
 
-#pragma mark - Information
-
-@property (nonatomic, nullable, weak) CENChatEngine *client;
-@property (nonatomic, nullable, weak) CENChatEngine *clientMock;
-
 #pragma mark -
 
 
@@ -43,24 +38,9 @@
     return NO;
 }
 
-- (void)setUp {
+- (BOOL)shouldThrowExceptionForTestCaseWithName:(NSString *)name {
     
-    [super setUp];
-    
-    CENConfiguration *configuration = [CENConfiguration configurationWithPublishKey:@"test-36" subscribeKey:@"test-36"];
-    configuration.throwExceptions = [self.name rangeOfString:@"testThrowError_ShouldThrow_WhenClientConfiguredForExpections"].location != NSNotFound;
-    self.client = [self chatEngineWithConfiguration:configuration];
-    self.clientMock = [self partialMockForObject:self.client];
-    
-    OCMStub([self.clientMock fetchParticipantsForChat:[OCMArg any]]).andDo(nil);
-    OCMStub([self.clientMock connectToChat:[OCMArg any] withCompletion:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
-        void(^handleBlock)(NSDictionary *) = nil;
-        
-        [invocation getArgument:&handleBlock atIndex:3];
-        handleBlock(nil);
-    });
-    
-    [self.clientMock createGlobalChat];
+    return [self.name rangeOfString:@"ShouldThrow"].location != NSNotFound;
 }
 
 
@@ -71,12 +51,18 @@
     NSString *expectedData = @"ChatEngine";
     NSArray *expectedPasrameters = @[expectedData];
     NSString *expectedEvent = @"test-event";
+    self.usesMockedObjects = YES;
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-variable"
+    NSString *namespace = self.client.currentConfiguration.namespace;
+#pragma clang diagnostic pop
     
-    OCMExpect([self.clientMock triggerEventLocallyFrom:self.clientMock event:expectedEvent withParameters:expectedPasrameters completion:[OCMArg any]]);
     
-    [self.clientMock triggerEventLocallyFrom:self.clientMock event:expectedEvent, expectedData, nil];
-    
-    OCMVerifyAll((id)self.clientMock);
+    id recorded = OCMExpect([self.client triggerEventLocallyFrom:self.client event:expectedEvent
+                                                  withParameters:expectedPasrameters completion:[OCMArg any]]);
+    [self waitForObject:self.client recordedInvocationCall:recorded withinInterval:self.testCompletionDelay afterBlock:^{
+        [self.client triggerEventLocallyFrom:self.client event:expectedEvent, expectedData, nil];
+    }];
 }
 
 
@@ -84,145 +70,110 @@
 
 - (void)testTriggerEventLocallyFromWithParameters_ShouldEmitEventWithOutMiddlewareHandling_WhenNonNSDictionaryParameterPassed {
     
+    self.usesMockedObjects = YES;
+    CENPluginsManager *manager = self.client.pluginsManager;
     NSString *expectedData = @"ChatEngine";
     NSArray *expectedPasrameters = @[expectedData];
     NSString *expectedEvent = @"test-event";
-    __block BOOL handlerCalled = NO;
     
-    OCMExpect([self.clientMock emitEventLocally:expectedEvent withParameters:expectedPasrameters]);
     
-    [self.clientMock triggerEventLocallyFrom:self.clientMock event:expectedEvent withParameters:expectedPasrameters
-                                  completion:^(NSString *event, id payload, BOOL rejected) {
-        handlerCalled = YES;
+    id managerMock = [self mockForObject:manager];
+    OCMExpect([[managerMock reject] runMiddlewaresAtLocation:[OCMArg any] forEvent:[OCMArg any] object:[OCMArg any]
+                                                 withPayload:[OCMArg any] completion:[OCMArg any]]);
+    
+    id recorded = OCMExpect([self.client emitEventLocally:expectedEvent withParameters:expectedPasrameters]);
+    [self waitForObject:self.client recordedInvocationCall:recorded withinInterval:self.testCompletionDelay afterBlock:^{
+        [self.client triggerEventLocallyFrom:self.client event:expectedEvent withParameters:expectedPasrameters
+                                      completion:^(NSString *event, id payload, BOOL rejected) { }];
     }];
     
-    OCMVerifyAll((id)self.clientMock);
-    XCTAssertTrue(handlerCalled);
+    OCMVerifyAll(managerMock);
 }
 
 - (void)testTriggerEventLocallyFromWithParameters_ShouldAddReferenceOnChat_WhenEmittingObjectIsCENChat {
     
-    CENChat *chat = self.client.global;
+    CENChat *chat = [self publicChatWithChatEngine:self.client];
     NSDictionary *expectedData = @{ @"test": @"data" };
     NSArray *expectedPasrameters = @[expectedData];
     NSString *expectedEvent = @"test-event";
-    __block BOOL handlerCalled = NO;
     
-    [self.client triggerEventLocallyFrom:chat event:expectedEvent withParameters:expectedPasrameters
-                              completion:^(NSString *event, NSArray<NSDictionary *> *updatedParameters, BOOL rejected) {
-                                         
-        handlerCalled = YES;
-                                         
-        XCTAssertNotNil(updatedParameters.firstObject[CENEventData.chat]);
-        XCTAssertEqual(updatedParameters.firstObject[CENEventData.chat], chat);
+    
+    [self waitToCompleteIn:self.testCompletionDelay codeBlock:^(dispatch_block_t handler) {
+        [self.client triggerEventLocallyFrom:chat event:expectedEvent withParameters:expectedPasrameters
+                                  completion:^(NSString *event, NSArray<NSDictionary *> *updatedParameters, BOOL rejected) {
+                                      
+            XCTAssertNotNil(updatedParameters.firstObject[CENEventData.chat]);
+            XCTAssertEqual(updatedParameters.firstObject[CENEventData.chat], chat);
+            handler();
+        }];
     }];
-    
-    XCTAssertTrue(handlerCalled);
 }
 
 - (void)testTriggerEventLocallyFromWithParameters_ShouldReplaceFirstParameter_WhenNSDictionaryPassed {
     
-    CENChat *chat = self.client.global;
+    CENChat *chat = [self publicChatWithChatEngine:self.client];
     NSDictionary *expectedData = @{ @"test": @"data", CENEventData.chat: chat };
     NSArray *expectedPasrameters = @[expectedData, @"Hello"];
     NSDictionary *data = @{ @"test": @"data" };
     NSString *expectedEvent = @"test-event";
     NSArray *pasrameters = @[data, @"Hello"];
-    __block BOOL handlerCalled = NO;
     
-    [self.client triggerEventLocallyFrom:chat event:expectedEvent withParameters:pasrameters
-                              completion:^(NSString *event, NSArray<NSDictionary *> *updatedParameters, BOOL rejected) {
-                                         
-        handlerCalled = YES;
-                                         
-        XCTAssertEqualObjects(event, expectedEvent);
-        XCTAssertFalse(rejected);
-        XCTAssertEqualObjects(updatedParameters, expectedPasrameters);
+    
+    [self waitToCompleteIn:self.testCompletionDelay codeBlock:^(dispatch_block_t handler) {
+        [self.client triggerEventLocallyFrom:chat event:expectedEvent withParameters:pasrameters
+                                  completion:^(NSString *event, NSArray<NSDictionary *> *updatedParameters, BOOL rejected) {
+                                      
+                XCTAssertEqualObjects(event, expectedEvent);
+                XCTAssertFalse(rejected);
+                XCTAssertEqualObjects(updatedParameters, expectedPasrameters);
+                handler();
+            }];
     }];
-    
-    XCTAssertTrue(handlerCalled);
 }
 
-- (void)testTriggerEventLocallyFromWithParameters_ShouldFetchUser_WhenUserUUIDPassed {
+- (void)testTriggerEventLocallyFromWithParameters_ShouldWrapFirstParameterInDictionary_WhenCENUserPassed {
     
-    NSDictionary *expectedData = @{ @"test": @"data", CENEventData.sender: @"tester-user" };
-    CENUser *user = self.clientMock.User(@"remoter").create();
-    id userPartialMock = [self partialMockForObject:user];
+    CENChat *chat = [self publicChatWithChatEngine:self.client];
+    CENUser *user = self.client.User(@"exception-tester").create();
+    NSDictionary *expectedPayload = @{ CENEventData.sender: user };
+    NSString *expectedEvent = @"$.connected";
+    
+    
+    id managerMock = [self mockForObject:self.client.pluginsManager];
+    id recorded = OCMExpect([managerMock runMiddlewaresAtLocation:@"on" forEvent:expectedEvent object:chat
+                                                      withPayload:expectedPayload completion:[OCMArg any]]).andForwardToRealObject();
+    [self waitForObject:managerMock recordedInvocationCall:recorded withinInterval:self.testCompletionDelay afterBlock:^{
+        [self.client triggerEventLocallyFrom:(id)chat event:expectedEvent, user, nil];
+    }];
+}
+
+- (void)testTriggerEventLocallyFromWithParameters_ShouldReportRejection_WhenMiddlewareRejects {
+    
+    CENChat *chat = [self publicChatWithChatEngine:self.client];
+    NSDictionary *expectedData = @{ @"test": @"data" };
     NSArray *expectedPasrameters = @[expectedData];
-    CENChat *chat = self.clientMock.global;
     NSString *expectedEvent = @"test-event";
-    __block BOOL handlerCalled = NO;
     
-    OCMStub([self.clientMock createUserWithUUID:[OCMArg any] state:[OCMArg any]]).andReturn(userPartialMock);
     
-    OCMStub([userPartialMock fetchStoredStateWithCompletion:[OCMArg any]]).andDo(^(NSInvocation *storedStatFetchInvocation) {
-        void(^handlerBlock)(NSDictionary *) = nil;
-        
-        [storedStatFetchInvocation getArgument:&handlerBlock atIndex:2];
-        handlerBlock(nil);
+    id managerMock = [self mockForObject:self.client.pluginsManager];
+    OCMStub([managerMock runMiddlewaresAtLocation:[OCMArg any] forEvent:[OCMArg any] object:[OCMArg any] withPayload:[OCMArg any]
+                                       completion:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
+        void(^block)(BOOL, id) = [self objectForInvocation:invocation argumentAtIndex:5];
+        id payload = [self objectForInvocation:invocation argumentAtIndex:4];
+        block(YES, payload);
     });
     
-    [self.clientMock triggerEventLocallyFrom:chat event:expectedEvent withParameters:expectedPasrameters
+    [self waitToCompleteIn:self.testCompletionDelay codeBlock:^(dispatch_block_t handler) {
+        [self.client triggerEventLocallyFrom:chat event:expectedEvent withParameters:expectedPasrameters
                                   completion:^(NSString *event, NSArray<NSDictionary *> *updatedParameters, BOOL rejected) {
-                                         
-        handlerCalled = YES;
-
-        XCTAssertNotNil(updatedParameters.firstObject[CENEventData.sender]);
-        XCTAssertTrue([updatedParameters.firstObject[CENEventData.sender] isKindOfClass:[CENUser class]]);
-        XCTAssertEqual(updatedParameters.firstObject[CENEventData.sender], userPartialMock);
+                                      
+            XCTAssertNil(updatedParameters.firstObject[CENEventData.chat]);
+            XCTAssertTrue(rejected);
+            handler();
+        }];
     }];
-    
-    XCTAssertTrue(handlerCalled);
 }
 
-- (void)testTriggerEventLocallyFromWithParameters_ShouldNotAddReferenceOnChat_WhenEmittingObjectIsNotCENChat {
-    
-    CENUser *user = self.client.User(@"tester-user").create();
-    NSDictionary *expectedData = @{ @"test": @"data" };
-    NSArray *expectedPasrameters = @[expectedData];
-    NSString *expectedEvent = @"test-event";
-    __block BOOL handlerCalled = NO;
-
-    [self.client triggerEventLocallyFrom:user event:expectedEvent withParameters:expectedPasrameters
-                              completion:^(NSString *event, id updatedParameters, BOOL rejected) {
-                                         
-        handlerCalled = YES;
-        XCTAssertEqualObjects(updatedParameters, expectedPasrameters);
-    }];
-    
-    XCTAssertTrue(handlerCalled);
-}
-
-- (void)testTriggerEventLocallyFromWithParameters_ShouldHandleMiddlewareRejection {
-    
-    id pluginsManagerPartialMock = [self partialMockForObject:self.client.pluginsManager];
-    CENUser *user = self.client.User(@"tester-user").create();
-    NSDictionary *expectedData = @{ @"test": @"data" };
-    NSArray *expectedPasrameters = @[expectedData];
-    NSString *expectedEvent = @"test-event";
-    __block BOOL handlerCalled = NO;
-    
-    OCMStub([pluginsManagerPartialMock runMiddlewaresAtLocation:[OCMArg any] forEvent:expectedEvent object:user withPayload:[OCMArg any]
-                                                     completion:[OCMArg any]])
-        .andDo(^(NSInvocation *middlewareInvocation) {
-            void(^handlerBlock)(BOOL) = nil;
-            
-            [middlewareInvocation getArgument:&handlerBlock atIndex:6];
-            handlerBlock(YES);
-        });
-    
-    [self.client triggerEventLocallyFrom:user event:expectedEvent withParameters:expectedPasrameters
-                              completion:^(NSString *event, id updatedParameters, BOOL rejected) {
-                                         
-        handlerCalled = YES;
-                                         
-        XCTAssertEqualObjects(event, expectedEvent);
-        XCTAssertTrue(rejected);
-        XCTAssertNil(updatedParameters);
-    }];
-    
-    XCTAssertTrue(handlerCalled);
-}
 
 
 #pragma mark - Tests :: throwError
@@ -230,49 +181,57 @@
 - (void)testThrowError_ShouldEmitErrorByClient {
     
     NSError *error = [NSError errorWithDomain:kCENErrorDomain code:0 userInfo:@{ NSLocalizedDescriptionKey: @"TestError" }];
+    self.usesMockedObjects = YES;
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-variable"
+    NSString *namespace = self.client.currentConfiguration.namespace;
+#pragma clang diagnostic pop
     
-    OCMExpect([self.clientMock emitEventLocally:@"$.error.test-error" withParameters:@[error]]);
     
-    [self.clientMock throwError:error forScope:@"test-error" from:nil propagateFlow:CEExceptionPropagationFlow.direct];
-    
-    OCMVerifyAll((id)self.clientMock);
+    id recorded = OCMExpect([self.client emitEventLocally:@"$.error.test-error" withParameters:@[error]]);
+    [self waitForObject:self.client recordedInvocationCall:recorded withinInterval:self.testCompletionDelay afterBlock:^{
+        [self.client throwError:error forScope:@"test-error" from:nil propagateFlow:CEExceptionPropagationFlow.direct];
+    }];
 }
 
 - (void)testThrowError_ShouldEmitErrorByObject_WhenDirectPropagationFlowUsed {
     
     NSError *error = [NSError errorWithDomain:kCENErrorDomain code:0 userInfo:@{ NSLocalizedDescriptionKey: @"TestError" }];
     CENUser *user = self.client.User(@"exception-tester").create();
-    id userPartialMock = [self partialMockForObject:user];
     
-    OCMExpect([userPartialMock emitEventLocally:@"$.error.test-error" withParameters:@[error]]);
     
-    [self.client throwError:error forScope:@"test-error" from:user propagateFlow:CEExceptionPropagationFlow.direct];
-    
-    OCMVerifyAll(userPartialMock);
+    id userMock = [self mockForObject:user];
+    id recorded = OCMExpect([userMock emitEventLocally:@"$.error.test-error" withParameters:@[error]]);
+    [self waitForObject:userMock recordedInvocationCall:recorded withinInterval:self.testCompletionDelay afterBlock:^{
+        [self.client throwError:error forScope:@"test-error" from:user propagateFlow:CEExceptionPropagationFlow.direct];
+    }];
 }
 
 - (void)testThrowError_ShouldEmitErrorByObjectAndClient_WhenMiddlewarePropagationFlowUsed {
-    
+   
+    self.usesMockedObjects = YES;
     NSError *error = [NSError errorWithDomain:kCENErrorDomain code:0 userInfo:@{ NSLocalizedDescriptionKey: @"TestError" }];
-    CENUser *user = self.clientMock.User(@"exception-tester").create();
-    id userPartialMock = [self partialMockForObject:user];
+    CENUser *user = self.client.User(@"exception-tester").create();
     NSArray *clientExpectedParameters = @[user, error];
     
-    OCMExpect([self.clientMock emitEventLocally:@"$.error.test-error" withParameters:clientExpectedParameters]);
-    OCMExpect([userPartialMock emitEventLocally:@"$.error.test-error" withParameters:@[error]]).andForwardToRealObject();
     
-    [self.clientMock throwError:error forScope:@"test-error" from:user propagateFlow:CEExceptionPropagationFlow.middleware];
+    id userMock = [self mockForObject:user];
+    OCMExpect([self.client emitEventLocally:@"$.error.test-error" withParameters:clientExpectedParameters]);
+    OCMExpect([userMock emitEventLocally:@"$.error.test-error" withParameters:@[error]]).andForwardToRealObject();
     
-    OCMVerifyAll((id)self.clientMock);
-    OCMVerifyAll(userPartialMock);
+    [self.client throwError:error forScope:@"test-error" from:user propagateFlow:CEExceptionPropagationFlow.middleware];
+    
+    OCMVerifyAll((id)self.client);
+    OCMVerifyAll(userMock);
 }
 
 - (void)testThrowError_ShouldThrow_WhenClientConfiguredForExpections {
     
     NSError *error = [NSError errorWithDomain:kCENErrorDomain code:0 userInfo:@{ NSLocalizedDescriptionKey: @"TestError" }];
-    CENUser *user = self.clientMock.User(@"exception-tester").create();
+    CENUser *user = self.client.User(@"exception-tester").create();
     
-    XCTAssertThrowsSpecificNamed([self.clientMock throwError:error forScope:@"test-error" from:user propagateFlow:CEExceptionPropagationFlow.direct],
+    XCTAssertThrowsSpecificNamed([self.client throwError:error forScope:@"test-error" from:user
+                                           propagateFlow:CEExceptionPropagationFlow.direct],
                                  NSException, error.domain);
     
 }

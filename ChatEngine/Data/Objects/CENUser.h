@@ -10,12 +10,12 @@
 NS_ASSUME_NONNULL_BEGIN
 
 /**
- * @brief      Remote \b ChatEngine user representation model.
- * @discussion This instance can be used to reach remote user by sending him direct message or subscribe on his private feed.
+ * @brief Remote user representation model which allow to get information about user itself and
+ * interact with him using \b {direct} chat.
  *
  * @author Serhii Mamontov
- * @version 0.9.0
- * @copyright © 2009-2018 PubNub, Inc.
+ * @version 0.10.0
+ * @copyright © 2010-2018 PubNub, Inc.
  */
 @interface CENUser : CENObject
 
@@ -23,22 +23,25 @@ NS_ASSUME_NONNULL_BEGIN
 #pragma mark - Information
 
 /**
- * @brief  Stores reference on publicly available user's information.
- */
-@property (nonatomic, readonly, copy) NSDictionary *state;
-
-/**
- * @brief  Reference on chat which can be used to send direct messages which is accessible only to this user.
+ * @brief \b {Chat CENChat} which can be used to send direct (private) messages which right to
+ * this user.
+ *
+ * @ref d11cc0e8-3295-43f1-9210-d28fd6b7682c
  */
 @property (nonatomic, readonly, strong) CENChat *direct;
 
 /**
- * @brief  Stores reference on unique user identifier which has been passed during instance initialization.
+ * @brief Unique user identifier which has been passed during instance initialization.
+ *
+ * @ref 2094781a-00e5-4bb1-a2ec-c6333618d534
  */
 @property (nonatomic, readonly, copy) NSString *uuid;
 
 /**
- * @brief  Reference on chat which is used by user to publish updates to which anyone has access.
+ * @brief \b {Chat CENChat} which is used by \b {user CENUser} to publish updates (public) which
+ * can be observed by anyone.
+ *
+ * @ref e8b1e8fe-8213-41f0-9fbf-0572ca09a47d
  */
 @property (nonatomic, readonly, strong) CENChat *feed;
 

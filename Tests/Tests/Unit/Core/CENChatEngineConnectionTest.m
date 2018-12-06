@@ -21,12 +21,6 @@
 @interface CENChatEngineConnectionTest : CENTestCase
 
 
-#pragma mark - Information
-
-@property (nonatomic, nullable, weak) CENChatEngine *client;
-@property (nonatomic, nullable, weak) CENChatEngine *clientMock;
-
-
 #pragma mark -
 
 
@@ -45,348 +39,251 @@
     return NO;
 }
 
+- (BOOL)shouldThrowExceptionForTestCaseWithName:(NSString *)name {
+    
+    return [name rangeOfString:@"ShouldThrow"].location != NSNotFound;
+}
+
+- (BOOL)shouldEnableGlobalChatForTestCaseWithName:(NSString *)name {
+    
+    return [name rangeOfString:@"GlobalChatEngabled"].location != NSNotFound;
+}
+
 - (void)setUp {
     
     [super setUp];
     
-    CENConfiguration *configuration = [CENConfiguration configurationWithPublishKey:@"test-36" subscribeKey:@"test-36"];
-    self.client = [self chatEngineWithConfiguration:configuration];
-    self.clientMock = [self partialMockForObject:self.client];
-    
-    OCMStub([self.clientMock fetchParticipantsForChat:[OCMArg any]]).andDo(nil);
-    OCMStub([self.clientMock connectToChat:[OCMArg any] withCompletion:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
-        void(^handleBlock)(NSDictionary *) = nil;
-        
-        [invocation getArgument:&handleBlock atIndex:3];
-        handleBlock(nil);
-    });
+    self.usesMockedObjects = YES;
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-variable"
+    NSString *namespace = self.client.currentConfiguration.namespace;
+#pragma clang diagnostic pop
 }
 
 
 #pragma mark - Tests :: connect / connectUser
 
-- (void)testConnectUser_ShouldAuthorizeLocalUser {
+- (void)testConnectUser_ShouldForwardToNewImplementation {
     
-    NSDictionary *expectedState = @{ @"test": @"state" };
+    NSString *expectedUUID = @"PubNub";
+    
+    
+    id recorded = OCMExpect([self.client connectUser:expectedUUID withAuthKey:nil globalChannel:nil]);
+    [self waitForObject:self.client recordedInvocationCall:recorded withinInterval:self.testCompletionDelay afterBlock:^{
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+        [self.client connectUser:expectedUUID];
+#pragma clang diagnostic pop
+    }];
+}
+
+- (void)testConnectUserWithState_ShouldForwardToNewImplementation {
+    
     NSString *expectedAuthKey = @"secret";
     NSString *expectedUUID = @"PubNub";
     
-    OCMExpect([self.clientMock authorizeLocalUserWithUUID:expectedUUID authorizationKey:expectedAuthKey completion:[OCMArg any]]);
     
-    self.clientMock.connect(expectedUUID).state(expectedState).authKey(expectedAuthKey).perform();
-    
-    OCMVerifyAll((id)self.clientMock);
+    id recorded = OCMExpect([self.client connectUser:expectedUUID withAuthKey:expectedAuthKey globalChannel:nil]);
+    [self waitForObject:self.client recordedInvocationCall:recorded withinInterval:self.testCompletionDelay afterBlock:^{
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+        [self.client connectUser:expectedUUID withState:@{ @"test": @"state" } authKey:expectedAuthKey];
+#pragma clang diagnostic pop
+    }];
 }
 
-- (void)testConnectUser_ShouldAuthorizeWithRandomAuthKey_WhenNonNSStringAuthKeyPassed {
+- (void)testConnectUser_ShouldAuthorize_WhenNSStringAuthKeyPassed {
     
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    NSDictionary *expectedState = @{ @"test": @"state" };
-    NSString *expectedAuthKey = (id)@2010;
+    NSString *expectedAuthKey = @"secret";
     NSString *expectedUUID = @"PubNub";
-    __block BOOL handlerCalled = NO;
     
-    OCMStub([self.clientMock global]).andReturn(nil);
-    OCMStub([self.clientMock authorizeLocalUserWithUUID:[OCMArg any] authorizationKey:[OCMArg any] completion:[OCMArg any]])
-        .andDo(^(NSInvocation *authorizeLocalUserInvocation) {
-            dispatch_block_t handlerBlock = nil;
-            
-            [authorizeLocalUserInvocation getArgument:&handlerBlock atIndex:4];
-            handlerBlock();
-        });
     
-    self.clientMock.on(@"$.connected", ^(CENChat *chat) {
-        if ([chat.name isEqualToString:self.clientMock.currentConfiguration.globalChannel]) {
-            handlerCalled = YES;
-            
-            XCTAssertNotNil([self.clientMock pubNubAuthKey]);
-            XCTAssertGreaterThan([self.clientMock pubNubAuthKey].length, 0);
-            XCTAssertNotEqualObjects([self.clientMock pubNubAuthKey], expectedAuthKey);
-            dispatch_semaphore_signal(semaphore);
-        }
-    });
-    
-    self.clientMock.connect(expectedUUID).state(expectedState).authKey(expectedAuthKey).perform();
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
-    XCTAssertTrue(handlerCalled);
+    id recorded = OCMExpect([self.client authorizeLocalUserWithUUID:expectedUUID authorizationKey:expectedAuthKey
+                                                         completion:[OCMArg any]]);
+    [self waitForObject:self.client recordedInvocationCall:recorded withinInterval:self.testCompletionDelay afterBlock:^{
+        self.client.connect(expectedUUID).authKey(expectedAuthKey).perform();
+    }];
 }
 
-- (void)testConnectUser_ShouldAuthorizeWithRandomAuthKey_WhenEmptyAuthKeyPassed {
+- (void)testConnectUser_ShouldAuthorize_WhenNSNumberAuthKeyPassed {
     
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    NSDictionary *expectedState = @{ @"test": @"state" };
-    NSString *expectedAuthKey = @"";
+    NSNumber *expectedAuthKey = @2010;
     NSString *expectedUUID = @"PubNub";
-    __block BOOL handlerCalled = NO;
     
-    OCMStub([self.clientMock global]).andReturn(nil);
-    OCMStub([self.clientMock authorizeLocalUserWithUUID:[OCMArg any] authorizationKey:[OCMArg any] completion:[OCMArg any]])
-        .andDo(^(NSInvocation *authorizeLocalUserInvocation) {
-            dispatch_block_t handlerBlock = nil;
-            
-            [authorizeLocalUserInvocation getArgument:&handlerBlock atIndex:4];
-            handlerBlock();
-        });
     
-    self.clientMock.on(@"$.connected", ^(CENChat *chat) {
-        if ([chat.name isEqualToString:self.clientMock.currentConfiguration.globalChannel]) {
-            handlerCalled = YES;
-            
-            XCTAssertNotNil([self.clientMock pubNubAuthKey]);
-            XCTAssertGreaterThan([self.clientMock pubNubAuthKey].length, 0);
-            XCTAssertNotEqualObjects([self.clientMock pubNubAuthKey], expectedAuthKey);
-            dispatch_semaphore_signal(semaphore);
-        }
-    });
+    id recorded = OCMExpect([self.client authorizeLocalUserWithUUID:expectedUUID authorizationKey:expectedAuthKey.stringValue
+                                                         completion:[OCMArg any]]);
+    [self waitForObject:self.client recordedInvocationCall:recorded withinInterval:self.testCompletionDelay afterBlock:^{
+        self.client.connect(expectedUUID).authKey(expectedAuthKey).perform();
+    }];
+}
+
+- (void)testConnectUser_ShouldThrow_WhenUnsupportedAuthKeyPassed {
     
-    self.clientMock.connect(expectedUUID).state(expectedState).authKey(expectedAuthKey).perform();
+    NSString *expectedAuthKey = (id)[NSArray new];
+    NSString *expectedUUID = @"PubNub";
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
-    XCTAssertTrue(handlerCalled);
+    
+    XCTAssertThrowsSpecificNamed([self.client connectUser:expectedUUID withAuthKey:expectedAuthKey globalChannel:nil],
+                                 NSException, kCENErrorDomain);
 }
 
 - (void)testConnectUser_ShouldConfigurePubNubClient {
     
     NSString *expectedUUID = @"PubNub";
     
-    OCMStub([self.clientMock global]).andReturn(nil);
-    OCMStub([self.clientMock authorizeLocalUserWithUUID:[OCMArg any] authorizationKey:[OCMArg any] completion:[OCMArg any]])
-        .andDo(^(NSInvocation *authorizeLocalUserInvocation) {
-            dispatch_block_t handlerBlock = nil;
-            
-            [authorizeLocalUserInvocation getArgument:&handlerBlock atIndex:4];
-            handlerBlock();
-        });
     
-    OCMExpect([self.clientMock setupPubNubForUserWithUUID:expectedUUID authorizationKey:[OCMArg any]]);
+    OCMStub([self.client connectToPubNubWithCompletion:[OCMArg any]]).andDo(nil);
     
-    [self.clientMock connectUser:expectedUUID];
+    [self stubUserAuthorization];
+    [self stubChatConnection];
     
-    OCMVerifyAll((id)self.clientMock);
+    id recorded = OCMExpect([self.client setupPubNubForUserWithUUID:expectedUUID authorizationKey:[OCMArg any]]);
+    [self waitForObject:self.client recordedInvocationCall:recorded withinInterval:self.testCompletionDelay afterBlock:^{
+        [self.client connectUser:expectedUUID withAuthKey:nil globalChannel:nil];
+    }];
 }
 
-- (void)testConnectUser_ShouldCreateGlobalChat {
+- (void)testConnectUser_ShouldReconnect_WhenPubNubInstanceExists {
     
-    NSDictionary *expectedState = @{ @"test": @"state" };
+    NSString *expectedAuthKey = (id)[NSArray new];
+    NSString *expectedUUID = @"PubNub";
+    
+    
+    OCMStub([self.client pubnub]).andReturn(@"PubNub");
+    
+    id recorded = OCMExpect([[(id)self.client reject] authorizeLocalUserWithUUID:[OCMArg any] authorizationKey:[OCMArg any]
+                                                                      completion:[OCMArg any]]);
+    [self waitForObject:self.client recordedInvocationNotCall:recorded withinInterval:self.falseTestCompletionDelay afterBlock:^{
+        self.client.connect(expectedUUID).authKey(expectedAuthKey).perform();
+    }];
+}
+
+- (void)testConnectUser_ShouldConnectToGlobalChatFirst_WhenGlobalChatEngabled {
+    
     NSString *expectedAuthKey = @"secret";
     NSString *expectedUUID = @"PubNub";
     
-    OCMStub([self.clientMock authorizeLocalUserWithUUID:[OCMArg any] authorizationKey:[OCMArg any] completion:[OCMArg any]])
-        .andDo(^(NSInvocation *authorizeLocalUserInvocation) {
-            dispatch_block_t handlerBlock = nil;
-            
-            [authorizeLocalUserInvocation getArgument:&handlerBlock atIndex:4];
-            handlerBlock();
-        });
     
-    OCMExpect([self.clientMock createGlobalChat]);
+    [self stubUserAuthorization];
+    [self stubChatConnection];
     
-    self.clientMock.connect(expectedUUID).state(expectedState).authKey(expectedAuthKey).perform();
-    
-    OCMVerifyAll((id)self.clientMock);
+    id recorded = OCMExpect([self.client createGlobalChatWithChannel:[OCMArg any]]);
+    [self waitForObject:self.client recordedInvocationCall:recorded withinInterval:self.testCompletionDelay afterBlock:^{
+        self.client.connect(expectedUUID).authKey(expectedAuthKey).perform();
+    }];
 }
 
-- (void)testConnectUser_ShouldCreateLocalUserWithEmptyState {
+- (void)testConnectUser_ShouldCreateLocalUser_WhenGlobalChatEngabledAndConnected {
     
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    NSDictionary *expectedState = @{ @"test": @"state" };
-    NSString *expectedAuthKey = @"secret";
-    NSString *expectedUUID = @"PubNub";
-    __block BOOL handlerCalled = NO;
-    
-    OCMStub([self.clientMock authorizeLocalUserWithUUID:[OCMArg any] authorizationKey:[OCMArg any] completion:[OCMArg any]])
-        .andDo(^(NSInvocation *authorizeLocalUserInvocation) {
-            dispatch_block_t handlerBlock = nil;
-            
-            [authorizeLocalUserInvocation getArgument:&handlerBlock atIndex:4];
-            handlerBlock();
-        });
-    
-    OCMExpect([self.clientMock createUserWithUUID:expectedUUID state:@{}]).andDo(^(NSInvocation *createUserInvocation) {
-        handlerCalled = YES;
-        
-        dispatch_semaphore_signal(semaphore);
-    });
-    
-    self.clientMock.connect(expectedUUID).state(expectedState).authKey(expectedAuthKey).perform();
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
-    OCMVerifyAll((id)self.clientMock);
-    XCTAssertTrue(handlerCalled);
-}
-
-- (void)testConnectUser_ShouldCreateLocalUserWithNilState_WhenNonNSDictionaryStatePassed {
-    
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    NSDictionary *expectedState = (id)@2010;
-    NSString *expectedAuthKey = @"secret";
-    NSString *expectedUUID = @"PubNub";
-    __block BOOL handlerCalled = NO;
-    
-    OCMStub([self.clientMock authorizeLocalUserWithUUID:[OCMArg any] authorizationKey:[OCMArg any] completion:[OCMArg any]])
-    .andDo(^(NSInvocation *authorizeLocalUserInvocation) {
-        dispatch_block_t handlerBlock = nil;
-        
-        [authorizeLocalUserInvocation getArgument:&handlerBlock atIndex:4];
-        handlerBlock();
-    });
-    
-    OCMExpect([self.clientMock updateLocalUserState:nil withCompletion:[OCMArg any]]).andDo(^(NSInvocation *createUserInvocation) {
-        handlerCalled = YES;
-        
-        dispatch_semaphore_signal(semaphore);
-    });
-    
-    [self.clientMock connectUser:expectedUUID withState:expectedState authKey:expectedAuthKey];
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
-    OCMVerifyAll((id)self.clientMock);
-    XCTAssertTrue(handlerCalled);
-}
-
-- (void)testConnectUser_ShouldCreateLocalUserWithNilState_WhenEmptyStatePassed {
-    
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    NSDictionary *expectedState = @{};
-    NSString *expectedAuthKey = @"secret";
-    NSString *expectedUUID = @"PubNub";
-    __block BOOL handlerCalled = NO;
-    
-    OCMStub([self.clientMock authorizeLocalUserWithUUID:[OCMArg any] authorizationKey:[OCMArg any] completion:[OCMArg any]])
-    .andDo(^(NSInvocation *authorizeLocalUserInvocation) {
-        dispatch_block_t handlerBlock = nil;
-        
-        [authorizeLocalUserInvocation getArgument:&handlerBlock atIndex:4];
-        handlerBlock();
-    });
-    
-    OCMExpect([self.clientMock updateLocalUserState:nil withCompletion:[OCMArg any]]).andDo(^(NSInvocation *createUserInvocation) {
-        handlerCalled = YES;
-        
-        dispatch_semaphore_signal(semaphore);
-    });
-    
-    [self.clientMock connectUser:expectedUUID withState:expectedState authKey:expectedAuthKey];
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
-    OCMVerifyAll((id)self.clientMock);
-    XCTAssertTrue(handlerCalled);
-}
-
-- (void)testConnectUser_ShouldUpdateLocalUserState {
-    
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    NSDictionary *expectedState = @{ @"test": @"state" };
-    NSString *expectedAuthKey = @"secret";
-    NSString *expectedUUID = @"PubNub";
-    __block BOOL handlerCalled = NO;
-    
-    OCMStub([self.clientMock authorizeLocalUserWithUUID:[OCMArg any] authorizationKey:[OCMArg any] completion:[OCMArg any]])
-        .andDo(^(NSInvocation *authorizeLocalUserInvocation) {
-            dispatch_block_t handlerBlock = nil;
-            
-            [authorizeLocalUserInvocation getArgument:&handlerBlock atIndex:4];
-            handlerBlock();
-        });
-    
-    OCMExpect([self.clientMock updateLocalUserState:expectedState withCompletion:[OCMArg any]]).andDo(^(NSInvocation *createUserInvocation) {
-        handlerCalled = YES;
-        
-        dispatch_semaphore_signal(semaphore);
-    });
-    
-    self.clientMock.connect(expectedUUID).state(expectedState).authKey(expectedAuthKey).perform();
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
-    OCMVerifyAll((id)self.clientMock);
-    XCTAssertTrue(handlerCalled);
-}
-
-- (void)testConnectUser_ShouldListenSynchronizationEevents {
-    
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    NSDictionary *expectedState = @{ @"test": @"state" };
-    NSString *expectedAuthKey = @"secret";
-    NSString *expectedUUID = @"PubNub";
-    __block BOOL handlerCalled = NO;
-    
-    OCMStub([self.clientMock connectToPubNub]).andDo(nil);
-    OCMStub([self.clientMock synchronizeSession]).andDo(nil);
-    OCMStub([self.clientMock authorizeLocalUserWithUUID:[OCMArg any] authorizationKey:[OCMArg any] completion:[OCMArg any]])
-        .andDo(^(NSInvocation *authorizeLocalUserInvocation) {
-            dispatch_block_t handlerBlock = nil;
-            
-            [authorizeLocalUserInvocation getArgument:&handlerBlock atIndex:4];
-            handlerBlock();
-        });
-    
-    OCMStub([self.clientMock updateLocalUserState:[OCMArg any] withCompletion:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
-            dispatch_block_t handlerBlock = nil;
-            
-            [invocation getArgument:&handlerBlock atIndex:3];
-            handlerBlock();
-        });
-    
-    OCMExpect([self.clientMock listenSynchronizationEvents]).andDo(^(NSInvocation *createUserInvocation) {
-        handlerCalled = YES;
-        
-        dispatch_semaphore_signal(semaphore);
-    });
-    
-    self.clientMock.connect(expectedUUID).state(expectedState).authKey(expectedAuthKey).perform();
-    [self.clientMock.global emitEventLocally:@"$.connected", nil];
-    [self.clientMock.me.direct emitEventLocally:@"$.connected", nil];
-    [self.clientMock.me.feed emitEventLocally:@"$.connected", nil];
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
-    OCMVerifyAll((id)self.clientMock);
-    XCTAssertTrue(handlerCalled);
-}
-
-- (void)testConnectUser_ShouldCompleteClientInitialization {
-    
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    NSDictionary *expectedState = @{ @"test": @"state" };
-    __block id globalChatPartialMock = nil;
     NSString *expectedAuthKey = @"secret";
     NSString *expectedUUID = @"PubNub";
     
-    dispatch_block_t configureGlobalChatMock = ^{
-        globalChatPartialMock = [self partialMockForObject:self.clientMock.global];
-        OCMExpect([globalChatPartialMock fetchParticipants]);
-    };
     
-    OCMStub([self.clientMock authorizeLocalUserWithUUID:[OCMArg any] authorizationKey:[OCMArg any] completion:[OCMArg any]])
-        .andDo(^(NSInvocation *authorizeLocalUserInvocation) {
-            dispatch_block_t handlerBlock = nil;
-            
-            [authorizeLocalUserInvocation getArgument:&handlerBlock atIndex:4];
-            handlerBlock();
-        });
+    [self stubUserAuthorization];
+    [self stubChatConnection];
     
-    OCMExpect([self.clientMock updateLocalUserState:[OCMArg any] withCompletion:[OCMArg any]])
-        .andDo(^(NSInvocation *localUserStateUpdateInvocation) {
-            dispatch_block_t handlerBlock = nil;
-            
-            [localUserStateUpdateInvocation getArgument:&handlerBlock atIndex:3];
-            handlerBlock();
-        });
+    id recorded = OCMExpect([self.client createUserWithUUID:[OCMArg any] state:[OCMArg any]]);
+    [self waitForObject:self.client recordedInvocationCall:recorded withinInterval:self.testCompletionDelay afterBlock:^{
+        self.client.connect(expectedUUID).authKey(expectedAuthKey).perform();
+    }];
+}
+
+- (void)testConnectUser_ShouldNotConnectToGlobalChat_WhenGlobalChatDisabled {
     
-    OCMStub([self.clientMock emitEventLocally:@"$.ready" withParameters:[OCMArg any]])
-        .andDo(^(NSInvocation *localUserStateUpdateInvocation) {
-            configureGlobalChatMock();
-        });
-    OCMExpect([self.clientMock connectToPubNub]);
-    OCMExpect([self.clientMock synchronizeSession]).andDo(^(NSInvocation *invocation) {
-        dispatch_semaphore_signal(semaphore);
-    });
+    NSString *expectedAuthKey = @"secret";
+    NSString *expectedUUID = @"PubNub";
     
-    self.clientMock.connect(expectedUUID).state(expectedState).authKey(expectedAuthKey).perform();
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
-    OCMVerifyAll((id)self.clientMock);
-    OCMVerifyAll(globalChatPartialMock);
+    OCMStub([self.client connectToPubNubWithCompletion:[OCMArg any]]).andDo(nil);
+    
+    [self stubUserAuthorization];
+    [self stubChatConnection];
+    
+    id recorded = OCMExpect([[(id)self.client reject] createGlobalChatWithChannel:[OCMArg any]]);
+    [self waitForObject:self.client recordedInvocationNotCall:recorded withinInterval:self.falseTestCompletionDelay afterBlock:^{
+        self.client.connect(expectedUUID).authKey(expectedAuthKey).perform();
+    }];
+}
+
+- (void)testConnectUser_ShouldCreateLocalUserWithEmptyState_WhenAuthorizationCompleted {
+    
+    NSString *expectedAuthKey = @"secret";
+    NSString *expectedUUID = [NSUUID UUID].UUIDString;
+    
+    
+    OCMStub([self.client connectToPubNubWithCompletion:[OCMArg any]]).andDo(nil);
+    
+    [self stubUserAuthorization];
+    [self stubChatConnection];
+    
+    id recorded = OCMExpect([self.client createUserWithUUID:expectedUUID state:@{}]);
+    [self waitForObject:self.client recordedInvocationCall:recorded withinInterval:self.testCompletionDelay afterBlock:^{
+        self.client.connect(expectedUUID).authKey(expectedAuthKey).perform();
+    }];
+}
+
+- (void)testConnectUser_ShouldConnectToPubNub_WhenAuthorizationCompleted {
+    
+    NSString *expectedAuthKey = @"secret";
+    NSString *expectedUUID = @"PubNub";
+    
+    
+    [self stubUserAuthorization];
+    [self stubChatConnection];
+    
+    id recorded = OCMExpect([self.client connectToPubNubWithCompletion:[OCMArg any]]);
+    [self waitForObject:self.client recordedInvocationCall:recorded withinInterval:self.testCompletionDelay afterBlock:^{
+        self.client.connect(expectedUUID).authKey(expectedAuthKey).perform();
+    }];
+}
+
+- (void)testConnectUser_ShouldListenSynchronizationEevents_WhenAuthorizationCompleted {
+    
+    NSString *expectedAuthKey = @"secret";
+    NSString *expectedUUID = @"PubNub";
+    
+    
+    [self stubUserAuthorization];
+    [self stubPubNubSubscribe];
+    [self stubChatConnection];
+    
+    id recorded = OCMExpect([self.client listenSynchronizationEvents]);
+    [self waitForObject:self.client recordedInvocationCall:recorded withinInterval:self.testCompletionDelay afterBlock:^{
+        self.client.connect(expectedUUID).authKey(expectedAuthKey).perform();
+    }];
+}
+
+- (void)testConnectUser_ShouldSynchronizeSession_WhenAuthorizationCompleted {
+    
+    NSString *expectedAuthKey = @"secret";
+    NSString *expectedUUID = @"PubNub";
+    
+    
+    [self stubUserAuthorization];
+    [self stubPubNubSubscribe];
+    [self stubChatConnection];
+    
+    id recorded = OCMExpect([self.client synchronizeSession]);
+    [self waitForObject:self.client recordedInvocationCall:recorded withinInterval:self.testCompletionDelay afterBlock:^{
+        self.client.connect(expectedUUID).authKey(expectedAuthKey).perform();
+    }];
+}
+
+- (void)testConnectUser_ShouldEmitReadyEvent_WhenAuthorizationCompleted {
+    
+    NSString *expectedAuthKey = @"secret";
+    NSString *expectedUUID = @"PubNub";
+    
+    
+    [self stubUserAuthorization];
+    [self stubPubNubSubscribe];
+    [self stubChatConnection];
+    
+    id recorded = OCMExpect([self.client emitEventLocally:@"$.ready" withParameters:[OCMArg any]]);
+    [self waitForObject:self.client recordedInvocationCall:recorded withinInterval:self.testCompletionDelay afterBlock:^{
+        self.client.connect(expectedUUID).authKey(expectedAuthKey).perform();
+    }];
 }
 
 
@@ -394,29 +291,33 @@
 
 - (void)testReconnectUser_ShouldReAuthorizeLocalUser {
     
-    OCMExpect([self.clientMock authorizeLocalUserWithCompletion:[OCMArg any]]);
-    
-    self.clientMock.reconnect();
-    
-    OCMVerifyAll((id)self.clientMock);
+    id recorded = OCMExpect([self.client authorizeLocalUserWithCompletion:[OCMArg any]]);
+    [self waitForObject:self.client recordedInvocationCall:recorded withinInterval:self.testCompletionDelay afterBlock:^{
+        self.client.reconnect();
+    }];
 }
 
 - (void)testReconnectUser_ShouldReConnectChatsAndPubNub {
     
-    OCMStub([self.clientMock authorizeLocalUserWithCompletion:[OCMArg any]])
-        .andDo(^(NSInvocation *localUserStateUpdateInvocation) {
-            dispatch_block_t handlerBlock = nil;
-            
-            [localUserStateUpdateInvocation getArgument:&handlerBlock atIndex:2];
-            handlerBlock();
-        });
+    [self stubUserAuthorization];
     
-    OCMExpect([self.clientMock connectChats]);
-    OCMExpect([self.clientMock connectToPubNub]);
+    OCMExpect([self.client connectChats]);
+    OCMExpect([self.client connectToPubNubWithCompletion:[OCMArg any]]);
     
-    self.clientMock.reconnect();
+    self.client.reconnect();
     
-    OCMVerifyAll((id)self.clientMock);
+    OCMVerifyAll((id)self.client);
+}
+
+- (void)testReconnectUser_ShouldReSynchronizeSession {
+    
+    [self stubUserAuthorization];
+    [self stubPubNubSubscribe];
+    
+    id recorded = OCMExpect([self.client synchronizeSession]);
+    [self waitForObject:self.client recordedInvocationCall:recorded withinInterval:self.testCompletionDelay afterBlock:^{
+        self.client.reconnect();
+    }];
 }
 
 
@@ -424,12 +325,12 @@
 
 - (void)testDisconnectUser_ShouldDisconnectChatsAndPubNub {
     
-    OCMExpect([self.clientMock disconnectFromPubNub]);
-    OCMExpect([self.clientMock disconnectChats]);
+    OCMExpect([self.client disconnectFromPubNub]);
+    OCMExpect([self.client disconnectChats]);
     
-    self.clientMock.disconnect();
+    self.client.disconnect();
     
-    OCMVerifyAll((id)self.clientMock);
+    OCMVerifyAll((id)self.client);
 }
 
 #pragma mark -

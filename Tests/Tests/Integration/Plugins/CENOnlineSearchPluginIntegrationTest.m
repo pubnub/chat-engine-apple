@@ -11,6 +11,22 @@
 @interface CENOnlineUserSearchPluginIntegrationTest : CENTestCase
 
 
+#pragma mark - Information
+
+@property (nonatomic, strong) NSString *namespace;
+@property (nonatomic, strong) NSString *globalChannel;
+
+
+#pragma mark - Misc
+
+/**
+ * @brief Wait when global chat of \c client will have expected number of users which is \b 3 for
+ * this test case.
+ *
+ * @param client Reference on \b ChatEngine instance for which test should wait for all users.
+ */
+- (void)waitForOtherUsersWithClient:(CENChatEngine *)client;
+
 #pragma mark -
 
 
@@ -24,12 +40,49 @@
 
 #pragma mark - Setup / Tear down
 
+- (BOOL)shouldConnectChatEngineForTestCaseWithName:(NSString *)name {
+    
+    return YES;
+}
+
+- (NSString *)globalChatChannelForTestCaseWithName:(NSString *)name {
+    
+    NSString *channel = [super globalChatChannelForTestCaseWithName:name];
+    
+    if (!self.globalChannel) {
+        self.globalChannel = channel;
+    }
+    
+    return self.globalChannel ?: channel;
+}
+
+- (NSString *)namespaceForTestCaseWithName:(NSString *)name {
+    
+    NSString *namespace = [super namespaceForTestCaseWithName:name];
+    
+    if (!self.namespace) {
+        self.namespace = namespace;
+    }
+    
+    return self.namespace ?: namespace;
+}
+
+- (NSDictionary *)stateForUser:(NSString *)user inTestCaseWithName:(NSString *)name {
+    
+    NSDictionary *state = @{ @"works": @YES };
+    
+    if ([user isEqualToString:@"stephen2"]) {
+        state = @{ @"works": @NO, @"lastName": @"Blum" };
+    }
+    
+    return state;
+}
+
 - (void)setUp {
     
     [super setUp];
     
-    NSString *global = [@[@"test", [NSUUID UUID].UUIDString] componentsJoinedByString:@"-"];
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
+    
     NSMutableDictionary *configuration = nil;
     
     if ([self.name rangeOfString:@"ShouldFindUserByFieldInState"].location != NSNotFound ||
@@ -42,22 +95,12 @@
         }
     }
     
-    [self setupChatEngineWithGlobal:global forUser:@"ian" synchronization:NO meta:NO state:@{ @"works": @YES }];
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.delayBetweenActions * NSEC_PER_SEC)));
-    
-    [self setupChatEngineWithGlobal:global forUser:@"stephen1" synchronization:NO meta:NO state:@{ @"works": @YES }];
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.delayBetweenActions * NSEC_PER_SEC)));
-    
-    [self setupChatEngineWithGlobal:global forUser:@"stephen2" synchronization:NO meta:NO state:@{ @"works": @NO, @"lastName": @"Blum" }];
-    
+    [self setupChatEngineForUser:@"ian"];
+    [self setupChatEngineForUser:@"stephen1"];
+    [self setupChatEngineForUser:@"stephen2"];
     [self chatEngineForUser:@"ian"].global.plugin([CENOnlineUserSearchPlugin class]).configuration(configuration).store();
     [self chatEngineForUser:@"stephen1"].global.plugin([CENOnlineUserSearchPlugin class]).configuration(configuration).store();
     [self chatEngineForUser:@"stephen2"].global.plugin([CENOnlineUserSearchPlugin class]).configuration(configuration).store();
-    
-    // Give some time to connect both users.
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.delayBetweenActions * NSEC_PER_SEC)));
 }
 
 
@@ -65,40 +108,34 @@
 
 - (void)testSearch_ShouldFindUserByDefaultUUIDKey_WhenFullCriteriaSpecified {
     
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     CENChatEngine *client1 = [self chatEngineForUser:@"ian"];
     CENChatEngine *client2 = [self chatEngineForUser:@"stephen1"];
-    __block BOOL handlerCalled = NO;
-
-    [CENOnlineUserSearchPlugin search:@"stephen1" inChat:client1.global withCompletion:^(NSArray<CENUser *> *users) {
-        handlerCalled = YES;
-        
-        XCTAssertEqual(users.count, 1);
-        XCTAssertEqualObjects(users.firstObject.uuid, client2.me.uuid);
-        dispatch_semaphore_signal(semaphore);
-    }];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
-    XCTAssertTrue(handlerCalled);
+
+    [self waitForOtherUsersWithClient:client1];
+    [self waitToCompleteIn:self.testCompletionDelay codeBlock:^(dispatch_block_t handler) {
+        [CENOnlineUserSearchPlugin search:@"stephen1" inChat:client1.global withCompletion:^(NSArray<CENUser *> *users) {
+            XCTAssertEqual(users.count, 1);
+            XCTAssertEqualObjects(users.firstObject.uuid, client2.me.uuid);
+            handler();
+        }];
+    }];
 }
 
 - (void)testSearch_ShouldFindUserByDefaultUUIDKey_WhenPartialCriteriaSpecified {
     
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     CENChatEngine *client1 = [self chatEngineForUser:@"ian"];
     CENChatEngine *client2 = [self chatEngineForUser:@"stephen2"];
-    __block BOOL handlerCalled = NO;
-
-    [CENOnlineUserSearchPlugin search:@"hen" inChat:client1.global withCompletion:^(NSArray<CENUser *> *users) {
-        handlerCalled = YES;
-        
-        XCTAssertEqual(users.count, 2);
-        XCTAssertTrue([[users valueForKey:@"uuid"] containsObject:client2.me.uuid]);
-        dispatch_semaphore_signal(semaphore);
-    }];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
-    XCTAssertTrue(handlerCalled);
+    
+    [self waitForOtherUsersWithClient:client1];
+    [self waitToCompleteIn:self.testCompletionDelay codeBlock:^(dispatch_block_t handler) {
+        [CENOnlineUserSearchPlugin search:@"hen" inChat:client1.global withCompletion:^(NSArray<CENUser *> *users) {
+            XCTAssertEqual(users.count, 2);
+            XCTAssertTrue([[users valueForKey:@"uuid"] containsObject:client2.me.uuid]);
+            handler();
+        }];
+    }];
 }
 
 
@@ -106,57 +143,64 @@
 
 - (void)testSearch_ShouldFindUserByFieldInState_WhenFullCriteriaSpecified {
     
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     CENChatEngine *client1 = [self chatEngineForUser:@"ian"];
     CENChatEngine *client2 = [self chatEngineForUser:@"stephen2"];
-    __block BOOL handlerCalled = NO;
-
-    [CENOnlineUserSearchPlugin search:@"Blum" inChat:client1.global withCompletion:^(NSArray<CENUser *> *users) {
-        handlerCalled = YES;
-        
-        XCTAssertEqual(users.count, 1);
-        XCTAssertEqualObjects(users.firstObject.uuid, client2.me.uuid);
-        dispatch_semaphore_signal(semaphore);
-    }];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
-    XCTAssertTrue(handlerCalled);
+    
+    [self waitForOtherUsersWithClient:client1];
+    [self waitToCompleteIn:self.testCompletionDelay codeBlock:^(dispatch_block_t handler) {
+        [CENOnlineUserSearchPlugin search:@"Blum" inChat:client1.global withCompletion:^(NSArray<CENUser *> *users) {
+            XCTAssertEqual(users.count, 1);
+            XCTAssertEqualObjects(users.firstObject.uuid, client2.me.uuid);
+            handler();
+        }];
+    }];
 }
 
 - (void)testSearch_ShouldFindUserByFieldInState_WhenPartialCriteriaSpecified {
     
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     CENChatEngine *client1 = [self chatEngineForUser:@"ian"];
     CENChatEngine *client2 = [self chatEngineForUser:@"stephen2"];
-    __block BOOL handlerCalled = NO;
-
-    [CENOnlineUserSearchPlugin search:@"bl" inChat:client1.global withCompletion:^(NSArray<CENUser *> *users) {
-        handlerCalled = YES;
-        
-        XCTAssertEqual(users.count, 1);
-        XCTAssertEqualObjects(users.firstObject.uuid, client2.me.uuid);
-        dispatch_semaphore_signal(semaphore);
-    }];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
-    XCTAssertTrue(handlerCalled);
+    
+    [self waitForOtherUsersWithClient:client1];
+    [self waitToCompleteIn:self.testCompletionDelay codeBlock:^(dispatch_block_t handler) {
+        [CENOnlineUserSearchPlugin search:@"bl" inChat:client1.global withCompletion:^(NSArray<CENUser *> *users) {
+            XCTAssertEqual(users.count, 1);
+            XCTAssertEqualObjects(users.firstObject.uuid, client2.me.uuid);
+            handler();
+        }];
+    }];
 }
 
 - (void)testSearch_ShouldNotFindUserByFieldInState_WhenCaseSensitiveCriteriaSpecifiedUsingWrongCase {
     
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     CENChatEngine *client = [self chatEngineForUser:@"ian"];
-    __block BOOL handlerCalled = NO;
-
-    [CENOnlineUserSearchPlugin search:@"blum" inChat:client.global withCompletion:^(NSArray<CENUser *> *users) {
-        handlerCalled = YES;
-        
-        XCTAssertEqual(users.count, 0);
-        dispatch_semaphore_signal(semaphore);
-    }];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
-    XCTAssertTrue(handlerCalled);
+    
+    [self waitForOtherUsersWithClient:client];
+    [self waitToCompleteIn:self.testCompletionDelay codeBlock:^(dispatch_block_t handler) {
+        [CENOnlineUserSearchPlugin search:@"blum" inChat:client.global withCompletion:^(NSArray<CENUser *> *users) {
+            XCTAssertEqual(users.count, 0);
+            handler();
+        }];
+    }];
+}
+
+
+#pragma mark - Misc
+
+- (void)waitForOtherUsersWithClient:(CENChatEngine *)client {
+    
+    if (client.global.users.count != 3) {
+        [self object:client shouldHandleEvent:@"$.online.*" withHandler:^CENEventHandlerBlock (dispatch_block_t handler) {
+            return ^(CENEmittedEvent *emittedEvent) {
+                if (client.global.users.count == 3) {
+                    handler();
+                }
+            };
+        } afterBlock:^{ }];
+    }
 }
 
 #pragma mark -

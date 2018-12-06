@@ -1,3 +1,8 @@
+/**
+ * @author Serhii Mamontov
+ * @version 0.10.0
+ * @copyright © 2010-2018 PubNub, Inc.
+ */
 #import "CENChat.h"
 
 
@@ -8,39 +13,58 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-/**
- * @brief      \b ChatEngine chat room representation model.
- * @discussion This instance can be used to invite new user(s), send messages and receive updates.
- * @discussion This is extended Objective-C interface to provide builder pattern for methods invocation.
- *
- * @author Serhii Mamontov
- * @version 0.9.0
- * @copyright © 2009-2018 PubNub, Inc.
- */
+#pragma mark - Builder interface declaration
+
 @interface CENChat (BuilderInterface)
+
+
+#pragma mark - Information
+
+/**
+ * @brief Chat metadata persisted on the server.
+ *
+ * @discussion Useful for storing things like the name and description. Call \b {CENChat.update} to
+ * update the remote information.
+ *
+ * @ref 1fc7c11f-8394-4f5a-bf09-d2251edf6992
+ */
+@property (nonatomic, readonly, copy) NSDictionary *meta;
+
+/**
+ * @brief Whether chat has been manually disconnected or not.
+ *
+ * @discussion If user manually disconnects via \b {CENChatEngine.disconnect}, the chat is put to
+ * 'sleep'. If a connection is reestablished via \b {CENChatEngine.reconnect}, sleeping chats
+ * reconnect automatically.
+ *
+ * @ref ffaa1c91-3ebc-4546-805e-32ce3b53a72d
+ */
+@property (nonatomic, readonly, assign) BOOL asleep;
 
 
 #pragma mark - Connection
 
 /**
- * @brief      Connect \c local user to \b PubNub real-time network to receive updates from other \c chat users.
- * @discussion During connection process, \b ChatEngine will perform handshake to get recent user's metadata for \c chat and
- *             ensure what there is no issues with access rights.
+ * @brief Connect \b {local user CENMe} to \b PubNub real-time network to receive updates from other
+ * \b {chat CENChat} participants.
  *
- * @discussion Connect to chat with random name:
+ * @throws \b CENErrorDomain exception in following cases:
+ * - if chat already connected.
+ *
+ * @discussion Authenticate \b {local user CENMe} for \b {chat CENChat} and subscribe with \b PubNub
  * @code
- * CENConfiguration *configuration = [CENConfiguration configurationWithPublishKey:@"demo-36" subscribeKey:@"demo-36"];
- * self.client = [CENChatEngine clientWithConfiguration:configuration];
- * self.client.once(@"$.ready", ^(CENMe *me) {
- *     // .....
- *     // at moment when chat created, ChatEngine client should be connected (at least once).
- *     // .....
- *     CENChat *chat = self.client.Chat().autoConnect(NO).create();
+ * // objc f3f3b69d-25ec-493b-87ee-512ad2027a46
  *
- *     chat.connect();
- * });
- * self.client.connect(@"ChatEngine").perform();
+ * // Create new chat room, but don't connect to it automatically.
+ * CENChat *chat = self.client.Chat().name(@"some-chat").autoConnect(NO).create();
+ *
+ * // Connect to the chat when we feel like it.
+ * chat.connect();
  * @endcode
+ *
+ * @return Receiver which can be used to chain other methods call.
+ *
+ * @ref e5bf86e5-f05f-4ed1-8303-37a82479f28c
  */
 @property (nonatomic, readonly, strong) CENChat * (^connect)(void);
 
@@ -48,112 +72,174 @@ NS_ASSUME_NONNULL_BEGIN
 #pragma mark - Meta
 
 /**
- * @brief Update \c chat meta information in \b ChatEngine network.
+ * @brief Update \b {chat CENChat} meta information on server.
  *
- * @discussion Change chat title on connection:
+ * @discussion Update \b {chat's CENChat} metadata
  * @code
- * CENConfiguration *configuration = [CENConfiguration configurationWithPublishKey:@"demo-36" subscribeKey:@"demo-36"];
- * self.client = [CENChatEngine clientWithConfiguration:configuration];
- * self.client.once(@"$.ready", ^(CENMe *me) {
- *     // .....
- *     // at moment when chat created, ChatEngine client should be connected (at least once).
- *     // .....
- *     CENChat *chat = self.client.Chat().meta(@{ @"title": @"Test" }).create();
+ * // objc e4a1350a-80bf-4e03-abda-0aec62655f15
  *
- *     chat.on(@"$.connected", ^{
- *         chat.update(@{ @"title": @"Updated test" });
- *     });
- * });
- * self.client.connect(@"ChatEngine").perform();
+ * // Create new chat room, with initial meta information.
+ * CENChat *chat = self.client.Chat().meta(@{ @"title": @"Test" }).create();
+ *
+ * // Change chat's meta when it will be required.
+ * chat.update(@{ @"title": @"Updated Test" });
  * @endcode
  *
- * @param meta Reference on metadata which should be bound to chat.
+ * @param meta \a NSDictionary with metadata which should be bound to \b {chat CENChat}.
+ *
+ * @return Receiver which can be used to chain other methods call.
+ *
+ * @ref e8edd46b-1d65-462b-8ce8-b0bd4676e816
  */
 @property (nonatomic, readonly, strong) CENChat * (^update)(NSDictionary * __nullable meta);
+
+
+#pragma mark - State
+
+/**
+ * @brief Restore state for any \b {chat CENChat} participant.
+ *
+ * @discussion Start restoring state for \b {users CENUser} from \b {CENChatEngine.global} chat
+ * @code
+ * // objc 38a484d7-ae4f-4e2d-82eb-8523740af395
+ *
+ * // Create new chat and enable participants state restore on it.
+ * CENChat *chat = self.client.Chat().create().restoreState(nil);
+ * @endcode
+ *
+ * @discussion Start restoring state for \b {users CENUser} from \b {custom chat CENChat}
+ * @code
+ * // objc 0bae8da8-7645-490e-aac4-a1cbcedda0ba
+ * *
+ * // Create chat which will be used by application to store users' state in it.
+ * CENChat *stateChat = self.client.Chat().name(@"users-state").create();
+ 
+ * // Create new chat and enable participants state restore on it.
+ * CENChat *chat = self.client.Chat().create().restoreState(stateChat);
+ * @endcode
+ *
+ * @param chat \b {Chat CENChat} from which state for users should be retrieved.
+ *     Pass \c nil to use \b {chat CENChat} instance on which method has been called.
+ *
+ * @return Receiver which can be used to chain other methods call.
+ *
+ * @since 0.10.0
+ *
+ * @ref e2f415db-4426-4ba6-99ba-3371d957fef3
+ */
+@property (nonatomic, readonly, strong) CENChat * (^restoreState)(CENChat * __nullable chat);
+
+/**
+ * @brief Update \b {local user CENMe} state in this \b {chat CENChat}.
+ *
+ * @discussion After change all other \b {users CENUser} will be notified about this change with
+ * \b {$.state} event.
+ *
+ * @discussion Update \b {local user CENMe} state for \b {chat CENChat}
+ * @code
+ * // objc 8a48f71e-4988-4b35-a450-693a3b6f1e66
+ *
+ * // Create new chat for local user to participate in.
+ * CENChat *chat = self.client.Chat().create();
+ *
+ * // Update user's state when it will be required.
+ * chat.setState(@{ @"state": @"offline" });
+ * @endcode
+ *
+ * @param state \a NSDictionary with data, which should be bound to \b {local user CENMe} in this
+ *     chat.
+ *
+ * @return Receiver which can be used to chain other methods call.
+ *
+ * @since 0.10.0
+ *
+ * @ref 2fc10c45-d0c5-4ec8-ba09-b25850fc7e4e
+ */
+@property (nonatomic, readonly, strong) CENChat * (^setState)(NSDictionary * __nullable state);
 
 
 #pragma mark - Participating
 
 /**
- * @brief      Invite remote \c user to join conversation.
- * @discussion Remote \c user will be granted with required rights to read and write messages to \c chat.
+ * @brief Invite a \b {user CENUser} to this \b {chat CENChat}.
  *
- * @discussion Inivte user to chat with name:
+ * @discussion Authorizes the invited user in the \b {chat CENChat} and sends them an invite via
+ * \b {CENUser.direct} chat.
+ *
+ * @discussion Invite another user to \b {chat CENChat}
  * @code
- * CENConfiguration *configuration = [CENConfiguration configurationWithPublishKey:@"demo-36" subscribeKey:@"demo-36"];
- * self.client = [CENChatEngine clientWithConfiguration:configuration];
- * self.client.once(@"$.ready", ^(CENMe *me) {
- *     // .....
- *     // at moment when chat created, ChatEngine client should be connected (at least once).
- *     // .....
- *     CENChat *chat = self.client.Chat().name(@"test-chat").create();
+ * // objc 9124b306-3108-4c5a-a2ce-e2dd3aca2a50
  *
- *     chat.invite(self.client.User(@"PubNub").create());
- * };
+ * // One of user running ChatEngine.
+ * CENChat *secretChat = self.client.Chat().name(@"secret-chat").create();
+ * secretChat.invite(anotherUser);
+ *
+ * // Another user listens for invitations.
+ * self.client.me.direct.on(@"$.invite", ^(CENEmittedEvent *event) {
+ *     NSDictionary *payload = event.data;
+ *     CENChat *secretChat = self.client.Chat().name(payload[@"channel"]).create();
  * });
- * self.client.connect(@"ChatEngine").perform();
  * @endcode
  *
- * @param user Reference on \b CENUser instante which represent remote user.
+ * @param user \b {User CENUser} which should be invited.
+ *
+ * @return Receiver which can be used to chain other methods call.
+ *
+ * @ref c3608222-f64b-4598-90b9-ec1d4fe65efd
  */
 @property (nonatomic, readonly, strong) CENChat * (^invite)(CENUser *user);
 
 /**
- * @brief      Leave \c chat on \c local user behalf.
- * @discussion After user will leave, he won't receive any real-time updates anymore.
+ * @brief Leave from the \b {chat CENChat} on behalf of \b {local user CENMe} and stop receiving
+ * events.
  *
- * @discussion Leave previously connected chat:
+ * @discussion Leave specific chat
  * @code
- * CENConfiguration *configuration = [CENConfiguration configurationWithPublishKey:@"demo-36" subscribeKey:@"demo-36"];
- * self.client = [CENChatEngine clientWithConfiguration:configuration];
- * // .....
- * CENChat *chat = self.client.Chat().name(@"test-chat").get();
+ * // objc 56aac5cd-e129-4241-8e6e-3a18c9035cc3
+ *
+ * // Create new chat for local user to participate in.
+ * CENChat *chat = self.client.Chat().name(@"test-chat").create();
+ *
+ * // Leave chat when there is no more any need to be participant of it.
  * chat.leave();
  * @endcode
+ *
+ * @return Receiver which can be used to chain other methods call.
+ *
+ * @ref 48a1986e-9f54-4e83-a392-b9a21000f516
  */
 @property (nonatomic, readonly, strong) CENChat * (^leave)(void);
-
-/**
- * @brief  Retrieve list of \c users in \c chat.
- *
- * @discussion \b Example:
- * @code
- * CENConfiguration *configuration = [CENConfiguration configurationWithPublishKey:@"demo-36" subscribeKey:@"demo-36"];
- * self.client = [CENChatEngine clientWithConfiguration:configuration];
- * // .....
- * CENChat *chat = self.client.Chat().name(@"test-chat").get();
- * chat.getUserUpdates();
- * @endcode
- */
-@property (nonatomic, readonly, strong) CENChat * (^fetchUserUpdates)(void);
 
 
 #pragma mark - Events emitting
 
 /**
- * @brief      Emit event for remote chat listeners.
- * @discussion Emit named event for all remote users connected to this chat.
- * @note       If returned \b CENEvent instance will be user longer than 10 minutes, make sure to save reference on it or it
- *             will be deallocated.
+ * @brief Event creation and configuration API builder.
  *
- * @discussion Emit simple event to 'global' chat:
+ * @discussion Events are trigger over the network and all events are made on behalf of
+ * \b {local user CENMe}.
+ 
+ * @note Builder parameters can be specified in different variations depending from needs.
+ *
+ * @discussion Emit event with data
  * @code
- * CENConfiguration *configuration = [CENConfiguration configurationWithPublishKey:@"demo-36" subscribeKey:@"demo-36"];
- * self.client = [CENChatEngine clientWithConfiguration:configuration];
- * self.client.on(@"$.ready", ^(CENMe *me) {
- *     self.client.global.emit(@"$.test-event").data(@{ @"message": @"Hello world" }).perform()
- *         .once(@"$.emitted", ^(NSDictionary *payload) {
- *             // Handle event emit completion at payload.timetoken.
- *         });
+ * // objc 26856530-b1e4-453d-8a8d-ab9b2627e890
+ *
+ * // Emit event by one user.
+ * self.chat.emit(@"custom-event").data(@{ @"value": @YES }).perform();
+ *
+ * // Handle event on another side.
+ * self.chat.on(@"custom-event", ^(CENEmittedEvent *event) {
+ *     NSDictionary *payload = event.data;
+ *     CENUser *sender = payload[CENEventData.sender];
+ *
+ *     NSLog(@"%@ emitted the value: %@", sender.uuid, payload[CENEventData.data][@"message"]);
  * });
- * self.client.connect(@"ChatEngine").perform();
  * @endcode
  *
- * @param event Reference on name of emitted event.
- * @param data  Reference on data which should be sent along with event.
+ * @param event Name of emitted event.
  *
- * @return Reference on object which allow to track emitting progress (it is possible to subscribe on events for it with
- *         '-CENEvent.on()' and '-CENEvent.once()' methods.
+ * @return Builder instance which allow to complete event emit call configuration.
  */
 @property (nonatomic, readonly, strong) CENChatEmitBuilderInterface * (^emit)(NSString *event);
 
@@ -161,27 +247,39 @@ NS_ASSUME_NONNULL_BEGIN
 #pragma mark - Events search
 
 /**
- * @brief      Search through previously emitted events.
- * @discussion Created \b CENSearch instance will allow to iterate through history of found \c events. Depending from
- *             configuration, search instance can search for particular event type and/or sent from specific \c user. It is
- *             possible to limit in time and count of sent events.
- * @note       If returned \b CENSearch instance will be user longer than 10 minutes, make sure to
- *             save reference on it or it will be deallocated.
+ * @brief Search through previously emitted events.
+ 
+ * @note Builder parameters can be specified in different variations depending from needs.
  *
- * @discussion Search for 10 'ping' events sent by 'PubNub':
+ * @discussion Search for specific event from \b {local user CENMe}
  * @code
- * CENConfiguration *configuration = [CENConfiguration configurationWithPublishKey:@"demo-36" subscribeKey:@"demo-36"];
- * self.client = [CENChatEngine clientWithConfiguration:configuration];
- * self.client.on(@"$.ready", ^(CENMe *me) {
- *     CENUser *user = self.client.User(@"PubNub").get();
- *     self.client.global.search().event(@"ping").sender(user).limit(10).create()
- *         .search()
- *         .on(@"ping", ^(NSDictionary *eventData) {
- *             // Handle 'ping' event from chat's history.
- *         });
- * });
- * self.client.connect(@"ChatEngine").perform();
+ * // objc 643490dc-1019-4830-bf87-950e46493f9f
+ *
+ * self.chat.search().event(@"my-custom-event").sender(self.client.me).limit(20).create()
+ *     .search()
+ *     .on(@"my-custom-event", ^(CENEmittedEvent *event) {
+ *         NSLog(@"This is an old event!: %@", event.data);
+ *     })
+ *     .on(@"$.search.finish", ^(CENEmittedEvent *event) {
+ *         NSLog(@"We have all our results!");
+ *     });
  * @endcode
+ *
+ * @discussion Search for all events
+ * @code
+ * // objc eba2b098-1b22-450f-951f-f7869ab32137
+ *
+ * self.chat.search().create()
+ *     .search()
+ *     .on(@"my-custom-event", ^(CENEmittedEvent *event) {
+ *         NSLog(@"This is an old event!: %@", event.data);
+ *     })
+ *     .on(@"$.search.finish", ^(CENEmittedEvent *event) {
+ *         NSLog(@"We have all our results!");
+ *     });
+ * @endcode
+ *
+ * @return Builder instance which allow to complete events searching call configuration.
  */
 @property (nonatomic, readonly, strong) CENChatSearchBuilderInterface * (^search)(void);
 
@@ -189,144 +287,174 @@ NS_ASSUME_NONNULL_BEGIN
 #pragma mark - Handlers addition
 
 /**
- * @brief      Subscribe on particular \c event which will be emitted by receiver and handle with provided event handling
- *             \b handlerBlock.
- * @discussion Builder block allow to specify \b required fields: \c event - name of event on which handler should be called;
- *             \c handlerBlock - reference on event handling block.
+ * @brief Subscribe on particular \c event which will be emitted by receiver and handle it with
+ * provided event handler.
  *
- * @discussion Handle client initialization complection:
+ * @discussion Handle specific event
  * @code
- * CENConfiguration *configuration = [CENConfiguration configurationWithPublishKey:@"demo-36" subscribeKey:@"demo-36"];
- * self.client = [CENChatEngine clientWithConfiguration:configuration];
- * self.client.on(@"$.ready", ^(CENMe *me) {
- *     // Handle client connection complete.
- * });
- * self.client.connect(@"ChatEngine").perform();
- * @endcode
+ * // objc 5029a4eb-b20d-406d-b263-a4b0047ec088
  *
- * @return Refererence on \b CENChat subclass which can be used to chain other methods call.
- */
-@property (nonatomic, readonly, strong) CENChat * (^on)(NSString *event, id handlerBlock);
-
-/**
- * @brief      Subscribe on any events which will be emitted by receiver and handle with provided event handling
- *             \b handlerBlock.
- * @discussion Builder block allow to specify \b required field - reference on event handling block.
- *
- * @discussion Handle any events emitted by client:
- * @code
- * CENConfiguration *configuration = [CENConfiguration configurationWithPublishKey:@"demo-36" subscribeKey:@"demo-36"];
- * self.client = [CENChatEngine clientWithConfiguration:configuration];
- * self.client.onAny(^(NSString *event, CENObject *sender, id data) {
- *     // Handle event.
- * });
- * self.client.connect(@"ChatEngine").perform();
- * @endcode
- *
- * @return Refererence on \b CENChat subclass which can be used to chain other methods call.
- */
-@property (nonatomic, readonly, strong) CENChat * (^onAny)(id handlerBlock);
-
-/**
- * @brief      Subscribe on particular \c event which will be emitted by receiver and handle once with provided event
- *             handling \b handlerBlock.
- * @discussion Builder block allow to specify \b required fields: \c event - name of event on which handler should be called;
- *             \c handlerBlock - reference on event handling block.
- *
- * @discussion Handle user invitation once:
- * @code
- * CENConfiguration *configuration = [CENConfiguration configurationWithPublishKey:@"demo-36" subscribeKey:@"demo-36"];
- * self.client = [CENChatEngine clientWithConfiguration:configuration];
- * self.client.on(@"$.ready", ^(CENMe *me) {
- *     me.direct.once(@"$.invite", ^(NSDictionary *invitationData) {
- *         // Handle invitation from invitationData.sender to join invitationData.channel.
+ * // Create new chat for local user to participate in.
+ * CENChat *chat = self.client.Chat().name(@"test-chat").create()
+ *     .on(@"$.connected", ^(CENEmittedEvent *event) {
+ *         // Handle connection to chat real-time channel.
  *     });
- * });
- * self.client.connect(@"ChatEngine").perform();
  * @endcode
  *
- * @return Refererence on \b CENChat subclass which can be used to chain other methods call.
+ * @discussion Handle multiple events using wildcard
+ * @code
+ * // objc 1a66ce8d-910b-4023-af5d-f0d8d6fa92d0
+ *
+ * // Create new chat for local user to participate in.
+ * CENChat *chat = self.client.Chat().name(@"test-chat").create()
+ *     .on(@"$.error.*", ^(CENEmittedEvent *event) {
+ *         // Handle any emitted error.
+ *     });
+ * @endcode
+ *
+ * @param event Name of event which should be handled by \c block.
+ * @param handler Block / closure which will handle specified \c event.
+ *
+ * @return Receiver which can be used to chain other methods call.
+ *
+ * @ref d1ff2b7b-6cb7-4301-996a-a597210f907a
  */
-@property (nonatomic, readonly, strong) CENChat * (^once)(NSString *event, id handlerBlock);
+@property (nonatomic, readonly, strong) CENChat * (^on)(NSString *event,
+                                                        CENEventHandlerBlock handler);
+
+/**
+ * @brief Subscribe on any events which will be emitted by receiver and handle them with provided
+ * event handler.
+ *
+ * @discussion Handle any event
+ * @code
+ * // objc 373b6ae0-0e0b-4dbc-8751-6b089ea15a1d
+ *
+ * // Create new chat for local user to participate in.
+ * CENChat *chat = self.client.Chat().name(@"test-chat").create()
+ *     .onAny(^(CENEmittedEvent *event) {
+ *         // Handle any event emitted by object.
+ *     });
+ * @endcode
+ 
+ * @param handler Block / closure which will handle any events.
+ *
+ * @return Receiver which can be used to chain other methods call.
+ *
+ * @ref 141023e7-25c8-419c-889b-6aac928bf959
+ */
+@property (nonatomic, readonly, strong) CENChat * (^onAny)(CENEventHandlerBlock handler);
+
+/**
+ * @brief Subscribe on particular \c event which will be emitted by receiver and handle it once with
+ * provided event handler.
+ *
+ * @discussion Handle specific event once
+ * @code
+ * // objc b995473a-0d1d-4a7f-a85b-888fb1015619
+ *
+ * // Create new chat for local user to participate in.
+ * CENChat *chat = self.client.Chat().name(@"test-chat").create()
+ *     .once(@"$.state", ^(CENEmittedEvent *event) {
+ *         // Handle once user's state change for chat.
+ *     });
+ * @endcode
+ *
+ * @discussion Handle one of multiple events once using wildcard
+ * @code
+ * // objc 0f8e5012-6155-4e19-a671-46a02ab8e972
+ *
+ * // Create new chat for local user to participate in.
+ * CENChat *chat = self.client.Chat().name(@"test-chat").create()
+ *     .once(@"$.online.*", ^(CENEmittedEvent *event) {
+ *         // Handle once remote user join or list refresh.
+ *     })
+ *     .once(@"$.offline.*", ^(CENEmittedEvent *event) {
+ *         // Handle once remote user leave or offline events.
+ *     });
+ * @endcode
+ *
+ * @param event Name of event which should be handled by \c block.
+ * @param handler Block / closure which will handle specified \c event.
+ *
+ * @return Receiver which can be used to chain other methods call.
+ *
+ * @ref 7c3091a6-4bea-4f32-bdae-90dfa0b8d5b2
+ */
+@property (nonatomic, readonly, strong) CENChat * (^once)(NSString *event,
+                                                          CENEventHandlerBlock handler);
 
 
 #pragma mark - Handlers removal
 
 /**
- * @brief      Unsubscribe from particular \c event by removing \c handlerBlock from notifiers list.
- * @discussion \b Important: to be able to remove handling block, it is required to store reference on it in class which
- *             listens for updates. Newly created block won't remove previously registered \c handler.
- * @discussion Builder block allow to specify \b required fields: \c event - name of event from which event handler should
- *             removed; \c handlerBlock - reference on event handling block which previously has been used to handle this
- *             event.
+ * @brief Unsubscribe from particular \c event by removing \c handler from listeners list.
  *
- * @discussion Remove user's invitation event handler:
+ * @note To be able to remove handler block / closure, it is required to store reference on it in
+ * class which listens for updates.
+ *
+ * @discussion Stop specific event handling
  * @code
- * CENConfiguration *configuration = [CENConfiguration configurationWithPublishKey:@"demo-36" subscribeKey:@"demo-36"];
- * self.client = [CENChatEngine clientWithConfiguration:configuration];
- * self.invitationHandlingBlock = ^(NSDictionary *invitationData) {
- *     // Handle invitation from invitationData.sender to join invitationData.channel.
- * };
+ * // objc d9ef9d87-934d-4843-8c1d-b3d5d6b25f06
  *
- * self.client.on(@"$.ready", ^(CENMe *me) {
- *     me.direct.once(@"$.invite", self.invitationHandlingBlock);
- * });
- * self.client.connect(@"ChatEngine").perform();
- * ...
- * self.client.me.off(@"$.invite", self.invitationHandlingBlock);
+ * self.messageHandlingBlock = ^(CENEmittedEvent *event) {
+ *     // Handle remote user emitted event payload.
+ * };
+ * *
+ * self.chat.off(@"message", self.messageHandlingBlock);
  * @endcode
  *
- * @return Refererence on \b CENChat subclass which can be used to chain other methods call.
+ * @param event Name of event for which handler should be removed.
+ * @param handler Block / closure which has been used during event handler registration.
+ *
+ * @return Receiver which can be used to chain other methods call.
+ *
+ * @ref 23b56479-17a0-479b-9b18-ce93983b5221
  */
-@property (nonatomic, readonly, strong) CENChat * (^off)(NSString *event, id handlerBlock);
+@property (nonatomic, readonly, strong) CENChat * (^off)(NSString *event,
+                                                         CENEventHandlerBlock handler);
 
 /**
- * @brief      Unsubscribe from any events emitted by receiver by removing \c handlerBlock from notifiers list.
- * @discussion \b Important: to be able to remove handling block, it is required to store reference on it in class which
- *             listens for updates. Newly created block won't remove previously registered \c handler.
- * @discussion Builder block allow to specify \b required field - reference on event handling block which previously has been
- *             used to handle all events.
+ * @brief Unsubscribe from any events emitted by receiver by removing \c handler from
+ * listeners list.
  *
- * @discussion Remove handler for any events emitted by client:
+ * @note To be able to remove handler block / closure, it is required to store reference on it in
+ * class which listens for updates.
+ *
+ * @discussion Stop any events handling
  * @code
- * CENConfiguration *configuration = [CENConfiguration configurationWithPublishKey:@"demo-36" subscribeKey:@"demo-36"];
- * self.client = [CENChatEngine clientWithConfiguration:configuration];
- * self.anyHandlingBlock = ^(NSString *event, CENObject *sender, id data) {
- *     // Handle event.
+ * // objc 156cd8c4-9e24-4eb9-b419-00852b818a80
+ *
+ * self.anyEventHandlingBlock = ^(CENEmittedEvent *event) {
+ *     // Handle any event emitted by object.
  * };
  *
- * self.client.onAny(self.anyHandlingBlock);
- * self.client.connect(@"ChatEngine").perform();
- * ...
- * self.client.offAny(self.invitationHandlingBlock);
+ * self.chat.offAny(self.anyEventHandlingBlock);
  * @endcode
  *
- * @return Refererence on \b CENChat subclass which can be used to chain other methods call.
+ * @param handler Block / closure which has been used during event handler registration.
+ *
+ * @return Receiver which can be used to chain other methods call.
+ *
+ * @ref 1614fc4b-a395-4b8c-894e-7e2c4ac7451c
  */
-@property (nonatomic, readonly, strong) CENChat * (^offAny)(id handlerBlock);
+@property (nonatomic, readonly, strong) CENChat * (^offAny)(CENEventHandlerBlock handler);
 
 /**
- * @brief      Unsubscribe all \c event handling blocks from event processing.
- * @discussion Builder block allow to specify \b required field - name of event from which event handlers should removed.
+ * @brief Unsubscribe all \c event handlers.
  *
- * @discussion Remove all '$.invite' event listeners:
+ * @discussion Remove specific event handlers
  * @code
- * CENConfiguration *configuration = [CENConfiguration configurationWithPublishKey:@"demo-36" subscribeKey:@"demo-36"];
- * self.client = [CENChatEngine clientWithConfiguration:configuration];
- * self.client.on(@"$.ready", ^(CENMe *me) {
- *     me.direct.on(@"$.invite", ^(NSDictionary *invitationData) {
- *         // Do something with sender.
- *     });
- *     me.direct.on(@"$.invite", ^(NSDictionary *invitationData) {
- *         // Do something with channel data.
- *     });
- * }];
- * self.client.connect(@"ChatEngine").perform();
- * ...
- * self.client.me.removeAll(@"$.invite");
+ * // objc 72d3ec39-2941-4b55-b50f-65ee95a27aab
+ *
+ * self.chat.removeAll(@"message");
  * @endcode
  *
- * @return Refererence on \b CENChat subclass which can be used to chain other methods call.
+ * @param event Name of event for which has been used to register handler blocks.
+ *
+ * @return Receiver which can be used to chain other methods call.
+ *
+ * @ref d3497eaf-63c4-4a13-950d-c62a8aa35614
  */
 @property (nonatomic, readonly, strong) CENChat * (^removeAll)(NSString *event);
 
@@ -334,18 +462,20 @@ NS_ASSUME_NONNULL_BEGIN
 #pragma mark - Misc
 
 /**
- * @brief  Serialize \c chat instance into dictionary.
+ * @brief Serialize \c chat instance into dictionary.
  *
- * @discussion \b Example:
+ * @discussion Serialize \b {chat CENChat} information into dictionary
  * @code
- * CENConfiguration *configuration = [CENConfiguration configurationWithPublishKey:@"demo-36" subscribeKey:@"demo-36"];
- * self.client = [CENChatEngine clientWithConfiguration:configuration];
- * // .....
+ * // objc 23b3c6dd-5ed1-46dc-a45e-4bca9fffa154
+ *
  * CENChat *chat = self.client.Chat().name(@"test-chat").get();
+ *
  * NSLog(@"Chat dictionary representation: %@", chat.objectify());
  * @endcode
  *
- * @return Chat's dictionary representation.
+ * @return \a NSDictionary with publicly visible chat data.
+ *
+ * @ref 84bf40d4-6226-45e2-b3c0-cad9fedc1c62
  */
 @property (nonatomic, readonly, strong) NSDictionary * (^objectify)(void);
 

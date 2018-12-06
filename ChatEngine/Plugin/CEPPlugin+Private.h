@@ -1,7 +1,7 @@
 /**
  * @author Serhii Mamontov
- * @version 0.9.0
- * @copyright © 2009-2018 PubNub, Inc.
+ * @version 0.10.0
+ * @copyright © 2010-2018 PubNub, Inc.
  */
 #import "CEPPlugin+Developer.h"
 
@@ -13,7 +13,6 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-
 #pragma mark Private interface declaration
 
 @interface CEPPlugin (Private)
@@ -21,52 +20,74 @@ NS_ASSUME_NONNULL_BEGIN
 
 #pragma mark - Information
 
-/**
- * @brief Stores reference on identifier with which plugin instance actually has been registered.
- */
 @property (nonatomic, readonly, copy) NSString *identifier;
 
 
 #pragma mark - Initialization and Configuration
 
 /**
- * @brief  Create and configure plugin instance.
+ * @brief Create and configure plugin instance.
  *
- * @param identifier    Reference on unique plugin identifier which will override identifer provided by class.
- * @param configuration Reference on dictionary which is passed during plugin registration and will be passed by
- *                      \b ChatEngine during extension and/or middleware instantiation.
+ * @param identifier Unique plugin identifier under which it should be registered.
+ *     \b Default: Plugin default identifier
+ * @param configuration Configuration object with data which will be passed to plugin instance.
+ *     \b Default: @{}
  *
  * @return Configured and ready to use plugin instance.
  */
-+ (instancetype)pluginWithIdentifier:(nullable NSString *)identifier configuration:(nullable NSDictionary *)configuration;
++ (instancetype)pluginWithIdentifier:(nullable NSString *)identifier
+                       configuration:(nullable NSDictionary *)configuration;
 
 
 #pragma mark - Misc
 
 /**
- * @brief  Check whether passed value can be used as plugin identifier or not.
+ * @brief Check whether passed value can be used as plugin identifier or not.
  *
- * @param identifier Reference on value which should be checked.
+ * @param identifier Value which should be checked.
  *
- * @retrun \c YES in case if not empty string has been provided.
+ * @return Whether passed identifier can be used by plugin or not.
  */
 + (BOOL)isValidIdentifier:(NSString *)identifier;
 
 /**
- * @brief  Check whether passed value is one of allowed \c ChatEngine object types.
+ * @brief Check whether passed value is one of allowed \b {object CENObject} type.
  *
- * @param type Reference on value which should be checked.
+ * @param type Value which should be checked.
  *
- * @retrun \c YES in case if passed value is one of: Chat, User, Me or Search.
+ * @return Whether passed type is one of: Chat, User, Me or Search.
  */
 + (BOOL)isValidObjectType:(NSString *)type;
 
 /**
- * @brief  Check whether passed class can be used by \b ChatEngine as object's plugin.
+ * @brief Check whether passed value can be associated with plugin or not.
  *
- * @param cls Reference on class which should be checked on compatibility with plugin requirements.
+ * @param object Instance which should be checked.
  *
- * @retrun \c YES in case if passed class can be used as plugin.
+ * @return Whether passed object can be used to register plugin on it or not.
+ *
+ * @since 0.10.0
+ */
++ (BOOL)isValidObject:(CENObject *)object;
+
+/**
+ * @brief Check whether passed value can be used as plugin's configuration or not.
+ *
+ * @param configuration Instance which should be checked.
+ *
+ * @return Whether passed object can be used by plugin as configuration or not.
+ *
+ * @since 0.10.0
+ */
++ (BOOL)isValidConfiguration:(NSDictionary *)configuration;
+
+/**
+ * @brief Check whether passed class can be used by \b {ChatEngine CENChatEngine} as object's
+ * plugin.
+ *
+ * @param cls Class which should be checked on compatibility with plugin requirements.
+ *
+ * @return Whether passed class can be used as plugin or not.
  */
 + (BOOL)isPluginClass:(Class)cls;
 

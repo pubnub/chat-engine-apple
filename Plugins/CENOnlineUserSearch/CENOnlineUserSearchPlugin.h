@@ -4,20 +4,31 @@
 #pragma mark Structures
 
 /**
- * @brief  Structure wich describe available configuration option key names.
+ * @brief Structure which provides available configuration option keys.
  */
 typedef struct CENOnlineUserSearchConfigurationKeys {
-    
     /**
-     * @brief      Stores reference on name of key under which stored name of property which should be used in search.
-     * @discussion It is possible to use CENUser properties and also key-path for \c state property.
-     */
-    __unsafe_unretained NSString *propertyName;
-    
-    /**
-     * @brief  Stores reference on name of key under which stored whether case-sensitive search should be used or not.
+     * @brief Whether case-sensitive search should be used or not.
+     *
+     * \b Default: \c NO
      */
     __unsafe_unretained NSString *caseSensitive;
+    
+    /**
+     * @brief Name of property which should be used in search.
+     *
+     * @discussion It is possible to use \b {user CENUser} properties and also key-path for \c state
+     * property.
+     *
+     * \b Default: \c uuid
+     */
+    __unsafe_unretained NSString *propertyName;
+    /**
+     * @brief \b {Chat CENChat} from which state will be used to perform search.
+     *
+     * \b Default: \b {CENChatEngine.global}
+     */
+    __unsafe_unretained NSString *chat;
 } CENOnlineUserSearchConfigurationKeys;
 
 extern CENOnlineUserSearchConfigurationKeys CENOnlineUserSearchConfiguration;
@@ -28,28 +39,33 @@ extern CENOnlineUserSearchConfigurationKeys CENOnlineUserSearchConfiguration;
 @class CENChat, CENUser;
 
 
+NS_ASSUME_NONNULL_BEGIN
+
 /**
- * @brief      \b CENChat extension to search online users.
- * @discussion This plugin adds the ability to get list of users which conform to search criteria.
+ * @brief \b {Chat CENChat} extension to search online users.
  *
- * @discussion Register plugin which has default property name ('uuid') which should be used for search:
+ * @discussion This plugin adds the ability to get list of users which conform to search criteria by
+ * performing full-text search on property.
+ *
+ * @discussion Setup with default configuration:
  * @code
- * CENConfiguration *configuration = [CENConfiguration configurationWithPublishKey:@"demo-36" subscribeKey:@"demo-36"];
- * self.client = [CENChatEngine clientWithConfiguration:configuration];
+ * // objc
  * self.client.proto(@"Chat", [CENOnlineUserSearchPlugin class]).store();
  * @endcode
  *
- * @discussion Register plugin which has custom property name which should be used for search:
+ * @discussion Setup with custom property name which should be used for search:
  * @code
- * CENConfiguration *configuration = [CENConfiguration configurationWithPublishKey:@"demo-36" subscribeKey:@"demo-36"];
- * self.client = [CENChatEngine clientWithConfiguration:configuration];
+ * // objc
+ * self.client.connect(@"ChatEngine").perform();
+ *
  * self.client.proto(@"Chat", [CENOnlineUserSearchPlugin class]).configuration(@{
- *     CENOnlineUserSearchConfiguration.propertyName = @"state.firstName"
- * });
+ *     CENOnlineUserSearchConfiguration.propertyName = @"state.firstName",
+ *     CENOnlineUserSearchConfiguration.chat = self.chat
+ * }).store();
  * @endcode
  *
  * @author Serhii Mamontov
- * @version 1.0.0
+ * @version 1.1.0
  * @copyright © 2009-2018 PubNub, Inc.
  */
 @interface CENOnlineUserSearchPlugin : CEPPlugin
@@ -58,23 +74,28 @@ extern CENOnlineUserSearchConfigurationKeys CENOnlineUserSearchConfiguration;
 #pragma mark - Extension
 
 /**
- * @brief      Search for user.
- * @discussion Use provided search criteria to look up for online users.
+ * @brief Search for \b {user CENUser} using provided search criteria to look up for online users.
  *
- * @discussion \b Example:
  * @code
- * [CENOnlineUserSearchPlugin search:@"bob" inChat:chat withCompletion:^(NSArray<CENUser *> *users) {
- *     NSLog(@"Found %@ users which has 'bob' in their UUID", @(users.count));
+ * // objc
+ * [CENOnlineUserSearchPlugin search:@"bob" inChat:chat withCompletion:^(NSArray<CENUser *> *users){
+ *     NSLog(@"Found %@ users which has 'bob' in their UUID or state", @(users.count));
  * }];
  * @endcode
  *
- * @param criteria Reference on string which should be checked in property specified under \c CENOnlineUserSearchConfiguration.propertyName key.
- * @param chat     Reference on \c chat instance for which search should be done.
- * @param block    Reference on search completion block. Block pass only one argument - list of users which conform to search \c criteria.
+ * @param criteria String which should be checked in property specified under
+ *     \b {CENOnlineUserSearchConfiguration.propertyName} key.
+ * @param chat \b {Chat CENChat} for which search should be done.
+ * @param block Block / closure which will be called at the end of search and pass list of
+ *     \b {users CENUser} which conform to search criteria.
  */
-+ (void)search:(NSString *)criteria inChat:(CENChat *)chat withCompletion:(void(^)(NSArray<CENUser *> *))block;
++ (void)search:(NSString *)criteria
+            inChat:(CENChat *)chat
+    withCompletion:(void(^)(NSArray<CENUser *> *))block;
 
 #pragma mark -
 
 
 @end
+
+NS_ASSUME_NONNULL_END

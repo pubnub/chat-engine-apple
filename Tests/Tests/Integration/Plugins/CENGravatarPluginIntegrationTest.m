@@ -11,6 +11,12 @@
 @interface CENGravatarPluginIntegrationTest : CENTestCase
 
 
+#pragma mark - Information
+
+@property (nonatomic, strong) NSDictionary *configuration;
+@property (nonatomic, strong) NSString *globalChannel;
+@property (nonatomic, strong) NSString *namespace;
+
 #pragma mark -
 
 
@@ -24,29 +30,67 @@
 
 #pragma mark - Setup / Tear down
 
+- (BOOL)shouldConnectChatEngineForTestCaseWithName:(NSString *)name {
+    
+    return YES;
+}
+
+- (NSString *)globalChatChannelForTestCaseWithName:(NSString *)name {
+    
+    NSString *channel = [super globalChatChannelForTestCaseWithName:name];
+    
+    if (!self.globalChannel) {
+        self.globalChannel = channel;
+    }
+    
+    return self.globalChannel ?: channel;
+}
+
+- (NSString *)namespaceForTestCaseWithName:(NSString *)name {
+    
+    NSString *namespace = [super namespaceForTestCaseWithName:name];
+    
+    if (!self.namespace) {
+        self.namespace = namespace;
+    }
+    
+    return self.namespace ?: namespace;
+}
+
+- (NSDictionary *)stateForUser:(NSString *)user inTestCaseWithName:(NSString *)name {
+    
+    NSDictionary *state = nil;
+    
+    if ([user isEqualToString:@"ian"]) {
+        state = @{ @"email": @"test@pubnub.com", @"address": @"test2@pubnub.com" };
+        
+        if ([self.name rangeOfString:@"WhenEmailNotPassed"].location != NSNotFound) {
+            state = @{ @"works": @YES };
+        }
+    }
+    
+    return state;
+}
+
 - (void)setUp {
     
     [super setUp];
     
-    NSDictionary *state = @{ @"email": @"test@pubnub.com", @"address": @"test2@pubnub.com" };
+    
     NSDictionary *configuration = nil;
     
     if ([self.name rangeOfString:@"EmailSetWithCustomKey"].location != NSNotFound) {
         configuration = @{ CENGravatarPluginConfiguration.emailKey: @"address" };
     }
     
-    if ([self.name rangeOfString:@"WhenEmailNotPassed"].location != NSNotFound) {
-        state = @{ @"works": @YES };
-    }
-    
     if ([self.name rangeOfString:@"WhenUserChangeEmailAddress"].location != NSNotFound) {
         configuration = @{ CENGravatarPluginConfiguration.gravatarURLKey: @"imgURL" };
     }
     
-    NSString *global = [@[@"test", [NSUUID UUID].UUIDString] componentsJoinedByString:@"-"];
-    [self setupChatEngineWithGlobal:global forUser:@"ian" synchronization:NO meta:NO state:state];
+    self.configuration = configuration;
     
-    [self chatEngineForUser:@"ian"].me.plugin([CENGravatarPlugin class]).configuration(configuration).store();
+    [self setupChatEngineForUser:@"ian"];
+    [self setupChatEngineForUser:@"stephen"];
 }
 
 
@@ -54,81 +98,94 @@
 
 - (void)testStateEvent_ShouldReceiveStateWithGravatarURL_WhenEmailSetWithDefaultKey {
     
-    NSString *expected = @"https:/www.gravatar.com/avatar/b02585c8494d87b9f634eb41b17fbd28";
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    CENChatEngine *client = [self chatEngineForUser:@"ian"];
-    __block BOOL hanlderCalled = NO;
+    NSString *expected = @"https://www.gravatar.com/avatar/b02585c8494d87b9f634eb41b17fbd28";
+    CENChatEngine *client1 = [self chatEngineForUser:@"ian"];
+    CENChatEngine *client2 = [self chatEngineForUser:@"stephen"];
     
-    client.on(@"$.state", ^(CENUser *user) {
-        hanlderCalled = YES;
-        
-        XCTAssertNotNil(user.state[@"gravatar"]);
-        XCTAssertEqualObjects(user.state[@"gravatar"], expected);
-        dispatch_semaphore_signal(semaphore);
-    });
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
-    XCTAssertTrue(hanlderCalled);
+    [self object:client2 shouldHandleEvent:@"$.state" withHandler:^CENEventHandlerBlock (dispatch_block_t handler) {
+        return ^(CENEmittedEvent *emittedEvent) {
+            CENUser *user = emittedEvent.data;
+            NSDictionary *state = user.state(nil);
+            
+            if (state[@"gravatar"]) {
+                XCTAssertEqualObjects(state[@"gravatar"], expected);
+                handler();
+            }
+        };
+    } afterBlock:^{
+        client1.me.plugin([CENGravatarPlugin class]).configuration(self.configuration).store();
+    }];
 }
 
 - (void)testStateEvent_ShouldNotReceiveStateWithGravatarURL_WhenEmailNotPassed {
     
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    CENChatEngine *client = [self chatEngineForUser:@"ian"];
-    __block BOOL hanlderCalled = NO;
+    CENChatEngine *client1 = [self chatEngineForUser:@"ian"];
+    CENChatEngine *client2 = [self chatEngineForUser:@"stephen"];
     
-    client.on(@"$.state", ^(CENUser *user) {
-        hanlderCalled = YES;
-        
-        dispatch_semaphore_signal(semaphore);
-    });
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.falseTestCompletionDelay * NSEC_PER_SEC)));
-    XCTAssertFalse(hanlderCalled);
+    [self object:client2 shouldNotHandleEvent:@"$.state" withHandler:^CENEventHandlerBlock (dispatch_block_t handler) {
+        return ^(CENEmittedEvent *emittedEvent) {
+            handler();
+        };
+    } afterBlock:^{
+        client1.me.plugin([CENGravatarPlugin class]).configuration(self.configuration).store();
+    }];
 }
 
 - (void)testStateEvent_ShouldReceiveStateWithGravatarURL_WhenEmailSetWithCustomKey {
     
-    NSString *expected = @"https:/www.gravatar.com/avatar/b73daa7d238779c2dbd7dc3e0ac627d2";
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    CENChatEngine *client = [self chatEngineForUser:@"ian"];
-    __block BOOL handlerCalled = NO;
+    NSString *expected = @"https://www.gravatar.com/avatar/b73daa7d238779c2dbd7dc3e0ac627d2";
+    CENChatEngine *client1 = [self chatEngineForUser:@"ian"];
+    CENChatEngine *client2 = [self chatEngineForUser:@"stephen"];
     
-    client.on(@"$.state", ^(CENUser *user) {
-        handlerCalled = YES;
-        
-        XCTAssertNotNil(user.state[@"gravatar"]);
-        XCTAssertEqualObjects(user.state[@"gravatar"], expected);
-        dispatch_semaphore_signal(semaphore);
-    });
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
-    XCTAssertTrue(handlerCalled);
+    [self object:client2 shouldHandleEvent:@"$.state" withHandler:^CENEventHandlerBlock (dispatch_block_t handler) {
+        return ^(CENEmittedEvent *emittedEvent) {
+            CENUser *user = emittedEvent.data;
+            NSDictionary *state = user.state(nil);
+            
+            if (state[@"gravatar"]) {
+                XCTAssertEqualObjects(state[@"gravatar"], expected);
+                handler();
+            }
+        };
+    } afterBlock:^{
+        client1.me.plugin([CENGravatarPlugin class]).configuration(self.configuration).store();
+    }];
 }
 
 - (void)testStateEvent_ShouldReceiveStateWithGravatarURL_WhenUserChangeEmailAddress {
     
-    NSString *expected = @"https:/www.gravatar.com/avatar/9c0a62f30107b5ad7dbf83d97b27634f";
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    CENChatEngine *client = [self chatEngineForUser:@"ian"];
-    __block BOOL handlerCalled = NO;
+    NSString *expected = @"https://www.gravatar.com/avatar/9c0a62f30107b5ad7dbf83d97b27634f";
+    CENChatEngine *client1 = [self chatEngineForUser:@"ian"];
+    CENChatEngine *client2 = [self chatEngineForUser:@"stephen"];
     
-    client.on(@"$.state", ^(CENUser *user) {
-        if (user.state[@"imgURL"] && [user.state[@"imgURL"] isEqualToString:expected]) {
-            handlerCalled = YES;
+    [self object:client2 shouldHandleEvent:@"$.state" withHandler:^CENEventHandlerBlock (dispatch_block_t handler) {
+        return ^(CENEmittedEvent *emittedEvent) {
+            CENUser *user = emittedEvent.data;
+            NSDictionary *state = user.state(nil);
             
-            XCTAssertNotNil(user.state[@"imgURL"]);
-            dispatch_semaphore_signal(semaphore);
-        }
-        
-        if ([user.state[@"email"] isEqualToString:@"test@pubnub.com"]) {
-            dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.delayedCheck * NSEC_PER_SEC)));
-            client.me.update(@{ @"email": @"test1@pubnub.com" });
-        }
-    });
+            if ([state[@"email"] isEqualToString:@"test@pubnub.com"]) {
+                handler();
+            }
+        };
+    } afterBlock:^{
+        client1.me.plugin([CENGravatarPlugin class]).configuration(self.configuration).store();
+    }];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
-    XCTAssertTrue(handlerCalled);
+    [self object:client2 shouldHandleEvent:@"$.state" withHandler:^CENEventHandlerBlock (dispatch_block_t handler) {
+        return ^(CENEmittedEvent *emittedEvent) {
+            CENUser *user = emittedEvent.data;
+            NSDictionary *state = user.state(nil);
+            
+            if (state[@"imgURL"] && [state[@"imgURL"] isEqualToString:expected]) {
+                handler();
+            }
+        };
+    } afterBlock:^{
+        client1.me.update(@{ @"email": @"test1@pubnub.com" }, nil);
+    }];
 }
 
 #pragma mark -

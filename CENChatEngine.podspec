@@ -24,7 +24,7 @@ Pod::Spec.new do |spec|
             'ChatEngine/Core/{Emitter,Publish,Search,Session}/*.h',
             'ChatEngine/Data/Managers/*.h',
             'ChatEngine/**/*Private.h',
-            'ChatEngine/Misc/{CENConstants,CENPrivateStructures}.h',
+            'ChatEngine/Misc/{CENDefines,CENConstants,CENPrivateStructures}.h',
             'ChatEngine/Misc/Helpers/{CENDictionary}.h',
             'ChatEngine/Network/**/*.h',
             'ChatEngine/Plugin/CEPPrivateStructures.h'

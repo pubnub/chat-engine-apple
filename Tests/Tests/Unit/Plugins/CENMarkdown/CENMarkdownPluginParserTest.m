@@ -43,12 +43,13 @@
 
 - (BOOL)shouldSetupVCR {
     
-    return [self.name isEqualToString:@"testImage_ShuldAddImageAttachment_WhenTextStringWithImageMarkdownMarkupPassed"];
+    return [self.name rangeOfString:@"testImage_ShuldAddImageAttachment"].location != NSNotFound;
 }
 
 - (void)setUp {
     
     [super setUp];
+    
     
     self.defaultFontName = @"HelveticaNeue";
     self.defaultFontSize = 20.f;
@@ -68,10 +69,14 @@
     self.customDefaultFontSize = 26.f;
     self.customCodeFontSize = 30.f;
     self.customDefaultFont = [UIFont fontWithName:self.customDefaultFontName size:self.customDefaultFontSize];
-    self.customItalicFont = [UIFont fontWithName:[self.customDefaultFontName stringByAppendingString:@"-Italic"] size:self.customDefaultFontSize];
-    self.customBoldFont = [UIFont fontWithName:[self.customDefaultFontName stringByAppendingString:@"-Bold"] size:self.customDefaultFontSize];
-    self.customLinkFont = [UIFont fontWithName:[self.customCodeFontName stringByAppendingString:@"-Oblique"] size:self.customDefaultFontSize];
-    self.customCodeFont = [UIFont fontWithName:[self.customCodeFontName stringByAppendingString:@"-Bold"] size:self.customCodeFontSize];
+    self.customItalicFont = [UIFont fontWithName:[self.customDefaultFontName stringByAppendingString:@"-Italic"]
+                                            size:self.customDefaultFontSize];
+    self.customBoldFont = [UIFont fontWithName:[self.customDefaultFontName stringByAppendingString:@"-Bold"]
+                                          size:self.customDefaultFontSize];
+    self.customLinkFont = [UIFont fontWithName:[self.customCodeFontName stringByAppendingString:@"-Oblique"]
+                                          size:self.customDefaultFontSize];
+    self.customCodeFont = [UIFont fontWithName:[self.customCodeFontName stringByAppendingString:@"-Bold"]
+                                          size:self.customCodeFontSize];
     self.customStrikethrough = NSUnderlinePatternDashDotDot;
     
     self.customParser = [CENMarkdownParser parserWithConfiguration:@{
@@ -91,21 +96,19 @@
     
     CENMarkdownParser *parser = [CENMarkdownParser parserWithConfiguration:nil];
     UIFont *expected = [UIFont fontWithName:self.defaultFontName size:14.f];
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    __block BOOL handlerCalled = NO;
+    NSString *markdownString = @"some **bold text**";
     
-    [parser parseMarkdownString:@"some **bold text**" withCompletion:^(id string) {
-        NSAttributedString *attributesString = (NSAttributedString *)string;
-        handlerCalled = YES;
-        
-        XCTAssertNotNil(string);
-        XCTAssertTrue([string isKindOfClass:[NSAttributedString class]]);
-        XCTAssertEqualObjects([attributesString attribute:NSFontAttributeName atIndex:0 effectiveRange:nil], expected);
-        dispatch_semaphore_signal(semaphore);
+    
+    [self waitToCompleteIn:self.testCompletionDelay codeBlock:^(dispatch_block_t handler) {
+        [parser parseMarkdownString:markdownString withCompletion:^(id string) {
+            NSAttributedString *attributesString = (NSAttributedString *)string;
+            
+            XCTAssertNotNil(string);
+            XCTAssertTrue([string isKindOfClass:[NSAttributedString class]]);
+            XCTAssertEqualObjects([attributesString attribute:NSFontAttributeName atIndex:0 effectiveRange:nil], expected);
+            handler();
+        }];
     }];
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.f * NSEC_PER_SEC)));
-    XCTAssertTrue(handlerCalled);
 }
 
 
@@ -113,37 +116,31 @@
 
 - (void)testParse_ShouldReturnNSString_WhenStringWithOutMarkdownMarkupPassed {
     
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    __block BOOL handlerCalled = NO;
+    NSString *markdownString = @"some text";
     
-    [self.defaultParser parseMarkdownString:@"some text" withCompletion:^(id string) {
-        handlerCalled = YES;
-        
-        XCTAssertNotNil(string);
-        XCTAssertFalse([string isKindOfClass:[NSAttributedString class]]);
-        XCTAssertTrue([string isKindOfClass:[NSString class]]);
-        dispatch_semaphore_signal(semaphore);
+    
+    [self waitToCompleteIn:self.testCompletionDelay codeBlock:^(dispatch_block_t handler) {
+        [self.defaultParser parseMarkdownString:markdownString withCompletion:^(id string) {
+            XCTAssertNotNil(string);
+            XCTAssertFalse([string isKindOfClass:[NSAttributedString class]]);
+            XCTAssertTrue([string isKindOfClass:[NSString class]]);
+            handler();
+        }];
     }];
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.f * NSEC_PER_SEC)));
-    XCTAssertTrue(handlerCalled);
 }
 
 - (void)testParse_ShouldReturnNSAttributedString_WhenStringWithMarkdownMarkupPassed {
     
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    __block BOOL handlerCalled = NO;
+    NSString *markdownString = @"some **bold text**";
     
-    [self.defaultParser parseMarkdownString:@"some **bold text**" withCompletion:^(id string) {
-        handlerCalled = YES;
-        
-        XCTAssertNotNil(string);
-        XCTAssertTrue([string isKindOfClass:[NSAttributedString class]]);
-        dispatch_semaphore_signal(semaphore);
+    
+    [self waitToCompleteIn:self.testCompletionDelay codeBlock:^(dispatch_block_t handler) {
+        [self.defaultParser parseMarkdownString:markdownString withCompletion:^(id string) {
+            XCTAssertNotNil(string);
+            XCTAssertTrue([string isKindOfClass:[NSAttributedString class]]);
+            handler();
+        }];
     }];
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.f * NSEC_PER_SEC)));
-    XCTAssertTrue(handlerCalled);
 }
 
 
@@ -151,290 +148,263 @@
 
 - (void)testDefaultFont_ShuldSetDefaultFontPartially_WhenTextPartDoesntHaveMarkupOnIt {
     
+    NSString *markdownString = @"some **bold text**";
     UIFont *expected = self.defaultFont;
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    __block BOOL handlerCalled = NO;
     
-    [self.defaultParser parseMarkdownString:@"some **bold text**" withCompletion:^(id string) {
-        NSAttributedString *attributesString = (NSAttributedString *)string;
-        handlerCalled = YES;
-        
-        XCTAssertEqualObjects([attributesString attribute:NSFontAttributeName atIndex:0 effectiveRange:nil], expected);
-        dispatch_semaphore_signal(semaphore);
+    
+    [self waitToCompleteIn:self.testCompletionDelay codeBlock:^(dispatch_block_t handler) {
+        [self.defaultParser parseMarkdownString:markdownString withCompletion:^(id string) {
+            NSAttributedString *attributesString = (NSAttributedString *)string;
+            
+            XCTAssertEqualObjects([attributesString attribute:NSFontAttributeName atIndex:0 effectiveRange:nil], expected);
+            handler();
+        }];
     }];
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.f * NSEC_PER_SEC)));
-    XCTAssertTrue(handlerCalled);
 }
 
 - (void)testDefaultFont_ShuldSetMonospaceFont_WhenStringWithCodeMarkdownMarkupPassed {
     
+    NSString *markdownString = @"`code`";
     UIFont *expected = self.codeFont;
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    __block BOOL handlerCalled = NO;
     
-    [self.defaultParser parseMarkdownString:@"`code`" withCompletion:^(id string) {
-        NSAttributedString *attributesString = (NSAttributedString *)string;
-        handlerCalled = YES;
-        
-        XCTAssertEqualObjects([attributesString attribute:NSFontAttributeName atIndex:0 effectiveRange:nil], expected);
-        dispatch_semaphore_signal(semaphore);
+    
+    [self waitToCompleteIn:self.testCompletionDelay codeBlock:^(dispatch_block_t handler) {
+        [self.defaultParser parseMarkdownString:markdownString withCompletion:^(id string) {
+            NSAttributedString *attributesString = (NSAttributedString *)string;
+            
+            XCTAssertEqualObjects([attributesString attribute:NSFontAttributeName atIndex:0 effectiveRange:nil], expected);
+            handler();
+        }];
     }];
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.f * NSEC_PER_SEC)));
-    XCTAssertTrue(handlerCalled);
 }
 
 - (void)testDefaultFont_ShuldUseItalicCreatedFromDefault_WhenStringWithItalicMarkdownMarkupPassed {
     
     UIFont *expected = [UIFont fontWithName:[self.defaultFontName stringByAppendingString:@"-Italic"] size:self.defaultFontSize];
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    __block BOOL handlerCalled = NO;
+    NSString *markdownString = @"*italic text*";
     
-    [self.defaultParser parseMarkdownString:@"*italic text*" withCompletion:^(id string) {
-        NSAttributedString *attributesString = (NSAttributedString *)string;
-        handlerCalled = YES;
-        
-        XCTAssertEqualObjects([attributesString attribute:NSFontAttributeName atIndex:0 effectiveRange:nil], expected);
-        dispatch_semaphore_signal(semaphore);
+    
+    [self waitToCompleteIn:self.testCompletionDelay codeBlock:^(dispatch_block_t handler) {
+        [self.defaultParser parseMarkdownString:markdownString withCompletion:^(id string) {
+            NSAttributedString *attributesString = (NSAttributedString *)string;
+            
+            XCTAssertEqualObjects([attributesString attribute:NSFontAttributeName atIndex:0 effectiveRange:nil], expected);
+            handler();
+        }];
     }];
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.f * NSEC_PER_SEC)));
-    XCTAssertTrue(handlerCalled);
 }
 
 - (void)testDefaultFont_ShuldUseBoldCreatedFromDefault_WhenStringWithBoldMarkdownMarkupPassed {
     
     UIFont *expected = [UIFont fontWithName:[self.defaultFontName stringByAppendingString:@"-Bold"] size:self.defaultFontSize];
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    __block BOOL handlerCalled = NO;
+    NSString *markdownString = @"**bold text**";
     
-    [self.defaultParser parseMarkdownString:@"**bold text**" withCompletion:^(id string) {
-        NSAttributedString *attributesString = (NSAttributedString *)string;
-        handlerCalled = YES;
-        
-        XCTAssertEqualObjects([attributesString attribute:NSFontAttributeName atIndex:0 effectiveRange:nil], expected);
-        dispatch_semaphore_signal(semaphore);
+    
+    [self waitToCompleteIn:self.testCompletionDelay codeBlock:^(dispatch_block_t handler) {
+        [self.defaultParser parseMarkdownString:markdownString withCompletion:^(id string) {
+            NSAttributedString *attributesString = (NSAttributedString *)string;
+            
+            XCTAssertEqualObjects([attributesString attribute:NSFontAttributeName atIndex:0 effectiveRange:nil], expected);
+            handler();
+        }];
     }];
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.f * NSEC_PER_SEC)));
-    XCTAssertTrue(handlerCalled);
 }
 
 - (void)testDefaultFont_ShuldUseBoldItalicCreatedFromDefault_WhenStringWithBoldItalicMarkdownMarkupPassed {
     
-    UIFont *expected = [UIFont fontWithName:[self.defaultFontName stringByAppendingString:@"-BoldItalic"] size:self.defaultFontSize];
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    __block BOOL handlerCalled = NO;
+    UIFont *expected = [UIFont fontWithName:[self.defaultFontName stringByAppendingString:@"-BoldItalic"]
+                                       size:self.defaultFontSize];
+    NSString *markdownString = @"___bold text___";
     
-    [self.defaultParser parseMarkdownString:@"___bold text___" withCompletion:^(id string) {
-        NSAttributedString *attributesString = (NSAttributedString *)string;
-        handlerCalled = YES;
-        
-        XCTAssertEqualObjects([attributesString attribute:NSFontAttributeName atIndex:0 effectiveRange:nil], expected);
-        dispatch_semaphore_signal(semaphore);
+    
+    [self waitToCompleteIn:self.testCompletionDelay codeBlock:^(dispatch_block_t handler) {
+        [self.defaultParser parseMarkdownString:markdownString withCompletion:^(id string) {
+            NSAttributedString *attributesString = (NSAttributedString *)string;
+            
+            XCTAssertEqualObjects([attributesString attribute:NSFontAttributeName atIndex:0 effectiveRange:nil], expected);
+            handler();
+        }];
     }];
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.f * NSEC_PER_SEC)));
-    XCTAssertTrue(handlerCalled);
 }
 
 - (void)testDefaultFont_ShuldUseMonospaceBoldCreatedFromDefault_WhenStringWithBoldCodeMarkdownMarkupPassed {
     
     UIFont *expected = [UIFont fontWithName:[self.codeFontName stringByAppendingString:@"-Bold"] size:self.codeFontSize];
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    __block BOOL handlerCalled = NO;
+    NSString *markdownString = @"**``bold code``**";
     
-    [self.defaultParser parseMarkdownString:@"**``bold code``**" withCompletion:^(id string) {
-        NSAttributedString *attributesString = (NSAttributedString *)string;
-        handlerCalled = YES;
-        
-        XCTAssertEqualObjects([attributesString attribute:NSFontAttributeName atIndex:0 effectiveRange:nil], expected);
-        dispatch_semaphore_signal(semaphore);
+    
+    [self waitToCompleteIn:self.testCompletionDelay codeBlock:^(dispatch_block_t handler) {
+        [self.defaultParser parseMarkdownString:markdownString withCompletion:^(id string) {
+            NSAttributedString *attributesString = (NSAttributedString *)string;
+            
+            XCTAssertEqualObjects([attributesString attribute:NSFontAttributeName atIndex:0 effectiveRange:nil], expected);
+            handler();
+        }];
     }];
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.f * NSEC_PER_SEC)));
-    XCTAssertTrue(handlerCalled);
 }
 
 - (void)testDefaultFont_ShuldUseMonospaceItalicCreatedFromDefault_WhenStringWithItalicCodeMarkdownMarkupPassed {
     
     UIFont *expected = [UIFont fontWithName:[self.codeFontName stringByAppendingString:@"-Oblique"] size:self.codeFontSize];
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    __block BOOL handlerCalled = NO;
+    NSString *markdownString = @"*``bold code``*";
     
-    [self.defaultParser parseMarkdownString:@"*``bold code``*" withCompletion:^(id string) {
-        NSAttributedString *attributesString = (NSAttributedString *)string;
-        handlerCalled = YES;
-        
-        XCTAssertEqualObjects([attributesString attribute:NSFontAttributeName atIndex:0 effectiveRange:nil], expected);
-        dispatch_semaphore_signal(semaphore);
+    
+    [self waitToCompleteIn:self.testCompletionDelay codeBlock:^(dispatch_block_t handler) {
+        [self.defaultParser parseMarkdownString:markdownString withCompletion:^(id string) {
+            NSAttributedString *attributesString = (NSAttributedString *)string;
+            
+            XCTAssertEqualObjects([attributesString attribute:NSFontAttributeName atIndex:0 effectiveRange:nil], expected);
+            handler();
+        }];
     }];
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.f * NSEC_PER_SEC)));
-    XCTAssertTrue(handlerCalled);
 }
 
 - (void)testDefaultFont_ShuldUseMonospaceBoldItalicCreatedFromDefault_WhenStringWithBoldItalicCodeMarkdownMarkupPassed {
     
     UIFont *expected = [UIFont fontWithName:[self.codeFontName stringByAppendingString:@"-BoldOblique"] size:self.codeFontSize];
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    __block BOOL handlerCalled = NO;
+    NSString *markdownString = @"*__``bold code``__*";
     
-    [self.defaultParser parseMarkdownString:@"*__``bold code``__*" withCompletion:^(id string) {
-        NSAttributedString *attributesString = (NSAttributedString *)string;
-        handlerCalled = YES;
-        
-        XCTAssertEqualObjects([attributesString attribute:NSFontAttributeName atIndex:0 effectiveRange:nil], expected);
-        dispatch_semaphore_signal(semaphore);
+    
+    [self waitToCompleteIn:self.testCompletionDelay codeBlock:^(dispatch_block_t handler) {
+        [self.defaultParser parseMarkdownString:markdownString withCompletion:^(id string) {
+            NSAttributedString *attributesString = (NSAttributedString *)string;
+            
+            XCTAssertEqualObjects([attributesString attribute:NSFontAttributeName atIndex:0 effectiveRange:nil], expected);
+            handler();
+        }];
     }];
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.f * NSEC_PER_SEC)));
-    XCTAssertTrue(handlerCalled);
 }
 
 - (void)testCustomFont_ShuldSetDefaultFontPartially_WhenTextPartDoesntHaveMarkupOnIt {
     
+    NSString *markdownString = @"some **bold text**";
     UIFont *expected = self.customDefaultFont;
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    __block BOOL handlerCalled = NO;
     
-    [self.customParser parseMarkdownString:@"some **bold text**" withCompletion:^(id string) {
-        NSAttributedString *attributesString = (NSAttributedString *)string;
-        handlerCalled = YES;
-        
-        XCTAssertEqualObjects([attributesString attribute:NSFontAttributeName atIndex:0 effectiveRange:nil], expected);
-        dispatch_semaphore_signal(semaphore);
+    
+    [self waitToCompleteIn:self.testCompletionDelay codeBlock:^(dispatch_block_t handler) {
+        [self.customParser parseMarkdownString:markdownString withCompletion:^(id string) {
+            NSAttributedString *attributesString = (NSAttributedString *)string;
+            
+            XCTAssertEqualObjects([attributesString attribute:NSFontAttributeName atIndex:0 effectiveRange:nil], expected);
+            handler();
+        }];
     }];
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.f * NSEC_PER_SEC)));
-    XCTAssertTrue(handlerCalled);
 }
 
 - (void)testCustomFont_ShuldSetMonospaceFont_WhenStringWithCodeMarkdownMarkupPassed {
     
     UIFont *expected = self.customCodeFont;
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    __block BOOL handlerCalled = NO;
+    NSString *markdownString = @"`code`";
     
-    [self.customParser parseMarkdownString:@"`code`" withCompletion:^(id string) {
-        NSAttributedString *attributesString = (NSAttributedString *)string;
-        handlerCalled = YES;
-        
-        XCTAssertEqualObjects([attributesString attribute:NSFontAttributeName atIndex:0 effectiveRange:nil], expected);
-        dispatch_semaphore_signal(semaphore);
+    
+    [self waitToCompleteIn:self.testCompletionDelay codeBlock:^(dispatch_block_t handler) {
+        [self.customParser parseMarkdownString:markdownString withCompletion:^(id string) {
+            NSAttributedString *attributesString = (NSAttributedString *)string;
+            
+            XCTAssertEqualObjects([attributesString attribute:NSFontAttributeName atIndex:0 effectiveRange:nil], expected);
+            handler();
+        }];
     }];
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.f * NSEC_PER_SEC)));
-    XCTAssertTrue(handlerCalled);
 }
 
 - (void)testCustomFont_ShuldUseItalicFont_WhenStringWithItalicMarkdownMarkupPassed {
     
+    NSString *markdownString = @"*italic text*";
     UIFont *expected = self.customItalicFont;
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    __block BOOL handlerCalled = NO;
     
-    [self.customParser parseMarkdownString:@"*italic text*" withCompletion:^(id string) {
-        NSAttributedString *attributesString = (NSAttributedString *)string;
-        handlerCalled = YES;
-        
-        XCTAssertEqualObjects([attributesString attribute:NSFontAttributeName atIndex:0 effectiveRange:nil], expected);
-        dispatch_semaphore_signal(semaphore);
+    
+    [self waitToCompleteIn:self.testCompletionDelay codeBlock:^(dispatch_block_t handler) {
+        [self.customParser parseMarkdownString:markdownString withCompletion:^(id string) {
+            NSAttributedString *attributesString = (NSAttributedString *)string;
+            
+            XCTAssertEqualObjects([attributesString attribute:NSFontAttributeName atIndex:0 effectiveRange:nil], expected);
+            handler();
+        }];
     }];
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.f * NSEC_PER_SEC)));
-    XCTAssertTrue(handlerCalled);
 }
 
 - (void)testCustomFont_ShuldUseBoldCreatedFont_WhenStringWithBoldMarkdownMarkupPassed {
     
+    NSString *markdownString = @"**bold text**";
     UIFont *expected = self.customBoldFont;
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    __block BOOL handlerCalled = NO;
     
-    [self.customParser parseMarkdownString:@"**bold text**" withCompletion:^(id string) {
-        NSAttributedString *attributesString = (NSAttributedString *)string;
-        handlerCalled = YES;
-        
-        XCTAssertEqualObjects([attributesString attribute:NSFontAttributeName atIndex:0 effectiveRange:nil], expected);
-        dispatch_semaphore_signal(semaphore);
+    
+    [self waitToCompleteIn:self.testCompletionDelay codeBlock:^(dispatch_block_t handler) {
+        [self.customParser parseMarkdownString:markdownString withCompletion:^(id string) {
+            NSAttributedString *attributesString = (NSAttributedString *)string;
+            
+            XCTAssertEqualObjects([attributesString attribute:NSFontAttributeName atIndex:0 effectiveRange:nil], expected);
+            handler();
+        }];
     }];
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.f * NSEC_PER_SEC)));
-    XCTAssertTrue(handlerCalled);
 }
 
 - (void)testCustomFont_ShuldUseBoldItalicCreatedFromCustom_WhenStringWithBoldItalicMarkdownMarkupPassed {
     
-    UIFont *expected = [UIFont fontWithName:[self.customDefaultFontName stringByAppendingString:@"-BoldItalic"] size:self.customDefaultFontSize];
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    __block BOOL handlerCalled = NO;
+    UIFont *expected = [UIFont fontWithName:[self.customDefaultFontName stringByAppendingString:@"-BoldItalic"]
+                                       size:self.customDefaultFontSize];
+    NSString *markdownString = @"___bold text___";
     
-    [self.customParser parseMarkdownString:@"___bold text___" withCompletion:^(id string) {
-        NSAttributedString *attributesString = (NSAttributedString *)string;
-        handlerCalled = YES;
-        
-        XCTAssertEqualObjects([attributesString attribute:NSFontAttributeName atIndex:0 effectiveRange:nil], expected);
-        dispatch_semaphore_signal(semaphore);
+    
+    [self waitToCompleteIn:self.testCompletionDelay codeBlock:^(dispatch_block_t handler) {
+        [self.customParser parseMarkdownString:markdownString withCompletion:^(id string) {
+            NSAttributedString *attributesString = (NSAttributedString *)string;
+            
+            XCTAssertEqualObjects([attributesString attribute:NSFontAttributeName atIndex:0 effectiveRange:nil], expected);
+            handler();
+        }];
     }];
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.f * NSEC_PER_SEC)));
-    XCTAssertTrue(handlerCalled);
 }
 
 - (void)testCustomFont_ShuldUseMonospaceBoldCreatedFromCustom_WhenStringWithBoldCodeMarkdownMarkupPassed {
     
-    UIFont *expected = [UIFont fontWithName:[self.customCodeFontName stringByAppendingString:@"-Bold"] size:self.customCodeFontSize];
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    __block BOOL handlerCalled = NO;
+    UIFont *expected = [UIFont fontWithName:[self.customCodeFontName stringByAppendingString:@"-Bold"]
+                                       size:self.customCodeFontSize];
+    NSString *markdownString = @"**``bold code``**";
     
-    [self.customParser parseMarkdownString:@"**``bold code``**" withCompletion:^(id string) {
-        NSAttributedString *attributesString = (NSAttributedString *)string;
-        handlerCalled = YES;
-        
-        XCTAssertEqualObjects([attributesString attribute:NSFontAttributeName atIndex:0 effectiveRange:nil], expected);
-        dispatch_semaphore_signal(semaphore);
+    
+    [self waitToCompleteIn:self.testCompletionDelay codeBlock:^(dispatch_block_t handler) {
+        [self.customParser parseMarkdownString:markdownString withCompletion:^(id string) {
+            NSAttributedString *attributesString = (NSAttributedString *)string;
+            
+            XCTAssertEqualObjects([attributesString attribute:NSFontAttributeName atIndex:0 effectiveRange:nil], expected);
+            handler();
+        }];
     }];
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.f * NSEC_PER_SEC)));
-    XCTAssertTrue(handlerCalled);
 }
 
 - (void)testCustomFont_ShuldUseMonospaceItalicCreatedFromCustom_WhenStringWithItalicCodeMarkdownMarkupPassed {
     
-    UIFont *expected = [UIFont fontWithName:[self.customCodeFontName stringByAppendingString:@"-Oblique"] size:self.customCodeFontSize];
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    __block BOOL handlerCalled = NO;
+    UIFont *expected = [UIFont fontWithName:[self.customCodeFontName stringByAppendingString:@"-Oblique"]
+                                       size:self.customCodeFontSize];
+    NSString *markdownString = @"*``bold code``*";
     
-    [self.customParser parseMarkdownString:@"*``bold code``*" withCompletion:^(id string) {
-        NSAttributedString *attributesString = (NSAttributedString *)string;
-        handlerCalled = YES;
-        
-        XCTAssertEqualObjects([attributesString attribute:NSFontAttributeName atIndex:0 effectiveRange:nil], expected);
-        dispatch_semaphore_signal(semaphore);
+    
+    [self waitToCompleteIn:self.testCompletionDelay codeBlock:^(dispatch_block_t handler) {
+        [self.customParser parseMarkdownString:markdownString withCompletion:^(id string) {
+            NSAttributedString *attributesString = (NSAttributedString *)string;
+            
+            XCTAssertEqualObjects([attributesString attribute:NSFontAttributeName atIndex:0 effectiveRange:nil], expected);
+            handler();
+        }];
     }];
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.f * NSEC_PER_SEC)));
-    XCTAssertTrue(handlerCalled);
 }
 
 - (void)testCustomFont_ShuldUseMonospaceBoldItalicCreatedFromCustom_WhenStringWithBoldItalicCodeMarkdownMarkupPassed {
     
-    UIFont *expected = [UIFont fontWithName:[self.customCodeFontName stringByAppendingString:@"-BoldOblique"] size:self.customCodeFontSize];
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    __block BOOL handlerCalled = NO;
+    UIFont *expected = [UIFont fontWithName:[self.customCodeFontName stringByAppendingString:@"-BoldOblique"]
+                                       size:self.customCodeFontSize];
+    NSString *markdownString = @"*__``bold code``__*";
     
-    [self.customParser parseMarkdownString:@"*__``bold code``__*" withCompletion:^(id string) {
-        NSAttributedString *attributesString = (NSAttributedString *)string;
-        handlerCalled = YES;
-        
-        XCTAssertEqualObjects([attributesString attribute:NSFontAttributeName atIndex:0 effectiveRange:nil], expected);
-        dispatch_semaphore_signal(semaphore);
+    
+    [self waitToCompleteIn:self.testCompletionDelay codeBlock:^(dispatch_block_t handler) {
+        [self.customParser parseMarkdownString:markdownString withCompletion:^(id string) {
+            NSAttributedString *attributesString = (NSAttributedString *)string;
+            
+            XCTAssertEqualObjects([attributesString attribute:NSFontAttributeName atIndex:0 effectiveRange:nil], expected);
+            handler();
+        }];
     }];
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.f * NSEC_PER_SEC)));
-    XCTAssertTrue(handlerCalled);
 }
 
 
@@ -442,338 +412,314 @@
 
 - (void)testDefaultDecoration_ShuldAddStrikethroughDecoration_WhenTextStringWithStrikethroughMarkdownMarkupPassed {
     
-    UIFont *expectedFont = self.defaultFont;
+    NSString *markdownString = @"~strikethrough text~";
     NSUnderlineStyle expected = NSUnderlineStyleThick;
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    __block BOOL handlerCalled = NO;
+    UIFont *expectedFont = self.defaultFont;
     
-    [self.defaultParser parseMarkdownString:@"~strikethrough text~" withCompletion:^(id string) {
-        NSAttributedString *attributesString = (NSAttributedString *)string;
-        handlerCalled = YES;
-        
-        NSNumber *style = [attributesString attribute:NSStrikethroughStyleAttributeName atIndex:0 effectiveRange:nil];
-        XCTAssertEqual(style.integerValue, expected);
-        XCTAssertEqualObjects([attributesString attribute:NSFontAttributeName atIndex:0 effectiveRange:nil], expectedFont);
-        dispatch_semaphore_signal(semaphore);
+    
+    [self waitToCompleteIn:self.testCompletionDelay codeBlock:^(dispatch_block_t handler) {
+        [self.defaultParser parseMarkdownString:markdownString withCompletion:^(id string) {
+            NSAttributedString *attributesString = (NSAttributedString *)string;
+            NSNumber *style = [attributesString attribute:NSStrikethroughStyleAttributeName atIndex:0 effectiveRange:nil];
+            
+            XCTAssertEqual(style.integerValue, expected);
+            XCTAssertEqualObjects([attributesString attribute:NSFontAttributeName atIndex:0 effectiveRange:nil], expectedFont);
+            handler();
+        }];
     }];
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.f * NSEC_PER_SEC)));
-    XCTAssertTrue(handlerCalled);
 }
 
 - (void)testDefaultDecoration_ShuldAddStrikethroughDecoration_WhenTextStringWithStrikethroughItalicMarkdownMarkupPassed {
     
-    UIFont *expectedFont = [UIFont fontWithName:[self.defaultFontName stringByAppendingString:@"-Italic"] size:self.defaultFontSize];
+    UIFont *expectedFont = [UIFont fontWithName:[self.defaultFontName stringByAppendingString:@"-Italic"]
+                                           size:self.defaultFontSize];
+    NSString *markdownString = @"_~~italic strikethrough text~~_";
     NSUnderlineStyle expected = NSUnderlineStyleThick;
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    __block BOOL handlerCalled = NO;
     
-    [self.defaultParser parseMarkdownString:@"_~~italic strikethrough text~~_" withCompletion:^(id string) {
-        NSAttributedString *attributesString = (NSAttributedString *)string;
-        handlerCalled = YES;
-        
-        NSNumber *style = [attributesString attribute:NSStrikethroughStyleAttributeName atIndex:0 effectiveRange:nil];
-        XCTAssertEqual(style.integerValue, expected);
-        XCTAssertEqualObjects([attributesString attribute:NSFontAttributeName atIndex:0 effectiveRange:nil], expectedFont);
-        dispatch_semaphore_signal(semaphore);
+    
+    [self waitToCompleteIn:self.testCompletionDelay codeBlock:^(dispatch_block_t handler) {
+        [self.defaultParser parseMarkdownString:markdownString withCompletion:^(id string) {
+            NSAttributedString *attributesString = (NSAttributedString *)string;
+            NSNumber *style = [attributesString attribute:NSStrikethroughStyleAttributeName atIndex:0 effectiveRange:nil];
+            
+            XCTAssertEqual(style.integerValue, expected);
+            XCTAssertEqualObjects([attributesString attribute:NSFontAttributeName atIndex:0 effectiveRange:nil], expectedFont);
+            handler();
+        }];
     }];
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.f * NSEC_PER_SEC)));
-    XCTAssertTrue(handlerCalled);
 }
 
 - (void)testDefaultDecoration_ShuldAddStrikethroughDecoration_WhenTextStringWithStrikethroughBoldMarkdownMarkupPassed {
     
-    UIFont *expectedFont = [UIFont fontWithName:[self.defaultFontName stringByAppendingString:@"-Bold"] size:self.defaultFontSize];
+    UIFont *expectedFont = [UIFont fontWithName:[self.defaultFontName stringByAppendingString:@"-Bold"]
+                                           size:self.defaultFontSize];
+    NSString *markdownString = @"**~bold strikethrough text~**";
     NSUnderlineStyle expected = NSUnderlineStyleThick;
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    __block BOOL handlerCalled = NO;
     
-    [self.defaultParser parseMarkdownString:@"**~bold strikethrough text~**" withCompletion:^(id string) {
-        NSAttributedString *attributesString = (NSAttributedString *)string;
-        handlerCalled = YES;
-        
-        NSNumber *style = [attributesString attribute:NSStrikethroughStyleAttributeName atIndex:0 effectiveRange:nil];
-        XCTAssertEqual(style.integerValue, expected);
-        XCTAssertEqualObjects([attributesString attribute:NSFontAttributeName atIndex:0 effectiveRange:nil], expectedFont);
-        dispatch_semaphore_signal(semaphore);
+    
+    [self waitToCompleteIn:self.testCompletionDelay codeBlock:^(dispatch_block_t handler) {
+        [self.defaultParser parseMarkdownString:markdownString withCompletion:^(id string) {
+            NSAttributedString *attributesString = (NSAttributedString *)string;
+            NSNumber *style = [attributesString attribute:NSStrikethroughStyleAttributeName atIndex:0 effectiveRange:nil];
+            
+            XCTAssertEqual(style.integerValue, expected);
+            XCTAssertEqualObjects([attributesString attribute:NSFontAttributeName atIndex:0 effectiveRange:nil], expectedFont);
+            handler();
+        }];
     }];
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.f * NSEC_PER_SEC)));
-    XCTAssertTrue(handlerCalled);
 }
 
 - (void)testDefaultDecoration_ShuldAddStrikethroughDecoration_WhenStringWithStrikethroughBoldItalicMarkdownMarkupPassed {
     
-    UIFont *expectedFont = [UIFont fontWithName:[self.defaultFontName stringByAppendingString:@"-BoldItalic"] size:self.defaultFontSize];
+    UIFont *expectedFont = [UIFont fontWithName:[self.defaultFontName stringByAppendingString:@"-BoldItalic"]
+                                           size:self.defaultFontSize];
     NSUnderlineStyle expected = NSUnderlineStyleThick;
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    __block BOOL handlerCalled = NO;
+    NSString *markdownString = @"___~bold text~___";
     
-    [self.defaultParser parseMarkdownString:@"___~bold text~___" withCompletion:^(id string) {
-        NSAttributedString *attributesString = (NSAttributedString *)string;
-        handlerCalled = YES;
-        
-        NSNumber *style = [attributesString attribute:NSStrikethroughStyleAttributeName atIndex:0 effectiveRange:nil];
-        XCTAssertEqual(style.integerValue, expected);
-        XCTAssertEqualObjects([attributesString attribute:NSFontAttributeName atIndex:0 effectiveRange:nil], expectedFont);
-        dispatch_semaphore_signal(semaphore);
+    
+    [self waitToCompleteIn:self.testCompletionDelay codeBlock:^(dispatch_block_t handler) {
+        [self.defaultParser parseMarkdownString:markdownString withCompletion:^(id string) {
+            NSAttributedString *attributesString = (NSAttributedString *)string;
+            NSNumber *style = [attributesString attribute:NSStrikethroughStyleAttributeName atIndex:0 effectiveRange:nil];
+            
+            XCTAssertEqual(style.integerValue, expected);
+            XCTAssertEqualObjects([attributesString attribute:NSFontAttributeName atIndex:0 effectiveRange:nil], expectedFont);
+            handler();
+        }];
     }];
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.f * NSEC_PER_SEC)));
-    XCTAssertTrue(handlerCalled);
 }
 
 - (void)testDefaultDecoration_ShuldAddStrikethroughDecoration_WhenStringWithStrikethroughCodeMarkdownMarkupPassed {
     
-    UIFont *expectedFont = self.codeFont;
     NSUnderlineStyle expected = NSUnderlineStyleThick;
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    __block BOOL handlerCalled = NO;
+    NSString *markdownString = @"~`bold code`~";
+    UIFont *expectedFont = self.codeFont;
     
-    [self.defaultParser parseMarkdownString:@"~`bold code`~" withCompletion:^(id string) {
-        NSAttributedString *attributesString = (NSAttributedString *)string;
-        handlerCalled = YES;
-        
-        NSNumber *style = [attributesString attribute:NSStrikethroughStyleAttributeName atIndex:0 effectiveRange:nil];
-        XCTAssertEqual(style.integerValue, expected);
-        XCTAssertEqualObjects([attributesString attribute:NSFontAttributeName atIndex:0 effectiveRange:nil], expectedFont);
-        dispatch_semaphore_signal(semaphore);
+    
+    [self waitToCompleteIn:self.testCompletionDelay codeBlock:^(dispatch_block_t handler) {
+        [self.defaultParser parseMarkdownString:markdownString withCompletion:^(id string) {
+            NSAttributedString *attributesString = (NSAttributedString *)string;
+            NSNumber *style = [attributesString attribute:NSStrikethroughStyleAttributeName atIndex:0 effectiveRange:nil];
+            
+            XCTAssertEqual(style.integerValue, expected);
+            XCTAssertEqualObjects([attributesString attribute:NSFontAttributeName atIndex:0 effectiveRange:nil], expectedFont);
+            handler();
+        }];
     }];
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.f * NSEC_PER_SEC)));
-    XCTAssertTrue(handlerCalled);
 }
 
 - (void)testDefaultDecoration_ShuldAddStrikethroughDecoration_WhenStringWithStrikethroughBoldCodeMarkdownMarkupPassed {
     
     UIFont *expectedFont = [UIFont fontWithName:[self.codeFontName stringByAppendingString:@"-Bold"] size:self.codeFontSize];
     NSUnderlineStyle expected = NSUnderlineStyleThick;
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    __block BOOL handlerCalled = NO;
+    NSString *markdownString = @"~**``bold code``**~";
     
-    [self.defaultParser parseMarkdownString:@"~**``bold code``**~" withCompletion:^(id string) {
-        NSAttributedString *attributesString = (NSAttributedString *)string;
-        handlerCalled = YES;
-        
-        NSNumber *style = [attributesString attribute:NSStrikethroughStyleAttributeName atIndex:0 effectiveRange:nil];
-        XCTAssertEqual(style.integerValue, expected);
-        XCTAssertEqualObjects([attributesString attribute:NSFontAttributeName atIndex:0 effectiveRange:nil], expectedFont);
-        dispatch_semaphore_signal(semaphore);
+    
+    [self waitToCompleteIn:self.testCompletionDelay codeBlock:^(dispatch_block_t handler) {
+        [self.defaultParser parseMarkdownString:markdownString withCompletion:^(id string) {
+            NSAttributedString *attributesString = (NSAttributedString *)string;
+            NSNumber *style = [attributesString attribute:NSStrikethroughStyleAttributeName atIndex:0 effectiveRange:nil];
+            
+            XCTAssertEqual(style.integerValue, expected);
+            XCTAssertEqualObjects([attributesString attribute:NSFontAttributeName atIndex:0 effectiveRange:nil], expectedFont);
+            handler();
+        }];
     }];
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.f * NSEC_PER_SEC)));
-    XCTAssertTrue(handlerCalled);
 }
 
 - (void)testDefaultDecoration_ShuldAddStrikethroughDecoration_WhenStringWithStrikethroughItalicCodeMarkdownMarkupPassed {
     
     UIFont *expectedFont = [UIFont fontWithName:[self.codeFontName stringByAppendingString:@"-Oblique"] size:self.codeFontSize];
     NSUnderlineStyle expected = NSUnderlineStyleThick;
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    __block BOOL handlerCalled = NO;
+    NSString *markdownString = @"*~``bold code``~*";
     
-    [self.defaultParser parseMarkdownString:@"*~``bold code``~*" withCompletion:^(id  string) {
-        NSAttributedString *attributesString = (NSAttributedString *)string;
-        handlerCalled = YES;
-        
-        NSNumber *style = [attributesString attribute:NSStrikethroughStyleAttributeName atIndex:0 effectiveRange:nil];
-        XCTAssertEqual(style.integerValue, expected);
-        XCTAssertEqualObjects([attributesString attribute:NSFontAttributeName atIndex:0 effectiveRange:nil], expectedFont);
-        dispatch_semaphore_signal(semaphore);
+    
+    [self waitToCompleteIn:self.testCompletionDelay codeBlock:^(dispatch_block_t handler) {
+        [self.defaultParser parseMarkdownString:markdownString withCompletion:^(id  string) {
+            NSAttributedString *attributesString = (NSAttributedString *)string;
+            NSNumber *style = [attributesString attribute:NSStrikethroughStyleAttributeName atIndex:0 effectiveRange:nil];
+            
+            XCTAssertEqual(style.integerValue, expected);
+            XCTAssertEqualObjects([attributesString attribute:NSFontAttributeName atIndex:0 effectiveRange:nil], expectedFont);
+            handler();
+        }];
     }];
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.f * NSEC_PER_SEC)));
-    XCTAssertTrue(handlerCalled);
 }
 
 - (void)testDefaultDecoration_ShuldAddStrikethroughDecoration_WhenStringWithStrikethroughBoldItalicCodeMarkdownMarkupPassed {
     
-    UIFont *expectedFont = [UIFont fontWithName:[self.codeFontName stringByAppendingString:@"-BoldOblique"] size:self.codeFontSize];
+    UIFont *expectedFont = [UIFont fontWithName:[self.codeFontName stringByAppendingString:@"-BoldOblique"]
+                                           size:self.codeFontSize];
+    NSString *markdownString = @"*~__``bold code``__~*";
     NSUnderlineStyle expected = NSUnderlineStyleThick;
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    __block BOOL handlerCalled = NO;
     
-    [self.defaultParser parseMarkdownString:@"*~__``bold code``__~*" withCompletion:^(id string) {
-        NSAttributedString *attributesString = (NSAttributedString *)string;
-        handlerCalled = YES;
-        
-        NSNumber *style = [attributesString attribute:NSStrikethroughStyleAttributeName atIndex:0 effectiveRange:nil];
-        XCTAssertEqual(style.integerValue, expected);
-        XCTAssertEqualObjects([attributesString attribute:NSFontAttributeName atIndex:0 effectiveRange:nil], expectedFont);
-        dispatch_semaphore_signal(semaphore);
+    
+    [self waitToCompleteIn:self.testCompletionDelay codeBlock:^(dispatch_block_t handler) {
+        [self.defaultParser parseMarkdownString:markdownString withCompletion:^(id string) {
+            NSAttributedString *attributesString = (NSAttributedString *)string;
+            NSNumber *style = [attributesString attribute:NSStrikethroughStyleAttributeName atIndex:0 effectiveRange:nil];
+            
+            XCTAssertEqual(style.integerValue, expected);
+            XCTAssertEqualObjects([attributesString attribute:NSFontAttributeName atIndex:0 effectiveRange:nil], expectedFont);
+            handler();
+        }];
     }];
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.f * NSEC_PER_SEC)));
-    XCTAssertTrue(handlerCalled);
 }
 
 - (void)testCustomDecoration_ShuldAddStrikethroughDecoration_WhenTextStringWithStrikethroughMarkdownMarkupPassed {
     
-    UIFont *expectedFont = self.customDefaultFont;
     NSUnderlineStyle expected = self.customStrikethrough;
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    __block BOOL handlerCalled = NO;
+    NSString *markdownString = @"~strikethrough text~";
+    UIFont *expectedFont = self.customDefaultFont;
     
-    [self.customParser parseMarkdownString:@"~strikethrough text~" withCompletion:^(id string) {
-        NSAttributedString *attributesString = (NSAttributedString *)string;
-        handlerCalled = YES;
-        
-        NSNumber *style = [attributesString attribute:NSStrikethroughStyleAttributeName atIndex:0 effectiveRange:nil];
-        XCTAssertEqual(style.integerValue, expected);
-        XCTAssertEqualObjects([attributesString attribute:NSFontAttributeName atIndex:0 effectiveRange:nil], expectedFont);
-        dispatch_semaphore_signal(semaphore);
+    
+    [self waitToCompleteIn:self.testCompletionDelay codeBlock:^(dispatch_block_t handler) {
+        [self.customParser parseMarkdownString:markdownString withCompletion:^(id string) {
+            NSAttributedString *attributesString = (NSAttributedString *)string;
+            NSNumber *style = [attributesString attribute:NSStrikethroughStyleAttributeName atIndex:0 effectiveRange:nil];
+            
+            XCTAssertEqual(style.integerValue, expected);
+            XCTAssertEqualObjects([attributesString attribute:NSFontAttributeName atIndex:0 effectiveRange:nil], expectedFont);
+            handler();
+        }];
     }];
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.f * NSEC_PER_SEC)));
-    XCTAssertTrue(handlerCalled);
 }
 
 - (void)testCustomDecoration_ShuldAddStrikethroughDecoration_WhenTextStringWithStrikethroughItalicMarkdownMarkupPassed {
     
-    UIFont *expectedFont = self.customItalicFont;
+    NSString *markdownString = @"_~~italic strikethrough text~~_";
     NSUnderlineStyle expected = self.customStrikethrough;
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    __block BOOL handlerCalled = NO;
+    UIFont *expectedFont = self.customItalicFont;
     
-    [self.customParser parseMarkdownString:@"_~~italic strikethrough text~~_" withCompletion:^(id string) {
-        NSAttributedString *attributesString = (NSAttributedString *)string;
-        handlerCalled = YES;
-        
-        NSNumber *style = [attributesString attribute:NSStrikethroughStyleAttributeName atIndex:0 effectiveRange:nil];
-        XCTAssertEqual(style.integerValue, expected);
-        XCTAssertEqualObjects([attributesString attribute:NSFontAttributeName atIndex:0 effectiveRange:nil], expectedFont);
-        dispatch_semaphore_signal(semaphore);
+    
+    [self waitToCompleteIn:self.testCompletionDelay codeBlock:^(dispatch_block_t handler) {
+        [self.customParser parseMarkdownString:markdownString withCompletion:^(id string) {
+            NSAttributedString *attributesString = (NSAttributedString *)string;
+            NSNumber *style = [attributesString attribute:NSStrikethroughStyleAttributeName atIndex:0 effectiveRange:nil];
+            
+            XCTAssertEqual(style.integerValue, expected);
+            XCTAssertEqualObjects([attributesString attribute:NSFontAttributeName atIndex:0 effectiveRange:nil], expectedFont);
+            handler();
+        }];
     }];
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.f * NSEC_PER_SEC)));
-    XCTAssertTrue(handlerCalled);
 }
 
 - (void)testCustomDecoration_ShuldAddStrikethroughDecoration_WhenTextStringWithStrikethroughBoldMarkdownMarkupPassed {
     
-    UIFont *expectedFont = self.customBoldFont;
+    NSString *markdownString = @"**~bold strikethrough text~**";
     NSUnderlineStyle expected = self.customStrikethrough;
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    __block BOOL handlerCalled = NO;
+    UIFont *expectedFont = self.customBoldFont;
     
-    [self.customParser parseMarkdownString:@"**~bold strikethrough text~**" withCompletion:^(id string) {
-        NSAttributedString *attributesString = (NSAttributedString *)string;
-        handlerCalled = YES;
-        
-        NSNumber *style = [attributesString attribute:NSStrikethroughStyleAttributeName atIndex:0 effectiveRange:nil];
-        XCTAssertEqual(style.integerValue, expected);
-        XCTAssertEqualObjects([attributesString attribute:NSFontAttributeName atIndex:0 effectiveRange:nil], expectedFont);
-        dispatch_semaphore_signal(semaphore);
+    
+    [self waitToCompleteIn:self.testCompletionDelay codeBlock:^(dispatch_block_t handler) {
+        [self.customParser parseMarkdownString:markdownString withCompletion:^(id string) {
+            NSAttributedString *attributesString = (NSAttributedString *)string;
+            NSNumber *style = [attributesString attribute:NSStrikethroughStyleAttributeName atIndex:0 effectiveRange:nil];
+            
+            XCTAssertEqual(style.integerValue, expected);
+            XCTAssertEqualObjects([attributesString attribute:NSFontAttributeName atIndex:0 effectiveRange:nil], expectedFont);
+            handler();
+        }];
     }];
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.f * NSEC_PER_SEC)));
-    XCTAssertTrue(handlerCalled);
 }
 
 - (void)testCustomDecoration_ShuldAddStrikethroughDecoration_WhenStringWithStrikethroughBoldItalicMarkdownMarkupPassed {
     
-    UIFont *expectedFont = [UIFont fontWithName:[self.customDefaultFontName stringByAppendingString:@"-BoldItalic"] size:self.customDefaultFontSize];
+    UIFont *expectedFont = [UIFont fontWithName:[self.customDefaultFontName stringByAppendingString:@"-BoldItalic"]
+                                           size:self.customDefaultFontSize];
     NSUnderlineStyle expected = self.customStrikethrough;
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    __block BOOL handlerCalled = NO;
+    NSString *markdownString = @"___~bold text~___";
     
-    [self.customParser parseMarkdownString:@"___~bold text~___" withCompletion:^(id string) {
-        NSAttributedString *attributesString = (NSAttributedString *)string;
-        handlerCalled = YES;
-        
-        NSNumber *style = [attributesString attribute:NSStrikethroughStyleAttributeName atIndex:0 effectiveRange:nil];
-        XCTAssertEqual(style.integerValue, expected);
-        XCTAssertEqualObjects([attributesString attribute:NSFontAttributeName atIndex:0 effectiveRange:nil], expectedFont);
-        dispatch_semaphore_signal(semaphore);
+    
+    [self waitToCompleteIn:self.testCompletionDelay codeBlock:^(dispatch_block_t handler) {
+        [self.customParser parseMarkdownString:markdownString withCompletion:^(id string) {
+            NSAttributedString *attributesString = (NSAttributedString *)string;
+            NSNumber *style = [attributesString attribute:NSStrikethroughStyleAttributeName atIndex:0 effectiveRange:nil];
+            
+            XCTAssertEqual(style.integerValue, expected);
+            XCTAssertEqualObjects([attributesString attribute:NSFontAttributeName atIndex:0 effectiveRange:nil], expectedFont);
+            handler();
+        }];
     }];
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.f * NSEC_PER_SEC)));
-    XCTAssertTrue(handlerCalled);
 }
 
 - (void)testCustomDecoration_ShuldAddStrikethroughDecoration_WhenStringWithStrikethroughCodeMarkdownMarkupPassed {
     
-    UIFont *expectedFont = self.customCodeFont;
     NSUnderlineStyle expected = self.customStrikethrough;
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    __block BOOL handlerCalled = NO;
+    NSString *markdownString = @"~`bold code`~";
+    UIFont *expectedFont = self.customCodeFont;
     
-    [self.customParser parseMarkdownString:@"~`bold code`~" withCompletion:^(id string) {
-        NSAttributedString *attributesString = (NSAttributedString *)string;
-        handlerCalled = YES;
-        
-        NSNumber *style = [attributesString attribute:NSStrikethroughStyleAttributeName atIndex:0 effectiveRange:nil];
-        XCTAssertEqual(style.integerValue, expected);
-        XCTAssertEqualObjects([attributesString attribute:NSFontAttributeName atIndex:0 effectiveRange:nil], expectedFont);
-        dispatch_semaphore_signal(semaphore);
+    
+    [self waitToCompleteIn:self.testCompletionDelay codeBlock:^(dispatch_block_t handler) {
+        [self.customParser parseMarkdownString:markdownString withCompletion:^(id string) {
+            NSAttributedString *attributesString = (NSAttributedString *)string;
+            NSNumber *style = [attributesString attribute:NSStrikethroughStyleAttributeName atIndex:0 effectiveRange:nil];
+            
+            XCTAssertEqual(style.integerValue, expected);
+            XCTAssertEqualObjects([attributesString attribute:NSFontAttributeName atIndex:0 effectiveRange:nil], expectedFont);
+            handler();
+        }];
     }];
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.f * NSEC_PER_SEC)));
-    XCTAssertTrue(handlerCalled);
 }
 
 - (void)testCustomDecoration_ShuldAddStrikethroughDecoration_WhenStringWithStrikethroughBoldCodeMarkdownMarkupPassed {
     
-    UIFont *expectedFont = [UIFont fontWithName:[self.customCodeFontName stringByAppendingString:@"-Bold"] size:self.customCodeFontSize];
+    UIFont *expectedFont = [UIFont fontWithName:[self.customCodeFontName stringByAppendingString:@"-Bold"]
+                                           size:self.customCodeFontSize];
     NSUnderlineStyle expected = self.customStrikethrough;
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    __block BOOL handlerCalled = NO;
+    NSString *markdownString = @"~**``bold code``**~";
     
-    [self.customParser parseMarkdownString:@"~**``bold code``**~" withCompletion:^(id string) {
-        NSAttributedString *attributesString = (NSAttributedString *)string;
-        handlerCalled = YES;
-        
-        NSNumber *style = [attributesString attribute:NSStrikethroughStyleAttributeName atIndex:0 effectiveRange:nil];
-        XCTAssertEqual(style.integerValue, expected);
-        XCTAssertEqualObjects([attributesString attribute:NSFontAttributeName atIndex:0 effectiveRange:nil], expectedFont);
-        dispatch_semaphore_signal(semaphore);
+    
+    [self waitToCompleteIn:self.testCompletionDelay codeBlock:^(dispatch_block_t handler) {
+        [self.customParser parseMarkdownString:markdownString withCompletion:^(id string) {
+            NSAttributedString *attributesString = (NSAttributedString *)string;
+            NSNumber *style = [attributesString attribute:NSStrikethroughStyleAttributeName atIndex:0 effectiveRange:nil];
+            
+            XCTAssertEqual(style.integerValue, expected);
+            XCTAssertEqualObjects([attributesString attribute:NSFontAttributeName atIndex:0 effectiveRange:nil], expectedFont);
+            handler();
+        }];
     }];
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.f * NSEC_PER_SEC)));
-    XCTAssertTrue(handlerCalled);
 }
 
 - (void)testCustomDecoration_ShuldAddStrikethroughDecoration_WhenStringWithStrikethroughItalicCodeMarkdownMarkupPassed {
     
-    UIFont *expectedFont = [UIFont fontWithName:[self.customCodeFontName stringByAppendingString:@"-Oblique"] size:self.customCodeFontSize];
+    UIFont *expectedFont = [UIFont fontWithName:[self.customCodeFontName stringByAppendingString:@"-Oblique"]
+                                           size:self.customCodeFontSize];
     NSUnderlineStyle expected = self.customStrikethrough;
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    __block BOOL handlerCalled = NO;
+    NSString *markdownString = @"*~``bold code``~*";
     
-    [self.customParser parseMarkdownString:@"*~``bold code``~*" withCompletion:^(id  string) {
-        NSAttributedString *attributesString = (NSAttributedString *)string;
-        handlerCalled = YES;
-        
-        NSNumber *style = [attributesString attribute:NSStrikethroughStyleAttributeName atIndex:0 effectiveRange:nil];
-        XCTAssertEqual(style.integerValue, expected);
-        XCTAssertEqualObjects([attributesString attribute:NSFontAttributeName atIndex:0 effectiveRange:nil], expectedFont);
-        dispatch_semaphore_signal(semaphore);
+    
+    [self waitToCompleteIn:self.testCompletionDelay codeBlock:^(dispatch_block_t handler) {
+        [self.customParser parseMarkdownString:markdownString withCompletion:^(id  string) {
+            NSAttributedString *attributesString = (NSAttributedString *)string;
+            NSNumber *style = [attributesString attribute:NSStrikethroughStyleAttributeName atIndex:0 effectiveRange:nil];
+            
+            XCTAssertEqual(style.integerValue, expected);
+            XCTAssertEqualObjects([attributesString attribute:NSFontAttributeName atIndex:0 effectiveRange:nil], expectedFont);
+            handler();
+        }];
     }];
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.f * NSEC_PER_SEC)));
-    XCTAssertTrue(handlerCalled);
 }
 
 - (void)testCustomDecoration_ShuldAddStrikethroughDecoration_WhenStringWithStrikethroughBoldItalicCodeMarkdownMarkupPassed {
     
-    UIFont *expectedFont = [UIFont fontWithName:[self.customCodeFontName stringByAppendingString:@"-BoldOblique"] size:self.customCodeFontSize];
+    UIFont *expectedFont = [UIFont fontWithName:[self.customCodeFontName stringByAppendingString:@"-BoldOblique"]
+                                           size:self.customCodeFontSize];
     NSUnderlineStyle expected = self.customStrikethrough;
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    __block BOOL handlerCalled = NO;
+    NSString *markdownString = @"*~__``bold code``__~*";
     
-    [self.customParser parseMarkdownString:@"*~__``bold code``__~*" withCompletion:^(id string) {
-        NSAttributedString *attributesString = (NSAttributedString *)string;
-        handlerCalled = YES;
-        
-        NSNumber *style = [attributesString attribute:NSStrikethroughStyleAttributeName atIndex:0 effectiveRange:nil];
-        XCTAssertEqual(style.integerValue, expected);
-        XCTAssertEqualObjects([attributesString attribute:NSFontAttributeName atIndex:0 effectiveRange:nil], expectedFont);
-        dispatch_semaphore_signal(semaphore);
+    
+    [self waitToCompleteIn:self.testCompletionDelay codeBlock:^(dispatch_block_t handler) {
+        [self.customParser parseMarkdownString:markdownString withCompletion:^(id string) {
+            NSAttributedString *attributesString = (NSAttributedString *)string;
+            NSNumber *style = [attributesString attribute:NSStrikethroughStyleAttributeName atIndex:0 effectiveRange:nil];
+            
+            XCTAssertEqual(style.integerValue, expected);
+            XCTAssertEqualObjects([attributesString attribute:NSFontAttributeName atIndex:0 effectiveRange:nil], expectedFont);
+            handler();
+        }];
     }];
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.f * NSEC_PER_SEC)));
-    XCTAssertTrue(handlerCalled);
 }
 
 
@@ -781,250 +727,235 @@
 
 - (void)testDefaultLink_ShuldAddLink_WhenTextStringWithLinkMarkdownMarkupPassed {
     
+    NSString *markdownString = @"[PubNub](https://pubnub.com)";
     NSString *expected = @"https://pubnub.com";
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    __block BOOL handlerCalled = NO;
     
-    [self.defaultParser parseMarkdownString:@"[PubNub](https://pubnub.com)" withCompletion:^(id string) {
-        NSAttributedString *attributesString = (NSAttributedString *)string;
-        handlerCalled = YES;
-        
-        id link = [attributesString attribute:NSLinkAttributeName atIndex:0 effectiveRange:nil];
-        XCTAssertEqualObjects(link, expected);
-        dispatch_semaphore_signal(semaphore);
+    
+    [self waitToCompleteIn:self.testCompletionDelay codeBlock:^(dispatch_block_t handler) {
+        [self.defaultParser parseMarkdownString:markdownString withCompletion:^(id string) {
+            NSAttributedString *attributesString = (NSAttributedString *)string;
+            id link = [attributesString attribute:NSLinkAttributeName atIndex:0 effectiveRange:nil];
+            
+            XCTAssertEqualObjects(link, expected);
+            handler();
+        }];
     }];
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.f * NSEC_PER_SEC)));
-    XCTAssertTrue(handlerCalled);
 }
 
 - (void)testDefaultLink_ShuldAddLink_WhenTextStringWithLinkItalicMarkdownMarkupPassed {
     
-    UIFont *expectedFont = [UIFont fontWithName:[self.defaultFontName stringByAppendingString:@"-Italic"] size:self.defaultFontSize];
+    UIFont *expectedFont = [UIFont fontWithName:[self.defaultFontName stringByAppendingString:@"-Italic"]
+                                           size:self.defaultFontSize];
+    NSString *markdownString = @"_[PubNub](https://pubnub.com)_";
     NSString *expected = @"https://pubnub.com";
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    __block BOOL handlerCalled = NO;
     
-    [self.defaultParser parseMarkdownString:@"_[PubNub](https://pubnub.com)_" withCompletion:^(id string) {
-        NSAttributedString *attributesString = (NSAttributedString *)string;
-        handlerCalled = YES;
-        
-        id link = [attributesString attribute:NSLinkAttributeName atIndex:0 effectiveRange:nil];
-        XCTAssertEqualObjects(link, expected);
-        XCTAssertEqualObjects([attributesString attribute:NSFontAttributeName atIndex:0 effectiveRange:nil], expectedFont);
-        dispatch_semaphore_signal(semaphore);
+    
+    [self waitToCompleteIn:self.testCompletionDelay codeBlock:^(dispatch_block_t handler) {
+        [self.defaultParser parseMarkdownString:markdownString withCompletion:^(id string) {
+            NSAttributedString *attributesString = (NSAttributedString *)string;
+            id link = [attributesString attribute:NSLinkAttributeName atIndex:0 effectiveRange:nil];
+            
+            XCTAssertEqualObjects(link, expected);
+            XCTAssertEqualObjects([attributesString attribute:NSFontAttributeName atIndex:0 effectiveRange:nil], expectedFont);
+            handler();
+        }];
     }];
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.f * NSEC_PER_SEC)));
-    XCTAssertTrue(handlerCalled);
 }
 
 - (void)testDefaultLink_ShuldAddLink_WhenTextStringWithLinkBoldMarkdownMarkupPassed {
     
-    UIFont *expectedFont = [UIFont fontWithName:[self.defaultFontName stringByAppendingString:@"-Bold"] size:self.defaultFontSize];
+    UIFont *expectedFont = [UIFont fontWithName:[self.defaultFontName stringByAppendingString:@"-Bold"]
+                                           size:self.defaultFontSize];
+    NSString *markdownString = @"__[PubNub](https://pubnub.com)__";
     NSString *expected = @"https://pubnub.com";
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    __block BOOL handlerCalled = NO;
     
-    [self.defaultParser parseMarkdownString:@"__[PubNub](https://pubnub.com)__" withCompletion:^(id string) {
-        NSAttributedString *attributesString = (NSAttributedString *)string;
-        handlerCalled = YES;
-        
-        id link = [attributesString attribute:NSLinkAttributeName atIndex:0 effectiveRange:nil];
-        XCTAssertEqualObjects(link, expected);
-        XCTAssertEqualObjects([attributesString attribute:NSFontAttributeName atIndex:0 effectiveRange:nil], expectedFont);
-        dispatch_semaphore_signal(semaphore);
+    
+    [self waitToCompleteIn:self.testCompletionDelay codeBlock:^(dispatch_block_t handler) {
+        [self.defaultParser parseMarkdownString:markdownString withCompletion:^(id string) {
+            NSAttributedString *attributesString = (NSAttributedString *)string;
+            id link = [attributesString attribute:NSLinkAttributeName atIndex:0 effectiveRange:nil];
+            
+            XCTAssertEqualObjects(link, expected);
+            XCTAssertEqualObjects([attributesString attribute:NSFontAttributeName atIndex:0 effectiveRange:nil], expectedFont);
+            handler();
+        }];
     }];
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.f * NSEC_PER_SEC)));
-    XCTAssertTrue(handlerCalled);
 }
 
 - (void)testDefaultLink_ShuldAddLink_WhenTextStringWithLinkBoldItalicMarkdownMarkupPassed {
     
-    UIFont *expectedFont = [UIFont fontWithName:[self.defaultFontName stringByAppendingString:@"-BoldItalic"] size:self.defaultFontSize];
+    UIFont *expectedFont = [UIFont fontWithName:[self.defaultFontName stringByAppendingString:@"-BoldItalic"]
+                                           size:self.defaultFontSize];
+    NSString *markdownString = @"**_[PubNub](https://pubnub.com)_**";
     NSString *expected = @"https://pubnub.com";
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    __block BOOL handlerCalled = NO;
     
-    [self.defaultParser parseMarkdownString:@"**_[PubNub](https://pubnub.com)_**" withCompletion:^(id string) {
-        NSAttributedString *attributesString = (NSAttributedString *)string;
-        handlerCalled = YES;
-        
-        id link = [attributesString attribute:NSLinkAttributeName atIndex:0 effectiveRange:nil];
-        XCTAssertEqualObjects(link, expected);
-        XCTAssertEqualObjects([attributesString attribute:NSFontAttributeName atIndex:0 effectiveRange:nil], expectedFont);
-        dispatch_semaphore_signal(semaphore);
+    
+    [self waitToCompleteIn:self.testCompletionDelay codeBlock:^(dispatch_block_t handler) {
+        [self.defaultParser parseMarkdownString:markdownString withCompletion:^(id string) {
+            NSAttributedString *attributesString = (NSAttributedString *)string;
+            id link = [attributesString attribute:NSLinkAttributeName atIndex:0 effectiveRange:nil];
+            
+            XCTAssertEqualObjects(link, expected);
+            XCTAssertEqualObjects([attributesString attribute:NSFontAttributeName atIndex:0 effectiveRange:nil], expectedFont);
+            handler();
+        }];
     }];
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.f * NSEC_PER_SEC)));
-    XCTAssertTrue(handlerCalled);
 }
 
 - (void)testCustomLink_ShuldAddLink_WhenTextStringWithLinkMarkdownMarkupPassed {
     
+    NSString *markdownString = @"[PubNub](https://pubnub.com)";
     NSString *expected = @"https://pubnub.com";
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    __block BOOL handlerCalled = NO;
     
-    [self.customParser parseMarkdownString:@"[PubNub](https://pubnub.com)" withCompletion:^(id string) {
-        NSAttributedString *attributesString = (NSAttributedString *)string;
-        handlerCalled = YES;
-        
-        id link = [attributesString attribute:NSLinkAttributeName atIndex:0 effectiveRange:nil];
-        XCTAssertEqualObjects(link, expected);
-        dispatch_semaphore_signal(semaphore);
+    
+    [self waitToCompleteIn:self.testCompletionDelay codeBlock:^(dispatch_block_t handler) {
+        [self.customParser parseMarkdownString:markdownString withCompletion:^(id string) {
+            NSAttributedString *attributesString = (NSAttributedString *)string;
+            id link = [attributesString attribute:NSLinkAttributeName atIndex:0 effectiveRange:nil];
+            
+            XCTAssertEqualObjects(link, expected);
+            handler();
+        }];
     }];
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.f * NSEC_PER_SEC)));
-    XCTAssertTrue(handlerCalled);
 }
 
 - (void)testCustomLink_ShuldAddLink_WhenTextStringWithItalicMarkdownMarkupInsideOfLinkPassed {
     
-    UIFont *expectedFont = [UIFont fontWithName:[self.customCodeFontName stringByAppendingString:@"-Oblique"] size:self.customDefaultFontSize];
+    UIFont *expectedFont = [UIFont fontWithName:[self.customCodeFontName stringByAppendingString:@"-Oblique"]
+                                           size:self.customDefaultFontSize];
+    NSString *markdownString = @"[_PubNub_](https://pubnub.com)";
     NSString *expected = @"https://pubnub.com";
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    __block BOOL handlerCalled = NO;
     
-    [self.customParser parseMarkdownString:@"[_PubNub_](https://pubnub.com)" withCompletion:^(id string) {
-        NSAttributedString *attributesString = (NSAttributedString *)string;
-        handlerCalled = YES;
-        
-        id link = [attributesString attribute:NSLinkAttributeName atIndex:0 effectiveRange:nil];
-        XCTAssertEqualObjects(link, expected);
-        XCTAssertEqualObjects([attributesString attribute:NSFontAttributeName atIndex:0 effectiveRange:nil], expectedFont);
-        dispatch_semaphore_signal(semaphore);
+    
+    [self waitToCompleteIn:self.testCompletionDelay codeBlock:^(dispatch_block_t handler) {
+        [self.customParser parseMarkdownString:markdownString withCompletion:^(id string) {
+            NSAttributedString *attributesString = (NSAttributedString *)string;
+            id link = [attributesString attribute:NSLinkAttributeName atIndex:0 effectiveRange:nil];
+            
+            XCTAssertEqualObjects(link, expected);
+            XCTAssertEqualObjects([attributesString attribute:NSFontAttributeName atIndex:0 effectiveRange:nil], expectedFont);
+            handler();
+        }];
     }];
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.f * NSEC_PER_SEC)));
-    XCTAssertTrue(handlerCalled);
 }
 
 - (void)testCustomLink_ShuldAddLink_WhenTextStringWithItalicMarkdownMarkupOutsideOfLinkPassed {
     
-    UIFont *expectedFont = [UIFont fontWithName:[self.customCodeFontName stringByAppendingString:@"-Oblique"] size:self.customDefaultFontSize];
+    UIFont *expectedFont = [UIFont fontWithName:[self.customCodeFontName stringByAppendingString:@"-Oblique"]
+                                           size:self.customDefaultFontSize];
+    NSString *markdownString = @"_[PubNub](https://pubnub.com)_";
     NSString *expected = @"https://pubnub.com";
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    __block BOOL handlerCalled = NO;
     
-    [self.customParser parseMarkdownString:@"_[PubNub](https://pubnub.com)_" withCompletion:^(id string) {
-        NSAttributedString *attributesString = (NSAttributedString *)string;
-        handlerCalled = YES;
-        
-        id link = [attributesString attribute:NSLinkAttributeName atIndex:0 effectiveRange:nil];
-        XCTAssertEqualObjects(link, expected);
-        XCTAssertEqualObjects([attributesString attribute:NSFontAttributeName atIndex:0 effectiveRange:nil], expectedFont);
-        dispatch_semaphore_signal(semaphore);
+    
+    [self waitToCompleteIn:self.testCompletionDelay codeBlock:^(dispatch_block_t handler) {
+        [self.customParser parseMarkdownString:markdownString withCompletion:^(id string) {
+            NSAttributedString *attributesString = (NSAttributedString *)string;
+            id link = [attributesString attribute:NSLinkAttributeName atIndex:0 effectiveRange:nil];
+            
+            XCTAssertEqualObjects(link, expected);
+            XCTAssertEqualObjects([attributesString attribute:NSFontAttributeName atIndex:0 effectiveRange:nil], expectedFont);
+            handler();
+        }];
     }];
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.f * NSEC_PER_SEC)));
-    XCTAssertTrue(handlerCalled);
 }
 
 - (void)testCustomLink_ShuldAddLink_WhenTextStringWithBoldMarkdownMarkupInsideOfLinkPassed {
     
-    UIFont *expectedFont = [UIFont fontWithName:[self.customCodeFontName stringByAppendingString:@"-Bold"] size:self.customDefaultFontSize];
+    UIFont *expectedFont = [UIFont fontWithName:[self.customCodeFontName stringByAppendingString:@"-Bold"]
+                                           size:self.customDefaultFontSize];
+    NSString *markdownString = @"[__PubNub__](https://pubnub.com)";
     NSString *expected = @"https://pubnub.com";
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    __block BOOL handlerCalled = NO;
     
-    [self.customParser parseMarkdownString:@"[__PubNub__](https://pubnub.com)" withCompletion:^(id string) {
-        NSAttributedString *attributesString = (NSAttributedString *)string;
-        handlerCalled = YES;
-        
-        id link = [attributesString attribute:NSLinkAttributeName atIndex:0 effectiveRange:nil];
-        XCTAssertEqualObjects(link, expected);
-        XCTAssertEqualObjects([attributesString attribute:NSFontAttributeName atIndex:0 effectiveRange:nil], expectedFont);
-        dispatch_semaphore_signal(semaphore);
+    
+    [self waitToCompleteIn:self.testCompletionDelay codeBlock:^(dispatch_block_t handler) {
+        [self.customParser parseMarkdownString:markdownString withCompletion:^(id string) {
+            NSAttributedString *attributesString = (NSAttributedString *)string;
+            id link = [attributesString attribute:NSLinkAttributeName atIndex:0 effectiveRange:nil];
+            
+            XCTAssertEqualObjects(link, expected);
+            XCTAssertEqualObjects([attributesString attribute:NSFontAttributeName atIndex:0 effectiveRange:nil], expectedFont);
+            handler();
+        }];
     }];
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.f * NSEC_PER_SEC)));
-    XCTAssertTrue(handlerCalled);
 }
 
 - (void)testCustomLink_ShuldAddLink_WhenTextStringWithBoldMarkdownMarkupOutsideOfLinkPassed {
     
-    UIFont *expectedFont = [UIFont fontWithName:[self.customCodeFontName stringByAppendingString:@"-Bold"] size:self.customDefaultFontSize];
+    UIFont *expectedFont = [UIFont fontWithName:[self.customCodeFontName stringByAppendingString:@"-Bold"]
+                                           size:self.customDefaultFontSize];
+    NSString *markdownString = @"__[PubNub](https://pubnub.com)__";
     NSString *expected = @"https://pubnub.com";
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    __block BOOL handlerCalled = NO;
     
-    [self.customParser parseMarkdownString:@"__[PubNub](https://pubnub.com)__" withCompletion:^(id string) {
-        NSAttributedString *attributesString = (NSAttributedString *)string;
-        handlerCalled = YES;
-        
-        id link = [attributesString attribute:NSLinkAttributeName atIndex:0 effectiveRange:nil];
-        XCTAssertEqualObjects(link, expected);
-        XCTAssertEqualObjects([attributesString attribute:NSFontAttributeName atIndex:0 effectiveRange:nil], expectedFont);
-        dispatch_semaphore_signal(semaphore);
+    
+    [self waitToCompleteIn:self.testCompletionDelay codeBlock:^(dispatch_block_t handler) {
+        [self.customParser parseMarkdownString:markdownString withCompletion:^(id string) {
+            NSAttributedString *attributesString = (NSAttributedString *)string;
+            id link = [attributesString attribute:NSLinkAttributeName atIndex:0 effectiveRange:nil];
+            
+            XCTAssertEqualObjects(link, expected);
+            XCTAssertEqualObjects([attributesString attribute:NSFontAttributeName atIndex:0 effectiveRange:nil], expectedFont);
+            handler();
+        }];
     }];
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.f * NSEC_PER_SEC)));
-    XCTAssertTrue(handlerCalled);
 }
 
 - (void)testCustomLink_ShuldAddLink_WhenTextStringWithBoldItalicMarkdownMarkupInsideOfLinkPassed {
     
-    UIFont *expectedFont = [UIFont fontWithName:[self.customCodeFontName stringByAppendingString:@"-BoldOblique"] size:self.customDefaultFontSize];
+    UIFont *expectedFont = [UIFont fontWithName:[self.customCodeFontName stringByAppendingString:@"-BoldOblique"]
+                                           size:self.customDefaultFontSize];
+    NSString *markdownString = @"[**_PubNub_**](https://pubnub.com)";
     NSString *expected = @"https://pubnub.com";
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    __block BOOL handlerCalled = NO;
     
-    [self.customParser parseMarkdownString:@"[**_PubNub_**](https://pubnub.com)" withCompletion:^(id string) {
-        NSAttributedString *attributesString = (NSAttributedString *)string;
-        handlerCalled = YES;
-        
-        id link = [attributesString attribute:NSLinkAttributeName atIndex:0 effectiveRange:nil];
-        XCTAssertEqualObjects(link, expected);
-        XCTAssertEqualObjects([attributesString attribute:NSFontAttributeName atIndex:0 effectiveRange:nil], expectedFont);
-        dispatch_semaphore_signal(semaphore);
+    
+    [self waitToCompleteIn:self.testCompletionDelay codeBlock:^(dispatch_block_t handler) {
+        [self.customParser parseMarkdownString:markdownString withCompletion:^(id string) {
+            NSAttributedString *attributesString = (NSAttributedString *)string;
+            id link = [attributesString attribute:NSLinkAttributeName atIndex:0 effectiveRange:nil];
+            
+            XCTAssertEqualObjects(link, expected);
+            XCTAssertEqualObjects([attributesString attribute:NSFontAttributeName atIndex:0 effectiveRange:nil], expectedFont);
+            handler();
+        }];
     }];
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.f * NSEC_PER_SEC)));
-    XCTAssertTrue(handlerCalled);
 }
 
 - (void)testCustomLink_ShuldAddLink_WhenTextStringWithBoldItalicMarkdownMarkupOutsideOfLinkPassed {
     
-    UIFont *expectedFont = [UIFont fontWithName:[self.customCodeFontName stringByAppendingString:@"-BoldOblique"] size:self.customDefaultFontSize];
+    UIFont *expectedFont = [UIFont fontWithName:[self.customCodeFontName stringByAppendingString:@"-BoldOblique"]
+                                           size:self.customDefaultFontSize];
+    NSString *markdownString = @"**_[PubNub](https://pubnub.com)_**";
     NSString *expected = @"https://pubnub.com";
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    __block BOOL handlerCalled = NO;
     
-    [self.customParser parseMarkdownString:@"**_[PubNub](https://pubnub.com)_**" withCompletion:^(id string) {
-        NSAttributedString *attributesString = (NSAttributedString *)string;
-        handlerCalled = YES;
-        
-        id link = [attributesString attribute:NSLinkAttributeName atIndex:0 effectiveRange:nil];
-        XCTAssertEqualObjects(link, expected);
-        XCTAssertEqualObjects([attributesString attribute:NSFontAttributeName atIndex:0 effectiveRange:nil], expectedFont);
-        dispatch_semaphore_signal(semaphore);
+    
+    [self waitToCompleteIn:self.testCompletionDelay codeBlock:^(dispatch_block_t handler) {
+        [self.customParser parseMarkdownString:markdownString withCompletion:^(id string) {
+            NSAttributedString *attributesString = (NSAttributedString *)string;
+            id link = [attributesString attribute:NSLinkAttributeName atIndex:0 effectiveRange:nil];
+            
+            XCTAssertEqualObjects(link, expected);
+            XCTAssertEqualObjects([attributesString attribute:NSFontAttributeName atIndex:0 effectiveRange:nil], expectedFont);
+            handler();
+        }];
     }];
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.f * NSEC_PER_SEC)));
-    XCTAssertTrue(handlerCalled);
 }
 
 - (void)testCustomLink_ShuldAddLink_WhenTextStringWithLinkCodeMarkdownMarkupPassed {
     
+    NSString *markdownString = @"[`PubNub`](https://pubnub.com)";
     UIFont *expectedFont = self.customCodeFont;
     NSString *expected = @"https://pubnub.com";
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    __block BOOL handlerCalled = NO;
     
-    [self.customParser parseMarkdownString:@"[`PubNub`](https://pubnub.com)" withCompletion:^(id string) {
-        NSAttributedString *attributesString = (NSAttributedString *)string;
-        handlerCalled = YES;
-        
-        id link = [attributesString attribute:NSLinkAttributeName atIndex:0 effectiveRange:nil];
-        XCTAssertEqualObjects(link, expected);
-        XCTAssertEqualObjects([attributesString attribute:NSFontAttributeName atIndex:0 effectiveRange:nil], expectedFont);
-        dispatch_semaphore_signal(semaphore);
+    
+    [self waitToCompleteIn:self.testCompletionDelay codeBlock:^(dispatch_block_t handler) {
+        [self.customParser parseMarkdownString:markdownString withCompletion:^(id string) {
+            NSAttributedString *attributesString = (NSAttributedString *)string;
+            id link = [attributesString attribute:NSLinkAttributeName atIndex:0 effectiveRange:nil];
+            
+            XCTAssertEqualObjects(link, expected);
+            XCTAssertEqualObjects([attributesString attribute:NSFontAttributeName atIndex:0 effectiveRange:nil], expectedFont);
+            handler();
+        }];
     }];
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.f * NSEC_PER_SEC)));
-    XCTAssertTrue(handlerCalled);
 }
 
 
@@ -1032,22 +963,18 @@
 
 - (void)testImage_ShuldAddImageAttachment_WhenTextStringWithImageMarkdownMarkupPassed {
     
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    __block BOOL handlerCalled = NO;
-    
-    [self.defaultParser parseMarkdownString:@"![](https://cdn0.iconfinder.com/data/icons/easter-2020/42/rabbit_smiled-128.png)" withCompletion:^(id string) {
-        NSAttributedString *attributesString = (NSAttributedString *)string;
-        handlerCalled = YES;
-        
-        id attachment = [attributesString attribute:NSAttachmentAttributeName atIndex:0 effectiveRange:nil];
-        XCTAssertTrue([attachment isKindOfClass:[NSTextAttachment class]]);
-        XCTAssertNotNil(((NSTextAttachment *)attachment).image);
-        XCTAssertTrue([((NSTextAttachment *)attachment).image isKindOfClass:[UIImage class]]);
-        dispatch_semaphore_signal(semaphore);
+    NSString *markdownString = @"![](https://cdn0.iconfinder.com/data/icons/easter-2020/42/rabbit_smiled-128.png)";
+    [self waitToCompleteIn:self.testCompletionDelay codeBlock:^(dispatch_block_t handler) {
+        [self.defaultParser parseMarkdownString:markdownString withCompletion:^(id string) {
+            NSAttributedString *attributesString = (NSAttributedString *)string;
+            id attachment = [attributesString attribute:NSAttachmentAttributeName atIndex:0 effectiveRange:nil];
+            
+            XCTAssertTrue([attachment isKindOfClass:[NSTextAttachment class]]);
+            XCTAssertNotNil(((NSTextAttachment *)attachment).image);
+            XCTAssertTrue([((NSTextAttachment *)attachment).image isKindOfClass:[UIImage class]]);
+            handler();
+        }];
     }];
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.f * NSEC_PER_SEC)));
-    XCTAssertTrue(handlerCalled);
 }
 
 #pragma mark -

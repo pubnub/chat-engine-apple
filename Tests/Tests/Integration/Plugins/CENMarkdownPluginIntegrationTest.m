@@ -11,6 +11,11 @@
 @interface CENMarkdownPluginIntegrationTest : CENTestCase
 
 
+#pragma mark - Information
+
+@property (nonatomic, strong) NSString *namespace;
+@property (nonatomic, strong) NSString *globalChannel;
+
 #pragma mark -
 
 
@@ -24,113 +29,124 @@
 
 #pragma mark - Setup / Tear down
 
+- (BOOL)shouldConnectChatEngineForTestCaseWithName:(NSString *)name {
+    
+    return YES;
+}
+
+- (NSString *)globalChatChannelForTestCaseWithName:(NSString *)name {
+    
+    NSString *channel = [super globalChatChannelForTestCaseWithName:name];
+    
+    if (!self.globalChannel) {
+        self.globalChannel = channel;
+    }
+    
+    return self.globalChannel ?: channel;
+}
+
+- (NSString *)namespaceForTestCaseWithName:(NSString *)name {
+    
+    NSString *namespace = [super namespaceForTestCaseWithName:name];
+    
+    if (!self.namespace) {
+        self.namespace = namespace;
+    }
+    
+    return self.namespace ?: namespace;
+}
+
 - (void)setUp {
     
     [super setUp];
     
+    
     NSDictionary *configuration = nil;
-    NSString *global = [@[@"test", [NSUUID UUID].UUIDString] componentsJoinedByString:@"-"];
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    
-    [self setupChatEngineWithGlobal:global forUser:@"ian" synchronization:NO meta:NO state:@{ @"works": @YES }];
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.delayBetweenActions * NSEC_PER_SEC)));
-    
-    [self setupChatEngineWithGlobal:global forUser:@"stephen" synchronization:NO meta:NO state:@{ @"works": @YES }];
     
     if ([self.name rangeOfString:@"testDefaultCondfiguration"].location == NSNotFound) {
         configuration = @{ CENMarkdownConfiguration.events: @[@"message"], CENMarkdownConfiguration.messageKey: @"text" };
     }
     
+    [self setupChatEngineForUser:@"ian"];
+    [self setupChatEngineForUser:@"stephen"];
     [self chatEngineForUser:@"ian"].global.plugin([CENMarkdownPlugin class]).configuration(configuration).store();
     [self chatEngineForUser:@"stephen"].global.plugin([CENMarkdownPlugin class]).configuration(configuration).store();
-    
-    // Give some time to connect both users.
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.delayBetweenActions * NSEC_PER_SEC)));
 }
 
 - (void)testDefaultCondfiguration_ShouldHandleMessageEventsByDefault {
     
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     CENChatEngine *client1 = [self chatEngineForUser:@"ian"];
     CENChatEngine *client2 = [self chatEngineForUser:@"stephen"];
-    __block BOOL handlerCalled = NO;
     
-    client1.global.once(@"message", ^(NSDictionary *payload) {
-        handlerCalled = YES;
-        
-        XCTAssertNotNil(payload[CENEventData.data][@"text"]);
-        XCTAssertTrue([payload[CENEventData.data][@"text"] isKindOfClass:[NSAttributedString class]]);
-        dispatch_semaphore_signal(semaphore);
-    });
     
-    client2.global.emit(@"message").data(@{ @"text": @"_Italic_ text" }).perform();
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
-    XCTAssertTrue(handlerCalled);
+    [self object:client1.global shouldHandleEvent:@"message" withHandler:^CENEventHandlerBlock (dispatch_block_t handler) {
+        return ^(CENEmittedEvent *emittedEvent) {
+            NSDictionary *payload = emittedEvent.data;
+            
+            XCTAssertNotNil(payload[CENEventData.data][@"text"]);
+            XCTAssertTrue([payload[CENEventData.data][@"text"] isKindOfClass:[NSAttributedString class]]);
+            handler();
+        };
+    } afterBlock:^{
+        client2.global.emit(@"message").data(@{ @"text": @"_Italic_ text" }).perform();
+    }];
 }
 
 - (void)testDefaultCondfiguration_ShouldHandleMessagesUnderDefaultDataKey {
     
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     CENChatEngine *client1 = [self chatEngineForUser:@"ian"];
     CENChatEngine *client2 = [self chatEngineForUser:@"stephen"];
-    __block BOOL handlerCalled = NO;
     
-    client1.global.once(@"message", ^(NSDictionary *payload) {
-        handlerCalled = YES;
-        
-        XCTAssertNotNil(payload[CENEventData.data][@"text"]);
-        XCTAssertTrue([payload[CENEventData.data][@"text"] isKindOfClass:[NSAttributedString class]]);
-        dispatch_semaphore_signal(semaphore);
-    });
     
-    client2.global.emit(@"message").data(@{ @"text": @"**Bold** text" }).perform();
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
-    XCTAssertTrue(handlerCalled);
+    [self object:client1.global shouldHandleEvent:@"message" withHandler:^CENEventHandlerBlock (dispatch_block_t handler) {
+        return ^(CENEmittedEvent *emittedEvent) {
+            NSDictionary *payload = emittedEvent.data;
+            
+            XCTAssertNotNil(payload[CENEventData.data][@"text"]);
+            XCTAssertTrue([payload[CENEventData.data][@"text"] isKindOfClass:[NSAttributedString class]]);
+            handler();
+        };
+    } afterBlock:^{
+        client2.global.emit(@"message").data(@{ @"text": @"**Bold** text" }).perform();
+    }];
 }
 
 - (void)testMarkdownFormat_ShouldNotFormatReceivedMessage_WhenReceivedMessageWithOutMarkdownMarkup {
     
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     CENChatEngine *client1 = [self chatEngineForUser:@"ian"];
     CENChatEngine *client2 = [self chatEngineForUser:@"stephen"];
-    __block BOOL handlerCalled = NO;
     
-    client1.global.once(@"message", ^(NSDictionary *payload) {
-        handlerCalled = YES;
-        
-        XCTAssertNotNil(payload[CENEventData.data][@"text"]);
-        XCTAssertTrue([payload[CENEventData.data][@"text"] isKindOfClass:[NSString class]]);
-        dispatch_semaphore_signal(semaphore);
-    });
     
-    client2.global.emit(@"message").data(@{ @"text": @"Simple text" }).perform();
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
-    XCTAssertTrue(handlerCalled);
+    [self object:client1.global shouldHandleEvent:@"message" withHandler:^CENEventHandlerBlock (dispatch_block_t handler) {
+        return ^(CENEmittedEvent *emittedEvent) {
+            NSDictionary *payload = emittedEvent.data;
+            
+            XCTAssertNotNil(payload[CENEventData.data][@"text"]);
+            XCTAssertTrue([payload[CENEventData.data][@"text"] isKindOfClass:[NSString class]]);
+            handler();
+        };
+    } afterBlock:^{
+        client2.global.emit(@"message").data(@{ @"text": @"Simple text" }).perform();
+    }];
 }
 
 - (void)testMarkdownFormat_ShouldFormatReceivedMessage_WhenReceivedMessageWithMarkdownMarkup {
     
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     CENChatEngine *client1 = [self chatEngineForUser:@"ian"];
     CENChatEngine *client2 = [self chatEngineForUser:@"stephen"];
-    __block BOOL handlerCalled = NO;
     
-    client1.global.once(@"message", ^(NSDictionary *payload) {
-        handlerCalled = YES;
-        
-        XCTAssertNotNil(payload[CENEventData.data][@"text"]);
-        XCTAssertTrue([payload[CENEventData.data][@"text"] isKindOfClass:[NSAttributedString class]]);
-        dispatch_semaphore_signal(semaphore);
-    });
     
-    client2.global.emit(@"message").data(@{ @"text": @"**Bold** text" }).perform();
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
-    XCTAssertTrue(handlerCalled);
+    [self object:client1.global shouldHandleEvent:@"message" withHandler:^CENEventHandlerBlock (dispatch_block_t handler) {
+        return ^(CENEmittedEvent *emittedEvent) {
+            NSDictionary *payload = emittedEvent.data;
+            
+            XCTAssertNotNil(payload[CENEventData.data][@"text"]);
+            XCTAssertTrue([payload[CENEventData.data][@"text"] isKindOfClass:[NSAttributedString class]]);
+            handler();
+        };
+    } afterBlock:^{
+        client2.global.emit(@"message").data(@{ @"text": @"**Bold** text" }).perform();
+    }];
 }
 
 #pragma mark -

@@ -49,3 +49,19 @@ Uses Gravatar service to create an avatar based on user state information.
 ## [Random Usernames](https://github.com/pubnub/chat-engine-apple/wiki/plugins-random-username)
 
 A plugin that gives every use a random username combining a color and an animal.
+
+# Tests
+
+To run tests, follow next steps:  
+* Ensure what [latest](https://itunes.apple.com/ua/app/xcode/id497799835?mt=12) Xcode version installed.  
+* Ensure what latest CocoaPods installed by calling from Terminal:  
+  ```sudo gem install cocoapods```  
+* Clone repository and navigate to it's root  
+* Pull out dependencies by calling from Terminal:  
+  ```pod install```  
+* Navigate to `Tests/Tests/Resources` subdirectory and rename `demo-test-keysset.plist` to `test-keysset.plist`. This file values (publish / subscribe keys) used only in case of new Fixtures generation.  
+* Navigate to `Tests` subdirectory and open `ChatEngine Tests.xcworkspace`  
+* At top left of Xcode find drop down menu which contain following useful tests:  
+  * `Code Coverage (Unit)` - performs **unit** tests and generate code coverage report  
+  * `Code Coverage (Integration)` - performs **integration** tests and generate code coverage report  
+  * `Code Coverage (Full)` - runs both **unit** and **integration** tests with code coverage report. **Note:** this case sometimes behave not as expected because **unit** uses OCMock library to patch code and sometime it doesn't get released in time to remove altered behavior.  

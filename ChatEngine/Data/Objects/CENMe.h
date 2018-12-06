@@ -6,13 +6,15 @@
 @class CENSession;
 
 
+NS_ASSUME_NONNULL_BEGIN
+
 /**
- * @brief      Local \b ChatEngine user representation model.
- * @discussion This model represent user for which \b ChatEngine has been configured.
+ * @brief Special type of \b {user CENUser} which represent currently connected client with write
+ * permissions and ability to update it's state.
  *
  * @author Serhii Mamontov
- * @version 0.9.0
- * @copyright © 2009-2018 PubNub, Inc.
+ * @version 0.10.0
+ * @copyright © 2010-2018 PubNub, Inc.
  */
 @interface CENMe : CENUser
 
@@ -20,7 +22,10 @@
 #pragma mark - Information
 
 /**
- * @brief  Stores reference on object which allow track user's session synchronization.
+ * @brief \b {Object CENSession} which allow to synchronize chats list change between
+ * \b {local user CENMe} devices.
+ *
+ * @ref c0679c82-bff2-4dd9-8a4e-d5351a26418e
  */
 @property (nonatomic, nullable, readonly, strong) CENSession *session;
 
@@ -28,3 +33,5 @@
 
 
 @end
+
+NS_ASSUME_NONNULL_END

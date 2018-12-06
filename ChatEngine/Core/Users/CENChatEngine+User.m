@@ -1,7 +1,7 @@
 /**
  * @author Serhii Mamontov
- * @version 0.9.0
- * @copyright © 2009-2018 PubNub, Inc.
+ * @version 0.10.0
+ * @copyright © 2010-2018 PubNub, Inc.
  */
 #import "CENChatEngine.h"
 #import "CENChatEngine+UserPrivate.h"
@@ -16,9 +16,7 @@
 #import "CENChatEngine+Private.h"
 #import "CENChat+Private.h"
 #import "CENUser+Private.h"
-#import "CENMe+Private.h"
 #import "CENLogMacro.h"
-#import "CENSession.h"
 #import "CENError.h"
 
 
@@ -43,14 +41,12 @@
 #pragma mark - User
 
 #if CHATENGINE_USE_BUILDER_INTERFACE
-
 - (CENUserBuilderInterface * (^)(NSString *))User {
     
-    CENUserBuilderInterface *builder = [CENUserBuilderInterface builderWithExecutionBlock:^id(NSArray<NSString *> *flags,
-                                                                                            NSDictionary *arguments) {
+    CENInterfaceCallCompletionBlock block = ^id (NSArray<NSString *> *flags, NSDictionary *args) {
         CENUser *user = nil;
-        NSString *uuid = arguments[@"uuid"];
-        NSDictionary *state = arguments[NSStringFromSelector(@selector(state))];
+        NSString *uuid = args[@"uuid"];
+        NSDictionary *state = args[NSStringFromSelector(@selector(state))];
         
         if ([flags containsObject:NSStringFromSelector(@selector(create))]) {
             user = [self createUserWithUUID:uuid state:state];
@@ -59,15 +55,15 @@
         }
         
         return user;
-    }];
+    };
+    
+    CENUserBuilderInterface *builder = [CENUserBuilderInterface builderWithExecutionBlock:block];
     
     return ^CENUserBuilderInterface * (NSString *uuid) {
         [builder setArgument:uuid forParameter:@"uuid"];
-        
         return builder;
     };
 }
-
 #endif // CHATENGINE_USE_BUILDER_INTERFACE
 
 - (CENUser *)createUserWithUUID:(NSString *)uuid state:(NSDictionary *)state {
@@ -85,29 +81,28 @@
 
 #pragma mark - State
 
-- (void)updateLocalUserState:(nullable NSDictionary *)state withCompletion:(dispatch_block_t)block {
+- (void)fetchUserState:(CENUser *)user
+               forChat:(CENChat *)chat
+        withCompletion:(void(^)(NSDictionary *state))block {
     
-    [self.me updateState:state withCompletion:block];
-}
+    NSArray *routeSeries = @[@{
+        @"route": @"user_state",
+        @"method": @"get",
+        @"query": @{ @"user": user.uuid, @"channel": chat.channel }
+    }];
 
-- (void)propagateLocalUserStateRefreshWithCompletion:(dispatch_block_t)block {
-    
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-        [self.global setState:self.me.state withCompletion:block];
-    });
-}
-
-- (void)fetchUserState:(CENUser *)user withCompletion:(void(^)(NSDictionary *state))block {
-    
-    NSArray *routeSeries = @[@{ @"route": @"user_state", @"method": @"get", @"query": @{ @"user": user.uuid } }];
-    
-    __weak __typeof__(self) weakSelf = self;
-    [self.functionsClient callRouteSeries:routeSeries withCompletion:^(BOOL success, NSArray *responses) {
+    [self.functionClient callRouteSeries:routeSeries
+                          withCompletion:^(BOOL success, NSArray *responses) {
+                              
         if (!success) {
             NSString *description = @"Something went wrong while making a request to chat server.";
-            NSError *error = [CENError errorFromPubNubFunctionError:responses withDescription:description];
+            NSError *error = [CENError errorFromPubNubFunctionError:responses
+                                                    withDescription:description];
             
-            [weakSelf throwError:error forScope:@"getState" from:user propagateFlow:CEExceptionPropagationFlow.middleware];
+            [self throwError:error
+                    forScope:@"restoreState.network"
+                        from:user
+               propagateFlow:CEExceptionPropagationFlow.direct];
             
             return;
         }

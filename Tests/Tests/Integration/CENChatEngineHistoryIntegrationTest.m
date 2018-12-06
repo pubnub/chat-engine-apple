@@ -6,10 +6,20 @@
 #import "CEDummyPlugin.h"
 
 
-#pragma mark Interface declaration
+#pragma mark Constants
+
+static BOOL const kCENTShouldPublishTestMessages = YES;
+static NSUInteger const kCENTPublishedMessagesCount = 250;
+
+
+#pragma mark - Interface declaration
 
 @interface CENChatEngineHistoryIntegrationTest: CENTestCase
 
+
+#pragma mark - Misc
+
+- (void)publishTestMessages;
 
 #pragma mark -
 
@@ -24,248 +34,339 @@
 
 #pragma mark - Setup / Tear down
 
+- (BOOL)shouldSetupVCR {
+    
+    return [self.name rangeOfString:@"testSearch_AddMessagesToChat_WhenRecordingNewCassette"].location == NSNotFound;
+}
+
+- (BOOL)shouldConnectChatEngineForTestCaseWithName:(NSString *)name {
+
+    return YES;
+}
+
+- (NSString *)globalChatChannelForTestCaseWithName:(NSString *)name {
+    
+    return @"global";
+}
+
+- (NSString *)namespaceForTestCaseWithName:(NSString *)name {
+    
+    return @"namespace";
+}
+
+- (NSDictionary *)stateForUser:(NSString *)user inTestCaseWithName:(NSString *)name {
+
+    return @{ @"works": @YES };
+}
+
 - (void)setUp {
     
     [super setUp];
+
+
+    [self setupChatEngineForUser:@"robot-stephen"];
+}
+
+- (void)testSearch_AddMessagesToChat_WhenRecordingNewCassette {
     
-    [self setupChatEngineWithGlobal:@"global" forUser:@"stephen" synchronization:NO meta:NO state:@{ @"works": @YES }];
+    NSString *fixturesPath = @"/Volumes/Develop/Projects/Xcode/PubNub/chat-engine-apple/Tests/Tests/Fixtures";
+    NSString *cassette = [NSStringFromClass([self class]) stringByAppendingPathExtension:@"bundle"];
+    NSString *cassettesPath = [fixturesPath stringByAppendingPathComponent:cassette];
+    
+    if (kCENTShouldPublishTestMessages && ![[NSFileManager defaultManager] fileExistsAtPath:cassettesPath isDirectory:nil]) {
+        [self publishTestMessages];
+    }
 }
 
 - (void)testSearch_ShouldFetch50SpecificEvents_WhenLimitAndEventNameIsSet {
-    
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    CENChatEngine *client = [self chatEngineForUser:@"stephen"];
+
+    CENChatEngine *client = [self chatEngineForUser:@"robot-stephen"];
     __block NSUInteger foundEventsCount = 0;
     NSUInteger expectedEventsCount = 50;
-    __block BOOL handlerCalled = NO;
-    
-    CENChat *chat = client.Chat().name(@"chat-history").create();
-    chat.once(@"$.connected", ^{
-        CENSearch *search = chat.search().event(@"tester").limit(expectedEventsCount).create();
-        
-        search.on(@"tester",^(NSDictionary *payload) {
+    __block CENChat *chat = nil;
+
+
+    [self object:client shouldHandleEvent:@"$.connected" afterBlock:^{
+        chat = client.Chat().name(@"chat-history").create();
+    }];
+
+    CENSearch *search = chat.search().event(@"tester").limit(expectedEventsCount).create();
+    [self object:search shouldHandleEvent:@"$.search.finish" withHandler:^CENEventHandlerBlock (dispatch_block_t handler) {
+        return ^(CENEmittedEvent *emittedEvent) {
+            XCTAssertEqual(foundEventsCount, expectedEventsCount);
+            XCTAssertFalse(search.hasMore);
+            handler();
+        };
+    } afterBlock:^{
+        search.search().on(@"tester", ^(CENEmittedEvent *emittedEvent) {
+            NSDictionary *payload = emittedEvent.data;
+            foundEventsCount++;
+
             XCTAssertEqualObjects(payload[CENEventData.event], @"tester");
             XCTAssertNotNil(payload[CENEventData.timetoken]);
-            
-            foundEventsCount++;
         });
-        
-        search.once(@"$.search.finish", ^{
-            handlerCalled = YES;
-            
-            XCTAssertFalse(search.hasMore);
-            dispatch_semaphore_signal(semaphore);
-        });
-        
-        search.search();
-    });
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelayWithNestedSemaphores * NSEC_PER_SEC)));
-    XCTAssertEqual(foundEventsCount, expectedEventsCount);
-    XCTAssertTrue(handlerCalled);
+    }];
 }
 
 - (void)testSearch_ShouldFetch200SpecificEvents_WhenLimitEventNameAndPagesIsSet {
-    
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    CENChatEngine *client = [self chatEngineForUser:@"stephen"];
+
+    CENChatEngine *client = [self chatEngineForUser:@"robot-stephen"];
     __block NSUInteger foundEventsCount = 0;
     NSUInteger expectedEventsCount = 200;
-    __block BOOL handlerCalled = NO;
-    
-    CENChat *chat = client.Chat().name(@"chat-history").create();
-    chat.once(@"$.connected", ^{
-        CENSearch *search = chat.search().event(@"tester").limit(expectedEventsCount).pages(11).create();
-        
-        search.on(@"tester",^(NSDictionary *payload) {
+    __block CENChat *chat = nil;
+
+
+    [self object:client shouldHandleEvent:@"$.connected" afterBlock:^{
+        chat = client.Chat().name(@"chat-history").create();
+    }];
+
+    CENSearch *search = chat.search().event(@"tester").limit(expectedEventsCount).pages(11).create();
+    [self object:search shouldHandleEvent:@"$.search.finish" withHandler:^CENEventHandlerBlock (dispatch_block_t handler) {
+        return ^(CENEmittedEvent *emittedEvent) {
+            XCTAssertEqual(foundEventsCount, expectedEventsCount);
+            XCTAssertFalse(search.hasMore);
+            handler();
+        };
+    } afterBlock:^{
+        search.search().on(@"tester", ^(CENEmittedEvent *emittedEvent) {
             foundEventsCount++;
         });
-        
-        search.once(@"$.search.finish", ^{
-            handlerCalled = YES;
-            
-            XCTAssertFalse(search.hasMore);
-            dispatch_semaphore_signal(semaphore);
-        });
-        
-        search.search();
-    });
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelayWithNestedSemaphores * NSEC_PER_SEC)));
-    XCTAssertEqual(foundEventsCount, expectedEventsCount);
-    XCTAssertTrue(handlerCalled);
+    }];
 }
 
 - (void)testSearch_ShouldFetch10LatestEvents_WhenLimitAndPagesIsSet {
-    
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    CENChatEngine *client = [self chatEngineForUser:@"stephen"];
-    __block BOOL handlerCalledAtLeastOnce = NO;
+
+    CENChatEngine *client = [self chatEngineForUser:@"robot-stephen"];
     __block BOOL handlerCalled = NO;
-    
-    CENChat *chat = client.Chat().name(@"chat-history").create();
-    chat.once(@"$.connected", ^{
-        CENSearch *search = chat.search().limit(10).pages(13).create();
-        
-        search.once(@"tester",^(NSDictionary *payload) {
-            handlerCalledAtLeastOnce = YES;
-        });
-        
-        search.once(@"$.search.finish", ^{
-            handlerCalled = YES;
-            
+    __block CENChat *chat = nil;
+
+
+    [self object:client shouldHandleEvent:@"$.connected" afterBlock:^{
+        chat = client.Chat().name(@"chat-history").create();
+    }];
+
+    CENSearch *search = chat.search().limit(10).create();
+    [self object:search shouldHandleEvent:@"$.search.finish" withHandler:^CENEventHandlerBlock (dispatch_block_t handler) {
+        return ^(CENEmittedEvent *emittedEvent) {
             XCTAssertFalse(search.hasMore);
-            dispatch_semaphore_signal(semaphore);
+            XCTAssertTrue(handlerCalled);
+            handler();
+        };
+    } afterBlock:^{
+        search.search().once(@"tester", ^(CENEmittedEvent *emittedEvent) {
+            handlerCalled = YES;
         });
-        
-         search.search();
-    });
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelayWithNestedSemaphores * NSEC_PER_SEC)));
-    XCTAssertTrue(handlerCalledAtLeastOnce);
-    XCTAssertTrue(handlerCalled);
+    }];
 }
 
 - (void)testSearch_ShouldNotFetchEvents_WhenUnknownSenderSpecified {
-    
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    CENChatEngine *client = [self chatEngineForUser:@"stephen"];
-    __block BOOL handlerCalledAtLeastOnce = NO;
+
+    CENChatEngine *client = [self chatEngineForUser:@"robot-stephen"];
     __block BOOL handlerCalled = NO;
-    
-    CENChat *chat = client.Chat().name(@"chat-history").create();
-    chat.once(@"$.connected", ^{
-        CENSearch *search = chat.search().sender(client.me).limit(10).pages(1).create();
-        
-        search.once(@"tester",^(NSDictionary *payload) {
-            handlerCalledAtLeastOnce = YES;
-        });
-        
-        search.once(@"$.search.pause", ^{
+    __block CENChat *chat = nil;
+
+
+    [self object:client shouldHandleEvent:@"$.connected" afterBlock:^{
+        chat = client.Chat().name(@"chat-history").create();
+    }];
+
+    CENUser *user = client.User(@"stephen").create();
+    CENSearch *search = chat.search().sender(user).limit(10).pages(1).create();
+    [self object:search shouldHandleEvent:@"$.search.pause" withHandler:^CENEventHandlerBlock (dispatch_block_t handler) {
+        return ^(CENEmittedEvent *emittedEvent) {
+            XCTAssertFalse(handlerCalled);
+            handler();
+        };
+    } afterBlock:^{
+        search.search().once(@"tester", ^(CENEmittedEvent *emittedEvent) {
             handlerCalled = YES;
-            dispatch_semaphore_signal(semaphore);
         });
-        
-         search.search();
-    });
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelayWithNestedSemaphores * NSEC_PER_SEC)));
-    XCTAssertFalse(handlerCalledAtLeastOnce);
-    XCTAssertTrue(handlerCalled);
+    }];
 }
 
-- (void)testSearch_ShouldEmitEventsInDesencdingOrder_WhenSearhingForEvents {
-    
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
+- (void)testSearch_ShouldEmitEventsInDescendingOrder_WhenSearchingForEvents {
+
     NSMutableArray<NSNumber *> *timetokens = [NSMutableArray new];
-    CENChatEngine *client = [self chatEngineForUser:@"stephen"];
-    __block BOOL handlerCalled = NO;
-    
-    CENChat *chat = client.Chat().name(@"chat-history").create();
-    chat.once(@"$.connected", ^{
-        CENSearch *search = chat.search().event(@"tester").limit(10).pages(13).create();
-        
-        search.on(@"tester",^(NSDictionary *payload) {
+    CENChatEngine *client = [self chatEngineForUser:@"robot-stephen"];
+    __block CENChat *chat = nil;
+
+
+    [self object:client shouldHandleEvent:@"$.connected" afterBlock:^{
+        chat = client.Chat().name(@"chat-history").create();
+    }];
+
+    CENSearch *search = chat.search().event(@"tester").limit(10).create();
+    [self object:search shouldHandleEvent:@"$.search.finish" withHandler:^CENEventHandlerBlock (dispatch_block_t handler) {
+        return ^(CENEmittedEvent *emittedEvent) {
+            XCTAssertGreaterThan(timetokens.count, 0);
+            XCTAssertEqual([timetokens.firstObject compare:timetokens.lastObject], NSOrderedDescending);
+            XCTAssertFalse(search.hasMore);
+            handler();
+        };
+    } afterBlock:^{
+        search.search().on(@"tester", ^(CENEmittedEvent *emittedEvent) {
+            NSDictionary *payload = emittedEvent.data;
             [timetokens addObject:payload[CENEventData.timetoken]];
         });
-         
-        search.once(@"$.search.finish", ^{
-            handlerCalled = YES;
-            
-            XCTAssertFalse(search.hasMore);
-            dispatch_semaphore_signal(semaphore);
-        });
-        
-        search.search();
-    });
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelayWithNestedSemaphores * NSEC_PER_SEC)));
-    XCTAssertEqual([timetokens.firstObject compare:timetokens.lastObject], NSOrderedDescending);
-    XCTAssertTrue(handlerCalled);
+    }];
 }
 
-- (void)testSearch_ShouldFetchEventsIgnoringLimit_WhenSearhingForEventsBetweenDates {
+- (void)testSearch_ShouldFetchEventsIgnoringLimit_WhenSearchingForEventsBetweenDates {
     
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     NSMutableArray<NSDictionary *> *messages = [NSMutableArray new];
     NSMutableArray<NSNumber *> *timetokens = [NSMutableArray new];
-    CENChatEngine *client = [self chatEngineForUser:@"stephen"];
-    __block NSUInteger expectedMessagesCount = 0;
-    __block BOOL handlerCalled = NO;
+    CENChatEngine *client = [self chatEngineForUser:@"robot-stephen"];
+    __block CENChat *chat = nil;
     
-    CENChat *chat = client.Chat().name(@"chat-history").create();
-    chat.once(@"$.connected", ^{
-        CENSearch *search1 = chat.search().event(@"tester").limit(100).create();
-        
-        search1.on(@"tester",^(NSDictionary *payload) {
+    
+    [self object:client shouldHandleEvent:@"$.connected" afterBlock:^{
+        chat = client.Chat().name(@"chat-history").create();
+    }];
+    
+    CENSearch *search = chat.search().event(@"tester").limit(100).create();
+    [self object:search shouldHandleEvent:@"$.search.finish" withHandler:^CENEventHandlerBlock (dispatch_block_t handler) {
+        return ^(CENEmittedEvent *emittedEvent) {
+            XCTAssertGreaterThan(timetokens.count, 0);
+            handler();
+        };
+    } afterBlock:^{
+        search.search().on(@"tester", ^(CENEmittedEvent *emittedEvent) {
+            NSDictionary *payload = emittedEvent.data;
             [timetokens insertObject:payload[CENEventData.timetoken] atIndex:0];
         });
-        
-        search1.once(@"$.search.finish", ^{
-            NSNumber *end = timetokens[timetokens.count - 10];
-            NSNumber *start = timetokens[10];
-            // -1 because start/end search exclude message at 'end' date.
-            expectedMessagesCount = [timetokens indexOfObject:end] - [timetokens indexOfObject:start] - 1;
-            CENSearch *search2 = chat.search().event(@"tester").limit(10).pages(14).start(start).end(end).create();
-            
-            search2.on(@"tester",^(NSDictionary *payload) {
-                [messages insertObject:payload atIndex:0];
-            });
-            
-            search2.once(@"$.search.finish", ^{
-                handlerCalled = YES;
-                
-                XCTAssertFalse(search2.hasMore);
-                dispatch_semaphore_signal(semaphore);
-            });
-            
-            search2.search();
-        });
-        
-        search1.search();
-    });
+    }];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelayWithNestedSemaphores * NSEC_PER_SEC)));
-    XCTAssertEqual(messages.count - 1, expectedMessagesCount);
-    XCTAssertTrue(handlerCalled);
+    // Search between timetokens.
+    NSNumber *end = timetokens[timetokens.count - 10];
+    NSNumber *start = timetokens[10];
+    // -1 because start/end search exclude message at 'end' date.
+    NSUInteger expectedMessagesCount = [timetokens indexOfObject:end] - [timetokens indexOfObject:start] - 1;
+    
+    search = chat.search().event(@"tester").limit(10).pages(14).start(start).end(end).create();
+    [self object:search shouldHandleEvent:@"$.search.finish" withHandler:^CENEventHandlerBlock (dispatch_block_t handler) {
+        return ^(CENEmittedEvent *emittedEvent) {
+            XCTAssertEqual(messages.count - 1, expectedMessagesCount);
+            XCTAssertFalse(search.hasMore);
+            handler();
+        };
+    } afterBlock:^{
+        search.search().on(@"tester", ^(CENEmittedEvent *emittedEvent) {
+            NSDictionary *payload = emittedEvent.data;
+            [messages insertObject:payload atIndex:0];
+        });
+    }];
 }
 
 - (void)testSearch_ShouldFetchEventsLimitedByPage_WhenSearhingForEventsBetweenDates {
     
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     NSMutableArray<NSNumber *> *timetokens = [NSMutableArray new];
-    CENChatEngine *client = [self chatEngineForUser:@"stephen"];
-    __block BOOL handlerCalled = NO;
+    CENChatEngine *client = [self chatEngineForUser:@"robot-stephen"];
+    __block CENChat *chat = nil;
     
     
-    CENChat *chat = client.Chat().name(@"chat-history").create();
-    chat.once(@"$.connected", ^{
-        CENSearch *search1 = chat.search().event(@"tester").limit(100).create();
-        
-        search1.on(@"tester",^(NSDictionary *payload) {
+    [self object:client shouldHandleEvent:@"$.connected" afterBlock:^{
+        chat = client.Chat().name(@"chat-history").create();
+    }];
+    
+    // Pull out list of event timetokens.
+    CENSearch *search = chat.search().event(@"tester").limit(100).create();
+    [self object:search shouldHandleEvent:@"$.search.finish" withHandler:^CENEventHandlerBlock (dispatch_block_t handler) {
+        return ^(CENEmittedEvent *emittedEvent) {
+            XCTAssertGreaterThan(timetokens.count, 0);
+            handler();
+        };
+    } afterBlock:^{
+        search.search().on(@"tester", ^(CENEmittedEvent *emittedEvent) {
+            NSDictionary *payload = emittedEvent.data;
             [timetokens insertObject:payload[CENEventData.timetoken] atIndex:0];
         });
+    }];
+    
+    // Search between timetokens.
+    NSNumber *end = timetokens[timetokens.count - 10];
+    NSNumber *start = timetokens[10];
+    
+    search = chat.search().event(@"tester").pages(1).count(10).start(start).end(end).create();
+    [self object:search shouldHandleEvent:@"$.search.pause" withHandler:^CENEventHandlerBlock (dispatch_block_t handler) {
+        return ^(CENEmittedEvent *emittedEvent) {
+            XCTAssertTrue(search.hasMore);
+            handler();
+        };
+    } afterBlock:^{
+        search.search();
+    }];
+}
+
+- (void)testSearch_ShouldFetchEventsLimitedByPageCount {
+    
+    CENChatEngine *client = [self chatEngineForUser:@"robot-stephen"];
+    __block CENChat *chat = nil;
+    
+    
+    [self object:client shouldHandleEvent:@"$.connected" afterBlock:^{
+        chat = client.Chat().name(@"chat-history").create();
+    }];
+    
+    CENSearch *search = chat.search().event(@"tester").count(10).pages(1).create();
+    [self object:search shouldHandleEvent:@"$.search.pause" withHandler:^CENEventHandlerBlock (dispatch_block_t handler) {
+        return ^(CENEmittedEvent *emittedEvent) {
+            handler();
+        };
+    } afterBlock:^{
+        search.search();
+    }];
+}
+
+
+#pragma mark - Misc
+
+- (void)publishTestMessages {
+    
+    dispatch_semaphore_t publishSemaphore = dispatch_semaphore_create(0);
+    CENChatEngine *client = [self chatEngineForUser:@"robot-stephen"];
+    dispatch_group_t messagePublishGroup = dispatch_group_create();
+    __block CENChat *chat = nil;
+    
+    // Wait for connection to test chat.
+    [self object:client shouldHandleEvent:@"$.connected" afterBlock:^{
+        chat = client.Chat().name(@"chat-history").create();
+    }];
+    
+    CENEventHandlerBlock errorHandler = ^(CENEmittedEvent *event) {
+        NSLog(@"Event publish failed with error: %@", event.data);
         
-        search1.once(@"$.search.finish", ^{
-            NSNumber *end = timetokens[timetokens.count - 10];
-            NSNumber *start = timetokens[10];
-            CENSearch *search2 = chat.search().event(@"tester").limit(0).pages(1).count(10).start(start).end(end).create();
-            
-            search2.once(@"$.search.pause", ^{
-                handlerCalled = YES;
-                
-                XCTAssertTrue(search2.hasMore);
-                dispatch_semaphore_signal(semaphore);
-            });
-            
-            search2.search();
+        dispatch_group_leave(messagePublishGroup);
+    };
+    
+    NSLog(@"Publish %@ messages to '%@'", @(kCENTPublishedMessagesCount), chat.name);
+    for (NSUInteger messageIdx = 0; messageIdx < kCENTPublishedMessagesCount; messageIdx++) {
+        dispatch_group_enter(messagePublishGroup);
+        dispatch_group_enter(messagePublishGroup);
+        
+        chat.emit(@"tester").data(@{ @"works": @YES, @"count": @(messageIdx) }).perform()
+            .once(@"$.emitted", ^(CENEmittedEvent *event) {
+                dispatch_group_leave(messagePublishGroup);
+            })
+            .once(@"$.error.emitter", errorHandler);
+        
+        chat.emit(@"not-tester").data(@{ @"works": @NO, @"count": @(messageIdx) }).perform()
+            .once(@"$.emitted", ^(CENEmittedEvent *event) {
+                dispatch_group_leave(messagePublishGroup);
+            })
+            .once(@"$.error.emitter", errorHandler);
+    }
+    
+    dispatch_queue_t queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
+    dispatch_group_notify(messagePublishGroup, queue, ^{
+        NSLog(@"%@ messages has been published.", @(kCENTPublishedMessagesCount));
+        
+        chat.leave().once(@"$.disconnected", ^(CENEmittedEvent * __unused event) {
+            dispatch_semaphore_signal(publishSemaphore);
         });
-        
-        search1.search();
     });
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelayWithNestedSemaphores * NSEC_PER_SEC)));
-    XCTAssertTrue(handlerCalled);
+    dispatch_semaphore_wait(publishSemaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(60.f * NSEC_PER_SEC)));
+    NSLog(@"Ready to start test");
 }
 
 #pragma mark -

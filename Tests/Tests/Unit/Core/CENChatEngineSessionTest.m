@@ -20,14 +20,9 @@
 @interface CENChatEngineSessionTest : CENTestCase
 
 
-#pragma mark - Information
+#pragma mark Misc
 
-@property (nonatomic, nullable, weak) CENChatEngine *client;
-@property (nonatomic, nullable, weak) CENChatEngine *clientMock;
-
-
-#pragma mark - Misc
-
+- (void)stubLocalUser;
 - (PNErrorStatus *)streamAuditErrorStatus;
 
 #pragma mark -
@@ -48,42 +43,26 @@
     return NO;
 }
 
-- (void)setUp {
+- (BOOL)shouldThrowExceptionForTestCaseWithName:(NSString *)name {
     
-    [super setUp];
+    return [name rangeOfString:@"ShouldThrow"].location != NSNotFound;
+}
+
+- (BOOL)shouldSynchronizeSessionForTestCaseWithName:(NSString *)name {
     
-    CENConfiguration *configuration = [CENConfiguration configurationWithPublishKey:@"test-36" subscribeKey:@"test-36"];
-    configuration.synchronizeSession = YES;
-    self.client = [self chatEngineWithConfiguration:configuration];
-    self.clientMock = [self partialMockForObject:self.client];
-    
-    OCMStub([self.clientMock fetchParticipantsForChat:[OCMArg any]]).andDo(nil);
-    OCMStub([self.clientMock createDirectChatForUser:[OCMArg any]])
-        .andReturn(self.clientMock.Chat().name(@"chat-engine#user#tester#write.#direct").autoConnect(NO).create());
-    OCMStub([self.clientMock createFeedChatForUser:[OCMArg any]])
-        .andReturn(self.clientMock.Chat().name(@"chat-engine#user#tester#read.#feed").autoConnect(NO).create());
-    OCMStub([self.clientMock me]).andReturn([CENMe userWithUUID:@"tester" state:@{} chatEngine:self.clientMock]);
-    
-    OCMStub([self.clientMock connectToChat:[OCMArg any] withCompletion:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
-        void(^handleBlock)(NSDictionary *) = nil;
-        
-        [invocation getArgument:&handleBlock atIndex:3];
-        handleBlock(nil);
-    });
+    return YES;
 }
 
 
 #pragma mark - Tests :: listenSynchronizationEvents
 
-- (void)testListenSynchronizationEvents_ShouldRequestSynchronizationManagerHandleEvebts {
+- (void)testListenSynchronizationEvents_ShouldRequestSynchronizationManagerHandleEvents {
     
-    id syncrhonizationPartialMock = [self partialMockForObject:self.client.synchronizationSession];
-    
-    OCMExpect([syncrhonizationPartialMock listenEvents]);
-    
-    [self.client listenSynchronizationEvents];
-    
-    OCMVerifyAll(syncrhonizationPartialMock);
+    id sessionMock = [self mockForObject:self.client.synchronizationSession];
+    id recorded = OCMExpect([sessionMock listenEvents]);
+    [self waitForObject:sessionMock recordedInvocationCall:recorded withinInterval:self.testCompletionDelay afterBlock:^{
+        [self.client listenSynchronizationEvents];
+    }];
 }
 
 
@@ -91,85 +70,88 @@
 
 - (void)testSynchronizeSession_ShouldRequestChatsSynchronizationFromSynchronizationManager {
     
-    id syncrhonizationPartialMock = [self partialMockForObject:self.client.synchronizationSession];
-    
-    OCMExpect([syncrhonizationPartialMock restore]);
-    
-    [self.client synchronizeSession];
-    
-    OCMVerifyAll(syncrhonizationPartialMock);
+    id sessionMock = [self mockForObject:self.client.synchronizationSession];
+    id recorded = OCMExpect([sessionMock restore]);
+    [self waitForObject:sessionMock recordedInvocationCall:recorded withinInterval:self.testCompletionDelay afterBlock:^{
+        [self.client synchronizeSession];
+    }];
 }
 
 
-#pragma mark - Tests :: synchronizeSessionChatsWithCompletion
+#pragma mark - Tests :: synchronizeSessionWithCompletion
 
-- (void)testSynchronizeSessionChatsWithCompletion_ShouldRequestListOfChatsForPredefinedGroups {
+- (void)testSynchronizeSessionWithCompletion_ShouldRequestListOfChatsForPredefinedGroups {
     
-    NSString *globalChat = self.clientMock.currentConfiguration.globalChannel;
-    NSString *localUserUUID = self.clientMock.me.uuid;
-    NSString *expectedCustomGroup = [@[globalChat, localUserUUID, CENChatGroup.custom] componentsJoinedByString:@"#"];
-    NSString *expectedSystemGroup = [@[globalChat, localUserUUID, CENChatGroup.system] componentsJoinedByString:@"#"];
+    self.usesMockedObjects = YES;
+    NSString *namespace = self.client.currentConfiguration.namespace;
     
-    OCMExpect([self.clientMock channelsForGroup:expectedCustomGroup withCompletion:[OCMArg any]]);
-    OCMExpect([self.clientMock channelsForGroup:expectedSystemGroup withCompletion:[OCMArg any]]);
     
-    [self.clientMock synchronizeSessionChatsWithCompletion:^(NSString *group, NSArray<NSString *> *chats) { }];
+    [self stubLocalUser];
     
-    OCMVerifyAll((id)self.clientMock);
+    NSString *localUserUUID = self.client.me.uuid;
+    NSString *expectedGroup = [@[namespace, localUserUUID, CENChatGroup.custom] componentsJoinedByString:@"#"];
+    
+    id recorded = OCMExpect([self.client channelsForGroup:expectedGroup withCompletion:[OCMArg any]]);
+    [self waitForObject:self.client recordedInvocationCall:recorded withinInterval:self.testCompletionDelay afterBlock:^{
+        [self.client synchronizeSessionWithCompletion:^(NSString *group, NSArray<NSString *> *chats) { }];
+    }];
 }
 
-- (void)testSynchronizeSessionChatsWithCompletion_ShouldCallHandlerBlock {
+- (void)testSynchronizeSessionWithCompletion_ShouldCallHandlerBlock {
     
-    NSString *globalChat = self.clientMock.currentConfiguration.globalChannel;
-    NSString *localUserUUID = self.clientMock.me.uuid;
-    NSString *expectedGroup = [@[globalChat, localUserUUID, CENChatGroup.custom] componentsJoinedByString:@"#"];
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
+    self.usesMockedObjects = YES;
+    NSString *namespace = self.client.currentConfiguration.namespace;
     NSArray *expectedChats = @[@"Chat1", @"Chat2", @"Chat3"];
-    __block BOOL handlerCalled = NO;
     
-    OCMStub([self.clientMock channelsForGroup:expectedGroup withCompletion:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
-        void(^handlerBlock)(NSArray<NSString *> *, PNErrorStatus *) = nil;
-        
-        [invocation getArgument:&handlerBlock atIndex:3];
+    
+    [self stubLocalUser];
+    
+    NSString *localUserUUID = self.client.me.uuid;
+    NSString *expectedGroup = [@[namespace, localUserUUID, CENChatGroup.custom] componentsJoinedByString:@"#"];
+    
+    OCMStub([self.client channelsForGroup:expectedGroup withCompletion:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
+        void(^handlerBlock)(NSArray<NSString *> *, PNErrorStatus *) = [self objectForInvocation:invocation argumentAtIndex:2];
         handlerBlock(expectedChats, nil);
     });
     
-    [self.clientMock synchronizeSessionChatsWithCompletion:^(NSString *group, NSArray<NSString *> *chats) {
-        handlerCalled = YES;
-        
-        XCTAssertEqualObjects(chats, expectedChats);
-        dispatch_semaphore_signal(semaphore);
+    [self waitToCompleteIn:self.testCompletionDelay codeBlock:^(dispatch_block_t handler) {
+        [self.client synchronizeSessionWithCompletion:^(NSString *group, NSArray<NSString *> *chats) {
+            XCTAssertEqualObjects(chats, expectedChats);
+            handler();
+        }];
     }];
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
-    OCMVerifyAll((id)self.clientMock);
-    XCTAssertTrue(handlerCalled);
 }
 
-- (void)testSynchronizeSessionChatsWithCompletion_ShouldThrowEmitError_WhenAuditionDidFail {
+- (void)testSynchronizeSessionWithCompletion_ShouldThrow_WhenAuditionDidFail {
     
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    __block BOOL handlerCalled = NO;
+    [self stubLocalUser];
     
-    OCMExpect([self.clientMock channelsForGroup:[OCMArg any] withCompletion:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
-        void(^handlerBlock)(NSArray<NSString *> *, PNErrorStatus *) = nil;
-        
-        [invocation getArgument:&handlerBlock atIndex:3];
+    OCMExpect([self.client channelsForGroup:[OCMArg any] withCompletion:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
+        void(^handlerBlock)(NSArray<NSString *> *, PNErrorStatus *) = [self objectForInvocation:invocation argumentAtIndex:2];
         handlerBlock(nil, [self streamAuditErrorStatus]);
     });
     
-    self.clientMock.once(@"$.error.sync", ^(NSError *error) {
-        handlerCalled = YES;
-        
-        XCTAssertNotNil(error);
-        dispatch_semaphore_signal(semaphore);
+    XCTAssertThrowsSpecificNamed([self.client synchronizeSessionWithCompletion:^(NSString *group, NSArray *chats) { }],
+                                 NSException, kCENPNErrorDomain);
+}
+
+- (void)testSynchronizeSessionWithCompletion_ShouldEmitError_WhenAuditionDidFail {
+    
+    [self stubLocalUser];
+    
+    OCMExpect([self.client channelsForGroup:[OCMArg any] withCompletion:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
+        void(^handlerBlock)(NSArray<NSString *> *, PNErrorStatus *) = [self objectForInvocation:invocation argumentAtIndex:2];
+        handlerBlock(nil, [self streamAuditErrorStatus]);
     });
     
-    [self.clientMock synchronizeSessionChatsWithCompletion:^(NSString *group, NSArray<NSString *> *chats) { }];
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
-    OCMVerifyAll((id)self.clientMock);
-    XCTAssertTrue(handlerCalled);
+    [self object:self.client shouldHandleEvent:@"$.error.sync" withHandler:^CENEventHandlerBlock (dispatch_block_t handler) {
+        return ^(CENEmittedEvent *emittedEvent) {
+            XCTAssertNotNil(emittedEvent.data);
+            handler();
+        };
+    } afterBlock:^{
+        [self.client synchronizeSessionWithCompletion:^(NSString *group, NSArray<NSString *> *chats) { }];
+    }];
 }
 
 
@@ -177,14 +159,41 @@
 
 - (void)testSynchronizeSessionChatJoin_ShouldRequestChatJoinUsingSynchronizationManager {
     
-    id syncrhonizationPartialMock = [self partialMockForObject:self.client.synchronizationSession];
     CENChat *expectedChat = self.client.Chat().autoConnect(NO).create();
     
-    OCMExpect([syncrhonizationPartialMock joinChat:expectedChat]);
     
-    [self.client synchronizeSessionChatJoin:expectedChat];
+    id sessionMock = [self mockForObject:self.client.synchronizationSession];
+    id recorded = OCMExpect([sessionMock joinChat:expectedChat]);
+    [self waitForObject:sessionMock recordedInvocationCall:recorded withinInterval:self.testCompletionDelay afterBlock:^{
+        [self.client synchronizeSessionChatJoin:expectedChat];
+    }];
+}
+
+- (void)testSynchronizeSessionChatJoin_ShouldNotRequestChatJoinUsingSynchronizationManager_WhenSystemChatPassed {
     
-    OCMVerifyAll(syncrhonizationPartialMock);
+    CENChat *expectedChat = [self publicChatFromGroup:CENChatGroup.system withChatEngine:self.client];
+    
+    
+    id sessionMock = [self mockForObject:self.client.synchronizationSession];
+    id recorded = OCMExpect([[sessionMock reject] joinChat:expectedChat]);
+    [self waitForObject:sessionMock recordedInvocationNotCall:recorded withinInterval:self.falseTestCompletionDelay afterBlock:^{
+        [self.client synchronizeSessionChatJoin:expectedChat];
+    }];
+}
+
+- (void)testSynchronizeSessionChatJoin_ShouldNotRequestChatJoinUsingSynchronizationManager_WhenGlobalChatPassed{
+    
+    self.usesMockedObjects = YES;
+    CENChat *expectedChat = [self publicChatWithChatEngine:self.client];
+    
+    
+    OCMStub([self.client global]).andReturn(expectedChat);
+    
+    id sessionMock = [self mockForObject:self.client.synchronizationSession];
+    id recorded = OCMExpect([[sessionMock reject] joinChat:expectedChat]);
+    [self waitForObject:sessionMock recordedInvocationNotCall:recorded withinInterval:self.falseTestCompletionDelay afterBlock:^{
+        [self.client synchronizeSessionChatJoin:expectedChat];
+    }];
 }
 
 
@@ -192,14 +201,41 @@
 
 - (void)testSynchronizeSessionChatLeave_ShouldRequestChatLeaveUsingSynchronizationManager {
     
-    id syncrhonizationPartialMock = [self partialMockForObject:self.client.synchronizationSession];
     CENChat *expectedChat = self.client.Chat().autoConnect(NO).create();
     
-    OCMExpect([syncrhonizationPartialMock leaveChat:expectedChat]);
     
-    [self.client synchronizeSessionChatLeave:expectedChat];
+    id sessionMock = [self mockForObject:self.client.synchronizationSession];
+    id recorded = OCMExpect([sessionMock leaveChat:expectedChat]);
+    [self waitForObject:sessionMock recordedInvocationCall:recorded withinInterval:self.testCompletionDelay afterBlock:^{
+        [self.client synchronizeSessionChatLeave:expectedChat];
+    }];
+}
+
+- (void)testSynchronizeSessionChatLeave_ShouldNotRequestChatLeaveUsingSynchronizationManager_WhenSystemChatPassed {
     
-    OCMVerifyAll(syncrhonizationPartialMock);
+    CENChat *expectedChat = [self publicChatFromGroup:CENChatGroup.system withChatEngine:self.client];
+    
+    
+    id sessionMock = [self mockForObject:self.client.synchronizationSession];
+    id recorded = OCMExpect([[sessionMock reject] leaveChat:expectedChat]);
+    [self waitForObject:sessionMock recordedInvocationNotCall:recorded withinInterval:self.falseTestCompletionDelay afterBlock:^{
+        [self.client synchronizeSessionChatLeave:expectedChat];
+    }];
+}
+
+- (void)testSynchronizeSessionChatLeave_ShouldNotRequestChatLeaveUsingSynchronizationManager_WhenGlobalChatPassed {
+    
+    self.usesMockedObjects = YES;
+    CENChat *expectedChat = [self publicChatWithChatEngine:self.client];
+    
+    
+    OCMStub([self.client global]).andReturn(expectedChat);
+    
+    id sessionMock = [self mockForObject:self.client.synchronizationSession];
+    id recorded = OCMExpect([[sessionMock reject] leaveChat:expectedChat]);
+    [self waitForObject:sessionMock recordedInvocationNotCall:recorded withinInterval:self.falseTestCompletionDelay afterBlock:^{
+        [self.client synchronizeSessionChatLeave:expectedChat];
+    }];
 }
 
 
@@ -207,13 +243,11 @@
 
 - (void)testDestroySession_ShouldStopSynchronizationEventsHandling {
     
-    id syncrhonizationPartialMock = [self partialMockForObject:self.client.synchronizationSession];
-    
-    OCMExpect([syncrhonizationPartialMock destruct]);
-    
-    [self.client destroySession];
-    
-    OCMVerifyAll(syncrhonizationPartialMock);
+    id sessionMock = [self mockForObject:self.client.synchronizationSession];
+    id recorded = OCMExpect([sessionMock destruct]);
+    [self waitForObject:sessionMock recordedInvocationCall:recorded withinInterval:self.testCompletionDelay afterBlock:^{
+        [self.client destroySession];
+    }];
 }
 
 
@@ -221,23 +255,42 @@
 
 - (void)testSynchronizationChat_ShouldConstructChatToListenSynchronizationEvents {
     
-    NSString *globalChat = self.clientMock.currentConfiguration.globalChannel;
-    NSString *localUserUUID = self.clientMock.me.uuid;
-    NSString *expectedChat = [@[globalChat, @"user", localUserUUID, @"me.", @"sync"] componentsJoinedByString:@"#"];
     NSString *expectedGroup = CENChatGroup.system;
-    BOOL expectedPrivate = NO;
     BOOL expectedAutoConnect = YES;
+    BOOL expectedPrivate = NO;
     
-    OCMExpect([self.clientMock createChatWithName:expectedChat group:expectedGroup private:expectedPrivate autoConnect:expectedAutoConnect
-                                         metaData:[OCMArg any]]).andForwardToRealObject();
     
-    XCTAssertNotNil([self.clientMock synchronizationChat]);
+    [self stubLocalUser];
+    NSString *namespace = self.client.currentConfiguration.namespace;
+    NSString *localUserUUID = self.client.me.uuid;
+    NSString *expectedChat = [@[namespace, @"user", localUserUUID, @"me.", @"sync"] componentsJoinedByString:@"#"];
     
-    OCMVerifyAll((id)self.clientMock);
+    id recorded = OCMExpect([self.client createChatWithName:expectedChat group:expectedGroup private:expectedPrivate
+                                                autoConnect:expectedAutoConnect metaData:[OCMArg any]]);
+    [self waitForObject:self.client recordedInvocationCall:recorded withinInterval:self.testCompletionDelay afterBlock:^{
+        [self.client synchronizationChat];
+    }];
 }
 
 
 #pragma mark - Misc
+
+- (void)stubLocalUser {
+    
+    self.usesMockedObjects = YES;
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-variable"
+    NSString *namespace = self.client.currentConfiguration.namespace;
+#pragma clang diagnostic pop
+    
+    OCMStub([self.client pubnub]).andReturn(@"PubNub");
+    OCMStub([self.client connectToChat:[OCMArg any] withCompletion:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
+        void(^handleBlock)(NSDictionary *) = [self objectForInvocation:invocation argumentAtIndex:2];
+        handleBlock(nil);
+    });
+    
+    OCMStub([self.client me]).andReturn([CENMe userWithUUID:@"tester" state:@{} chatEngine:self.client]);
+}
 
 - (PNErrorStatus *)streamAuditErrorStatus {
     

@@ -1,7 +1,7 @@
 /**
  * @author Serhii Mamontov
- * @version 0.9.0
- * @copyright © 2009-2018 PubNub, Inc.
+ * @version 0.10.0
+ * @copyright © 2010-2018 PubNub, Inc.
  */
 #import "CENError.h"
 #import <PubNub/PubNub.h>
@@ -16,20 +16,21 @@
 #pragma mark - Misc
 
 /**
- * @brief  Extract error code from \b PubNub status error \c category.
+ * @brief Get error code from \b PubNub status error \c category.
  *
- * @param status Reference on \b PubNub error status object with \c category which should be used to determine error code.
+ * @param status \b PubNub error status object with \c category which should be used to determine
+ *     error code.
  *
  * @return Error code which conform to \c category from CENErrorCodes header.
  */
 + (NSInteger)errorCodeFromPubNubStatus:(PNErrorStatus *)status;
 
 /**
- * @brief  Extract error code from \b PubNub Function error.
+ * @brief Get error code from \b PubNub Function error.
  *
- * @param error Reference on error instance which has been created during request to \b PubNub Functions.
+ * @param error \a NSError which has been created during request to \b PubNub Functions.
  *
- * @return Error code which conform to \c category from CENErrorCodes header.
+ * @return Error code which conform to \c category from \b {CENErrorCodes}.
  */
 + (NSInteger)errorCodeFromPubNubFunctionError:(NSError *)error;
 
@@ -53,23 +54,29 @@
 
 + (NSError *)errorFromPubNubStatus:(PNErrorStatus *)status withDescription:(NSString *)description {
     
-    return [self errorFromPubNubStatus:status withUserInfo:@{ NSLocalizedDescriptionKey: description }];
+    return [self errorFromPubNubStatus:status
+                          withUserInfo:@{ NSLocalizedDescriptionKey: description }];
     
 }
 
 + (NSError *)errorFromPubNubStatus:(PNErrorStatus *)status withUserInfo:(NSDictionary *)userInfo {
     
-    NSMutableDictionary *errorInformation = [@{ NSLocalizedDescriptionKey: (status.errorData.information ?: @"Unknown error") } mutableCopy];
+    NSMutableDictionary *errorInformation = [@{
+        NSLocalizedDescriptionKey: (status.errorData.information ?: @"Unknown error")
+    } mutableCopy];
     [errorInformation addEntriesFromDictionary:userInfo];
     
-    return [NSError errorWithDomain:kCENPNErrorDomain code:[self errorCodeFromPubNubStatus:status] userInfo:errorInformation];
+    return [NSError errorWithDomain:kCENPNErrorDomain
+                               code:[self errorCodeFromPubNubStatus:status]
+                           userInfo:errorInformation];
 }
 
-+ (NSError *)errorFromPubNubFunctionError:(nullable id)functionResponses withDescription:(NSString *)description {
++ (NSError *)errorFromPubNubFunctionError:(NSArray *)responses
+                          withDescription:(NSString *)description {
     
     NSError *functionError = nil;
     
-    for (id response in functionResponses) {
+    for (id response in responses) {
         if ([response isKindOfClass:[NSError class]]) {
             functionError = response;
             
@@ -79,12 +86,19 @@
     
     if (!functionError) {
         NSDictionary *errorInformation = @{ NSLocalizedDescriptionKey: @"Unknown error" };
-        functionError = [NSError errorWithDomain:NSURLErrorDomain code:NSURLErrorUnknown userInfo:errorInformation];
+        functionError = [NSError errorWithDomain:NSURLErrorDomain
+                                            code:NSURLErrorUnknown
+                                        userInfo:errorInformation];
     }
     
-    NSDictionary *userInfo = @{ NSLocalizedDescriptionKey: description, NSUnderlyingErrorKey: functionError };
+    NSDictionary *userInfo = @{
+        NSLocalizedDescriptionKey: description,
+        NSUnderlyingErrorKey: functionError
+    };
     
-    return [NSError errorWithDomain:kCENPNFunctionErrorDomain code:[self errorCodeFromPubNubFunctionError:functionError] userInfo:userInfo];
+    return [NSError errorWithDomain:kCENPNFunctionErrorDomain
+                               code:[self errorCodeFromPubNubFunctionError:functionError]
+                           userInfo:userInfo];
 }
 
 

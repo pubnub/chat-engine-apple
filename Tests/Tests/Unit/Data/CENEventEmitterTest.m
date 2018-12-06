@@ -7,6 +7,7 @@
 #import <CENChatEngine/CENEventEmitter+Interface.h>
 #import <CENChatEngine/CENEventEmitter+Private.h>
 #import <CENChatEngine/ChatEngine.h>
+#import "CENTestEventEmitter.h"
 #import "CENTestCase.h"
 
 
@@ -59,16 +60,30 @@
     
     NSArray<NSString *> *expected = @[@"test-event"];
     
-    self.emitter.on(@"test-event", ^{});
+    
+    self.emitter.on(@"test-event", ^(CENEmittedEvent *event) {});
     
     XCTAssertEqualObjects(self.emitter.eventNames, expected);
     XCTAssertEqual(self.emitter.eventNames.count, 1);
 }
 
+- (void)testThat_AfterHandlerRegistered_WhenRegisteredForAny_ThenEventNamesListShouldIncludeWildcard {
+    
+    CENEventHandlerBlock handler = ^(CENEmittedEvent *event) {};
+    
+    
+    self.emitter.on(@"test-event", handler);
+    self.emitter.onAny(handler);
+    
+    XCTAssertEqual(self.emitter.eventNames.count, 2);
+    XCTAssertTrue([self.emitter.eventNames containsObject:@"*"]);
+}
+
 - (void)testThat_AfterHandlerRegistered_WhenRemovedRegisteredHandler_ThenEventNamesListShouldBeEmpty {
     
-    dispatch_block_t handler = ^{};
+    CENEventHandlerBlock handler = ^(CENEmittedEvent *event) {};
     NSArray<NSString *> *expected = @[];
+    
     
     self.emitter.on(@"test-event", handler);
     
@@ -86,7 +101,8 @@
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     __block BOOL handlerCalled = NO;
     
-    self.emitter.on(@"test-event", ^{
+    
+    self.emitter.on(@"test-event", ^(CENEmittedEvent *event) {
         handlerCalled = YES;
         
         dispatch_semaphore_signal(semaphore);
@@ -103,7 +119,8 @@
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     __block BOOL handlerNotCalled = YES;
     
-    self.emitter.on(@"test-event1", ^{
+    
+    self.emitter.on(@"test-event1", ^(CENEmittedEvent *event) {
         handlerNotCalled = NO;
     });
     
@@ -119,66 +136,15 @@
     __block BOOL handlerCalled = NO;
     NSString *expected = @"1";
     
-    self.emitter.on(@"test.event", ^(id parameter1) {
+    
+    self.emitter.on(@"test.event", ^(CENEmittedEvent *event) {
         handlerCalled = YES;
         
-        XCTAssertEqualObjects(parameter1, expected);
+        XCTAssertEqualObjects(event.data, expected);
         dispatch_semaphore_signal(semaphore);
     });
     
     [self.emitter emitEventLocally:@"test.event", expected, nil];
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
-    XCTAssertTrue(handlerCalled);
-}
-
-- (void)testThat_HandlerRegisteredOnConcreteEvent_WhenEmittedEventWithFourData_ThenReceiveData {
-    
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    __block BOOL handlerCalled = NO;
-    NSString *expected1 = @"1";
-    NSString *expected2 = @"2";
-    NSString *expected3 = @"3";
-    NSString *expected4 = @"4";
-    
-    self.emitter.on(@"test.event", ^(id parameter1, id parameter2, id parameter3, id parameter4) {
-        handlerCalled = YES;
-        
-        XCTAssertEqualObjects(parameter1, expected1);
-        XCTAssertEqualObjects(parameter2, expected2);
-        XCTAssertEqualObjects(parameter3, expected3);
-        XCTAssertEqualObjects(parameter4, expected4);
-        dispatch_semaphore_signal(semaphore);
-    });
-    
-    [self.emitter emitEventLocally:@"test.event", expected1, expected2, expected3, expected4, nil];
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
-    XCTAssertTrue(handlerCalled);
-}
-
-- (void)testThat_HandlerRegisteredOnConcreteEvent_WhenEmittedEventWithFiveData_ThenReceiveData {
-    
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    __block BOOL handlerCalled = NO;
-    NSString *expected1 = @"1";
-    NSString *expected2 = @"2";
-    NSString *expected3 = @"3";
-    NSString *expected4 = @"4";
-    NSString *expected5 = @"5";
-    
-    self.emitter.on(@"test.event", ^(id parameter1, id parameter2, id parameter3, id parameter4, id parameter5) {
-        handlerCalled = YES;
-        
-        XCTAssertEqualObjects(parameter1, expected1);
-        XCTAssertEqualObjects(parameter2, expected2);
-        XCTAssertEqualObjects(parameter3, expected3);
-        XCTAssertEqualObjects(parameter4, expected4);
-        XCTAssertEqualObjects(parameter5, expected5);
-        dispatch_semaphore_signal(semaphore);
-    });
-    
-    [self.emitter emitEventLocally:@"test.event", expected1, expected2, expected3, expected4, expected5, nil];
     
     dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
     XCTAssertTrue(handlerCalled);
@@ -189,7 +155,8 @@
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     __block BOOL handlerCalled = NO;
     
-    self.emitter.on(@"test.*", ^{
+    
+    self.emitter.on(@"test.*", ^(CENEmittedEvent *event) {
         handlerCalled = YES;
         
         dispatch_semaphore_signal(semaphore);
@@ -206,7 +173,8 @@
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     __block BOOL handlerNotCalled = YES;
     
-    self.emitter.on(@"test.*", ^{
+    
+    self.emitter.on(@"test.*", ^(CENEmittedEvent *event) {
         handlerNotCalled = NO;
         
         dispatch_semaphore_signal(semaphore);
@@ -225,11 +193,12 @@
     __block BOOL handlerCalled = NO;
     NSString *expectedValue = @"1";
     
-    self.emitter.on(@"test.*", ^(NSString *event, id parameter) {
+    
+    self.emitter.on(@"test.*", ^(CENEmittedEvent *event) {
         handlerCalled = YES;
         
-        XCTAssertEqualObjects(event, expectedEvent);
-        XCTAssertEqualObjects(parameter, expectedValue);
+        XCTAssertEqualObjects(event.event, expectedEvent);
+        XCTAssertEqualObjects(event.data, expectedValue);
         dispatch_semaphore_signal(semaphore);
     });
     
@@ -244,7 +213,8 @@
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     __block BOOL handlerCalled = NO;
     
-    self.emitter.on(@"test.**", ^{
+    
+    self.emitter.on(@"test.**", ^(CENEmittedEvent *event) {
         handlerCalled = YES;
         
         dispatch_semaphore_signal(semaphore);
@@ -262,7 +232,8 @@
     __block BOOL handler1Called = NO;
     __block BOOL handler2Called = NO;
     
-    self.emitter.on(@"test.**", ^{
+    
+    self.emitter.on(@"test.**", ^(CENEmittedEvent *event) {
         handler1Called = YES;
         
         if (handler2Called) {
@@ -270,7 +241,7 @@
         }
     });
     
-    self.emitter.on(@"test.event.*", ^{
+    self.emitter.on(@"test.event.*", ^(CENEmittedEvent *event) {
         handler2Called = YES;
         
         if (handler1Called) {
@@ -285,6 +256,25 @@
     XCTAssertTrue(handler2Called);
 }
 
+- (void)testThat_EmitterForwarded_WhenEventEmittedByEmitterSubclass {
+    
+    CENTestEventEmitter *globalEmitter = [CENTestEventEmitter new];
+    NSArray *data = @[@"ChatEngine", @"Test"];
+    NSString *event = @"test-event";
+    
+    
+    [self object:globalEmitter shouldHandleEvent:event withHandler:^CENEventHandlerBlock (dispatch_block_t handler) {
+        return ^(CENEmittedEvent *emittedEvent) {
+            XCTAssertEqualObjects(emittedEvent.event, event);
+            XCTAssertEqualObjects(emittedEvent.emitter, self.emitter);
+            XCTAssertEqualObjects(emittedEvent.data, data);
+            handler();
+        };
+    } afterBlock:^{
+        [globalEmitter emitEventLocally:event withParameters:@[self.emitter, data]];
+    }];
+}
+
 
 #pragma mark - Tests :: Property :: onAny / wildcard
 
@@ -293,7 +283,8 @@
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     __block BOOL handlerCalled = NO;
     
-    self.emitter.on(@"*", ^{
+    
+    self.emitter.on(@"*", ^(CENEmittedEvent *event) {
         handlerCalled = YES;
         
         dispatch_semaphore_signal(semaphore);
@@ -310,7 +301,7 @@
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     __block BOOL handlerCalled = NO;
     
-    self.emitter.onAny(^{
+    self.emitter.onAny(^(CENEmittedEvent *event) {
         handlerCalled = YES;
         
         dispatch_semaphore_signal(semaphore);
@@ -329,11 +320,12 @@
     __block BOOL handlerCalled = NO;
     NSString *expectedValue = @"1";
     
-    self.emitter.onAny(^(NSString *event, id parameter) {
+    
+    self.emitter.onAny(^(CENEmittedEvent *event) {
         handlerCalled = YES;
         
-        XCTAssertEqualObjects(event, expectedEvent);
-        XCTAssertEqualObjects(parameter, expectedValue);
+        XCTAssertEqualObjects(event.event, expectedEvent);
+        XCTAssertEqualObjects(event.data, expectedValue);
         dispatch_semaphore_signal(semaphore);
     });
     
@@ -350,11 +342,12 @@
     __block BOOL handlerCalled = NO;
     NSString *expectedValue = @"1";
     
-    self.emitter.onAny(^(NSString *event, id parameter) {
+    
+    self.emitter.onAny(^(CENEmittedEvent *event) {
         handlerCalled = YES;
         
-        XCTAssertEqualObjects(event, expectedEvent);
-        XCTAssertEqualObjects(parameter, expectedValue);
+        XCTAssertEqualObjects(event.event, expectedEvent);
+        XCTAssertEqualObjects(event.data, expectedValue);
         dispatch_semaphore_signal(semaphore);
     });
     
@@ -374,7 +367,8 @@
     __block BOOL calledOnce = NO;
     __block BOOL calledTwice = NO;
     
-    self.emitter.once(@"test-event", ^{
+    
+    self.emitter.once(@"test-event", ^(CENEmittedEvent *event) {
         if (calledOnce) {
             calledTwice = YES;
             
@@ -403,7 +397,7 @@
     __block BOOL calledOnce = NO;
     __block BOOL calledTwice = NO;
     
-    dispatch_block_t handler = ^{
+    CENEventHandlerBlock handler = ^(CENEmittedEvent *event) {
         if (calledOnce) {
             calledTwice = YES;
             
@@ -412,6 +406,7 @@
         
         calledOnce = YES;
     };
+    
     
     self.emitter.on(@"test-event", handler);
     
@@ -434,14 +429,15 @@
     __block BOOL handler2CalledOnce = NO;
     __block BOOL handler2CalledTwice = NO;
     
-    dispatch_block_t handler1 = ^{
+    CENEventHandlerBlock handler1 = ^(CENEmittedEvent *event) {
         if (handler1CalledOnce) {
             handler1CalledTwice = YES;
         }
         
         handler1CalledOnce = YES;
     };
-    dispatch_block_t handler2 = ^{
+    
+    CENEventHandlerBlock handler2 = ^(CENEmittedEvent *event) {
         if (handler2CalledOnce) {
             handler2CalledTwice = YES;
             
@@ -450,6 +446,7 @@
         
         handler2CalledOnce = YES;
     };
+    
     
     self.emitter.on(@"test-event", handler1);
     self.emitter.on(@"test-event", handler2);
@@ -477,14 +474,15 @@
     __block BOOL handler2CalledOnce = NO;
     __block BOOL handler2CalledTwice = NO;
     
-    dispatch_block_t handler1 = ^{
+    CENEventHandlerBlock handler1 = ^(CENEmittedEvent *event) {
         if (handler1CalledOnce) {
             handler1CalledTwice = YES;
         }
         
         handler1CalledOnce = YES;
     };
-    dispatch_block_t handler2 = ^{
+    
+    CENEventHandlerBlock handler2 = ^(CENEmittedEvent *event) {
         if (handler2CalledOnce) {
             handler2CalledTwice = YES;
             
@@ -493,6 +491,8 @@
         
         handler2CalledOnce = YES;
     };
+    
+    
     self.emitter.onAny(handler1);
     self.emitter.onAny(handler2);
     
@@ -518,14 +518,15 @@
     __block BOOL handler2CalledOnce = NO;
     __block BOOL handler2CalledTwice = NO;
     
-    dispatch_block_t handler1 = ^{
+    CENEventHandlerBlock handler1 = ^(CENEmittedEvent *event) {
         if (handler1CalledOnce) {
             handler1CalledTwice = YES;
         }
         
         handler1CalledOnce = YES;
     };
-    dispatch_block_t handler2 = ^{
+    
+    CENEventHandlerBlock handler2 = ^(CENEmittedEvent *event) {
         if (handler2CalledOnce) {
             handler2CalledTwice = YES;
             
@@ -534,6 +535,8 @@
         
         handler2CalledOnce = YES;
     };
+    
+    
     self.emitter.on(@"test-event", handler1);
     self.emitter.on(@"test-event", handler2);
     
@@ -556,14 +559,15 @@
     __block BOOL handler2CalledOnce = NO;
     __block BOOL handler2CalledTwice = NO;
     
-    dispatch_block_t handler1 = ^{
+    CENEventHandlerBlock handler1 = ^(CENEmittedEvent *event) {
         if (handler1CalledOnce) {
             handler1CalledTwice = YES;
         }
         
         handler1CalledOnce = YES;
     };
-    dispatch_block_t handler2 = ^{
+    
+    CENEventHandlerBlock handler2 = ^(CENEmittedEvent *event) {
         if (handler2CalledOnce) {
             handler2CalledTwice = YES;
             
@@ -572,6 +576,7 @@
         
         handler2CalledOnce = YES;
     };
+    
     
     self.emitter.on(@"*", handler1);
     self.emitter.on(@"*", handler2);
@@ -593,14 +598,16 @@
     __block BOOL handler1Called = NO;
     __block BOOL handler2Called = NO;
     
-    dispatch_block_t handler1 = ^{
+    CENEventHandlerBlock handler1 = ^(CENEmittedEvent *event) {
         handler1Called = YES;
     };
-    dispatch_block_t handler2 = ^{
+    
+    CENEventHandlerBlock handler2 = ^(CENEmittedEvent *event) {
         handler2Called = YES;
         
         dispatch_semaphore_signal(semaphore);
     };
+    
     
     self.emitter.on(@"test.event1", handler1);
     self.emitter.on(@"test.event2", handler2);
@@ -620,14 +627,17 @@
     __block BOOL handler1Called = NO;
     __block BOOL handler2Called = NO;
     
-    dispatch_block_t handler1 = ^{
+    CENEventHandlerBlock handler1 = ^(CENEmittedEvent *event) {
         handler1Called = YES;
     };
-    dispatch_block_t handler2 = ^{
+    
+    CENEventHandlerBlock handler2 = ^(CENEmittedEvent *event) {
         handler2Called = YES;
         
         dispatch_semaphore_signal(semaphore);
     };
+    
+    
     self.emitter.on(@"test.*", handler1);
     self.emitter.on(@"test.event.2", handler2);
     

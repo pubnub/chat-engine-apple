@@ -23,8 +23,6 @@
 
 #pragma mark - Information
 
-@property (nonatomic, nullable, weak) CENChatEngine *client;
-@property (nonatomic, nullable, weak) CENChatEngine *clientMock;
 @property (nonatomic, strong) NSString *localUserUUID;
 
 
@@ -51,29 +49,32 @@
     return NO;
 }
 
+- (BOOL)shouldThrowExceptionForTestCaseWithName:(NSString *)name {
+    
+    return [name rangeOfString:@"ShouldThrow"].location != NSNotFound;
+}
+
 - (void)setUp {
     
     [super setUp];
     
+    self.usesMockedObjects = YES;
     self.localUserUUID = @"tester";
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-variable"
+    NSString *namespace = self.client.currentConfiguration.namespace;
+#pragma clang diagnostic pop
     
-    CENConfiguration *configuration = [CENConfiguration configurationWithPublishKey:@"test-36" subscribeKey:@"test-36"];
-    self.client = [self chatEngineWithConfiguration:configuration];
-    self.clientMock = [self partialMockForObject:self.client];
+    if ([self.name rangeOfString:@"WhenMeIsMissing"].location != NSNotFound) {
+        return;
+    }
     
-    OCMStub([self.clientMock fetchParticipantsForChat:[OCMArg any]]).andDo(nil);
-    OCMStub([self.clientMock createDirectChatForUser:[OCMArg any]])
-        .andReturn(self.clientMock.Chat().name(@"chat-engine#user#tester#write.#direct").autoConnect(NO).create());
-    OCMStub([self.clientMock createFeedChatForUser:[OCMArg any]])
-        .andReturn(self.clientMock.Chat().name(@"chat-engine#user#tester#read.#feed").autoConnect(NO).create());
-    OCMStub([self.clientMock me]).andReturn([CENMe userWithUUID:self.localUserUUID state:@{} chatEngine:self.clientMock]);
-    
-    OCMStub([self.clientMock connectToChat:[OCMArg any] withCompletion:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
-        void(^handleBlock)(NSDictionary *) = nil;
-        
-        [invocation getArgument:&handleBlock atIndex:3];
+    OCMStub([self.client connectToChat:[OCMArg any] withCompletion:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
+        void(^handleBlock)(NSDictionary *) = [self objectForInvocation:invocation argumentAtIndex:2];
         handleBlock(nil);
     });
+    
+    OCMStub([self.client me]).andReturn([CENMe userWithUUID:self.localUserUUID state:@{} chatEngine:self.client]);
 }
 
 
@@ -81,95 +82,120 @@
 
 - (void)testPublishToChat_ShouldCreateEventEmittingInstance {
     
-    id eventClassMock = [self mockForClass:[CENEvent class]];
-    CENChat *expectedChat = self.clientMock.Chat().autoConnect(NO).create();
+    CENChat *expectedChat = self.client.Chat().autoConnect(NO).create();
     NSDictionary *expectedData = @{ @"test": @[@"data", @"payload"] };
     NSString *expectedEvent = @"test-event";
     
-    OCMExpect([eventClassMock eventWithName:expectedEvent chat:expectedChat chatEngine:self.clientMock]);
-    OCMExpect([self.clientMock storeTemporaryObject:[OCMArg any]]);
+    id eventMock = [self mockForObject:[CENEvent class]];
+    OCMExpect([eventMock eventWithName:expectedEvent chat:expectedChat chatEngine:self.client]);
+    OCMExpect([self.client storeTemporaryObject:[OCMArg any]]);
     
-    [self.clientMock publishToChat:expectedChat eventWithName:expectedEvent data:expectedData];
+    [self.client publishToChat:expectedChat eventWithName:expectedEvent data:expectedData];
     
-    OCMVerify(eventClassMock);
-    OCMVerify((id)self.clientMock);
+    OCMVerify(eventMock);
+    OCMVerify((id)self.client);
+}
+
+- (void)testPublishToChat_ShouldCreateEventEmittingInstance_WhenNilDataPassed {
     
-    [eventClassMock stopMocking];
+    CENChat *expectedChat = self.client.Chat().autoConnect(NO).create();
+    NSDictionary *expectedData = nil;
+    NSString *expectedEvent = @"test-event";
+    
+    id eventMock = [self mockForObject:[CENEvent class]];
+    OCMExpect([eventMock eventWithName:expectedEvent chat:expectedChat chatEngine:self.client]);
+    OCMExpect([self.client storeTemporaryObject:[OCMArg any]]);
+    
+    [self.client publishToChat:expectedChat eventWithName:expectedEvent data:expectedData];
+    
+    OCMVerify(eventMock);
+    OCMVerify((id)self.client);
+}
+
+- (void)testPublishToChat_ShouldNotCreateEventEmittingInstance_WhenMeIsMissing {
+    
+    CENChat *expectedChat = self.client.Chat().autoConnect(NO).create();
+    NSDictionary *expectedData = @{ @"test": @[@"data", @"payload"] };
+    NSString *expectedEvent = @"test-event";
+    
+    
+    id eventMock = [self mockForObject:[CENEvent class]];
+    OCMExpect([[eventMock reject] eventWithName:expectedEvent chat:expectedChat chatEngine:self.client]);
+    OCMExpect([[(id)self.client reject] storeTemporaryObject:[OCMArg any]]);
+    
+    [self.client publishToChat:expectedChat eventWithName:expectedEvent data:expectedData];
+    
+    OCMVerify(eventMock);
+    OCMVerify((id)self.client);
 }
 
 - (void)testPublishToChat_ShouldCreateMessagePayload {
     
-    CENChat *expectedChat = self.clientMock.Chat().autoConnect(NO).create();
+    NSString *expectedUUIDString = @"01234567-8910-1112-1314-151617181920";
+    CENChat *expectedChat = self.client.Chat().autoConnect(NO).create();
     NSDictionary *expectedData = @{ @"test": @[@"data", @"payload"] };
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    NSString *expectedSenderUUID = self.clientMock.me.uuid;
+    NSString *expectedSenderUUID = self.client.me.uuid;
     NSString *expectedEvent = @"test-event";
     NSNumber *expectedTimetoken = @2010;
-    __block BOOL callbackCalled = NO;
     
-    NSString *expectedUUIDString = @"01234567-8910-1112-1314-151617181920";
-    id uuidClassMock = [self mockForClass:[NSUUID class]];
-    OCMStub([uuidClassMock UUID]).andReturn([[NSUUID alloc] initWithUUIDString:expectedUUIDString]);
     
-    OCMStub([self.clientMock publishStorable:YES event:[OCMArg any] toChannel:[OCMArg any] withData:[OCMArg any] completion:[OCMArg any]])
+    id uuidMock = [self mockForObject:[NSUUID class]];
+    OCMStub([uuidMock UUID]).andReturn([[NSUUID alloc] initWithUUIDString:expectedUUIDString]);
+    
+    OCMStub([self.client publishStorable:YES event:[OCMArg any] toChannel:[OCMArg any] withData:[OCMArg any]
+                              completion:[OCMArg any]])
         .andDo(^(NSInvocation *invocation) {
-            void(^handlerBlock)(NSNumber *) = nil;
-            
-            [invocation getArgument:&handlerBlock atIndex:6];
-            
+            void(^handlerBlock)(NSNumber *) = [self objectForInvocation:invocation argumentAtIndex:5];
             dispatch_queue_t queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
+            
             dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.1 * NSEC_PER_SEC)), queue, ^{
                 handlerBlock(expectedTimetoken);
             });
         });
     
-    [self.clientMock publishToChat:expectedChat eventWithName:expectedEvent data:expectedData].once(@"$.emitted", ^(NSDictionary *payload) {
-        callbackCalled = YES;
-        
-        XCTAssertEqualObjects(payload[CENEventData.data], expectedData);
-        XCTAssertEqualObjects(payload[CENEventData.eventID], expectedUUIDString);
-        XCTAssertEqualObjects(payload[CENEventData.event], expectedEvent);
-        XCTAssertEqualObjects(payload[CENEventData.sender], expectedSenderUUID);
-        XCTAssertEqualObjects(payload[CENEventData.timetoken], expectedTimetoken);
-        
-        dispatch_semaphore_signal(semaphore);
-    });
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
-    XCTAssertTrue(callbackCalled);
+    CENEvent *event = [self.client publishToChat:expectedChat eventWithName:expectedEvent data:expectedData];
+    [self object:event shouldHandleEvent:@"$.emitted" withHandler:^CENEventHandlerBlock (dispatch_block_t handler) {
+        return ^(CENEmittedEvent *emittedEvent) {
+            NSDictionary *payload = emittedEvent.data;
+            
+            XCTAssertEqualObjects(payload[CENEventData.data], expectedData);
+            XCTAssertEqualObjects(payload[CENEventData.eventID], expectedUUIDString);
+            XCTAssertEqualObjects(payload[CENEventData.event], expectedEvent);
+            XCTAssertEqualObjects(payload[CENEventData.sender], expectedSenderUUID);
+            XCTAssertEqualObjects(payload[CENEventData.timetoken], expectedTimetoken);
+            handler();
+        };
+    } afterBlock:^{ }];
 }
 
 - (void)testPublishToChat_ShouldCreateMessagePayloadWithEmptyData_WhenNilPassedAsData {
     
-    CENChat *expectedChat = self.clientMock.Chat().autoConnect(NO).create();
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
+    CENChat *expectedChat = self.client.Chat().autoConnect(NO).create();
     NSString *expectedEvent = @"test-event";
     NSDictionary *dataForPublish = nil;
-    __block BOOL callbackCalled = NO;
     NSDictionary *expectedData = @{};
     
-    OCMStub([self.clientMock publishStorable:YES event:[OCMArg any] toChannel:[OCMArg any] withData:[OCMArg any] completion:[OCMArg any]])
+    
+    OCMStub([self.client publishStorable:YES event:[OCMArg any] toChannel:[OCMArg any] withData:[OCMArg any]
+                              completion:[OCMArg any]])
         .andDo(^(NSInvocation *invocation) {
-            void(^handlerBlock)(NSNumber *) = nil;
-            
-            [invocation getArgument:&handlerBlock atIndex:6];
-            
+            void(^handlerBlock)(NSNumber *) = [self objectForInvocation:invocation argumentAtIndex:5];
             dispatch_queue_t queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
+            
             dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.1 * NSEC_PER_SEC)), queue, ^{
                 handlerBlock(@2010);
             });
         });
     
-    [self.clientMock publishToChat:expectedChat eventWithName:expectedEvent data:dataForPublish].once(@"$.emitted", ^(NSDictionary *payload) {
-        callbackCalled = YES;
-        
-        XCTAssertEqualObjects(payload[CENEventData.data], expectedData);
-        
-        dispatch_semaphore_signal(semaphore);
-    });
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
-    XCTAssertTrue(callbackCalled);
+    CENEvent *event = [self.client publishToChat:expectedChat eventWithName:expectedEvent data:dataForPublish];
+    [self object:event shouldHandleEvent:@"$.emitted" withHandler:^CENEventHandlerBlock (dispatch_block_t handler) {
+        return ^(CENEmittedEvent *emittedEvent) {
+            NSDictionary *payload = emittedEvent.data;
+            
+            XCTAssertEqualObjects(payload[CENEventData.data], expectedData);
+            handler();
+        };
+    } afterBlock:^{ }];
 }
 
 - (void)testPublishToChat_ShouldThrow_WhenNonNSDictionaryPayloadPassed {
@@ -186,62 +212,70 @@
 
 - (void)testPublishStorableEvent_ShouldRequestPayloadPublish {
     
-    CENChat *expectedChat = self.clientMock.Chat().autoConnect(NO).create();
+    CENChat *expectedChat = self.client.Chat().autoConnect(NO).create();
     NSDictionary *expectedData = @{ @"test": @[@"data", @"payload"] };
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
+    NSString *expectedEvent = @"test-event";
     CENEvent *event = nil;
-    __block BOOL handlerCalled = NO;
     
-    OCMExpect([self.clientMock publishStorable:YES data:[OCMArg any] toChannel:expectedChat.channel withCompletion:[OCMArg any]])
+    
+    OCMStub([self.client publishStorable:YES data:[OCMArg any] toChannel:expectedChat.channel withCompletion:[OCMArg any]])
         .andDo(^(NSInvocation *invocation) {
-            void(^handlerBlock)(PNErrorStatus *) = nil;
-            
-            [invocation getArgument:&handlerBlock atIndex:5];
-            
+            void(^handlerBlock)(PNErrorStatus *) = [self objectForInvocation:invocation argumentAtIndex:4];
             handlerBlock([self publishStatus]);
         });
-    
-    [self.clientMock publishStorable:YES event:event toChannel:expectedChat.channel withData:expectedData completion:^(NSNumber *timetoken) {
-        handlerCalled = YES;
-        
-        XCTAssertNotNil(timetoken);
-        dispatch_semaphore_signal(semaphore);
+
+    [self waitToCompleteIn:self.testCompletionDelay codeBlock:^(dispatch_block_t handler) {
+        [self.client publishStorable:YES event:event toChannel:expectedChat.channel withData:expectedData
+                          completion:^(NSNumber *timetoken) {
+            XCTAssertNotNil(timetoken);
+            handler();
+        }];
+    } afterBlock:^{
+        [self.client publishToChat:expectedChat eventWithName:expectedEvent data:expectedData];
     }];
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
-    OCMVerifyAll((id)self.clientMock);
-    XCTAssertTrue(handlerCalled);
 }
 
-- (void)testPublishStorable_ShouldThrowEmitError_WhenPublishUnsuccessful {
+- (void)testPublishStorable_ShouldThrow_WhenPublishUnsuccessful {
     
-    CENChat *expectedChat = self.clientMock.Chat().autoConnect(NO).create();
+    CENChat *expectedChat = self.client.Chat().autoConnect(NO).create();
     NSDictionary *expectedData = @{ @"test": @[@"data", @"payload"] };
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     NSString *expectedEvent = @"test-event";
-    __block BOOL handlerCalled = NO;
     
-    OCMExpect([self.clientMock publishStorable:YES data:[OCMArg any] toChannel:expectedChat.channel withCompletion:[OCMArg any]])
-        .andDo(^(NSInvocation *invocation4) {
-            void(^handlerBlock)(PNErrorStatus *) = nil;
-            
-            [invocation4 getArgument:&handlerBlock atIndex:5];
-            
+    
+    OCMStub([self.client publishStorable:YES data:[OCMArg any] toChannel:expectedChat.channel withCompletion:[OCMArg any]])
+        .andDo(^(NSInvocation *invocation) {
+            void(^handlerBlock)(PNErrorStatus *) = [self objectForInvocation:invocation argumentAtIndex:4];
             handlerBlock([self publishErrorStatus]);
         });
     
-    OCMExpect([self.clientMock throwError:[OCMArg any] forScope:@"emitter" from:[OCMArg any] propagateFlow:CEExceptionPropagationFlow.direct])
-        .andDo(^(NSInvocation *invocation5) {
-            handlerCalled = YES;
-            
-            dispatch_semaphore_signal(semaphore);
+    OCMStub([self.client runMiddlewaresAtLocation:[OCMArg any] forEvent:[OCMArg any] object:[OCMArg any] withPayload:[OCMArg any]
+                                       completion:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
+        void(^handlerBlock)(BOOL, NSMutableDictionary *) = [self objectForInvocation:invocation argumentAtIndex:5];
+        handlerBlock(NO, [NSMutableDictionary new]);
+    });
+    
+    XCTAssertThrowsSpecificNamed([self.client publishToChat:expectedChat eventWithName:expectedEvent data:expectedData],
+                                 NSException, kCENPNErrorDomain);
+}
+
+- (void)testPublishStorable_ShouldEmitError_WhenPublishUnsuccessful {
+    
+    CENChat *expectedChat = self.client.Chat().autoConnect(NO).create();
+    NSDictionary *expectedData = @{ @"test": @[@"data", @"payload"] };
+    NSString *expectedEvent = @"test-event";
+    
+    
+    OCMStub([self.client publishStorable:YES data:[OCMArg any] toChannel:expectedChat.channel withCompletion:[OCMArg any]])
+        .andDo(^(NSInvocation *invocation) {
+            void(^handlerBlock)(PNErrorStatus *) = [self objectForInvocation:invocation argumentAtIndex:4];
+            handlerBlock([self publishErrorStatus]);
         });
     
-    [self.clientMock publishToChat:expectedChat eventWithName:expectedEvent data:expectedData];
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
-    OCMVerifyAll((id)self.clientMock);
-    XCTAssertTrue(handlerCalled);
+    id recorded = OCMExpect([self.client throwError:[OCMArg any] forScope:@"emitter" from:[OCMArg any]
+                                      propagateFlow:CEExceptionPropagationFlow.direct]);
+    [self waitForObject:self.client recordedInvocationCall:recorded withinInterval:self.testCompletionDelay afterBlock:^{
+        [self.client publishToChat:expectedChat eventWithName:expectedEvent data:expectedData];
+    }];
 }
 
 

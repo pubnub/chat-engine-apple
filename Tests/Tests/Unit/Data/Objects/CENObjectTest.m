@@ -4,11 +4,13 @@
  */
 #import <XCTest/XCTest.h>
 #import <OCMock/OCMock.h>
+#import <CENChatEngine/CENStateRestoreAugmentationPlugin.h>
 #import <CENChatEngine/CENEventEmitter+Interface.h>
 #import <CENChatEngine/CENChatEngine+ChatPrivate.h>
 #import <CENChatEngine/CENEventEmitter+Private.h>
 #import <CENChatEngine/CENChatEngine+Private.h>
 #import <CENChatEngine/CENObject+Private.h>
+#import <CENChatEngine/CENObject+Plugins.h>
 #import <CENChatEngine/ChatEngine.h>
 #import "CENTestCase.h"
 
@@ -18,12 +20,8 @@
 
 #pragma mark - Information
 
-@property (nonatomic, nullable, weak) CENChatEngine *client;
-@property (nonatomic, nullable, weak) CENChatEngine *clientMock;
-
 @property (nonatomic, nullable, strong) NSString *defaultObjectType;
-@property (nonatomic, nullable, strong) id objectClassMock;
-@property (nonatomic, nullable, strong) CENObject *object;
+@property (nonatomic, nullable, weak) id objectClassMock;
 
 #pragma mark -
 
@@ -43,28 +41,20 @@
     return NO;
 }
 
+- (BOOL)shouldThrowExceptionForTestCaseWithName:(NSString *)name {
+    
+    return [name rangeOfString:@"ShouldThrow"].location != NSNotFound;
+}
+
 - (void)setUp {
     
     [super setUp];
     
-    self.client = [self chatEngineWithConfiguration:[CENConfiguration configurationWithPublishKey:@"test-36" subscribeKey:@"test-36"]];
-    self.clientMock = [self partialMockForObject:self.client];
-    
     self.defaultObjectType = @"test-object";
-    self.objectClassMock = [self mockForClass:[CENObject class]];
+    self.objectClassMock = [self mockForObject:[CENObject class]];
+    
     
     OCMStub([self.objectClassMock objectType]).andReturn(self.defaultObjectType);
-    OCMStub([self.clientMock fetchParticipantsForChat:[OCMArg any]]).andDo(nil);
-    
-    self.object = [[CENObject alloc] initWithChatEngine:self.client];
-}
-
-- (void)tearDown {
-
-    [self.object destruct];
-    self.object = nil;
-    
-    [super tearDown];
 }
 
 
@@ -73,6 +63,7 @@
 - (void)testConstructor_ShouldCreateInstance {
     
     CENObject *object = [[CENObject alloc] initWithChatEngine:self.client];
+    
     
     XCTAssertNotNil(object);
     XCTAssertNotNil(object.identifier);
@@ -89,32 +80,25 @@
 
 - (void)testEmitEventLocally_ShouldEmitEventFromObjectAndChatEngineClient {
     
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    __block BOOL clientHandlerCalled = NO;
-    __block BOOL objectHandlerCalled = NO;
+    CENObject *object = [[CENObject alloc] initWithChatEngine:self.client];
     
-    [self.client handleEventOnce:@"test-event" withHandlerBlock:^(CENObject *object) {
-        clientHandlerCalled = YES;
-        
-        XCTAssertEqual(object, self.object);
-        if (objectHandlerCalled) {
-            dispatch_semaphore_signal(semaphore);
-        }
+    
+    [self object:self.client shouldHandleEvent:@"test-event" withHandler:^CENEventHandlerBlock (dispatch_block_t handler) {
+        return ^(CENEmittedEvent *emittedEvent) {
+            XCTAssertEqual(emittedEvent.emitter, object);
+            handler();
+        };
+    } afterBlock:^{
+        [object emitEventLocally:@"test-event", nil];
     }];
     
-    [self.object handleEventOnce:@"test-event" withHandlerBlock:^{
-        objectHandlerCalled = YES;
-        
-        if (clientHandlerCalled) {
-            dispatch_semaphore_signal(semaphore);
-        }
+    [self object:object shouldHandleEvent:@"test-event" withHandler:^CENEventHandlerBlock (dispatch_block_t handler) {
+        return ^(CENEmittedEvent *emittedEvent) {
+            handler();
+        };
+    } afterBlock:^{
+        [object emitEventLocally:@"test-event", nil];
     }];
-    
-    [self.object emitEventLocally:@"test-event", nil];
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
-    XCTAssertTrue(clientHandlerCalled);
-    XCTAssertTrue(objectHandlerCalled);
 }
 
 
@@ -123,31 +107,25 @@
 - (void)testOnCreate_ShouldEmitConstructionEvent {
     
     NSString *expectedEvent = [@[@"$.created", self.defaultObjectType] componentsJoinedByString:@"."];
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    __block BOOL clientHandlerCalled = NO;
-    __block BOOL objectHandlerCalled = NO;
+    CENObject *object = [[CENObject alloc] initWithChatEngine:self.client];
     
-    [self.client handleEventOnce:expectedEvent withHandlerBlock:^(CENObject *object) {
-        clientHandlerCalled = YES;
-        
-        if (objectHandlerCalled) {
-            dispatch_semaphore_signal(semaphore);
-        }
+    
+    [self object:self.client shouldHandleEvent:expectedEvent withHandler:^CENEventHandlerBlock (dispatch_block_t handler) {
+        return ^(CENEmittedEvent *emittedEvent) {
+            XCTAssertEqual(emittedEvent.emitter, object);
+            handler();
+        };
+    } afterBlock:^{
+        [object onCreate];
     }];
     
-    [self.object handleEventOnce:expectedEvent withHandlerBlock:^{
-        objectHandlerCalled = YES;
-        
-        if (clientHandlerCalled) {
-            dispatch_semaphore_signal(semaphore);
-        }
+    [self object:object shouldHandleEvent:expectedEvent withHandler:^CENEventHandlerBlock (dispatch_block_t handler) {
+        return ^(CENEmittedEvent *emittedEvent) {
+            handler();
+        };
+    } afterBlock:^{
+        [object onCreate];
     }];
-    
-    [self.object onCreate];
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
-    XCTAssertTrue(clientHandlerCalled);
-    XCTAssertTrue(objectHandlerCalled);
 }
 
 
@@ -155,11 +133,14 @@
 
 - (void)testDestruct_ShouldUnregisterObjectByClient {
     
-    OCMExpect([self.clientMock unregisterAllFromObjects:self.object]);
+    self.usesMockedObjects = YES;
+    CENObject *object = [[CENObject alloc] initWithChatEngine:self.client];
+
     
-    [self.object destruct];
-    
-    OCMVerifyAll((id)self.clientMock);
+    id recorded = OCMExpect([self.client unregisterAllFromObjects:object]);
+    [self waitForObject:self.client recordedInvocationCall:recorded withinInterval:self.testCompletionDelay afterBlock:^{
+        [object destruct];
+    }];
 }
 
 
@@ -172,11 +153,47 @@
 }
 
 - (void)testObjectType_ShouldThrow_WhenSubclassDoesntHasImplementation {
-    
+
     [self.objectClassMock stopMocking];
-    self.objectClassMock = nil;
+    
     
     XCTAssertThrowsSpecificNamed([CENObject objectType], NSException, NSInternalInconsistencyException);
+}
+
+
+#pragma mark - Tests :: restoreStateForChat
+
+- (void)testRestoreState_ShouldRegisterUserStateResolverPlugin_WhenStateRestoreCalledWithData {
+    
+    CENObject *object = [[CENObject alloc] initWithChatEngine:self.client];
+    [object restoreStateForChat:(id)@"PubNub"];
+    
+    
+    XCTAssertTrue(object.plugin([CENStateRestoreAugmentationPlugin class]).exists());
+}
+
+- (void)testRestoreState_ShouldNotRegisterUserStateResolverPlugin_WhenCalledBefore {
+    
+    CENObject *object = [[CENObject alloc] initWithChatEngine:self.client];
+    
+    
+    id objectMock = [self mockForObject:object];
+    OCMExpect([objectMock registerPlugin:[CENStateRestoreAugmentationPlugin class] withConfiguration:[OCMArg any]])
+        .andForwardToRealObject();
+    OCMExpect([[objectMock reject] registerPlugin:[CENStateRestoreAugmentationPlugin class] withConfiguration:[OCMArg any]]);
+    
+    [object restoreStateForChat:(id)@"PubNub"];
+    [object restoreStateForChat:(id)@"PubNub"];
+    
+    OCMVerifyAll(objectMock);
+}
+
+- (void)testRestoreState_ShouldThrow_WhenStateRestoreCalledWithNil {
+    
+    CENObject *object = [[CENObject alloc] initWithChatEngine:self.client];
+    
+    
+    XCTAssertThrowsSpecificNamed([object restoreStateForChat:nil], NSException, kCENErrorDomain);
 }
 
 #pragma mark -

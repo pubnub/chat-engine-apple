@@ -1,6 +1,6 @@
 /**
  * @author Serhii Mamontov
- * @version 1.0.0
+ * @version 1.1.0
  * @copyright © 2009-2018 PubNub, Inc.
  */
 #import "CENRandomUsernamePlugin.h"
@@ -11,7 +11,13 @@
 
 #pragma mark Externs
 
-CENRandomUsernameConfigurationKeys CENRandomUsernameConfiguration = { .propertyName = @"pn" };
+/**
+ * @brief Typedef structure fields assignment.
+ */
+CENRandomUsernameConfigurationKeys CENRandomUsernameConfiguration = {
+    .propertyName = @"pn",
+    .chat = @"ct"
+};
 
 
 #pragma mark - Interface implementation
@@ -45,7 +51,7 @@ CENRandomUsernameConfigurationKeys CENRandomUsernameConfiguration = { .propertyN
 
 - (void)onCreate {
     
-    NSMutableDictionary *configuration = [NSMutableDictionary dictionaryWithDictionary:self.configuration];
+    NSMutableDictionary *configuration = [(self.configuration ?: @{}) mutableCopy];
     
     if (!configuration[CENRandomUsernameConfiguration.propertyName]) {
         configuration[CENRandomUsernameConfiguration.propertyName] = @"username";

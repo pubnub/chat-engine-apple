@@ -1,29 +1,45 @@
 /**
  * @author Serhii Mamontov
- * @version 1.0.0
+ * @version 1.1.0
  * @copyright © 2009-2018 PubNub, Inc.
  */
 #import "CENPushNotificationsExtension.h"
-#if TARGET_OS_IOS || TARGET_OS_WATCH
+
+#if (TARGET_OS_IOS && __IPHONE_OS_VERSION_MIN_REQUIRED >= 100000 && \
+     __IPHONE_OS_VERSION_MAX_ALLOWED >= 100000) || \
+    (TARGET_OS_WATCH && __WATCH_OS_VERSION_MIN_REQUIRED >= 30000 && \
+     __WATCH_OS_VERSION_MAX_ALLOWED >= 30000) || \
+    (TARGET_OS_TV && __TV_OS_VERSION_MIN_REQUIRED >= 100000 && \
+     __TV_OS_VERSION_MAX_ALLOWED >= 100000) || \
+    (TARGET_OS_OSX && __MAC_OS_X_VERSION_MIN_REQUIRED >= 101200 && \
+     __MAC_OS_X_VERSION_MAX_ALLOWED >= 101400)
+#define CEN_NOTIFICATION_PLUGIN_NOTIFICATION_CENTER_AVAILABLE 1
 #import <UserNotifications/UserNotifications.h>
+#else
+#define CEN_NOTIFICATION_PLUGIN_NOTIFICATION_CENTER_AVAILABLE 0
 #endif
+
 #import <CENChatEngine/CENEventEmitter+Interface.h>
 #import <CENChatEngine/CEPExtension+Developer.h>
 #import <CENChatEngine/CENChat+Interface.h>
 #import "CENPushNotificationsPlugin.h"
+#import <CENChatEngine/ChatEngine.h>
 #import <CENChatEngine/CENEvent.h>
 #import <CENChatEngine/CENMe.h>
+
+
+
 
 
 #pragma mark Const
 
 /**
- * @brief  Stores reference on value which represent event identifier for all received notifications.
+ * @brief Identifier of event which mean: all received notifications.
  */
 static NSString * const kCENPushNotificationAllNotificationsID = @"all";
 
 /**
- * @brief  Stores maximum length of string which contain list of channels on which manipulation should be performed.
+ * @brief Maximum length of string with channel names which can be sent with PubNub API at once.
  */
 static NSUInteger const kCENPushNotificationMaximumChannelsLength = 20000;
 
@@ -35,47 +51,53 @@ NS_ASSUME_NONNULL_BEGIN
 @interface CENPushNotificationsExtension ()
 
 
-#pragma mark - Information
-
-/**
- * @brief  Stores reference on chat creation block.
- * @note   Reference required to be able to unsubscribe from notifications.
- */
-@property (nonatomic, strong) void(^chatCreateHandler)(CENChat *chat);
-
-
 #pragma mark - Handlers
 
 /**
- * @brief  Handler push notification state change request processing results.
+ * @brief Push notification state change request results handler.
  *
- * @param errors Reference on list of \a NSError instances which describe all issus which happened during request.
- * @param block  Reference on request process completion block. Block pass only one argument - reference on request processing error.
+ * @param errors List of \a NSError instances which describe issues which happened during request.
+ * @param block Request process completion block which pass reference on error (if any).
  */
-- (void)handleStateChangeWithErrors:(NSArray<NSError *> *)errors completion:(void(^ __nullable)(NSError * __nullable error))block;
+- (void)handleStateChange:(BOOL)enable
+                 forChats:(NSArray<CENChat *> *)chats
+               withErrors:(NSArray<NSError *> *)errors
+               completion:(void(^ __nullable)(NSError * __nullable error))block;
 
 
 #pragma mark - Misc
 
 /**
- * @brief      Split channels list on series of channels on which requests should be perfomred.
- * @discussion Each sequence will contain maximum number of channels which can be handled with single request.
+ * @brief Try to hide from notification center the one, which represent event with specific
+ * identifier.
  *
- * @param channels Reference on list of channels which should be splitted into sessions.
+ * @param seenEventID Unique event identifier or \c all in case if all notifications should be
+ *     hidden.
+ */
+- (void)hideNotificationWithEventID:(NSString *)seenEventID;
+
+/**
+ * @brief Get list of channel name series on which push notification state change should be done.
+ *
+ * @discussion Because there is limit on URI string length, huge list of names should be splitted
+ * into series of names.
+ *
+ * @param channels List of channels which should be splitted into sessions.
  *
  * @return Series of channel names.
  */
-+ (NSArray<NSArray *> *)channelSeriesFromChannels:(NSArray<NSString *> *)channels;
+- (NSArray<NSArray *> *)channelSeriesFromChannels:(NSArray<NSString *> *)channels;
 
 /**
- * @brief  Compose error which emitted from \b PubNub for set of processed chats.
+ * @brief Compose error using \b PubNub error status.
  *
- * @param chats Reference on list of \b CENChat instances which has been used during last state change operation.
- * @param status Reference on \b PubNub error status object which contain information about error.
+ * @param chats List of \b {Chat CENChat} instances which has been used during last state change
+ *     operation.
+ * @param status \b PubNub error status object which contain information about error.
  *
- * @return Reference on error based on \b PubNub error state and list of used \c chats.
+ * @return Error based on \b PubNub error state and list of used \c chats.
  */
-+ (NSError *)pushNotificationStateChangeErrorForChats:(NSArray<CENChat *> *)chats fromStatus:(PNErrorStatus *)status;
+- (NSError *)updateErrorForChats:(NSArray<CENChat *> *)chats fromStatus:(PNErrorStatus *)status;
 
 #pragma mark -
 
@@ -92,139 +114,99 @@ NS_ASSUME_NONNULL_END
 
 #pragma mark - Management notifications state
 
-- (void)enablePushNotifications:(BOOL)shouldEnabled
-                       forChats:(NSArray<CENChat *> *)chats
-                withDeviceToken:(NSData *)token
-                     completion:(void(^)(NSError *error))block {
+- (void)enable:(BOOL)enable
+           forChats:(NSArray<CENChat *> *)chats
+    withDeviceToken:(NSData *)token
+         completion:(void(^)(NSError * error))block {
     
-    NSArray<NSArray<NSString *> *> *channelSeries = [CENPushNotificationsExtension channelSeriesFromChannels:[chats valueForKey:@"channel"]];
-    CENChatEngine *chatEngine = ((CENMe *)self.object).chatEngine;
+    NSArray *chatChannels = [chats valueForKey:NSStringFromSelector(@selector(channel))];
+    NSArray<NSArray<NSString *> *> *channelSeries = [self channelSeriesFromChannels:chatChannels];
     NSMutableArray<NSError *> *errors = [NSMutableArray new];
     dispatch_group_t group = dispatch_group_create();
-    PubNub *pubNub = chatEngine.pubnub;
-
-    if (shouldEnabled) {
+    BOOL disableAll = !enable && !chats.count;
+    CENMe *me = (CENMe *)self.object;
+    PubNub *pubNub = me.chatEngine.pubnub;
+    
+    void(^handlerBlock)(PNAcknowledgmentStatus *) = ^(PNAcknowledgmentStatus *status) {
+        if (status.isError) {
+            NSArray<CENChat *> *failedChats = !disableAll ? chats : @[];
+            
+            if(disableAll && status.errorData.channels) {
+                failedChats = [self chatListByChannelNames:status.errorData.channels forUser:me];
+            }
+            
+            [errors addObject:[self updateErrorForChats:failedChats fromStatus:status]];
+        }
+        
+        dispatch_group_leave(group);
+    };
+    
+    if (disableAll) {
+        dispatch_group_enter(group);
+        [pubNub removeAllPushNotificationsFromDeviceWithPushToken:token andCompletion:handlerBlock];
+    } else {
         for (NSArray<NSString *> *channels in channelSeries) {
             dispatch_group_enter(group);
-            [pubNub addPushNotificationsOnChannels:channels withDevicePushToken:token andCompletion:^(PNAcknowledgmentStatus *status) {
-                if (status.isError) {
-                    [errors addObject:[CENPushNotificationsExtension pushNotificationStateChangeErrorForChats:chats fromStatus:status]];
-                }
-        
-                dispatch_group_leave(group);
-            }];
-        }
-    } else {
-        if (chats.count) {
-            for (NSArray<NSString *> *channels in channelSeries) {
-                dispatch_group_enter(group);
-                [pubNub removePushNotificationsFromChannels:channels withDevicePushToken:token andCompletion:^(PNAcknowledgmentStatus *status) {
-                    if (status.isError) {
-                        [errors addObject:[CENPushNotificationsExtension pushNotificationStateChangeErrorForChats:chats fromStatus:status]];
-                    }
-                    
-                    dispatch_group_leave(group);
-                }];
+            
+            if (enable) {
+                [pubNub addPushNotificationsOnChannels:channels
+                                   withDevicePushToken:token
+                                         andCompletion:handlerBlock];
+            } else {
+                [pubNub removePushNotificationsFromChannels:channels
+                                        withDevicePushToken:token
+                                              andCompletion:handlerBlock];
             }
-        } else {
-            dispatch_group_enter(group);
-            [pubNub removeAllPushNotificationsFromDeviceWithPushToken:token andCompletion:^(PNAcknowledgmentStatus *status) {
-                if (status.isError) {
-                    NSArray<CENChat *> *failedChats = [CENPushNotificationsExtension chatListByChannelNames:status.errorData.channels
-                                                                                                    forUser:chatEngine.me];
-                    [errors addObject:[CENPushNotificationsExtension pushNotificationStateChangeErrorForChats:failedChats fromStatus:status]];
-                }
-                
-                dispatch_group_leave(group);
-            }];
         }
     }
     
     __weak __typeof__(self) weakSelf = self;
     dispatch_group_notify(group, dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-        [weakSelf handleStateChangeWithErrors:errors completion:block];
+        __strong __typeof(weakSelf) strongSelf = weakSelf;
+        
+        [strongSelf handleStateChange:enable forChats:chats withErrors:errors completion:block];
     });
 }
 
-
-#pragma mark - Handlers
-
-- (void)onCreate {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-implementations"
+- (void)enablePushNotifications:(BOOL)enable
+                       forChats:(NSArray<CENChat *> *)chats
+                withDeviceToken:(NSData *)token
+                     completion:(void(^)(NSError *error))block {
     
-    CENMe *me = (CENMe *)self.object;
-    NSDictionary *configuration = self.configuration;
-    
-    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-        if (![me.direct hasPluginWithIdentifier:self.identifier]) {
-            [me.direct registerPlugin:[CENPushNotificationsPlugin class] withConfiguration:configuration];
-        }
-    });
-    
-    self.chatCreateHandler = ^(CENChat *chat) {
-        [chat registerPlugin:[CENPushNotificationsPlugin class] withConfiguration:configuration];
-    };
-    
-    [me.chatEngine handleEvent:@"$.created.chat" withHandlerBlock:self.chatCreateHandler];
+    [self enable:enable forChats:chats withDeviceToken:token completion:block];
 }
-
-- (void)onDestruct {
-    
-    CENMe *me = (CENMe *)self.object;
-    [me.chatEngine removeHandler:self.chatCreateHandler forEvent:@"$.created.chat"];
-}
-
-- (void)handleStateChangeWithErrors:(NSArray<NSError *> *)errors completion:(void(^)(NSError *error))block {
-    
-    if (!block) {
-        return;
-    }
-    
-    NSError *error = errors.count == 1 ? errors.firstObject : nil;
-    
-    if (errors.count > 1) {
-        NSMutableArray<CENChat *> *failedChats = [NSMutableArray new];
-        
-        for (error in errors) {
-            if (((NSArray *)error.userInfo[kCENNotificationsErrorChatsKey]).count) {
-                [failedChats addObjectsFromArray:error.userInfo[kCENNotificationsErrorChatsKey]];
-            } else {
-                break;
-            }
-        }
-        
-        if (failedChats.count) {
-            NSMutableDictionary *userInfo = [NSMutableDictionary dictionaryWithDictionary:error.userInfo];
-            userInfo[kCENNotificationsErrorChatsKey] = failedChats;
-            
-            error = [NSError errorWithDomain:errors.lastObject.domain code:errors.lastObject.code userInfo:userInfo];
-        }
-    }
-    
-    block(error);
-}
+#pragma GCC diagnostic pop
 
 
 #pragma mark - Notifications management
 
-- (void)markNotificationAsSeen:(NSNotification *)notification withCompletion:(void(^)(NSError *error))block {
-
+- (void)markAsSeen:(NSNotification *)notification withCompletion:(void (^)(NSError *error))block {
+    
     NSString *eventName = notification.userInfo[@"cepayload"][CENEventData.event];
     NSString *eventID = notification.userInfo[@"cepayload"][CENEventData.eventID];
-    CENChatEngine *chatEngine = ((CENMe *)self.object).chatEngine;
+    CENChat *directChat = ((CENMe *)self.object).direct;
     CENEvent *event = nil;
     
     if (eventName) {
         if (![eventName isEqualToString:@"$notifications.seen"] && eventID.length) {
+            NSDictionary *eventPayload = @{ CENEventData.eventID: eventID };
+            
             // Emit 'seen' event internally will be pre-formatted with push notifications payload.
-            event = [chatEngine.me.direct emitEvent:@"$notifications.seen" withData:@{ CENEventData.eventID: eventID }];
+            event = [directChat emitEvent:@"$notifications.seen" withData:eventPayload];
             
             if (block) {
-                [event handleEventOnce:@"$.emitted" withHandlerBlock:^(NSDictionary *__unused payload) {
+                [event handleEventOnce:@"$.emitted"
+                      withHandlerBlock:^(CENEmittedEvent * __unused localEvent) {
+                          
                     block(nil);
                 }];
                 
-                [event handleEventOnce:@"$.error.emitter" withHandlerBlock:^(NSError *error) {
-                    block(error);
+                [event handleEventOnce:@"$.error.emitter"
+                      withHandlerBlock:^(CENEmittedEvent *localEvent) {
+                          
+                    block(localEvent.data);
                 }];
             }
             
@@ -235,75 +217,152 @@ NS_ASSUME_NONNULL_END
     }
 }
 
-- (void)markAllNotificationAsSeenWithCompletion:(void(^)(NSError *error))block {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-implementations"
+- (void)markNotificationAsSeen:(NSNotification *)notification
+                withCompletion:(void(^)(NSError *error))block {
+    
+    [self markAsSeen:notification withCompletion:block];
+}
+#pragma GCC diagnostic pop
 
-    CENChatEngine *chatEngine = ((CENMe *)self.object).chatEngine;
+- (void)markAllAsSeenWithCompletion:(void(^)(NSError *error))block {
+    
+    NSDictionary *eventPayload = @{ CENEventData.eventID: kCENPushNotificationAllNotificationsID };
+    CENChat *directChat = ((CENMe *)self.object).direct;
+    
     // Emit 'seen' event internally will be pre-formatted with push notifications payload.
-    CENEvent *event = [chatEngine.me.direct emitEvent:@"$notifications.seen"
-                                             withData:@{ CENEventData.eventID: kCENPushNotificationAllNotificationsID }];
+    CENEvent *event = [directChat emitEvent:@"$notifications.seen" withData:eventPayload];
     
     if (block) {
-        [event handleEventOnce:@"$.emitted" withHandlerBlock:^(NSDictionary *__unused payload) {
+        [event handleEventOnce:@"$.emitted"
+              withHandlerBlock:^(CENEmittedEvent *__unused localEvent) {
+                  
             block(nil);
         }];
         
-        [event handleEventOnce:@"$.error.emitter" withHandlerBlock:^(NSError *error) {
-            block(error);
+        [event handleEventOnce:@"$.error.emitter" withHandlerBlock:^(CENEmittedEvent *localEvent) {
+            block(localEvent.data);
         }];
     }
     
     [self hideNotificationWithEventID:kCENPushNotificationAllNotificationsID];
 }
 
-- (void)hideNotificationWithEventID:(NSString *)seenEventID {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-implementations"
+- (void)markAllNotificationAsSeenWithCompletion:(void(^)(NSError *error))block {
     
-#if TARGET_OS_IOS || TARGET_OS_WATCH
-    if (@available(iOS 10.0, watchOS 3.0, *)) {
-        UNUserNotificationCenter *center = [UNUserNotificationCenter currentNotificationCenter];
-        NSMutableArray<NSString *> *notificationIdentifiers = [NSMutableArray array];
-        dispatch_async(dispatch_get_main_queue(), ^{
-#if !TARGET_OS_WATCH
-            UIBackgroundTaskIdentifier backgroundTaskIdentifier = 0;
-            
-            if ([UIApplication sharedApplication].applicationState != UIApplicationStateActive) {
-                backgroundTaskIdentifier = [[UIApplication sharedApplication] beginBackgroundTaskWithExpirationHandler:^{
-                    [[UIApplication sharedApplication] endBackgroundTask:backgroundTaskIdentifier];
-                }];
+    [self markAllAsSeenWithCompletion:block];
+}
+#pragma GCC diagnostic pop
+
+
+#pragma mark - Handlers
+
+- (void)handleStateChange:(BOOL)enable
+                 forChats:(NSArray<CENChat *> *)chats
+               withErrors:(NSArray<NSError *> *)errors
+               completion:(void(^)(NSError *error))block {
+    
+    chats = chats.count ? chats : ((CENMe *)self.object).chatEngine.chats.allValues;
+    NSError *error = errors.count == 1 ? errors.firstObject : nil;
+    NSString *identifier = self.identifier;
+    
+    if (errors.count > 1) {
+        NSMutableArray<CENChat *> *failedChats = [NSMutableArray new];
+        
+        for (error in errors) {
+            if ((NSArray *)error.userInfo[kCENNotificationsErrorChatsKey]) {
+                [failedChats addObjectsFromArray:error.userInfo[kCENNotificationsErrorChatsKey]];
             }
-#endif
+        }
+        
+        if (failedChats.count) {
+            NSError *anyError = errors.lastObject;
+            NSMutableDictionary *userInfo = [(error.userInfo ?: @{}) mutableCopy];
+            userInfo[kCENNotificationsErrorChatsKey] = failedChats;
             
-            [center getDeliveredNotificationsWithCompletionHandler:^(NSArray<UNNotification *> *notifications) {
-                [notifications enumerateObjectsUsingBlock:^(UNNotification *notification, __unused NSUInteger objectIdx, BOOL *enumeratorStop) {
-                    NSString *eventID = ((UNNotificationContent *)notification.request.content).userInfo[@"cepayload"][CENEventData.eventID];
-                    
-                    if (eventID && ([eventID isEqualToString:seenEventID] || [seenEventID isEqualToString:kCENPushNotificationAllNotificationsID])) {
-                        [notificationIdentifiers addObject:notification.request.identifier];
-                        *enumeratorStop = [eventID isEqualToString:seenEventID];
-                    }
-                }];
-                
-                if (notificationIdentifiers.count) {
-                    [center removeDeliveredNotificationsWithIdentifiers:notificationIdentifiers];
-                }
-                
-#if !TARGET_OS_WATCH
-                if (backgroundTaskIdentifier) {
-                    [[UIApplication sharedApplication] endBackgroundTask:backgroundTaskIdentifier];
-                }
-#endif
-            }];
-        });
+            error = [NSError errorWithDomain:anyError.domain code:anyError.code userInfo:userInfo];
+        }
     }
-#endif
+    
+    for (CENChat *chat in chats) {
+        if (enable) {
+            if (![chat hasPluginWithIdentifier:identifier]) {
+                [chat registerPlugin:[CENPushNotificationsPlugin class]
+                      withIdentifier:identifier
+                       configuration:self.configuration];
+            }
+        } else {
+            [chat unregisterPluginWithIdentifier:identifier];
+        }
+    }
+    
+    if (block) {
+        block(error);
+    }
 }
 
 
 #pragma mark - Misc
 
-+ (NSArray<NSArray *> *)channelSeriesFromChannels:(NSArray<NSString *> *)channels {
+#if CEN_NOTIFICATION_PLUGIN_NOTIFICATION_CENTER_AVAILABLE
+- (void)hideNotificationWithEventID:(NSString *)seenEventID {
+    
+    if (@available(iOS 10.0, watchOS 3.0, tvOS 10.0, macOS 10.14, *)) {
+        BOOL isAllEvents = [seenEventID isEqualToString:kCENPushNotificationAllNotificationsID];
+        UNUserNotificationCenter *center = [UNUserNotificationCenter currentNotificationCenter];
+        NSMutableArray<NSString *> *identifiers = [NSMutableArray array];
+        
+#if TARGET_OS_IOS || TARGET_OS_TV
+        UIApplication *application = [UIApplication sharedApplication];
+        __block UIBackgroundTaskIdentifier taskIdentifier = 0;
+        
+        dispatch_async(dispatch_get_main_queue(), ^{
+            if (application.applicationState != UIApplicationStateActive) {
+                taskIdentifier = [application beginBackgroundTaskWithExpirationHandler:^{
+                    [application endBackgroundTask:taskIdentifier];
+                }];
+            }
+        });
+#endif
+        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+            [center getDeliveredNotificationsWithCompletionHandler:^(NSArray *notifications) {
+                for (UNNotification *notification in notifications) {
+                    UNNotificationContent *content = notification.request.content;
+                    NSString *eventID = content.userInfo[@"cepayload"][CENEventData.eventID];
+                    
+                    if (eventID && (isAllEvents || [eventID isEqualToString:seenEventID])) {
+                        [identifiers addObject:notification.request.identifier];
+                    }
+                }
+                
+                [center removeDeliveredNotificationsWithIdentifiers:identifiers];
+                
+#if TARGET_OS_IOS || TARGET_OS_TV
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    if (taskIdentifier) {
+                        [application endBackgroundTask:taskIdentifier];
+                    }
+                });
+#endif
+            }];
+        });
+    }
+}
+#else
+- (void)hideNotificationWithEventID:(NSString *)seenEventID {
+    // Do nothing, because UNUserNotificationCenter not available for target platform.
+}
+#endif // CEN_NOTIFICATION_PLUGIN_NOTIFICATION_CENTER_AVAILABLE
+
+- (NSArray<NSArray *> *)channelSeriesFromChannels:(NSArray<NSString *> *)channels {
     
     NSCharacterSet *allowedCharacters = [NSCharacterSet URLQueryAllowedCharacterSet];
-    NSUInteger length = [[channels componentsJoinedByString:@","] stringByAddingPercentEncodingWithAllowedCharacters:allowedCharacters].length;
+    NSString *channelsList = [channels componentsJoinedByString:@","];
+    NSString *encodedChannelsList = [channelsList stringByAddingPercentEncodingWithAllowedCharacters:allowedCharacters];
+    NSUInteger length = encodedChannelsList.length;
 
     if (length < kCENPushNotificationMaximumChannelsLength) {
         return length == 0 ? @[] : @[channels];
@@ -312,6 +371,7 @@ NS_ASSUME_NONNULL_END
     NSMutableArray<NSArray *> *series = [NSMutableArray new];
     NSMutableArray<NSString *> *currentSequence = [NSMutableArray new];
     NSMutableString *queryString = [NSMutableString new];
+
     for (NSUInteger channelIdx = 0; channelIdx < channels.count; channelIdx++) {
         NSString *channel = channels[channelIdx];
         NSString *percentEncodedChannel = [channel stringByAddingPercentEncodingWithAllowedCharacters:allowedCharacters];
@@ -342,26 +402,29 @@ NS_ASSUME_NONNULL_END
     return series;
 }
 
-+ (NSError *)pushNotificationStateChangeErrorForChats:(NSArray<CENChat *> *)chats fromStatus:(PNErrorStatus *)status {
+- (NSError *)updateErrorForChats:(NSArray<CENChat *> *)chats fromStatus:(PNErrorStatus *)status {
     
     NSMutableDictionary *userInfo = [NSMutableDictionary new];
+    NSArray<CENChat *> *failedChats = chats;
     
     if (status.errorData.channels.count) {
-        NSPredicate *filterPredicate = [NSPredicate predicateWithFormat:@"channel IN %@", status.errorData.channels];
-        NSArray<CENChat *> *failedChats = [chats filteredArrayUsingPredicate:filterPredicate];
-        if (failedChats.count) {
-            userInfo[kCENNotificationsErrorChatsKey] = failedChats;
-        }
+        NSArray *channels = status.errorData.channels;
+        NSPredicate *filterPredicate = [NSPredicate predicateWithFormat:@"channel IN %@", channels];
+
+        failedChats = [chats filteredArrayUsingPredicate:filterPredicate];
+    }
+    
+    if (failedChats.count) {
+        userInfo[kCENNotificationsErrorChatsKey] = failedChats;
     }
     
     return [CENError errorFromPubNubStatus:status withUserInfo:userInfo];
 }
 
-+ (NSArray<CENChat *> *)chatListByChannelNames:(NSArray<NSString *> *)channels forUser:(CENMe *)user {
+- (NSArray<CENChat *> *)chatListByChannelNames:(NSArray *)channels forUser:(CENMe *)user {
     
+    NSDictionary<NSString *,CENChat *> *knownChats = user.chatEngine.chats;
     NSMutableArray<CENChat *> *chats = [NSMutableArray new];
-    CENChatEngine *chatEngine = user.chatEngine;
-    NSDictionary<NSString *,CENChat *> *knownChats = chatEngine.chats;
     
     for (NSString *channel in channels) {
         if (knownChats[channel]) {

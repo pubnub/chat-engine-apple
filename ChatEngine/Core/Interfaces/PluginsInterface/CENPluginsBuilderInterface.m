@@ -1,7 +1,7 @@
 /**
  * author Serhii Mamontov
- * @version 0.9.0
- * @copyright © 2009-2017 PubNub, Inc.
+ * @version 0.10.0
+ * @copyright © 2010-2017 PubNub, Inc.
  */
 #import "CENPluginsBuilderInterface.h"
 #import "CENInterfaceBuilder+Private.h"
@@ -42,27 +42,24 @@
 
 - (void (^)(void))store {
     
-    [self setFlag:NSStringFromSelector(_cmd)];
-    
     return ^{
+        [self setFlag:NSStringFromSelector(_cmd)];
         return [self performWithBlock:nil];
     };
 }
 
 - (void (^)(void))remove {
     
-    [self setFlag:NSStringFromSelector(_cmd)];
-    
     return ^{
+        [self setFlag:NSStringFromSelector(_cmd)];
         return [self performWithBlock:nil];
     };
 }
 
 - (BOOL (^)(void))exists {
     
-    [self setFlag:NSStringFromSelector(_cmd)];
-    
     return ^BOOL {
+        [self setFlag:NSStringFromSelector(_cmd)];
         return ((NSNumber *)[self performWithReturnValue]).boolValue;
     };
 }

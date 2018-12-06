@@ -9,11 +9,10 @@
 NS_ASSUME_NONNULL_BEGIN
 
 /**
- * @brief      \b CENChat online search extension.
- * @discussion Plugin workhorse which use passed configuration to perform search of online users when it will be requested.
+ * @brief \b {Chat CENChat} interface extension for online \b {users CENUser} search support.
  *
  * @author Serhii Mamontov
- * @version 1.0.0
+ * @version 1.1.0
  * @copyright © 2009-2018 PubNub, Inc.
  */
 @interface CENOnlineUserSearchExtension : CEPExtension
@@ -22,11 +21,22 @@ NS_ASSUME_NONNULL_BEGIN
 #pragma mark - Search
 
 /**
- * @brief      Search for users using search criteria.
- * @discussion Plugin will search for users using name of property and check whether it's content partially march to search criteria or not.
+ * @brief Search for \b {users CENUser} using search criteria.
  *
- * @param criteria Reference on value which should be used to filter out online users.
- * @param block    Reference on search completion block. Block pass only one argument - list of users which conform to search \c criteria.
+ * @code
+ * // objc
+ * self.chat.extension([CENOnlineUserSearchPlugin class],
+ *                     ^(CENOnlineUserSearchExtension *extension) {
+ 
+ *     [extension searchFor:@"bob" inChat:self.chat  withCompletion:^(NSArray<CENUser *> *users) {
+ *         NSLog(@"Found %@ users which has 'bob' in their UUID or state", @(users.count));
+ *     }];
+ * });
+ * @endcode
+ *
+ * @param criteria Value which should be used to filter out online users.
+ * @param block Block / closure which will be called at the end of search and pass list of
+ *     \b {users CENUser} which conform to search criteria.
  */
 - (void)searchFor:(NSString *)criteria withCompletion:(void(^)(NSArray<CENUser *> *users))block;
 

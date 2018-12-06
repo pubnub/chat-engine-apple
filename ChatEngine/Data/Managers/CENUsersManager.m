@@ -1,7 +1,7 @@
 /**
  * @author Serhii Mamontov
- * @version 0.9.0
- * @copyright © 2009-2018 PubNub, Inc.
+ * @version 0.10.0
+ * @copyright © 2010-2018 PubNub, Inc.
  */
 #import "CENUsersManager.h"
 #import "CENChatEngine+PluginsPrivate.h"
@@ -15,7 +15,6 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-
 #pragma mark Protected interface declaration
 
 @interface CENUsersManager ()
@@ -23,9 +22,24 @@ NS_ASSUME_NONNULL_BEGIN
 
 #pragma mark - Information
 
+/**
+ * @brief Map of user identifiers to \b {user CENUser} instance which they represent.
+ */
 @property (nonatomic, strong) NSMapTable<NSString *, CENUser *> *usersMap;
+
+/**
+ * @brief Resource access serialization queue.
+ */
 @property (nonatomic, strong) dispatch_queue_t resourceAccessQueue;
+
+/**
+ * @brief \b {ChatEngine CENChatEngine} instance which instantiated this manager.
+ */
 @property (nonatomic, nullable, weak) CENChatEngine *chatEngine;
+
+/**
+ * @brief Currently active local user.
+ */
 @property (nonatomic, nullable, strong) CENMe *me;
 
 #pragma mark -
@@ -75,7 +89,8 @@ NS_ASSUME_NONNULL_END
 
 - (instancetype)init {
     
-    [NSException raise:NSDestinationInvalidException format:@"-init not implemented, please use: +managerForChatEngine:"];
+    [NSException raise:NSDestinationInvalidException
+                format:@"-init not implemented, please use: +managerForChatEngine:"];
     
     return nil;
 }
@@ -83,12 +98,15 @@ NS_ASSUME_NONNULL_END
 - (instancetype)initWithChatEngine:(CENChatEngine *)chatEngine {
     
     if ((self = [super init])) {
-        NSString *resourceQueueIdentifier = [NSString stringWithFormat:@"com.chatengine.manager.users.%p", self];
-        _resourceAccessQueue = dispatch_queue_create([resourceQueueIdentifier UTF8String], DISPATCH_QUEUE_CONCURRENT);
+        NSString *identifier = [NSString stringWithFormat:@"com.chatengine.manager.users.%p", self];
+        const char *cIdentifier = [identifier UTF8String];
+        _resourceAccessQueue = dispatch_queue_create(cIdentifier, DISPATCH_QUEUE_CONCURRENT);
+                                                      
         _usersMap = [NSMapTable strongToStrongObjectsMapTable];
         _chatEngine = chatEngine;
         
-        CELogResourceAllocation(self.chatEngine.logger, @"<ChatEngine::Manager::Users> %p instance allocation", self);
+        CELogResourceAllocation(self.chatEngine.logger,
+            @"<ChatEngine::Manager::Users> %p instance allocation", self);
     }
     
     return self;
@@ -103,7 +121,7 @@ NS_ASSUME_NONNULL_END
     __block CENUser *user = nil;
     
     if (![uuid isKindOfClass:[NSString class]] || !uuid.length) {
-        return  nil;
+        return nil;
     }
     
     if (state && ![state isKindOfClass:[NSDictionary class]]) {
@@ -112,22 +130,21 @@ NS_ASSUME_NONNULL_END
     
     BOOL isLocalUser = [uuid isEqualToString:[self.chatEngine pubNubUUID]];
     dispatch_barrier_sync(self.resourceAccessQueue, ^{
-        user = isLocalUser ? self->_me : [self.usersMap objectForKey:uuid];
+        user = isLocalUser ? (id)self->_me : [self.usersMap objectForKey:uuid];
 
         if (!user && self.chatEngine) {
             CELogAPICall(self.chatEngine.logger, @"<ChatEngine::API> Create '%@' user%@", uuid,
-                         state.count ? [@[@" with state: ", state] componentsJoinedByString:@""] : @".");
+                state.count ? [@[@" with state: ", state] componentsJoinedByString:@""] : @".");
             
             userCreated = YES;
-            user = [(isLocalUser ? [CENMe class] : [CENUser class]) userWithUUID:uuid state:state chatEngine:self.chatEngine];
+            Class cls = isLocalUser ? [CENMe class] : [CENUser class];
+            user = [cls userWithUUID:uuid state:state chatEngine:self.chatEngine];
             
             if (isLocalUser) {
                 self.me = (CENMe *)user;
             } else {
                 [self.usersMap setObject:user forKey:uuid];
             }
-        } else if (self.chatEngine) {
-            [user assignState:state];
         }
     });
     
@@ -162,7 +179,7 @@ NS_ASSUME_NONNULL_END
         BOOL isLocalUser = [uuid isEqualToString:[self.chatEngine pubNubUUID]];
         
         dispatch_sync(self.resourceAccessQueue, ^{
-            user = isLocalUser ? self->_me : [self.usersMap objectForKey:uuid];
+            user = isLocalUser ? (id)self->_me : [self.usersMap objectForKey:uuid];
         });
     }
     
@@ -175,7 +192,8 @@ NS_ASSUME_NONNULL_END
 - (void)destroy {
     
     dispatch_barrier_async(self.resourceAccessQueue, ^{
-        [[self.usersMap objectEnumerator].allObjects makeObjectsPerformSelector:@selector(destruct)];
+        NSArray<CENUser *> *users = [self.usersMap objectEnumerator].allObjects;
+        [users makeObjectsPerformSelector:@selector(destruct)];
         [self.usersMap removeAllObjects];
         [self->_me destruct];
         self->_me = nil;
@@ -184,7 +202,8 @@ NS_ASSUME_NONNULL_END
 
 - (void)dealloc {
     
-    CELogResourceAllocation(self.chatEngine.logger, @"<ChatEngine::Manager::Users> %p instance deallocation", self);
+    CELogResourceAllocation(self.chatEngine.logger,
+        @"<ChatEngine::Manager::Users> %p instance deallocation", self);
 }
 
 #pragma mark -

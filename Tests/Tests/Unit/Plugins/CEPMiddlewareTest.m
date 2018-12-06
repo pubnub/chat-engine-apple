@@ -23,11 +23,6 @@
 @interface CEPMiddlewareTest : CENTestCase
 
 
-#pragma mark - Information
-
-@property (nonatomic, nullable, weak) id middlewareClassMock;
-
-
 #pragma mark -
 
 
@@ -44,19 +39,14 @@
     return NO;
 }
 
-- (void)setUp {
-    
-    [super setUp];
-    
-    self.middlewareClassMock = [self mockForClass:[CEPMiddleware class]];
-}
-
 
 #pragma mark - Tests :: Information
 
 - (void)testLocations_ShouldReturnListOfAllowedLocations {
     
     NSArray *expected = @[CEPMiddlewareLocation.emit, CEPMiddlewareLocation.on];
+    
+    
     NSArray *locations = [CEPMiddleware locations];
     
     XCTAssertNotNil(locations);
@@ -84,6 +74,7 @@
     
     NSArray *expected = @[@"test.event.1", @"test.event.2"];
     
+    
     [CEPMiddleware replaceEventsWith:expected];
     
     XCTAssertEqualObjects([CEPMiddleware events], expected);
@@ -97,7 +88,9 @@
     NSDictionary *configuration = @{ @"test": @"configuration" };
     NSString *identifier = @"test";
     
-    OCMStub([self.middlewareClassMock events]).andReturn(@[]);
+    
+    id classMock = [self mockForObject:[CEPMiddleware class]];
+    OCMStub([classMock events]).andReturn(@[]);
     
     CEPMiddleware *middleware = [CEPMiddleware middlewareWithIdentifier:identifier configuration:configuration];
     
@@ -110,7 +103,9 @@
     
     NSString *identifier = nil;
     
-    OCMStub([self.middlewareClassMock events]).andReturn(@[]);
+    
+    id classMock = [self mockForObject:[CEPMiddleware class]];
+    OCMStub([classMock events]).andReturn(@[]);
     
     XCTAssertNil([CEPMiddleware middlewareWithIdentifier:identifier configuration:nil]);
 }
@@ -119,7 +114,9 @@
     
     NSString *identifier = @"";
     
-    OCMStub([self.middlewareClassMock events]).andReturn(@[]);
+    
+    id classMock = [self mockForObject:[CEPMiddleware class]];
+    OCMStub([classMock events]).andReturn(@[]);
     
     XCTAssertNil([CEPMiddleware middlewareWithIdentifier:identifier configuration:nil]);
 }
@@ -128,7 +125,9 @@
     
     NSString *identifier = (id)@2010;
     
-    OCMStub([self.middlewareClassMock events]).andReturn(@[]);
+    
+    id classMock = [self mockForObject:[CEPMiddleware class]];
+    OCMStub([classMock events]).andReturn(@[]);
     
     XCTAssertNil([CEPMiddleware middlewareWithIdentifier:identifier configuration:nil]);
 }
@@ -137,7 +136,9 @@
     
     NSDictionary *configuration = (id)@2010;
     
-    OCMStub([self.middlewareClassMock events]).andReturn(@[]);
+    
+    id classMock = [self mockForObject:[CEPMiddleware class]];
+    OCMStub([classMock events]).andReturn(@[]);
     
     CEPMiddleware *middleware = [CEPMiddleware middlewareWithIdentifier:@"test" configuration:configuration];
     
@@ -147,7 +148,8 @@
 
 - (void)testConstructor_ShouldSetEmptyDictionaryConfiguration_WhenConfigurationNotPassed {
     
-    OCMStub([self.middlewareClassMock events]).andReturn(@[]);
+    id classMock = [self mockForObject:[CEPMiddleware class]];
+    OCMStub([classMock events]).andReturn(@[]);
     
     CEPMiddleware *middleware = [CEPMiddleware middlewareWithIdentifier:@"test" configuration:nil];
     
@@ -160,19 +162,17 @@
 
 - (void)testRunForEvent_ShouldCallCompletionBlockWithNO {
     
-    __block BOOL handlerCalled = NO;
-    
-    OCMStub([self.middlewareClassMock events]).andReturn(@[]);
+    id classMock = [self mockForObject:[CEPMiddleware class]];
+    OCMStub([classMock events]).andReturn(@[]);
     
     CEPMiddleware *middleware = [CEPMiddleware middlewareWithIdentifier:@"test" configuration:nil];
     
-    [middleware runForEvent:@"event" withData:[@{} mutableCopy] completion:^(BOOL rejected) {
-        handlerCalled = YES;
-        
-        XCTAssertFalse(rejected);
+    [self waitToCompleteIn:self.testCompletionDelay codeBlock:^(dispatch_block_t handler) {
+        [middleware runForEvent:@"event" withData:[@{} mutableCopy] completion:^(BOOL rejected) {
+            XCTAssertFalse(rejected);
+            handler();
+        }];
     }];
-    
-    XCTAssertTrue(handlerCalled);
 }
 
 
@@ -182,7 +182,9 @@
     
     NSArray *events = @[@"test-event-3", @"test-event-4"];
     
-    OCMStub([self.middlewareClassMock events]).andReturn(events);
+    
+    id classMock = [self mockForObject:[CEPMiddleware class]];
+    OCMStub([classMock events]).andReturn(events);
     
     CEPMiddleware *middleware = [CEPMiddleware middlewareWithIdentifier:@"test" configuration:nil];
     
@@ -193,7 +195,9 @@
     
     NSArray *events = @[@"*"];
     
-    OCMStub([self.middlewareClassMock events]).andReturn(events);
+    
+    id classMock = [self mockForObject:[CEPMiddleware class]];
+    OCMStub([classMock events]).andReturn(events);
     
     CEPMiddleware *middleware = [CEPMiddleware middlewareWithIdentifier:@"test" configuration:nil];
     
@@ -204,7 +208,9 @@
     
     NSArray *events = @[@"test-event-3", @"test-event-4"];
     
-    OCMStub([self.middlewareClassMock events]).andReturn(events);
+    
+    id classMock = [self mockForObject:[CEPMiddleware class]];
+    OCMStub([classMock events]).andReturn(events);
     
     CEPMiddleware *middleware = [CEPMiddleware middlewareWithIdentifier:@"test" configuration:nil];
     
@@ -215,7 +221,9 @@
     
     NSArray *events = @[@"test.event.3", @"test.event.4"];
     
-    OCMStub([self.middlewareClassMock events]).andReturn(events);
+    
+    id classMock = [self mockForObject:[CEPMiddleware class]];
+    OCMStub([classMock events]).andReturn(events);
     
     CEPMiddleware *middleware = [CEPMiddleware middlewareWithIdentifier:@"test" configuration:nil];
     
@@ -226,7 +234,9 @@
     
     NSArray *events = @[@"test.event.*", @"test.event.4"];
     
-    OCMStub([self.middlewareClassMock events]).andReturn(events);
+    
+    id classMock = [self mockForObject:[CEPMiddleware class]];
+    OCMStub([classMock events]).andReturn(events);
     
     CEPMiddleware *middleware = [CEPMiddleware middlewareWithIdentifier:@"test" configuration:nil];
     
@@ -237,7 +247,9 @@
     
     NSArray *events = @[@"test.**", @"test.event.4"];
     
-    OCMStub([self.middlewareClassMock events]).andReturn(events);
+    
+    id classMock = [self mockForObject:[CEPMiddleware class]];
+    OCMStub([classMock events]).andReturn(events);
     
     CEPMiddleware *middleware = [CEPMiddleware middlewareWithIdentifier:@"test" configuration:nil];
     
@@ -248,7 +260,9 @@
     
     NSArray *events = @[@"test.event.3", @"test.event.4"];
     
-    OCMStub([self.middlewareClassMock events]).andReturn(events);
+    
+    id classMock = [self mockForObject:[CEPMiddleware class]];
+    OCMStub([classMock events]).andReturn(events);
     
     CEPMiddleware *middleware = [CEPMiddleware middlewareWithIdentifier:@"test" configuration:nil];
     
@@ -259,7 +273,9 @@
     
     NSArray *events = @[@"test.*", @"test.event.4"];
     
-    OCMStub([self.middlewareClassMock events]).andReturn(events);
+    
+    id classMock = [self mockForObject:[CEPMiddleware class]];
+    OCMStub([classMock events]).andReturn(events);
     
     CEPMiddleware *middleware = [CEPMiddleware middlewareWithIdentifier:@"test" configuration:nil];
     
@@ -270,7 +286,9 @@
     
     NSArray *events = @[@"test-event-3", @"test-event-4"];
     
-    OCMStub([self.middlewareClassMock events]).andReturn(events);
+    
+    id classMock = [self mockForObject:[CEPMiddleware class]];
+    OCMStub([classMock events]).andReturn(events);
     
     CEPMiddleware *middleware = [CEPMiddleware middlewareWithIdentifier:@"test" configuration:nil];
     [middleware registeredForEvent:@"test-event-4"];
@@ -283,13 +301,39 @@
     
     NSArray *events = @[@"test-event-3", @"test-event-4"];
     
-    OCMStub([self.middlewareClassMock events]).andReturn(events);
+    
+    id classMock = [self mockForObject:[CEPMiddleware class]];
+    OCMStub([classMock events]).andReturn(events);
     
     CEPMiddleware *middleware = [CEPMiddleware middlewareWithIdentifier:@"test" configuration:nil];
     [middleware registeredForEvent:@"test-event-5"];
     
     XCTAssertEqual(middleware.checkedEvents.count, 1);
     XCTAssertEqual(middleware.ignoredEvents.count, 1);
+}
+
+
+#pragma mark - Tests :: Handlers
+
+- (void)testOnCreate_ShouldHaveMethod {
+    
+    id classMock = [self mockForObject:[CEPMiddleware class]];
+    OCMStub([classMock events]).andReturn(@[]);
+    
+    CEPMiddleware *middleware = [CEPMiddleware middlewareWithIdentifier:@"test" configuration:nil];
+    
+    XCTAssertNoThrow([middleware onCreate]);
+}
+
+- (void)testOnDestruct_ShouldHaveMethod {
+    
+    id classMock = [self mockForObject:[CEPMiddleware class]];
+    OCMStub([classMock events]).andReturn(@[]);
+    
+    CEPMiddleware *middleware = [CEPMiddleware middlewareWithIdentifier:@"test" configuration:nil];
+    
+    
+    XCTAssertNoThrow([middleware onDestruct]);
 }
 
 #pragma mark -

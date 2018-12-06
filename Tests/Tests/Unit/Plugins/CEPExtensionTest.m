@@ -3,10 +3,10 @@
  * @copyright © 2009-2018 PubNub, Inc.
  */
 #import <CENChatEngine/CEPExtension+Private.h>
-#import <XCTest/XCTest.h>
+#import "CENTestCase.h"
 
 
-@interface CEPExtensionTest : XCTestCase
+@interface CEPExtensionTest : CENTestCase
 
 
 #pragma mark -
@@ -24,6 +24,7 @@
     
     NSDictionary *configuration = @{ @"test": @"configuration" };
     NSString *identifier = @"test";
+    
     
     CEPExtension *extension = [CEPExtension extensionWithIdentifier:identifier configuration:configuration];
     
@@ -69,6 +70,25 @@
     
     XCTAssertNotNil(extension);
     XCTAssertEqualObjects(extension.configuration, @{});
+}
+
+
+#pragma mark - Tests :: Handlers
+
+- (void)testOnCreate_ShouldHaveMethod {
+    
+    CEPExtension *extension = [CEPExtension extensionWithIdentifier:@"test" configuration:nil];
+    
+    
+    XCTAssertNoThrow([extension onCreate]);
+}
+
+- (void)testOnDestruct_ShouldHaveMethod {
+    
+    CEPExtension *extension = [CEPExtension extensionWithIdentifier:@"test" configuration:nil];
+    
+    
+    XCTAssertNoThrow([extension onDestruct]);
 }
 
 #pragma mark -

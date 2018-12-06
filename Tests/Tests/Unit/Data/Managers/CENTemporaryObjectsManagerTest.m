@@ -63,12 +63,11 @@
 
 - (void)testStoreTemporaryObject_ShouldAddObjectToStorage {
     
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    
     [self.manager storeTemporaryObject:@"ChatEngine #1"];
     [self.manager storeTemporaryObject:@"ChatEngine #2"];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.delayedCheck * NSEC_PER_SEC)));
+    
+    [self waitTask:@"delayedCheck" completionFor:self.delayedCheck];
     XCTAssertEqual(self.manager.temporaryObjects.count, 2);
 }
 
@@ -77,19 +76,19 @@
 
 - (void)testhandleCleanUpTimer_ShouldRemoveOutfatedObject {
     
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     NSDictionary *oldObject = @{
         @"o": @"ChatEngine #1",
         @"cd": @([NSDate date].timeIntervalSince1970)
     };
     NSDictionary *freshObject = @{
         @"o": @"ChatEngine #2",
-        @"cd": @([NSDate dateWithTimeIntervalSinceNow:kCEMaximumTemporaryStoreTime].timeIntervalSince1970)
+        @"cd": @([NSDate dateWithTimeIntervalSinceNow:kCENMaximumTemporaryStoreTime].timeIntervalSince1970)
     };
     self.manager.temporaryObjects = [NSMutableArray arrayWithArray:@[oldObject, freshObject]];
     [self.manager.cleanUpTimer fire];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.delayedCheck * NSEC_PER_SEC)));
+    
+    [self waitTask:@"delayedCheck" completionFor:self.delayedCheck];
     XCTAssertEqual(self.manager.temporaryObjects.count, 1);
 }
 
@@ -100,21 +99,21 @@
     
     [self.manager destroy];
     
+    
     XCTAssertNil(self.manager.cleanUpTimer);
 }
 
 - (void)testDestroy_ShouldRemoveAllTemporaryObjects {
     
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    
     [self.manager storeTemporaryObject:@"ChatEngine #1"];
     [self.manager storeTemporaryObject:@"ChatEngine #2"];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.delayedCheck * NSEC_PER_SEC)));
+    
+    [self waitTask:@"delayedCheck" completionFor:self.delayedCheck];
     
     [self.manager destroy];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.delayedCheck * NSEC_PER_SEC)));
+    [self waitTask:@"delayedCheck" completionFor:self.delayedCheck];
     XCTAssertEqual(self.manager.temporaryObjects.count, 0);
 }
 

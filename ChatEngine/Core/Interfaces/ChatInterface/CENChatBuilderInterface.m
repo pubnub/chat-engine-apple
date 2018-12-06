@@ -1,7 +1,7 @@
 /**
- * author Serhii Mamontov
- * @version 0.9.0
- * @copyright © 2009-2017 PubNub, Inc.
+ * @author Serhii Mamontov
+ * @version 0.10.0
+ * @copyright © 2010-2017 PubNub, Inc.
  */
 #import "CENChatBuilderInterface.h"
 #import "CENInterfaceBuilder+Private.h"
@@ -29,7 +29,6 @@
     
     return ^CENChatBuilderInterface * (BOOL isPrivate) {
         [self setArgument:@(isPrivate) forParameter:NSStringFromSelector(_cmd)];
-        
         return self;
     };
 }
@@ -38,7 +37,6 @@
     
     return ^CENChatBuilderInterface * (BOOL shouldAutoConnect) {
         [self setArgument:@(shouldAutoConnect) forParameter:NSStringFromSelector(_cmd)];
-        
         return self;
     };
 }
@@ -56,11 +54,7 @@
 
 - (CENChatBuilderInterface * (^)(NSString *group))group {
     
-    return ^CENChatBuilderInterface * (NSString *group) {
-        if ([group isKindOfClass:[NSString class]]) {
-            [self setArgument:group forParameter:NSStringFromSelector(_cmd)];
-        }
-        
+    return ^CENChatBuilderInterface * (NSString *__unused group) {
         return self;
     };
 }
@@ -70,18 +64,16 @@
 
 - (CENChat * (^)(void))create {
     
-    [self setFlag:NSStringFromSelector(_cmd)];
-    
     return ^CENChat * {
+        [self setFlag:NSStringFromSelector(_cmd)];
         return [self performWithReturnValue];
     };
 }
 
 - (CENChat * (^)(void))get {
     
-    [self setFlag:NSStringFromSelector(_cmd)];
-    
     return ^CENChat * {
+        [self setFlag:NSStringFromSelector(_cmd)];
         return [self performWithReturnValue];
     };
 }

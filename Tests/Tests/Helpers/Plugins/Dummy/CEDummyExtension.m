@@ -4,7 +4,6 @@
  * @copyright © 2009-2018 PubNub, Inc.
  */
 #import "CEDummyExtension.h"
-#import <CENChatEngine/CEPPlugablePropertyStorage+Private.h>
 #import <CENChatEngine/CEPExtension+Developer.h>
 
 

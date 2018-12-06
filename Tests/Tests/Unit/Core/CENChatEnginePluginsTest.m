@@ -20,11 +20,6 @@
 @interface CENChatEnginePluginsTest : CENTestCase
 
 
-#pragma mark - Information
-
-@property (nonatomic, nullable, weak) CENChatEngine *client;
-@property (nonatomic, nullable, weak) CENChatEngine *clientMock;
-
 #pragma mark -
 
 
@@ -43,168 +38,154 @@
     return NO;
 }
 
-- (void)setUp {
-    
-    [super setUp];
-    
-    CENConfiguration *configuration = [CENConfiguration configurationWithPublishKey:@"test-36" subscribeKey:@"test-36"];
-    self.client = [self chatEngineWithConfiguration:configuration];
-    self.clientMock = [self partialMockForObject:self.client];
-    
-    OCMStub([self.clientMock fetchParticipantsForChat:[OCMArg any]]).andDo(nil);
-    OCMStub([self.clientMock connectToChat:[OCMArg any] withCompletion:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
-        void(^handleBlock)(NSDictionary *) = nil;
-        
-        [invocation getArgument:&handleBlock atIndex:3];
-        handleBlock(nil);
-    });
-}
-
 
 #pragma mark - Tests :: proto / hasProtoPlugin
 
-- (void)testHasProtoPlugin_ShouldReturnYes_WhenProtoPluginWithSpecifiedClassExists {
+- (void)testHasProtoPlugin_ShouldSerchProtoPluginByClass {
     
-    [self.client registerProtoPlugin:[CENSearchFilterPlugin class] withConfiguration:nil forObjectType:@"Chat"];
+    NSString *identifier = CENSearchFilterPlugin.identifier;
+    NSString *objectType = @"Chat";
     
-    XCTAssertTrue([self.client hasProtoPlugin:[CENSearchFilterPlugin class] forObjectType:@"Chat"]);
+    
+    id managerMock = [self mockForObject:self.client.pluginsManager];
+    id recorded = OCMExpect([managerMock hasProtoPluginWithIdentifier:identifier forObjectType:objectType]);
+    [self waitForObject:managerMock recordedInvocationCall:recorded withinInterval:self.testCompletionDelay afterBlock:^{
+        [self.client hasProtoPlugin:[CENSearchFilterPlugin class] forObjectType:@"Chat"];
+    }];
 }
 
-- (void)testProtoHasProtoPlugin_ShouldReturnYes_WhenProtoPluginWithSpecifiedClassExists {
+- (void)testHasProtoPlugin_ShouldNotSerchProtoPluginByClass_WhenUnsupportedProtoPluginSpecified {
     
-    [self.client registerProtoPlugin:[CENSearchFilterPlugin class] withConfiguration:nil forObjectType:@"Chat"];
-    
-    XCTAssertTrue(self.client.proto(@"Chat", [CENSearchFilterPlugin class]).exists());
+    id managerMock = [self mockForObject:self.client.pluginsManager];
+    id recorded = OCMExpect([[managerMock reject] hasProtoPluginWithIdentifier:[OCMArg any] forObjectType:[OCMArg any]]);
+    [self waitForObject:managerMock recordedInvocationNotCall:recorded withinInterval:self.falseTestCompletionDelay afterBlock:^{
+        [self.client hasProtoPlugin:[NSArray class] forObjectType:@"Chat"];
+    }];
 }
 
-- (void)testProtoHasProtoPlugin_ShouldReturnNo_WhenProtoPluginWithSpecifiedClassNotRegistered {
+- (void)testHasProtoPlugin_ShouldNotSerchProtoPluginByClass_WhenUnknownObjectTypeSpecifided {
     
-    [self.client registerProtoPlugin:[CENSearchFilterPlugin class] withConfiguration:nil forObjectType:@"Chat"];
-    
-    XCTAssertFalse(self.client.proto(@"Chat", [CEDummyPlugin class]).exists());
-}
-
-- (void)testProtoHasProtoPlugin_ShouldReturnNo_WhenProtoPluginWithSpecifiedClassNotRegisteredForObjectType {
-    
-    [self.client registerProtoPlugin:[CENSearchFilterPlugin class] withConfiguration:nil forObjectType:@"Chat"];
-    
-    XCTAssertFalse(self.client.proto(@"User", [CENSearchFilterPlugin class]).exists());
-}
-
-- (void)testProtoHasProtoPlugin_ShouldReturnNo_WhenUnsupportedProtoPluginSpecified {
-    
-    [self.client registerProtoPlugin:[CENSearchFilterPlugin class] withConfiguration:nil forObjectType:@"Chat"];
-    
-    XCTAssertFalse([self.client hasProtoPlugin:[NSArray class] forObjectType:@"Chat"]);
-}
-
-- (void)testProtoHasProtoPlugin_ShouldReturnNo_WhenUnknownObjectTypeSpecifided {
-    
-    [self.client registerProtoPlugin:[CENSearchFilterPlugin class] withConfiguration:nil forObjectType:@"Chat"];
-    
-    XCTAssertFalse([self.client hasProtoPlugin:[CENSearchFilterPlugin class] forObjectType:@"PubNub"]);
+    id managerMock = [self mockForObject:self.client.pluginsManager];
+    id recorded = OCMExpect([[managerMock reject] hasProtoPluginWithIdentifier:[OCMArg any] forObjectType:[OCMArg any]]);
+    [self waitForObject:managerMock recordedInvocationNotCall:recorded withinInterval:self.falseTestCompletionDelay afterBlock:^{
+        [self.client hasProtoPlugin:[CENSearchFilterPlugin class] forObjectType:@"PubNub"];
+    }];
 }
 
 
 #pragma mark - Tests :: proto / hasProtoPluginWithIdentifier
 
-- (void)testProtoHasProtoPluginWithIdentifier_ShuldSearchUsingPluingsManager {
+- (void)testHasProtoPluginWithIdentifier_ShouldNotSerchProtoPluginByIdentifier {
     
-    id pluginsManagerPartialMock = [self partialMockForObject:self.client.pluginsManager];
     NSString *expectedIdentifier = CEDummyPlugin.identifier;
     NSString *expectedObjectType = @"Search";
     
-    OCMExpect([pluginsManagerPartialMock hasProtoPluginWithIdentifier:expectedIdentifier forObjectType:expectedObjectType]);
     
-    self.client.proto(expectedObjectType, expectedIdentifier).exists();
+    id managerMock = [self mockForObject:self.client.pluginsManager];
+    id recorded = OCMExpect([managerMock hasProtoPluginWithIdentifier:expectedIdentifier forObjectType:expectedObjectType]);
+    [self waitForObject:managerMock recordedInvocationCall:recorded withinInterval:self.testCompletionDelay afterBlock:^{
+        self.client.proto(expectedObjectType, [CEDummyPlugin class]).exists();
+    }];
     
-    OCMVerifyAll(pluginsManagerPartialMock);
+    recorded = OCMExpect([managerMock hasProtoPluginWithIdentifier:expectedIdentifier forObjectType:expectedObjectType]);
+    [self waitForObject:managerMock recordedInvocationCall:recorded withinInterval:self.testCompletionDelay afterBlock:^{
+        self.client.proto(expectedObjectType, expectedIdentifier).exists();
+    }];
 }
 
-- (void)testProtoHasProtoPluginWithIdentifier_ShuldNotSearchForUnknownObjectType {
+- (void)testHasProtoPluginWithIdentifier_ShouldNotSerchProtoPluginByIdentifier_WhenUnknownObjectType {
     
-    id pluginsManagerPartialMock = [self partialMockForObject:self.client.pluginsManager];
     NSString *expectedIdentifier = CEDummyPlugin.identifier;
     NSString *expectedObjectType = @"PubNub";
     
-    OCMExpect([[pluginsManagerPartialMock reject] hasProtoPluginWithIdentifier:[OCMArg any] forObjectType:[OCMArg any]]);
     
-    [self.client hasProtoPluginWithIdentifier:expectedIdentifier forObjectType:expectedObjectType];
-    
-    OCMVerifyAll(pluginsManagerPartialMock);
+    id managerMock = [self mockForObject:self.client.pluginsManager];
+    id recorded = OCMExpect([[managerMock reject] hasProtoPluginWithIdentifier:[OCMArg any] forObjectType:[OCMArg any]]);
+    [self waitForObject:managerMock recordedInvocationNotCall:recorded withinInterval:self.falseTestCompletionDelay afterBlock:^{
+        [self.client hasProtoPluginWithIdentifier:expectedIdentifier forObjectType:expectedObjectType];
+    }];
 }
 
-- (void)testProtoHasProtoPluginWithIdentifier_ShuldNotSearchForNonNSStringIdentifier {
+- (void)testHasProtoPluginWithIdentifier_ShouldNotSerchProtoPluginByIdentifier_WhenNonNSStringIdentifier {
     
-    id pluginsManagerPartialMock = [self partialMockForObject:self.client.pluginsManager];
     NSString *expectedIdentifier = (id)@2010;
     NSString *expectedObjectType = @"Search";
     
-    OCMExpect([[pluginsManagerPartialMock reject] hasProtoPluginWithIdentifier:[OCMArg any] forObjectType:[OCMArg any]]);
     
-    [self.client hasProtoPluginWithIdentifier:expectedIdentifier forObjectType:expectedObjectType];
-    
-    OCMVerifyAll(pluginsManagerPartialMock);
+    id managerMock = [self mockForObject:self.client.pluginsManager];
+    id recorded = OCMExpect([[managerMock reject] hasProtoPluginWithIdentifier:[OCMArg any] forObjectType:[OCMArg any]]);
+    [self waitForObject:managerMock recordedInvocationNotCall:recorded withinInterval:self.falseTestCompletionDelay afterBlock:^{
+        [self.client hasProtoPluginWithIdentifier:expectedIdentifier forObjectType:expectedObjectType];
+    }];
 }
 
-- (void)testProtoHasProtoPluginWithIdentifier_ShuldNotSearchForEmptyIdentifier {
+- (void)testHasProtoPluginWithIdentifier_ShouldNotSerchProtoPluginByIdentifier_WhenEmptyIdentifier {
     
-    id pluginsManagerPartialMock = [self partialMockForObject:self.client.pluginsManager];
-    NSString *expectedIdentifier = @"";
     NSString *expectedObjectType = @"Search";
+    NSString *expectedIdentifier = @"";
     
-    OCMExpect([[pluginsManagerPartialMock reject] hasProtoPluginWithIdentifier:[OCMArg any] forObjectType:[OCMArg any]]);
     
-    [self.client hasProtoPluginWithIdentifier:expectedIdentifier forObjectType:expectedObjectType];
-    
-    OCMVerifyAll(pluginsManagerPartialMock);
+    id managerMock = [self mockForObject:self.client.pluginsManager];
+    id recorded = OCMExpect([[managerMock reject] hasProtoPluginWithIdentifier:[OCMArg any] forObjectType:[OCMArg any]]);
+    [self waitForObject:managerMock recordedInvocationNotCall:recorded withinInterval:self.falseTestCompletionDelay afterBlock:^{
+        [self.client hasProtoPluginWithIdentifier:expectedIdentifier forObjectType:expectedObjectType];
+    }];
 }
 
 
 #pragma mark - Tests :: setupProtoPluginsForObject
 
-- (void)testSetupProtoPluginsForObject_ShouldConfigureProtoForObject {
+- (void)testSetupProtoPluginsForObject_ShouldConfigureProtoForObjectUsingPluingsManager {
     
-    id pluginsManagerPartialMock = [self partialMockForObject:self.client.pluginsManager];
-    CENChat *expectedChat = self.client.global;
+    CENChat *expectedChat = [self publicChatWithChatEngine:self.client];
     
-    OCMExpect([pluginsManagerPartialMock setupProtoPluginsForObject:expectedChat withCompletion:[OCMArg any]]);
     
-    [self.client setupProtoPluginsForObject:expectedChat withCompletion:^{}];
-    
-    OCMVerifyAll(pluginsManagerPartialMock);
+    id managerMock = [self mockForObject:self.client.pluginsManager];
+    id recorded = OCMExpect([managerMock setupProtoPluginsForObject:expectedChat withCompletion:[OCMArg any]]);
+    [self waitForObject:managerMock recordedInvocationCall:recorded withinInterval:self.testCompletionDelay afterBlock:^{
+        [self.client setupProtoPluginsForObject:expectedChat withCompletion:^{}];
+    }];
 }
 
 
 #pragma mark - Tests :: proto / registerProtoPlugin
 
-- (void)testProtoRegisterProtoPlugin_ShouldRegisterProtoWithDefaultIdentifier_WhenOnlyClassPassed {
+- (void)testRegisterProtoPlugin_ShouldRegisterProtoWithDefaultIdentifier_WhenOnlyClassPassed {
     
     NSDictionary *expectedConfiguration = @{ @"plugin": @"configuration" };
     NSString *expectedIdentifier = CEDummyPlugin.identifier;
     Class expectedClass = [CEDummyPlugin class];
     NSString *expectedObjectType = @"Search";
+
     
-    OCMExpect([self.clientMock registerProtoPlugin:expectedClass withIdentifier:expectedIdentifier configuration:expectedConfiguration
-                                     forObjectType:expectedObjectType]);
+    id managerMock = [self mockForObject:self.client.pluginsManager];
+    id recorded = OCMExpect([managerMock registerProtoPlugin:expectedClass withIdentifier:expectedIdentifier
+                                               configuration:expectedConfiguration forObjectType:expectedObjectType]);
+    [self waitForObject:managerMock recordedInvocationCall:recorded withinInterval:self.testCompletionDelay afterBlock:^{
+        self.client.proto(expectedObjectType, expectedClass).configuration(expectedConfiguration).store();
+    }];
     
-    self.clientMock.proto(expectedObjectType, expectedClass).configuration(expectedConfiguration).store();
-    
-    OCMVerifyAll((id)self.clientMock);
+    recorded = OCMExpect([managerMock registerProtoPlugin:expectedClass withIdentifier:expectedIdentifier
+                                            configuration:expectedConfiguration forObjectType:expectedObjectType]);
+    [self waitForObject:managerMock recordedInvocationCall:recorded withinInterval:self.testCompletionDelay afterBlock:^{
+        [self.client registerProtoPlugin:expectedClass withConfiguration:expectedConfiguration forObjectType:expectedObjectType];
+    }];
 }
 
-- (void)testProtoRegisterProtoPlugin_ShouldNotRegisterProtoWithDefaultIdentifier_WhenUnsupportedClassPassed {
+- (void)testRegisterProtoPlugin_ShouldNotRegisterProtoWithDefaultIdentifier_WhenUnsupportedClassPassed {
     
     NSDictionary *expectedConfiguration = @{ @"plugin": @"configuration" };
     NSString *expectedObjectType = @"Search";
     Class expectedClass = [NSArray class];
+    self.usesMockedObjects = YES;
     
-    OCMExpect([[(id)self.clientMock reject] registerProtoPlugin:[OCMArg any] withIdentifier:[OCMArg any] configuration:[OCMArg any]
-                                                  forObjectType:[OCMArg any]]);
     
-    [self.clientMock registerProtoPlugin:expectedClass withConfiguration:expectedConfiguration forObjectType:expectedObjectType];
-    
-    OCMVerifyAll((id)self.clientMock);
+    id managerMock = [self mockForObject:self.client.pluginsManager];
+    id recorded = OCMExpect([[managerMock reject] registerProtoPlugin:[OCMArg any] withIdentifier:[OCMArg any]
+                                                        configuration:[OCMArg any] forObjectType:[OCMArg any]]);
+    [self waitForObject:managerMock recordedInvocationNotCall:recorded withinInterval:self.falseTestCompletionDelay afterBlock:^{
+        [self.client registerProtoPlugin:expectedClass withConfiguration:expectedConfiguration forObjectType:expectedObjectType];
+    }];
 }
 
 - (void)testProtoRegisterProtoPlugin_ShouldNotRegisterProtoWithDefaultIdentifier_WhenUnknownObjectTypePassed {
@@ -212,13 +193,15 @@
     NSDictionary *expectedConfiguration = @{ @"plugin": @"configuration" };
     NSString *expectedObjectType = @"PubNub";
     Class expectedClass = [NSArray class];
+    self.usesMockedObjects = YES;
     
-    OCMExpect([[(id)self.clientMock reject] registerProtoPlugin:[OCMArg any] withIdentifier:[OCMArg any] configuration:[OCMArg any]
-                                                  forObjectType:[OCMArg any]]);
     
-    [self.clientMock registerProtoPlugin:expectedClass withConfiguration:expectedConfiguration forObjectType:expectedObjectType];
-    
-    OCMVerifyAll((id)self.clientMock);
+    id managerMock = [self mockForObject:self.client.pluginsManager];
+    id recorded = OCMExpect([[managerMock reject] registerProtoPlugin:[OCMArg any] withIdentifier:[OCMArg any]
+                                                        configuration:[OCMArg any] forObjectType:[OCMArg any]]);
+    [self waitForObject:managerMock recordedInvocationNotCall:recorded withinInterval:self.falseTestCompletionDelay afterBlock:^{
+        [self.client registerProtoPlugin:expectedClass withConfiguration:expectedConfiguration forObjectType:expectedObjectType];
+    }];
 }
 
 
@@ -226,86 +209,87 @@
 
 - (void)testProtoRegisterProtoPluginWithIdentifier_ShuldRegisterUsingPluingsManager {
     
-    id pluginsManagerPartialMock = [self partialMockForObject:self.client.pluginsManager];
     NSDictionary *expectedConfiguration = @{ @"plugin": @"configuration" };
     NSString *expectedIdentifier = CEDummyPlugin.identifier;
     Class expectedClass = [CEDummyPlugin class];
     NSString *expectedObjectType = @"Search";
     
-    OCMExpect([pluginsManagerPartialMock registerProtoPlugin:expectedClass withIdentifier:expectedIdentifier configuration:expectedConfiguration
-                                               forObjectType:expectedObjectType]);
     
-    self.client.proto(expectedObjectType, expectedClass).configuration(expectedConfiguration).identifier(expectedIdentifier).store();
-    
-    OCMVerifyAll(pluginsManagerPartialMock);
+    id managerMock = [self mockForObject:self.client.pluginsManager];
+    id recorded = OCMExpect([managerMock registerProtoPlugin:expectedClass withIdentifier:expectedIdentifier
+                                               configuration:expectedConfiguration forObjectType:expectedObjectType]);
+    [self waitForObject:managerMock recordedInvocationCall:recorded withinInterval:self.testCompletionDelay afterBlock:^{
+        self.client.proto(expectedObjectType, expectedClass).configuration(expectedConfiguration)
+            .identifier(expectedIdentifier).store();
+    }];
 }
 
 - (void)testProtoRegisterProtoPluginWithIdentifier_ShuldNotRegisterUsingPluingsManager_WhenUnsupportedClassPassed {
     
-    id pluginsManagerPartialMock = [self partialMockForObject:self.client.pluginsManager];
     NSDictionary *expectedConfiguration = @{ @"plugin": @"configuration" };
     NSString *expectedIdentifier = CEDummyPlugin.identifier;
     Class expectedClass = [NSArray class];
     NSString *expectedObjectType = @"Search";
     
-    OCMExpect([[pluginsManagerPartialMock reject] registerProtoPlugin:[OCMArg any] withIdentifier:[OCMArg any] configuration:[OCMArg any]
-                                                        forObjectType:[OCMArg any]]);
     
-    [self.client registerProtoPlugin:expectedClass withIdentifier:expectedIdentifier configuration:expectedConfiguration
-                       forObjectType:expectedObjectType];
-    
-    OCMVerifyAll(pluginsManagerPartialMock);
+    id managerMock = [self mockForObject:self.client.pluginsManager];
+    id recorded = OCMExpect([[managerMock reject] registerProtoPlugin:[OCMArg any] withIdentifier:[OCMArg any]
+                                                        configuration:[OCMArg any] forObjectType:[OCMArg any]]);
+    [self waitForObject:managerMock recordedInvocationNotCall:recorded withinInterval:self.falseTestCompletionDelay afterBlock:^{
+        [self.client registerProtoPlugin:expectedClass withIdentifier:expectedIdentifier configuration:expectedConfiguration
+                           forObjectType:expectedObjectType];
+    }];
 }
 
 - (void)testProtoRegisterProtoPluginWithIdentifier_ShuldNotRegisterUsingPluingsManager_WhenUnknownObjectTypePassed {
     
-    id pluginsManagerPartialMock = [self partialMockForObject:self.client.pluginsManager];
     NSDictionary *expectedConfiguration = @{ @"plugin": @"configuration" };
     NSString *expectedIdentifier = CEDummyPlugin.identifier;
     Class expectedClass = [CEDummyPlugin class];
     NSString *expectedObjectType = @"PubNub";
     
-    OCMExpect([[pluginsManagerPartialMock reject] registerProtoPlugin:[OCMArg any] withIdentifier:[OCMArg any] configuration:[OCMArg any]
-                                                        forObjectType:[OCMArg any]]);
     
-    [self.client registerProtoPlugin:expectedClass withIdentifier:expectedIdentifier configuration:expectedConfiguration
-                       forObjectType:expectedObjectType];
-    
-    OCMVerifyAll(pluginsManagerPartialMock);
+    id managerMock = [self mockForObject:self.client.pluginsManager];
+    id recorded = OCMExpect([[managerMock reject] registerProtoPlugin:[OCMArg any] withIdentifier:[OCMArg any]
+                                                        configuration:[OCMArg any] forObjectType:[OCMArg any]]);
+    [self waitForObject:managerMock recordedInvocationNotCall:recorded withinInterval:self.falseTestCompletionDelay afterBlock:^{
+        [self.client registerProtoPlugin:expectedClass withIdentifier:expectedIdentifier configuration:expectedConfiguration
+                           forObjectType:expectedObjectType];
+    }];
 }
 
 - (void)testProtoRegisterProtoPluginWithIdentifier_ShuldNotRegisterUsingPluingsManager_WhenNonNSStringIdentifierPassed {
     
-    id pluginsManagerPartialMock = [self partialMockForObject:self.client.pluginsManager];
     NSDictionary *expectedConfiguration = @{ @"plugin": @"configuration" };
     Class expectedClass = [CEDummyPlugin class];
-    NSString *expectedObjectType = @"PubNub";
+    NSString *expectedObjectType = @"Search";
     NSString *expectedIdentifier = (id)@2010;
     
-    OCMExpect([[pluginsManagerPartialMock reject] registerProtoPlugin:[OCMArg any] withIdentifier:[OCMArg any] configuration:[OCMArg any]
-                                                        forObjectType:[OCMArg any]]);
     
-    [self.client registerProtoPlugin:expectedClass withIdentifier:expectedIdentifier configuration:expectedConfiguration
-                       forObjectType:expectedObjectType];
-    
-    OCMVerifyAll(pluginsManagerPartialMock);
+    id managerMock = [self mockForObject:self.client.pluginsManager];
+    id recorded = OCMExpect([[managerMock reject] registerProtoPlugin:[OCMArg any] withIdentifier:[OCMArg any]
+                                                        configuration:[OCMArg any] forObjectType:[OCMArg any]]);
+    [self waitForObject:managerMock recordedInvocationNotCall:recorded withinInterval:self.falseTestCompletionDelay afterBlock:^{
+        [self.client registerProtoPlugin:expectedClass withIdentifier:expectedIdentifier configuration:expectedConfiguration
+                           forObjectType:expectedObjectType];
+    }];
 }
 
 - (void)testProtoRegisterProtoPluginWithIdentifier_ShuldNotRegisterUsingPluingsManager_WhenEmptyIdentifierPassed {
     
-    id pluginsManagerPartialMock = [self partialMockForObject:self.client.pluginsManager];
     NSDictionary *expectedConfiguration = @{ @"plugin": @"configuration" };
     Class expectedClass = [CEDummyPlugin class];
-    NSString *expectedObjectType = @"PubNub";
+    NSString *expectedObjectType = @"Search";
     NSString *expectedIdentifier = @"";
     
-    OCMExpect([[pluginsManagerPartialMock reject] registerProtoPlugin:[OCMArg any] withIdentifier:[OCMArg any] configuration:[OCMArg any]
-                                                        forObjectType:[OCMArg any]]);
     
-    [self.client registerProtoPlugin:expectedClass withIdentifier:expectedIdentifier configuration:expectedConfiguration
-                       forObjectType:expectedObjectType];
-    
-    OCMVerifyAll(pluginsManagerPartialMock);
+    id managerMock = [self mockForObject:self.client.pluginsManager];
+    id recorded = OCMExpect([[managerMock reject] registerProtoPlugin:[OCMArg any] withIdentifier:[OCMArg any]
+                                                        configuration:[OCMArg any] forObjectType:[OCMArg any]]);
+    [self waitForObject:managerMock recordedInvocationNotCall:recorded withinInterval:self.falseTestCompletionDelay afterBlock:^{
+        [self.client registerProtoPlugin:expectedClass withIdentifier:expectedIdentifier configuration:expectedConfiguration
+                           forObjectType:expectedObjectType];
+    }];
 }
 
 
@@ -317,13 +301,17 @@
     Class expectedClass = [CEDummyPlugin class];
     NSString *expectedObjectType = @"Search";
     
-    OCMExpect([self.clientMock unregisterProtoPluginWithIdentifier:expectedIdentifier forObjectType:expectedObjectType]);
-    OCMExpect([self.clientMock unregisterProtoPluginWithIdentifier:expectedIdentifier forObjectType:expectedObjectType]);
     
-    self.clientMock.proto(expectedObjectType, expectedClass).remove();
-    [self.clientMock unregisterProtoPlugin:expectedClass forObjectType:expectedObjectType];
+    id managerMock = [self mockForObject:self.client.pluginsManager];
+    id recorded = OCMExpect([managerMock unregisterProtoPluginWithIdentifier:expectedIdentifier forObjectType:expectedObjectType]);
+    [self waitForObject:managerMock recordedInvocationCall:recorded withinInterval:self.testCompletionDelay afterBlock:^{
+        self.client.proto(expectedObjectType, expectedClass).remove();
+    }];
     
-    OCMVerifyAll((id)self.clientMock);
+    recorded = OCMExpect([managerMock unregisterProtoPluginWithIdentifier:expectedIdentifier forObjectType:expectedObjectType]);
+    [self waitForObject:managerMock recordedInvocationCall:recorded withinInterval:self.testCompletionDelay afterBlock:^{
+        [self.client unregisterProtoPlugin:expectedClass forObjectType:expectedObjectType];
+    }];
 }
 
 - (void)testProtoUnregisterProtoPlugin_ShouldNotCallDesignatedMethod_WhenUnsupportedClassPassed {
@@ -331,11 +319,12 @@
     Class expectedClass = [NSArray class];
     NSString *expectedObjectType = @"Search";
     
-    OCMExpect([[(id)self.clientMock reject] unregisterProtoPluginWithIdentifier:[OCMArg any] forObjectType:[OCMArg any]]);
     
-    [self.clientMock unregisterProtoPlugin:expectedClass forObjectType:expectedObjectType];
-    
-    OCMVerifyAll((id)self.clientMock);
+    id managerMock = [self mockForObject:self.client.pluginsManager];
+    id recorded = OCMExpect([[managerMock reject] unregisterProtoPluginWithIdentifier:[OCMArg any] forObjectType:[OCMArg any]]);
+    [self waitForObject:managerMock recordedInvocationNotCall:recorded withinInterval:self.falseTestCompletionDelay afterBlock:^{
+        [self.client unregisterProtoPlugin:expectedClass forObjectType:expectedObjectType];
+    }];
 }
 
 - (void)testProtoUnregisterProtoPlugin_ShouldNotCallDesignatedMethod_WhenUnknownObjectTypePassed {
@@ -343,11 +332,12 @@
     Class expectedClass = [CEDummyPlugin class];
     NSString *expectedObjectType = @"PubNub";
     
-    OCMExpect([[(id)self.clientMock reject] unregisterProtoPluginWithIdentifier:[OCMArg any] forObjectType:[OCMArg any]]);
     
-    [self.clientMock unregisterProtoPlugin:expectedClass forObjectType:expectedObjectType];
-    
-    OCMVerifyAll((id)self.clientMock);
+    id managerMock = [self mockForObject:self.client.pluginsManager];
+    id recorded = OCMExpect([[managerMock reject] unregisterProtoPluginWithIdentifier:[OCMArg any] forObjectType:[OCMArg any]]);
+    [self waitForObject:managerMock recordedInvocationNotCall:recorded withinInterval:self.falseTestCompletionDelay afterBlock:^{
+        [self.client unregisterProtoPlugin:expectedClass forObjectType:expectedObjectType];
+    }];
 }
 
 
@@ -355,54 +345,54 @@
 
 - (void)testProtoUnregisterProtoPlugin_ShouldUnregisterUsingPluginsManager {
     
-    id pluginsManagerPartialMock = [self partialMockForObject:self.client.pluginsManager];
     NSString *expectedIdentifier = CEDummyPlugin.identifier;
     NSString *expectedObjectType = @"Search";
     
-    OCMExpect([pluginsManagerPartialMock unregisterProtoPluginWithIdentifier:expectedIdentifier forObjectType:expectedObjectType]);
     
-    self.client.proto(expectedObjectType, expectedIdentifier).remove();
-    
-    OCMVerifyAll(pluginsManagerPartialMock);
+    id managerMock = [self mockForObject:self.client.pluginsManager];
+    id recorded = OCMExpect([managerMock unregisterProtoPluginWithIdentifier:expectedIdentifier forObjectType:expectedObjectType]);
+    [self waitForObject:managerMock recordedInvocationCall:recorded withinInterval:self.testCompletionDelay afterBlock:^{
+        self.client.proto(expectedObjectType, expectedIdentifier).remove();
+    }];
 }
 
-- (void)testProtoUnregisterProtoPlugin_ShouldNotUnregisterUsingPluginsManager_WhenUnsupportedClassPassed {
+- (void)testProtoUnregisterProtoPlugin_ShouldNotUnregisterUsingPluginsManager_WhenUnknownObjectTypePassed {
     
-    id pluginsManagerPartialMock = [self partialMockForObject:self.client.pluginsManager];
     NSString *expectedIdentifier = CEDummyPlugin.identifier;
     NSString *expectedObjectType = @"PubNub";
     
-    OCMExpect([[pluginsManagerPartialMock reject] unregisterProtoPluginWithIdentifier:[OCMArg any] forObjectType:[OCMArg any]]);
     
-    [self.client unregisterProtoPluginWithIdentifier:expectedIdentifier forObjectType:expectedObjectType];
-    
-    OCMVerifyAll(pluginsManagerPartialMock);
+    id managerMock = [self mockForObject:self.client.pluginsManager];
+    id recorded = OCMExpect([[managerMock reject] unregisterProtoPluginWithIdentifier:[OCMArg any] forObjectType:[OCMArg any]]);
+    [self waitForObject:managerMock recordedInvocationNotCall:recorded withinInterval:self.falseTestCompletionDelay afterBlock:^{
+        [self.client unregisterProtoPluginWithIdentifier:expectedIdentifier forObjectType:expectedObjectType];
+    }];
 }
 
 - (void)testProtoUnregisterProtoPlugin_ShouldNotUnregisterUsingPluginsManager_WhenNonNSStringIdentifierPassed {
     
-    id pluginsManagerPartialMock = [self partialMockForObject:self.client.pluginsManager];
     NSString *expectedIdentifier = (id)@2010;
-    NSString *expectedObjectType = @"PubNub";
+    NSString *expectedObjectType = @"Search";
     
-    OCMExpect([[pluginsManagerPartialMock reject] unregisterProtoPluginWithIdentifier:[OCMArg any] forObjectType:[OCMArg any]]);
     
-    [self.client unregisterProtoPluginWithIdentifier:expectedIdentifier forObjectType:expectedObjectType];
-    
-    OCMVerifyAll(pluginsManagerPartialMock);
+    id managerMock = [self mockForObject:self.client.pluginsManager];
+    id recorded = OCMExpect([[managerMock reject] unregisterProtoPluginWithIdentifier:[OCMArg any] forObjectType:[OCMArg any]]);
+    [self waitForObject:managerMock recordedInvocationNotCall:recorded withinInterval:self.falseTestCompletionDelay afterBlock:^{
+        [self.client unregisterProtoPluginWithIdentifier:expectedIdentifier forObjectType:expectedObjectType];
+    }];
 }
 
 - (void)testProtoUnregisterProtoPlugin_ShouldNotUnregisterUsingPluginsManager_WhenEmptyIdentifierPassed {
     
-    id pluginsManagerPartialMock = [self partialMockForObject:self.client.pluginsManager];
-    NSString *expectedObjectType = @"PubNub";
+    NSString *expectedObjectType = @"Search";
     NSString *expectedIdentifier = @"";
     
-    OCMExpect([[pluginsManagerPartialMock reject] unregisterProtoPluginWithIdentifier:[OCMArg any] forObjectType:[OCMArg any]]);
     
-    [self.client unregisterProtoPluginWithIdentifier:expectedIdentifier forObjectType:expectedObjectType];
-    
-    OCMVerifyAll(pluginsManagerPartialMock);
+    id managerMock = [self mockForObject:self.client.pluginsManager];
+    id recorded = OCMExpect([[managerMock reject] unregisterProtoPluginWithIdentifier:[OCMArg any] forObjectType:[OCMArg any]]);
+    [self waitForObject:managerMock recordedInvocationNotCall:recorded withinInterval:self.falseTestCompletionDelay afterBlock:^{
+        [self.client unregisterProtoPluginWithIdentifier:expectedIdentifier forObjectType:expectedObjectType];
+    }];
 }
 
 
@@ -410,54 +400,54 @@
 
 - (void)testHasPluginWithIdentifier_ShouldSearchObjectPluginUsingPluginsManager {
     
-    id pluginsManagerPartialMock = [self partialMockForObject:self.client.pluginsManager];
     CENUser *expectedObject = self.client.User(@"tests").create();
     NSString *expectedIdentifier = CEDummyPlugin.identifier;
     
-    OCMExpect([pluginsManagerPartialMock hasPluginWithIdentifier:expectedIdentifier forObject:expectedObject]);
     
-    [self.client hasPluginWithIdentifier:expectedIdentifier forObject:expectedObject];
-    
-    OCMVerifyAll(pluginsManagerPartialMock);
+    id managerMock = [self mockForObject:self.client.pluginsManager];
+    id recorded = OCMExpect([managerMock hasPluginWithIdentifier:expectedIdentifier forObject:expectedObject]);
+    [self waitForObject:managerMock recordedInvocationCall:recorded withinInterval:self.testCompletionDelay afterBlock:^{
+        [self.client hasPluginWithIdentifier:expectedIdentifier forObject:expectedObject];
+    }];
 }
 
 - (void)testHasPluginWithIdentifier_ShouldNotSearchObjectPluginUsingPluginsManager_WhenUnsupportedObjectInstancePassed {
     
-    id pluginsManagerPartialMock = [self partialMockForObject:self.client.pluginsManager];
     NSString *expectedIdentifier = CEDummyPlugin.identifier;
     id expectedObject = [NSArray new];
     
-    OCMExpect([[pluginsManagerPartialMock reject] hasPluginWithIdentifier:[OCMArg any] forObject:[OCMArg any]]);
     
-    [self.client hasPluginWithIdentifier:expectedIdentifier forObject:expectedObject];
-    
-    OCMVerifyAll(pluginsManagerPartialMock);
+    id managerMock = [self mockForObject:self.client.pluginsManager];
+    id recorded = OCMExpect([[managerMock reject] hasPluginWithIdentifier:[OCMArg any] forObject:[OCMArg any]]);
+    [self waitForObject:managerMock recordedInvocationNotCall:recorded withinInterval:self.falseTestCompletionDelay afterBlock:^{
+        [self.client hasPluginWithIdentifier:expectedIdentifier forObject:expectedObject];
+    }];
 }
 
 - (void)testHasPluginWithIdentifier_ShouldNotSearchObjectPluginUsingPluginsManager_WhenNonNSStringIdentifierPassed {
     
-    id pluginsManagerPartialMock = [self partialMockForObject:self.client.pluginsManager];
     CENUser *expectedObject = self.client.User(@"tests").create();
     NSString *expectedIdentifier = (id)@2010;
     
-    OCMExpect([[pluginsManagerPartialMock reject] hasPluginWithIdentifier:[OCMArg any] forObject:[OCMArg any]]);
     
-    [self.client hasPluginWithIdentifier:expectedIdentifier forObject:expectedObject];
-    
-    OCMVerifyAll(pluginsManagerPartialMock);
+    id managerMock = [self mockForObject:self.client.pluginsManager];
+    id recorded = OCMExpect([[managerMock reject] hasPluginWithIdentifier:[OCMArg any] forObject:[OCMArg any]]);
+    [self waitForObject:managerMock recordedInvocationNotCall:recorded withinInterval:self.falseTestCompletionDelay afterBlock:^{
+        [self.client hasPluginWithIdentifier:expectedIdentifier forObject:expectedObject];
+    }];
 }
 
 - (void)testHasPluginWithIdentifier_ShouldNotSearchObjectPluginUsingPluginsManager_WhenEmptyIdentifierPassed {
     
-    id pluginsManagerPartialMock = [self partialMockForObject:self.client.pluginsManager];
     CENUser *expectedObject = self.client.User(@"tests").create();
     NSString *expectedIdentifier = @"";
     
-    OCMExpect([[pluginsManagerPartialMock reject] hasPluginWithIdentifier:[OCMArg any] forObject:[OCMArg any]]);
     
-    [self.client hasPluginWithIdentifier:expectedIdentifier forObject:expectedObject];
-    
-    OCMVerifyAll(pluginsManagerPartialMock);
+    id managerMock = [self mockForObject:self.client.pluginsManager];
+    id recorded = OCMExpect([[managerMock reject] hasPluginWithIdentifier:[OCMArg any] forObject:[OCMArg any]]);
+    [self waitForObject:managerMock recordedInvocationNotCall:recorded withinInterval:self.falseTestCompletionDelay afterBlock:^{
+        [self.client hasPluginWithIdentifier:expectedIdentifier forObject:expectedObject];
+    }];
 }
 
 
@@ -465,87 +455,92 @@
 
 - (void)testRegisterPlugin_ShouldRegisterObjectPluginUsingPluginsManager {
     
-    id pluginsManagerPartialMock = [self partialMockForObject:self.client.pluginsManager];
     NSDictionary *expectedConfiguration = @{ @"plugin": @"configuration" };
     CENUser *expectedObject = self.client.User(@"tests").create();
     NSString *expectedIdentifier = CEDummyPlugin.identifier;
     Class expectedClass = [CEDummyPlugin class];
     
-    OCMExpect([pluginsManagerPartialMock registerPlugin:expectedClass withIdentifier:expectedIdentifier configuration:expectedConfiguration
-                                              forObject:expectedObject firstInList:NO completion:[OCMArg any]]);
     
-    [self.client registerPlugin:expectedClass withIdentifier:expectedIdentifier configuration:expectedConfiguration
-                      forObject:expectedObject firstInList:NO completion:^{}];
-    
-    OCMVerifyAll(pluginsManagerPartialMock);
+    id managerMock = [self mockForObject:self.client.pluginsManager];
+    id recorded = OCMExpect([managerMock registerPlugin:expectedClass withIdentifier:expectedIdentifier
+                                          configuration:expectedConfiguration forObject:expectedObject firstInList:NO
+                                             completion:[OCMArg any]]);
+    [self waitForObject:managerMock recordedInvocationCall:recorded withinInterval:self.testCompletionDelay afterBlock:^{
+        [self.client registerPlugin:expectedClass withIdentifier:expectedIdentifier configuration:expectedConfiguration
+                          forObject:expectedObject firstInList:NO completion:^{}];
+    }];
 }
 
 - (void)testRegisterPlugin_ShouldNotRegisterObjectPluginUsingPluginsManager_WhenUnsupportedObjectInstancePassed {
     
-    id pluginsManagerPartialMock = [self partialMockForObject:self.client.pluginsManager];
     NSDictionary *expectedConfiguration = @{ @"plugin": @"configuration" };
     NSString *expectedIdentifier = CEDummyPlugin.identifier;
     Class expectedClass = [CEDummyPlugin class];
     id expectedObject = [NSArray new];
     
-    OCMExpect([[pluginsManagerPartialMock reject] registerPlugin:[OCMArg any] withIdentifier:[OCMArg any] configuration:[OCMArg any]
-                                                       forObject:[OCMArg any] firstInList:NO completion:[OCMArg any]]);
     
-    [self.client registerPlugin:expectedClass withIdentifier:expectedIdentifier configuration:expectedConfiguration
-                      forObject:expectedObject firstInList:NO completion:^{}];
-    
-    OCMVerifyAll(pluginsManagerPartialMock);
+    id managerMock = [self mockForObject:self.client.pluginsManager];
+    id recorded = OCMExpect([[managerMock reject] registerPlugin:[OCMArg any] withIdentifier:[OCMArg any]
+                                                   configuration:[OCMArg any] forObject:[OCMArg any] firstInList:NO
+                                                      completion:[OCMArg any]]);
+    [self waitForObject:managerMock recordedInvocationNotCall:recorded withinInterval:self.falseTestCompletionDelay afterBlock:^{
+        [self.client registerPlugin:expectedClass withIdentifier:expectedIdentifier configuration:expectedConfiguration
+                          forObject:expectedObject firstInList:NO completion:^{}];
+    }];
 }
 
 - (void)testRegisterPlugin_ShouldNotRegisterObjectPluginUsingPluginsManager_WhenUnsupportedClassPassed {
     
-    id pluginsManagerPartialMock = [self partialMockForObject:self.client.pluginsManager];
     NSDictionary *expectedConfiguration = @{ @"plugin": @"configuration" };
     CENUser *expectedObject = self.client.User(@"tests").create();
     NSString *expectedIdentifier = CEDummyPlugin.identifier;
     Class expectedClass = [NSArray class];
     
-    OCMExpect([[pluginsManagerPartialMock reject] registerPlugin:[OCMArg any] withIdentifier:[OCMArg any] configuration:[OCMArg any]
-                                                       forObject:[OCMArg any] firstInList:NO completion:[OCMArg any]]);
     
-    [self.client registerPlugin:expectedClass withIdentifier:expectedIdentifier configuration:expectedConfiguration
-                      forObject:expectedObject firstInList:NO completion:^{}];
-    
-    OCMVerifyAll(pluginsManagerPartialMock);
+    id managerMock = [self mockForObject:self.client.pluginsManager];
+    id recorded = OCMExpect([[managerMock reject] registerPlugin:[OCMArg any] withIdentifier:[OCMArg any]
+                                                   configuration:[OCMArg any] forObject:[OCMArg any] firstInList:NO
+                                                      completion:[OCMArg any]]);
+    [self waitForObject:managerMock recordedInvocationNotCall:recorded withinInterval:self.falseTestCompletionDelay afterBlock:^{
+        [self.client registerPlugin:expectedClass withIdentifier:expectedIdentifier configuration:expectedConfiguration
+                          forObject:expectedObject firstInList:NO completion:^{}];
+    }];
 }
 
 - (void)testRegisterPlugin_ShouldNotRegisterObjectPluginUsingPluginsManager_WhenNonNSStringIdentifierPassed {
     
-    id pluginsManagerPartialMock = [self partialMockForObject:self.client.pluginsManager];
     NSDictionary *expectedConfiguration = @{ @"plugin": @"configuration" };
     CENUser *expectedObject = self.client.User(@"tests").create();
     Class expectedClass = [CEDummyPlugin class];
     NSString *expectedIdentifier = (id)@2010;
     
-    OCMExpect([[pluginsManagerPartialMock reject] registerPlugin:[OCMArg any] withIdentifier:[OCMArg any] configuration:[OCMArg any]
-                                                       forObject:[OCMArg any] firstInList:NO completion:[OCMArg any]]);
     
-    [self.client registerPlugin:expectedClass withIdentifier:expectedIdentifier configuration:expectedConfiguration
-                      forObject:expectedObject firstInList:NO completion:^{}];
-    
-    OCMVerifyAll(pluginsManagerPartialMock);
+    id managerMock = [self mockForObject:self.client.pluginsManager];
+    id recorded = OCMExpect([[managerMock reject] registerPlugin:[OCMArg any] withIdentifier:[OCMArg any]
+                                                   configuration:[OCMArg any] forObject:[OCMArg any] firstInList:NO
+                                                      completion:[OCMArg any]]);
+    [self waitForObject:managerMock recordedInvocationNotCall:recorded withinInterval:self.falseTestCompletionDelay afterBlock:^{
+        [self.client registerPlugin:expectedClass withIdentifier:expectedIdentifier configuration:expectedConfiguration
+                          forObject:expectedObject firstInList:NO completion:^{}];
+    }];
 }
 
 - (void)testRegisterPlugin_ShouldNotRegisterObjectPluginUsingPluginsManager_WhenEmptyIdentifierPassed {
     
-    id pluginsManagerPartialMock = [self partialMockForObject:self.client.pluginsManager];
     NSDictionary *expectedConfiguration = @{ @"plugin": @"configuration" };
     CENUser *expectedObject = self.client.User(@"tests").create();
     Class expectedClass = [CEDummyPlugin class];
     NSString *expectedIdentifier = @"";
     
-    OCMExpect([[pluginsManagerPartialMock reject] registerPlugin:[OCMArg any] withIdentifier:[OCMArg any] configuration:[OCMArg any]
-                                                       forObject:[OCMArg any] firstInList:NO completion:[OCMArg any]]);
     
-    [self.client registerPlugin:expectedClass withIdentifier:expectedIdentifier configuration:expectedConfiguration
-                      forObject:expectedObject firstInList:NO completion:^{}];
-    
-    OCMVerifyAll(pluginsManagerPartialMock);
+    id managerMock = [self mockForObject:self.client.pluginsManager];
+    id recorded = OCMExpect([[managerMock reject] registerPlugin:[OCMArg any] withIdentifier:[OCMArg any]
+                                                   configuration:[OCMArg any] forObject:[OCMArg any] firstInList:NO
+                                                      completion:[OCMArg any]]);
+    [self waitForObject:managerMock recordedInvocationNotCall:recorded withinInterval:self.falseTestCompletionDelay afterBlock:^{
+        [self.client registerPlugin:expectedClass withIdentifier:expectedIdentifier configuration:expectedConfiguration
+                          forObject:expectedObject firstInList:NO completion:^{}];
+    }];
 }
 
 
@@ -553,54 +548,54 @@
 
 - (void)testUnregisterObjects_ShouldUnregisterObjectPluginUsingPluginsManager {
     
-    id pluginsManagerPartialMock = [self partialMockForObject:self.client.pluginsManager];
     CENUser *expectedObject = self.client.User(@"tests").create();
     NSString *expectedIdentifier = CEDummyPlugin.identifier;
     
-    OCMExpect([pluginsManagerPartialMock unregisterObjects:expectedObject pluginWithIdentifier:expectedIdentifier]);
     
-    [self.client unregisterObjects:expectedObject pluginWithIdentifier:expectedIdentifier];
-    
-    OCMVerifyAll(pluginsManagerPartialMock);
+    id managerMock = [self mockForObject:self.client.pluginsManager];
+    id recorded = OCMExpect([managerMock unregisterObjects:expectedObject pluginWithIdentifier:expectedIdentifier]);
+    [self waitForObject:managerMock recordedInvocationCall:recorded withinInterval:self.testCompletionDelay afterBlock:^{
+        [self.client unregisterObjects:expectedObject pluginWithIdentifier:expectedIdentifier];
+    }];
 }
 
 - (void)testUnregisterObjects_ShouldNotUnregisterObjectPluginUsingPluginsManager_WhenUnsupportedObjectInstancePassed {
     
-    id pluginsManagerPartialMock = [self partialMockForObject:self.client.pluginsManager];
     NSString *expectedIdentifier = CEDummyPlugin.identifier;
     id expectedObject = [NSArray new];
     
-    OCMExpect([[pluginsManagerPartialMock reject] unregisterObjects:[OCMArg any] pluginWithIdentifier:[OCMArg any]]);
     
-    [self.client unregisterObjects:expectedObject pluginWithIdentifier:expectedIdentifier];
-    
-    OCMVerifyAll(pluginsManagerPartialMock);
+    id managerMock = [self mockForObject:self.client.pluginsManager];
+    id recorded = OCMExpect([[managerMock reject] unregisterObjects:[OCMArg any] pluginWithIdentifier:[OCMArg any]]);
+    [self waitForObject:managerMock recordedInvocationNotCall:recorded withinInterval:self.falseTestCompletionDelay afterBlock:^{
+        [self.client unregisterObjects:expectedObject pluginWithIdentifier:expectedIdentifier];
+    }];
 }
 
 - (void)testUnregisterObjects_ShouldNotUnregisterObjectPluginUsingPluginsManager_WhenNonNSStringIdentifierPassed {
     
-    id pluginsManagerPartialMock = [self partialMockForObject:self.client.pluginsManager];
+    CENUser *expectedObject = self.client.User(@"tests").create();
     NSString *expectedIdentifier = (id)@2010;
-    id expectedObject = [CEDummyPlugin new];
     
-    OCMExpect([[pluginsManagerPartialMock reject] unregisterObjects:[OCMArg any] pluginWithIdentifier:[OCMArg any]]);
     
-    [self.client unregisterObjects:expectedObject pluginWithIdentifier:expectedIdentifier];
-    
-    OCMVerifyAll(pluginsManagerPartialMock);
+    id managerMock = [self mockForObject:self.client.pluginsManager];
+    id recorded = OCMExpect([[managerMock reject] unregisterObjects:[OCMArg any] pluginWithIdentifier:[OCMArg any]]);
+    [self waitForObject:managerMock recordedInvocationNotCall:recorded withinInterval:self.falseTestCompletionDelay afterBlock:^{
+        [self.client unregisterObjects:expectedObject pluginWithIdentifier:expectedIdentifier];
+    }];
 }
 
 - (void)testUnregisterObjects_ShouldNotUnregisterObjectPluginUsingPluginsManager_WhenEmptyIdentifierPassed {
     
-    id pluginsManagerPartialMock = [self partialMockForObject:self.client.pluginsManager];
-    id expectedObject = [CEDummyPlugin new];
+    CENUser *expectedObject = self.client.User(@"tests").create();
     NSString *expectedIdentifier = @"";
     
-    OCMExpect([[pluginsManagerPartialMock reject] unregisterObjects:[OCMArg any] pluginWithIdentifier:[OCMArg any]]);
     
-    [self.client unregisterObjects:expectedObject pluginWithIdentifier:expectedIdentifier];
-    
-    OCMVerifyAll(pluginsManagerPartialMock);
+    id managerMock = [self mockForObject:self.client.pluginsManager];
+    id recorded = OCMExpect([[managerMock reject] unregisterObjects:[OCMArg any] pluginWithIdentifier:[OCMArg any]]);
+    [self waitForObject:managerMock recordedInvocationNotCall:recorded withinInterval:self.falseTestCompletionDelay afterBlock:^{
+        [self.client unregisterObjects:expectedObject pluginWithIdentifier:expectedIdentifier];
+    }];
 }
 
 
@@ -608,27 +603,26 @@
 
 - (void)testUnregisterAllPluginsFromObjects_ShouldUnregisterAllObjectsPluginsUsingPluginsManager {
     
-    id pluginsManagerPartialMock = [self partialMockForObject:self.client.pluginsManager];
     CENUser *expectedObject = self.client.User(@"tests").create();
 
-    OCMExpect([pluginsManagerPartialMock unregisterAllFromObjects:expectedObject]);
     
-    [self.client unregisterAllPluginsFromObjects:expectedObject];
-    
-    OCMVerifyAll(pluginsManagerPartialMock);
+    id managerMock = [self mockForObject:self.client.pluginsManager];
+    id recorded = OCMExpect([managerMock unregisterAllFromObjects:expectedObject]);
+    [self waitForObject:managerMock recordedInvocationCall:recorded withinInterval:self.testCompletionDelay afterBlock:^{
+        [self.client unregisterAllPluginsFromObjects:expectedObject];
+    }];
 }
 
 - (void)testUnregisterAllPluginsFromObjects_ShouldNotUnregisterAllObjectsPluginsUsingPluginsManager_WhenUnsupportedObjectInstancePassed {
     
-    id pluginsManagerPartialMock = [self partialMockForObject:self.client.pluginsManager];
     id expectedObject = [NSArray new];
     
-    OCMExpect([[pluginsManagerPartialMock reject] unregisterAllFromObjects:[OCMArg any]]);
     
-    [self.client unregisterAllPluginsFromObjects:expectedObject];
-    
-    OCMVerifyAll(pluginsManagerPartialMock);
-    [pluginsManagerPartialMock stopMocking];
+    id managerMock = [self mockForObject:self.client.pluginsManager];
+    id recorded = OCMExpect([[managerMock reject] unregisterAllFromObjects:[OCMArg any]]);
+    [self waitForObject:managerMock recordedInvocationNotCall:recorded withinInterval:self.falseTestCompletionDelay afterBlock:^{
+        [self.client unregisterAllPluginsFromObjects:expectedObject];
+    }];
 }
 
 
@@ -636,72 +630,77 @@
 
 - (void)testExtensionForObject_ShouldRequestExtensionFromPluginsManager {
     
-    id pluginsManagerPartialMock = [self partialMockForObject:self.client.pluginsManager];
     CENUser *expectedObject = self.client.User(@"tests").create();
     NSString *expectedIdentifier = CEDummyPlugin.identifier;
     void(^expectedContextBlock)(id) = ^(id extension) {};
     
-    OCMExpect([pluginsManagerPartialMock extensionForObject:expectedObject withIdentifier:expectedIdentifier context:expectedContextBlock]);
     
-    [self.client extensionForObject:expectedObject withIdentifier:expectedIdentifier context:expectedContextBlock];
-    
-    OCMVerifyAll(pluginsManagerPartialMock);
+    id managerMock = [self mockForObject:self.client.pluginsManager];
+    id recorded = OCMExpect([managerMock extensionForObject:expectedObject withIdentifier:expectedIdentifier
+                                                    context:expectedContextBlock]);
+    [self waitForObject:managerMock recordedInvocationCall:recorded withinInterval:self.testCompletionDelay afterBlock:^{
+        [self.client extensionForObject:expectedObject withIdentifier:expectedIdentifier context:expectedContextBlock];
+    }];
 }
 
 - (void)testExtensionForObject_ShouldNotRequestExtensionFromPluginsManager_WhenUnsupportedObjectInstancePassed {
     
-    id pluginsManagerPartialMock = [self partialMockForObject:self.client.pluginsManager];
     NSString *expectedIdentifier = CEDummyPlugin.identifier;
     void(^expectedContextBlock)(id) = ^(id extension) {};
     id expectedObject = [NSArray new];
     
-    OCMExpect([[pluginsManagerPartialMock reject] extensionForObject:[OCMArg any] withIdentifier:[OCMArg any] context:[OCMArg any]]);
     
-    [self.client extensionForObject:expectedObject withIdentifier:expectedIdentifier context:expectedContextBlock];
-    
-    OCMVerifyAll(pluginsManagerPartialMock);
+    id managerMock = [self mockForObject:self.client.pluginsManager];
+    id recorded = OCMExpect([[managerMock reject] extensionForObject:[OCMArg any] withIdentifier:[OCMArg any]
+                                                             context:[OCMArg any]]);
+    [self waitForObject:managerMock recordedInvocationNotCall:recorded withinInterval:self.falseTestCompletionDelay afterBlock:^{
+        [self.client extensionForObject:expectedObject withIdentifier:expectedIdentifier context:expectedContextBlock];
+    }];
 }
 
 - (void)testExtensionForObject_ShouldNotRequestExtensionFromPluginsManager_WhenNonNSStringIdentifierPassed {
     
-    id pluginsManagerPartialMock = [self partialMockForObject:self.client.pluginsManager];
     CENUser *expectedObject = self.client.User(@"tests").create();
     void(^expectedContextBlock)(id) = ^(id extension) {};
     NSString *expectedIdentifier = (id)@2010;
     
-    OCMExpect([[pluginsManagerPartialMock reject] extensionForObject:[OCMArg any] withIdentifier:[OCMArg any] context:[OCMArg any]]);
     
-    [self.client extensionForObject:expectedObject withIdentifier:expectedIdentifier context:expectedContextBlock];
-    
-    OCMVerifyAll(pluginsManagerPartialMock);
+    id managerMock = [self mockForObject:self.client.pluginsManager];
+    id recorded = OCMExpect([[managerMock reject] extensionForObject:[OCMArg any] withIdentifier:[OCMArg any]
+                                                             context:[OCMArg any]]);
+    [self waitForObject:managerMock recordedInvocationNotCall:recorded withinInterval:self.falseTestCompletionDelay afterBlock:^{
+        [self.client extensionForObject:expectedObject withIdentifier:expectedIdentifier context:expectedContextBlock];
+    }];
 }
 
 - (void)testExtensionForObject_ShouldNotRequestExtensionFromPluginsManager_WhenEmptyIdentifierPassed {
     
-    id pluginsManagerPartialMock = [self partialMockForObject:self.client.pluginsManager];
     CENUser *expectedObject = self.client.User(@"tests").create();
     void(^expectedContextBlock)(id) = ^(id extension) {};
     NSString *expectedIdentifier = @"";
     
-    OCMExpect([[pluginsManagerPartialMock reject] extensionForObject:[OCMArg any] withIdentifier:[OCMArg any] context:[OCMArg any]]);
     
-    [self.client extensionForObject:expectedObject withIdentifier:expectedIdentifier context:expectedContextBlock];
-    
-    OCMVerifyAll(pluginsManagerPartialMock);
+    id managerMock = [self mockForObject:self.client.pluginsManager];
+    id recorded = OCMExpect([[managerMock reject] extensionForObject:[OCMArg any] withIdentifier:[OCMArg any]
+                                                             context:[OCMArg any]]);
+    [self waitForObject:managerMock recordedInvocationNotCall:recorded withinInterval:self.falseTestCompletionDelay afterBlock:^{
+        [self.client extensionForObject:expectedObject withIdentifier:expectedIdentifier context:expectedContextBlock];
+    }];
 }
 
 - (void)testExtensionForObject_ShouldNotRequestExtensionFromPluginsManager_WhenNilContextBlockPassed {
     
-    id pluginsManagerPartialMock = [self partialMockForObject:self.client.pluginsManager];
     CENUser *expectedObject = self.client.User(@"tests").create();
     NSString *expectedIdentifier = CEDummyPlugin.identifier;
     void(^expectedContextBlock)(id) = nil;
     
-    OCMExpect([[pluginsManagerPartialMock reject] extensionForObject:[OCMArg any] withIdentifier:[OCMArg any] context:[OCMArg any]]);
     
-    [self.client extensionForObject:expectedObject withIdentifier:expectedIdentifier context:expectedContextBlock];
-    
-    OCMVerifyAll(pluginsManagerPartialMock);
+    id managerMock = [self mockForObject:self.client.pluginsManager];
+    id recorded = OCMExpect([[managerMock reject] extensionForObject:[OCMArg any] withIdentifier:[OCMArg any]
+                                                             context:[OCMArg any]]);
+    [self waitForObject:managerMock recordedInvocationNotCall:recorded withinInterval:self.falseTestCompletionDelay afterBlock:^{
+        [self.client extensionForObject:expectedObject withIdentifier:expectedIdentifier context:expectedContextBlock];
+    }];
 }
 
 
@@ -710,21 +709,30 @@
 - (void)testRunMiddlewaresAtLocation_ShouldRequestToRunMiddlewaresUsingPluginsManager {
     
     NSMutableDictionary *expectedPayload = [NSMutableDictionary dictionaryWithDictionary:@{ @"test": @"payload" }];
-    id pluginsManagerPartialMock = [self partialMockForObject:self.client.pluginsManager];
     CENUser *expectedObject = self.client.User(@"tests").create();
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     NSString *expectedLocation = CEPMiddlewareLocation.on;
     NSString *expectedEvent = @"test-event";
     
-    OCMExpect([pluginsManagerPartialMock runMiddlewaresAtLocation:expectedLocation forEvent:expectedEvent object:expectedObject
+    
+    id managerMock = [self mockForObject:self.client.pluginsManager];
+    id recorded = OCMExpect([managerMock runMiddlewaresAtLocation:expectedLocation forEvent:expectedEvent object:expectedObject
                                                       withPayload:expectedPayload completion:[OCMArg any]]);
+    [self waitForObject:managerMock recordedInvocationCall:recorded withinInterval:self.testCompletionDelay afterBlock:^{
+        [self.client runMiddlewaresAtLocation:expectedLocation forEvent:expectedEvent object:expectedObject
+                                  withPayload:expectedPayload completion:^(BOOL rejected, id data) { }];
+    }];
+}
+
+
+#pragma mark - Tests :: destroyPubNub
+
+- (void)testDestroyPlugins_ShouldCallPluginsManagerDestroy {
     
-    [self.client runMiddlewaresAtLocation:expectedLocation forEvent:expectedEvent object:expectedObject withPayload:expectedPayload
-                                      completion:^(BOOL rejected, id data) { }];
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.f * NSEC_PER_SEC)));
-    
-    OCMVerifyAll(pluginsManagerPartialMock);
+    id managerMock = [self mockForObject:self.client.pluginsManager];
+    id recorded = OCMExpect([managerMock destroy]);
+    [self waitForObject:managerMock recordedInvocationCall:recorded withinInterval:self.testCompletionDelay afterBlock:^{
+        [self.client destroyPlugins];
+    }];
 }
 
 #pragma mark -

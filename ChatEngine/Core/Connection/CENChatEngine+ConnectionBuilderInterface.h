@@ -9,75 +9,80 @@
 NS_ASSUME_NONNULL_BEGIN
 
 /**
- * @brief      \b ChatEngine client interface for \c user's connection management.
- * @discussion This is extended Objective-C interface to provide builder pattern for methods invocation.
+ * @brief \b {ChatEngine CENChatEngine} client interface for \b {local user CENMe} connection
+ * management.
  *
  * @author Serhii Mamontov
- * @version 0.9.0
- * @copyright © 2009-2018 PubNub, Inc.
+ * @version 0.10.0
+ * @copyright © 2010-2018 PubNub, Inc.
  */
 @interface CENChatEngine (ConnectionBuilderInterface)
 
-
-#pragma mark - Connection
-
 /**
- * @brief      Prepare and connect \b ChatEngine to real-time network on behalf of user identified by his UUID.
- * @discussion Builder block allow to specify \b required client's identifier which will be used to authenticate user with
- *             \b ChatEngine network.
- * @discussion Available builder parameters can be specified in different variations depending from needs.
+ * @brief \b {ChatEngine CENChatEngine} client connection API builder.
  *
- * @discussion Connect to real-time network with user identifier:
+ * @note Builder parameters can be specified in different variations depending from needs.
+ *
+ * @discussion Connect to real-time network with \b {local user CENMe} identifier
  * @code
- * CENConfiguration *configuration = [CENConfiguration configurationWithPublishKey:@"demo-36" subscribeKey:@"demo-36"];
- * self.client = [CENChatEngine clientWithConfiguration:configuration];
+ * // objc bfeda931-4a5f-440c-acd7-d5f8ca3bd1ee
+ *
  * self.client.connect(@"ChatEngine").perform();
  * @endcode
  *
- * @discussion Connect to real-time network with user state:
+ * @discussion Connect to real-time network with \b {local user CENMe} authorization key
  * @code
- * CENConfiguration *configuration = [CENConfiguration configurationWithPublishKey:@"demo-36" subscribeKey:@"demo-36"];
- * self.client = [CENChatEngine clientWithConfiguration:configuration];
- * self.client.connect(@"ChatEngine").state(@{ @"name": @"PubNub" }).perform();
+ * // objc 96b69724-b16a-462b-8c62-98e98f32457f
+ *
+ * self.client.connect(@"ChatEngine").authKey(@"secret").perform();
  * @endcode
  *
- * @discussion Connect to real-time network with user authorization key:
- * @code
- * CENConfiguration *configuration = [CENConfiguration configurationWithPublishKey:@"demo-36" subscribeKey:@"demo-36"];
- * self.client = CENChatEngine.Client(configuration);
- * self.client.connect(@"ChatEngine").state(@{ @"name": @"PubNub" }).authKey(@"secret").perform();
- * @endcode
+ * @param uuid Unique alphanumeric identifier for \b {local user CENMe}. It can be a device id,
+ *     username, user id, email, etc.
+ *
+ * @return Builder instance which allow to complete local user connection call configuration.
  */
 @property (nonatomic, readonly, strong) CENUserConnectBuilderInterface * (^connect)(NSString *uuid);
 
 /**
- * @brief Re-connect previously disconnected \b ChatEngine instance.
+ * @brief Performs authentication with server and restores connection to all sleeping chats.
  *
- * @discussion Reconnect after client has been disconnected:
  * @code
- * CENConfiguration *configuration = [CENConfiguration configurationWithPublishKey:@"demo-36" subscribeKey:@"demo-36"];
- * self.client = [CENChatEngine clientWithConfiguration:configuration];
- * // .....
- * // user requested to disconnect from ChatEngine real-time network or there was another issues which caused client
- * // disconnection.
- * // .....
- * // user requested to restore real-time data update.
+ * // objc c24e2017-d181-43ef-b898-d8e703aa71cb
+ *
+ * // Create a new chat
+ * CENChat *chat = self.client.Chat().create();
+ *
+ * // Disconnect from ChatEngine
+ * self.client.disconnect();
+ *
+ * // Reconnect sometime later.
  * self.client.reconnect();
  * @endcode
+ *
+ * @return \b {ChatEngine CENChatEngine} client which can be used to chain other methods call.
+ *
+ * @ref adce6026-d56f-41e3-a8a5-cb95bf108016
  */
 @property (nonatomic, readonly, strong) CENChatEngine * (^reconnect)(void);
 
 /**
- * @brief  Disconnect \b ChatEngine from real-time network and stop any updates.
+ * @brief Disconnect \b {local user CENMe} from real-time service and stop receiving updates from
+ * chat(s) to which he was connected.
  *
- * @discussion Disconnect ChatEngine from real-time network:
  * @code
- * CENConfiguration *configuration = [CENConfiguration configurationWithPublishKey:@"demo-36" subscribeKey:@"demo-36"];
- * self.client = [CENChatEngine clientWithConfiguration:configuration];
- * // .....
- * // user requested to disconnect from ChatEngine real-time network.
+ * // objc f780d7d6-995e-428f-b01b-d56dd579f211
+ *
+ * // Create a new chat
+ * CENChat *chat = self.client.Chat().create();
+ *
+ * // Disconnect from ChatEngine.
  * self.client.disconnect();
  * @endcode
+ *
+ * @return \b {ChatEngine CENChatEngine} client which can be used to chain other methods call.
+ *
+ * @ref cb8bb38c-827e-45c1-b85b-4c55b7cf599d
  */
 @property (nonatomic, readonly, strong) CENChatEngine * (^disconnect)(void);
 

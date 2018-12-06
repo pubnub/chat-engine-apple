@@ -94,7 +94,8 @@
     
     NSString *expected = @"Some test description";
     
-    NSError *error = [CENError errorFromPubNubStatus:[self errorStatusWithCategory:PNMalformedResponseCategory] withDescription:expected];
+    NSError *error = [CENError errorFromPubNubStatus:[self errorStatusWithCategory:PNMalformedResponseCategory]
+                                     withDescription:expected];
     
     XCTAssertNotNil(error);
     XCTAssertEqualObjects(error.domain, kCENPNErrorDomain);
@@ -188,7 +189,8 @@
     processedData[@"information"] = [self informationForCategory:category];
     processedData[@"status"] = [self statusForCategory:category];
     
-    PNErrorStatus *status = [PNErrorStatus objectForOperation:PNSubscribeOperation completedWithTask:nil processedData:processedData processingError:nil];
+    PNErrorStatus *status = [PNErrorStatus objectForOperation:PNSubscribeOperation completedWithTask:nil
+                                                processedData:processedData processingError:nil];
     status.category = category;
     
     return status;

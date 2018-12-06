@@ -4,13 +4,13 @@
 #pragma mark Structures
 
 /**
- * @brief  Structure wich describe available configuration option key names.
+ * @brief Structure which describe available configuration option key names.
  */
 typedef struct CETypingIndicatorConfigurationKeys {
-    
     /**
-     * @brief      Stores reference on name of key under which stored active typing timeout.
-     * @discussion This is delay or user inactivity to send 'stop typing' event.
+     * @brief Typing event timeout.
+     *
+     * \b Default: \c 1.0
      */
     __unsafe_unretained NSString *timeout;
 } CENTypingIndicatorConfigurationKeys;
@@ -26,26 +26,37 @@ extern CENTypingIndicatorConfigurationKeys CENTypingIndicatorConfiguration;
 NS_ASSUME_NONNULL_BEGIN
 
 /**
- * @brief      \b CEChat typing indicator plugin.
- * @discussion This plugin adds the ability to send updates when user start / stop typing message.
+ * @brief \b {Chat CEChat} typing indicator plugin.
  *
- * @discussion Register plugin with pre-defined time to switch indicator off:
+ * @discussion Plugin adds the ability to send updates when user start / stop typing message.
+ *
+ * @discussion Setup with default configuration:
  * @code
- * CENConfiguration *configuration = [CENConfiguration configurationWithPublishKey:@"demo-36" subscribeKey:@"demo-36"];
- * self.client = [CENChatEngine clientWithConfiguration:configuration];
- * self.client.proto(@"Chat", [CENMarkdownPlugin class]).configuration(@{
- *     CENTypingIndicatorConfiguration.timeout: @(1.f)
- * }).store();
+ * // objc
+ * self.client.proto(@"Chat", [CENMarkdownPlugin class]).store();
+ *
+ * chat.on(@"$typingIndicator.*", ^(CENEmittedEvent *event) {
+ *     if ([event.event isEqualToString:@"$typingIndicator.startTyping"]) {
+ *         // Handle typing activity in chat started.
+ *     } else {
+ *         // Handle typing activity in chat stopped.
+ *     }
+ * });
  * @endcode
  *
- * @discussion Listen for typing indicator activity:
+ * @discussion Setup with custom timeout value:
  * @code
- * chat.on(@"$typingIndicator.startTyping", ^{
- *     // Handle typing activity in chat started.
- * });
+ * // objc
+ * self.client.proto(@"Chat", [CENMarkdownPlugin class]).configuration(@{
+ *     CENTypingIndicatorConfiguration.timeout: @(5.f)
+ * }).store();
  *
- * chat.on(@"$typingIndicator.stopTyping", ^{
- *     // Handle typing activity in chat stopped.
+ * chat.on(@"$typingIndicator.*", ^(CENEmittedEvent *event) {
+ *     if ([event.event isEqualToString:@"$typingIndicator.startTyping"]) {
+ *         // Handle typing activity in chat started.
+ *     } else {
+ *         // Handle typing activity in chat stopped.
+ *     }
  * });
  * @endcode
  *
@@ -59,36 +70,36 @@ NS_ASSUME_NONNULL_BEGIN
 #pragma mark - Extension
 
 /**
- * @brief      Update typing indicator state.
- * @discussion Set whether user currently typing or not.
+ * @brief Update typing indicator state.
  *
- * @discussion Manage typing indicator activity:
  * @code
+ * // objc
  * // Emit the typing event.
- * [CENTypingIndicatorPlugin setTyping:YES inChat:chat];
+ * [CENTypingIndicatorPlugin setTyping:YES inChat:self.chat];
  *
- * // Manually emit the stop tying event this is automagically emitted after the timeout period, or when a message is sent.
- * [CENTypingIndicatorPlugin setTyping:NO inChat:chat];
+ * // Manually emit the stop tying event this is automatically emitted after the timeout period,
+ * // or when a message is sent.
+ * [CENTypingIndicatorPlugin setTyping:NO inChat:self.chat];
  * @endcode
  *
- * @param isTyping Reference on flag which allow to specify whether user typing at this moment or not.
- * @param chat     Reference on \c chat instance for which typing indicator should be changed.
+ * @param isTyping Whether user typing at this moment or not.
+ * @param chat \b {Chat CENChat} for which typing indicator should be changed.
  */
 + (void)setTyping:(BOOL)isTyping inChat:(CENChat *)chat;
 
 /**
- * @brief  Check whether typing indicator currently \a ON in \c chat or not.
+ * @brief Check whether typing indicator currently \a ON in \b {chat CENChat} or not.
  *
- * @discussion \b Example:
  * @code
- * [CENTypingIndicatorPlugin checkIsTypingInChat:chat withCompletion:^(BOOL isTyping) {
+ * // objc
+ * [CENTypingIndicatorPlugin checkIsTypingInChat:self.chat withCompletion:^(BOOL isTyping) {
  *     // Handle received value.
  * }];
  * @endcode
  
- * @param chat  Reference on \c chat instance for which check should be done.
- * @param block Reference on block which will be called at the end of verification process. Block pass only one
- *              argument - whether typing indicator is active or not.
+ * @param chat \b {Chat CENChat} for which check should be done.
+ * @param block Block / closure which will be called at the end of check and pass whether typing
+ *     indicator currently on or off.
  */
 + (void)checkIsTypingInChat:(CENChat *)chat withCompletion:(void(^)(BOOL isTyping))block;
 

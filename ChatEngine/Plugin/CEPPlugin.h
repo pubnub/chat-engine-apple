@@ -1,12 +1,14 @@
 #import <Foundation/Foundation.h>
 
 
+NS_ASSUME_NONNULL_BEGIN
+
 /**
- * @brief  Class from which should be subclassed all other classes which is intended to be used as plugins.
+ * @brief Base class for \b {objects CENObject} plugins.
  *
  * @author Serhii Mamontov
- * @version 0.9.0
- * @copyright © 2009-2018 PubNub, Inc.
+ * @version 0.10.0
+ * @copyright © 2010-2018 PubNub, Inc.
  */
 @interface CEPPlugin : NSObject
 
@@ -15,3 +17,5 @@
 
 
 @end
+
+NS_ASSUME_NONNULL_END

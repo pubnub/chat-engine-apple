@@ -9,37 +9,42 @@
 NS_ASSUME_NONNULL_BEGIN
 
 /**
- * @brief  \b ChatEngine client interface for event publishing.
+ * @brief \b {ChatEngine CENChatEngine} client interface for event publishing.
  *
  * @author Serhii Mamontov
- * @version 0.9.0
- * @copyright © 2009-2018 PubNub, Inc.
+ * @version 0.10.0
+ * @copyright © 2010-2018 PubNub, Inc.
  */
 @interface CENChatEngine (Publish)
 
 /**
- * @brief  Create and configure event emitting instance.
- * @discussion Instance responsible for event delivery and progress updates notifications.
+ * @brief Create and configure event \b {emitter CENEvent} instance.
  *
- * @param chat      Reference on chat to which \c event should emit \c data.
- * @param eventName Reference on name of event which will allow to identify it on another side (participants of
- *                  chat).
- * @param data      Reference on object which should be sent along with event.
+ * @throws \b CENErrorDomain exception in following cases:
+ * - data is not \a NSDictionary.
  *
- * @return Configured and ready to use event emittin instance or \c nil in case if critical internal data missing.
+ * @param chat \b {Chat CENChat} to which \c event should emit \c data.
+ * @param eventName Name of event which will allow to identify it on another side (participants of
+ *     chat).
+ * @param data Dictionary with data which should be sent along with event.
+ *
+ * @return Configured and ready to use event \b {emitter CENEvent} instance or \c nil in case if
+ *     critical internal data missing.
  */
-- (nullable CENEvent *)publishToChat:(CENChat *)chat eventWithName:(NSString *)eventName data:(NSDictionary *)data;
+- (nullable CENEvent *)publishToChat:(CENChat *)chat
+                       eventWithName:(NSString *)eventName
+                                data:(NSDictionary *)data;
 
 /**
- * @brief  Perform actual data push using underlying \b PubNub client.
+ * @brief Perform actual data push using underlying \b PubNub client.
  *
- * @param shouldStoreInHistory Whether pushed data should be stored and available with history API.
- * @param event                Reference on name of event which will allow to identify it on another side
- *                             (participants of chat).
- * @param channel              Reference on channel (unique chat channel) to which data should be pushed.
- * @param data                 Reference on object which should be sent along with event.
- * @param block                Reference on block which should be called at the end of data push process. Block
- *                             pass only one argument - timestamp of time when \c data reached \b PubNub service.
+ * @param shouldStoreInHistory Whether pushed data should be stored and available with history API
+ *     or not.
+ * @param event Event \b {emitter CENEvent} instance.
+ * @param channel Channel (unique chat channel) to which data should be pushed.
+ * @param data Object which should be sent along with event.
+ * @param block Event emitting completion handler which pass date when payload has been delivered to
+ *     \b PubNub service.
  */
 - (void)publishStorable:(BOOL)shouldStoreInHistory
                   event:(CENEvent *)event

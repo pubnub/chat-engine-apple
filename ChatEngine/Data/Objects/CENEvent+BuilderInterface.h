@@ -3,159 +3,174 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-/**
- * @brief      Emitted event representation.
- * @discussion This model allow to represent emitted event and track it's progress.
- * @discussion This is extended Objective-C interface to provide builder pattern for methods invocation.
- *
- * @author Serhii Mamontov
- * @version 0.9.0
- * @copyright © 2009-2018 PubNub, Inc.
- */
+#pragma mark Builder interface declaration
+
 @interface CENEvent (BuilderInterface)
 
 
 #pragma mark - Handlers addition
 
 /**
- * @brief      Subscribe on particular \c event which will be emitted by receiver and handle with provided event handling
- *             \b handlerBlock.
- * @discussion Builder block allow to specify \b required fields: \c event - name of event on which handler should be called;
- *             \c handlerBlock - reference on event handling block.
+ * @brief Subscribe on particular \c event which will be emitted by receiver and handle it with
+ * provided event handler.
  *
- * @discussion Handle client initialization complection:
+ * @discussion Handle specific event
  * @code
- * CENConfiguration *configuration = [CENConfiguration configurationWithPublishKey:@"demo-36" subscribeKey:@"demo-36"];
- * self.client = [CENChatEngine clientWithConfiguration:configuration];
- * self.client.on(@"$.ready", ^(CENMe *me) {
- *     // Handle client connection complete.
- * });
- * self.client.connect(@"ChatEngine").perform();
- * @endcode
- *
- * @return Refererence on \b CENChat subclass which can be used to chain other methods call.
- */
-@property (nonatomic, readonly, strong) CENEvent * (^on)(NSString *event, id handlerBlock);
-
-/**
- * @brief      Subscribe on any events which will be emitted by receiver and handle with provided event handling
- *             \b handlerBlock.
- * @discussion Builder block allow to specify \b required field - reference on event handling block.
- *
- * @discussion Handle any events emitted by client:
- * @code
- * CENConfiguration *configuration = [CENConfiguration configurationWithPublishKey:@"demo-36" subscribeKey:@"demo-36"];
- * self.client = [CENChatEngine clientWithConfiguration:configuration];
- * self.client.onAny(^(NSString *event, CENObject *sender, id data) {
- *     // Handle event.
- * });
- * self.client.connect(@"ChatEngine").perform();
- * @endcode
- *
- * @return Refererence on \b CENChat subclass which can be used to chain other methods call.
- */
-@property (nonatomic, readonly, strong) CENEvent * (^onAny)(id handlerBlock);
-
-/**
- * @brief      Subscribe on particular \c event which will be emitted by receiver and handle once with provided event
- *             handling \b handlerBlock.
- * @discussion Builder block allow to specify \b required fields: \c event - name of event on which handler should be called;
- *             \c handlerBlock - reference on event handling block.
- *
- * @discussion Handle user invitation once:
- * @code
- * CENConfiguration *configuration = [CENConfiguration configurationWithPublishKey:@"demo-36" subscribeKey:@"demo-36"];
- * self.client = [CENChatEngine clientWithConfiguration:configuration];
- * self.client.on(@"$.ready", ^(CENMe *me) {
- *     me.direct.once(@"$.invite", ^(NSDictionary *invitationData) {
- *         // Handle invitation from invitationData.sender to join invitationData.channel.
+ * // objc 4f3f3988-3ad3-4ffb-9637-54ccfca2f5dd
+ 
+ * self.chat.emit(@"test-event").data(@{ @"message": @"Hello world" }).perform()
+ *     .on(@"$.emitted", ^(CENEmittedEvent *event) {
+ *         // Handle event emit completion.
  *     });
- * });
- * self.client.connect(@"ChatEngine").perform();
  * @endcode
  *
- * @return Refererence on \b CENChat subclass which can be used to chain other methods call.
+ * @discussion Handle one of multiple events once using wildcard
+ * @code
+ * // objc 68b9453c-6fcf-4cd4-9770-afe0bfedd303
+ 
+ * self.chat.emit(@"test-event").data(@{ @"message": @"Hello world" }).perform()
+ *     .on(@"$.error.*", ^(CENEmittedEvent *event) {
+ *         // Handle any emitted error.
+ *     });
+ * @endcode
+ *
+ * @param event Name of event which should be handled by \c block.
+ * @param handler Block / closure which will handle specified \c event.
+ *
+ * @return Receiver which can be used to chain other methods call.
+ *
+ * @ref ead126a1-1bf9-4642-97f1-a51e09425747
  */
-@property (nonatomic, readonly, strong) CENEvent * (^once)(NSString *event, id handlerBlock);
+@property (nonatomic, readonly, strong) CENEvent * (^on)(NSString *event,
+                                                         CENEventHandlerBlock handler);
+
+/**
+ * @brief Subscribe on any events which will be emitted by receiver and handle them with provided
+ * event handler.
+ *
+ * @discussion Handle any event
+ * @code
+ * // objc 0f2a267f-e28b-4e67-ad8c-0a6ca60be594
+ *
+ * self.chat.emit(@"test-event").data(@{ @"message": @"Hello world" }).perform()
+ *     .onAny(^(CENEmittedEvent *event) {
+ *         // Handle any event emitted by object.
+ *     });
+ * @endcode
+ 
+ * @param handler Block / closure which will handle any events.
+ *
+ * @return Receiver which can be used to chain other methods call.
+ *
+ * @ref 3ed464b2-582d-46a1-bc76-51316071360f
+ */
+@property (nonatomic, readonly, strong) CENEvent * (^onAny)(CENEventHandlerBlock handler);
+
+/**
+ * @brief Subscribe on particular \c event which will be emitted by receiver and handle it once with
+ * provided event handler.
+ *
+ * @discussion Handle specific event once
+ * @code
+ * // objc d6763664-f866-4c8d-81c4-32e54d2f9c78
+ *
+ * self.chat.emit(@"test-event").data(@{ @"message": @"Hello world" }).perform()
+ *     .once(@"$.emitted", ^(CENEmittedEvent *event) {
+ *         // Handle emitted event.
+ *     });
+ * @endcode
+ *
+ * @discussion Handle one of multiple events once using wildcard
+ * @code
+ * // objc 91a3a62e-8aaf-4b84-9279-bc448769374d
+ *
+ * self.chat.emit(@"test-event").data(@{ @"message": @"Hello world" }).perform()
+ *     .once(@"$.error.*", ^(CENEmittedEvent *event) {
+ *         // Handle any first emitted error.
+ *     });
+ * @endcode
+ *
+ * @param event Name of event which should be handled by \c block.
+ * @param handler Block / closure which will handle specified \c event.
+ *
+ * @return Receiver which can be used to chain other methods call.
+ *
+ * @ref e584ad68-c719-4184-b384-232dbe356f44
+ */
+@property (nonatomic, readonly, strong) CENEvent * (^once)(NSString *event,
+                                                           CENEventHandlerBlock handler);
 
 
 #pragma mark - Handlers removal
 
 /**
- * @brief      Unsubscribe from particular \c event by removing \c handlerBlock from notifiers list.
- * @discussion \b Important: to be able to remove handling block, it is required to store reference on it in class which
- *             listens for updates. Newly created block won't remove previously registered \c handler.
- * @discussion Builder block allow to specify \b required fields: \c event - name of event from which event handler should
- *             removed; \c handlerBlock - reference on event handling block which previously has been used to handle this
- *             event.
+ * @brief Unsubscribe from particular \c event by removing \c handler from listeners list.
  *
- * @discussion Remove user's invitation event handler:
+ * @note To be able to remove handler block / closure, it is required to store reference on it in
+ * class which listens for updates.
+ *
+ * @discussion Stop specific event handling
  * @code
- * CENConfiguration *configuration = [CENConfiguration configurationWithPublishKey:@"demo-36" subscribeKey:@"demo-36"];
- * self.client = [CENChatEngine clientWithConfiguration:configuration];
- * self.invitationHandlingBlock = ^(NSDictionary *invitationData) {
- *     // Handle invitation from invitationData.sender to join invitationData.channel.
+ * // objc 41724efa-ed81-498c-975d-36c98361cb40
+ *
+ * self.emitCompletionHandlingBlock = ^(CENEmittedEvent *event) {
+ *     // Handle successful event emit.
  * };
  *
- * self.client.on(@"$.ready", ^(CENMe *me) {
- *     me.direct.once(@"$.invite", self.invitationHandlingBlock);
- * });
- * self.client.connect(@"ChatEngine").perform();
- * ...
- * self.client.me.off(@"$.invite", self.invitationHandlingBlock);
+ * self.event.off(@"$.emitted", self.emitCompletionHandlingBlock);
  * @endcode
  *
- * @return Refererence on \b CENChat subclass which can be used to chain other methods call.
+ * @param event Name of event for which handler should be removed.
+ * @param handler Block / closure which has been used during event handler registration.
+ *
+ * @return Receiver which can be used to chain other methods call.
+ *
+ * @ref 5970c5a3-2c7b-4290-9d08-5f92d58ba97c
  */
-@property (nonatomic, readonly, strong) CENEvent * (^off)(NSString *event, id handlerBlock);
+@property (nonatomic, readonly, strong) CENEvent * (^off)(NSString *event,
+                                                          CENEventHandlerBlock handler);
 
 /**
- * @brief      Unsubscribe from any events emitted by receiver by removing \c handlerBlock from notifiers list.
- * @discussion \b Important: to be able to remove handling block, it is required to store reference on it in class which
- *             listens for updates. Newly created block won't remove previously registered \c handler.
- * @discussion Builder block allow to specify \b required field - reference on event handling block which previously has been
- *             used to handle all events.
+ * @brief Unsubscribe from any events emitted by receiver by removing \c handler from
+ * listeners list.
  *
- * @discussion Remove handler for any events emitted by client:
+ * @note To be able to remove handler block / closure, it is required to store reference on it in
+ * class which listens for updates.
+ *
+ * @discussion Stop any events handling
  * @code
- * CENConfiguration *configuration = [CENConfiguration configurationWithPublishKey:@"demo-36" subscribeKey:@"demo-36"];
- * self.client = [CENChatEngine clientWithConfiguration:configuration];
- * self.anyHandlingBlock = ^(NSString *event, CENObject *sender, id data) {
- *     // Handle event.
+ * // objc eb43cc2f-71a2-4758-bcd7-9e28cbc3f4e3
+ *
+ * self.anyHandlingBlock = ^(CENEmittedEvent *event) {
+ *     // Handle any event emitted by object.
  * };
  *
- * self.client.onAny(self.anyHandlingBlock);
- * self.client.connect(@"ChatEngine").perform();
- * ...
- * self.client.offAny(self.invitationHandlingBlock);
+ * self.event.offAny(self.anyHandlingBlock);
  * @endcode
  *
- * @return Refererence on \b CENChat subclass which can be used to chain other methods call.
+ * @param handler Block / closure which has been used during event handler registration.
+ *
+ * @return Receiver which can be used to chain other methods call.
+ *
+ * @ref 7ae64ec2-2f3d-4fcf-9e56-c22059bbc6d7
  */
-@property (nonatomic, readonly, strong) CENEvent * (^offAny)(id handlerBlock);
+@property (nonatomic, readonly, strong) CENEvent * (^offAny)(CENEventHandlerBlock handler);
 
 /**
- * @brief      Unsubscribe all \c event handling blocks from event processing.
- * @discussion Builder block allow to specify \b required field - name of event from which event handlers should removed.
+ * @brief Unsubscribe all \c event handling blocks from event processing.
  *
- * @discussion Remove all '$.invite' event listeners:
+ * @discussion Remove all '$.emitted' event listeners:
  * @code
- * CENConfiguration *configuration = [CENConfiguration configurationWithPublishKey:@"demo-36" subscribeKey:@"demo-36"];
- * self.client = [CENChatEngine clientWithConfiguration:configuration];
- * self.client.on(@"$.ready", ^(CENMe *me) {
- *     me.direct.on(@"$.invite", ^(NSDictionary *invitationData) {
- *         // Do something with sender.
- *     });
- *     me.direct.on(@"$.invite", ^(NSDictionary *invitationData) {
- *         // Do something with channel data.
- *     });
- * }];
- * self.client.connect(@"ChatEngine").perform();
- * ...
- * self.client.me.removeAll(@"$.invite");
+ * // objc e7d7a77b-5bba-4e72-a681-d5fe8cb874f3
+ *
+ * self.event.removeAll(@"$.emitted");
  * @endcode
  *
- * @return Refererence on \b CENChat subclass which can be used to chain other methods call.
+ * @param event Name of event for which has been used to register handler blocks.
+ *
+ * @return Receiver which can be used to chain other methods call.
+ *
+ * @ref 51190ade-5d29-41d5-8119-7396786a6e07
  */
 @property (nonatomic, readonly, strong) CENEvent * (^removeAll)(NSString *event);
 

@@ -27,6 +27,16 @@
 
 #pragma mark - Setup / Tear down
 
+- (BOOL)shouldConnectChatEngineForTestCaseWithName:(NSString *)name {
+    
+    return YES;
+}
+
+- (NSString *)globalChatChannelForTestCaseWithName:(NSString *)name {
+    
+    return @"global";
+}
+
 - (void)updateVCRConfigurationFromDefaultConfiguration:(YHVConfiguration *)configuration {
     
     [super updateVCRConfigurationFromDefaultConfiguration:configuration];
@@ -41,7 +51,8 @@
     
     YHVResponseBodyFilterBlock responseBodyFilter = configuration.responseBodyFilter;
     configuration.responseBodyFilter = ^NSData * (NSURLRequest *request, NSHTTPURLResponse *response, NSData *data) {
-        NSString *bodyString = [[NSString alloc] initWithData:responseBodyFilter(request, response, data) encoding:NSUTF8StringEncoding];
+        NSString *bodyString = [[NSString alloc] initWithData:responseBodyFilter(request, response, data)
+                                                     encoding:NSUTF8StringEncoding];
         bodyString = [[bodyString componentsSeparatedByString:self.testedChatName] componentsJoinedByString:@"chat-tester"];
         
         return [bodyString dataUsingEncoding:NSUTF8StringEncoding];
@@ -56,29 +67,30 @@
 - (void)setUp {
     
     [super setUp];
+
     
-    self.testedChatName = [@[@"chat-tester", [NSUUID UUID].UUIDString] componentsJoinedByString:@"-"];
+    NSString *testedChatName = [@[@"chat-tester", [NSUUID UUID].UUIDString] componentsJoinedByString:@"-"];
+    self.testedChatName = YHVVCR.cassette.isNewCassette ? testedChatName : @"chat-tester";
     
-    [self setupChatEngineWithGlobal:@"global" forUser:@"ian" synchronization:NO meta:YES state:@{ @"works": @YES }];
+    [self setupChatEngineForUser:@"ian"];
 }
 
 - (void)testMeta_ShouldUpdateChatMeta_WhenChatCreatedWithMeta {
     
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     CENChatEngine *client = [self chatEngineForUser:@"ian"];
     NSDictionary *expected = @{ @"works": @YES };
-    __block BOOL handlerCalled = NO;
     
-    CENChat *chat = client.Chat().name(self.testedChatName).meta(expected).create();
-    chat.once(@"$.connected", ^{
-        handlerCalled = YES;
-        
-        XCTAssertEqualObjects(chat.meta, expected);
-        dispatch_semaphore_signal(semaphore);
-    });
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
-    XCTAssertTrue(handlerCalled);
+    CENChat *chat = client.Chat().name(self.testedChatName).meta(expected).autoConnect(NO).create();
+    
+    [self object:chat shouldHandleEvent:@"$.connected" withHandler:^CENEventHandlerBlock (dispatch_block_t handler) {
+        return ^(CENEmittedEvent *emittedEvent) {
+            XCTAssertEqualObjects(chat.meta, expected);
+            handler();
+        };
+    } afterBlock:^{
+        chat.connect();
+    }];
 }
 
 #pragma mark -

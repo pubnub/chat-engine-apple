@@ -1,13 +1,13 @@
 #import <CENChatEngine/CEPExtension.h>
 
 
+NS_ASSUME_NONNULL_BEGIN
+
 /**
- * @brief      \b CENMe random username extension.
- * @discussion Plugin workhorse which generate unique username and use passed configuration to know place in \b CENMe state key where it should
- *             be stored.
+ * @brief \b {Local user CENMe} interface extension for random username support.
  *
  * @author Serhii Mamontov
- * @version 1.0.0
+ * @version 1.1.0
  * @copyright © 2009-2018 PubNub, Inc.
  */
 @interface CENRandomUsernameExtension : CEPExtension
@@ -17,3 +17,5 @@
 
 
 @end
+
+NS_ASSUME_NONNULL_END

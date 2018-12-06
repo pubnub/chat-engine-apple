@@ -1,16 +1,39 @@
 /**
  * @author Serhii Mamontov
- * @version 0.9.0
- * @copyright © 2009-2018 PubNub, Inc.
+ * @version 0.10.0
+ * @copyright © 2010-2018 PubNub, Inc.
  */
-#import "CENMe+Private.h"
+#import "CENMe.h"
+#import "CENChatEngine+EventEmitter.h"
 #import "CENChatEngine+Private.h"
-#import "CENChatEngine+UserPrivate.h"
-#import "CENChatEngine+ChatPrivate.h"
-#import "CENPrivateStructures.h"
 #import "CENObject+Private.h"
+#import "CENChat+Interface.h"
+#import "CENUser+Interface.h"
 #import "CENUser+Private.h"
-#import "CENChat+Private.h"
+#import "CENErrorCodes.h"
+
+
+NS_ASSUME_NONNULL_BEGIN
+
+#pragma mark Protected interface declaration
+
+@interface CENMe ()
+
+
+#pragma mark - Connection
+
+/**
+ * @brief Perform sequental connection to \b {local user CENMe} private chats (\b {CENUser.direct}
+ * and \b {CENUser.feed}).
+ */
+- (void)connectToPersonalChatsIfRequired;
+
+#pragma mark -
+
+
+@end
+
+NS_ASSUME_NONNULL_END
 
 
 #pragma mark - Interface implementation
@@ -30,34 +53,63 @@
     return self.chatEngine.synchronizationSession;
 }
 
-- (CENMe * (^)(NSDictionary *state))update {
+- (CENMe * (^)(NSDictionary *state, CENChat *chat))update {
     
-    return ^CENMe * (NSDictionary *state) {
-        [self updateState:state];
-        
+    return ^CENMe * (NSDictionary *state, CENChat *chat) {
+        [self updateState:state forChat:chat];
         return self;
     };
+}
+
+#pragma mark - Initialization and Configuration
+
++ (instancetype)userWithUUID:(NSString *)uuid
+                       state:(NSDictionary *)state
+                  chatEngine:(CENChatEngine *)chatEngine {
+    
+    CENMe *me = (CENMe *)[super userWithUUID:uuid state:state chatEngine:chatEngine];
+    [me connectToPersonalChatsIfRequired];
+    
+    return me;
+}
+
+
+#pragma mark - Connection
+
+- (void)connectToPersonalChatsIfRequired {
+
+    [self.direct handleEventOnce:@"$.connected"
+                withHandlerBlock:^(CENEmittedEvent * __unused event) {
+                    
+        [self.feed connectChat];
+    }];
+    
+    [self.direct connectChat];
 }
 
 
 #pragma mark - State
 
-- (void)assignState:(NSDictionary *)state {
-    
-    [super updateState:state];
-}
+- (void)updateState:(NSDictionary *)state forChat:(CENChat *)chat {
 
-- (void)updateState:(NSDictionary *)state {
-    
-    [self updateState:state withCompletion:nil];
-}
+    chat = chat ?: self.chatEngine.global;
 
-- (void)updateState:(NSDictionary *)state withCompletion:(dispatch_block_t)block {
-    
-    [self fetchStoredStateWithCompletion:^(__unused NSDictionary *fetchedState) {
-        [super updateState:state];
-        [self.chatEngine propagateLocalUserStateRefreshWithCompletion:block];
-    }];
+    if (!chat) {
+        NSString *description = @"No chat specified for state update.";
+        NSError *error = [NSError errorWithDomain:kCENErrorDomain
+                                             code:kCENChatMissingError
+                                         userInfo:@{ NSLocalizedDescriptionKey : description }];
+
+        [self.chatEngine throwError:error
+                           forScope:@"updateParam"
+                               from:self
+                      propagateFlow:CEExceptionPropagationFlow.middleware];
+
+        return;
+    }
+
+    [self assignState:state forChat:chat];
+    [chat setState:[self stateForChat:chat]];
 }
 
 

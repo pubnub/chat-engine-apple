@@ -15,11 +15,6 @@
 @interface CENChatEngineSearchTest : CENTestCase
 
 
-#pragma mark - Information
-
-@property (nonatomic, nullable, weak) CENChatEngine *client;
-@property (nonatomic, nullable, weak) CENChatEngine *clientMock;
-
 #pragma mark -
 
 
@@ -38,47 +33,25 @@
     return NO;
 }
 
-- (void)setUp {
-    
-    [super setUp];
-    
-    CENConfiguration *configuration = [CENConfiguration configurationWithPublishKey:@"test-36" subscribeKey:@"test-36"];
-    self.client = [self chatEngineWithConfiguration:configuration];
-    self.clientMock = [self partialMockForObject:self.client];
-    
-    OCMStub([self.clientMock fetchParticipantsForChat:[OCMArg any]]).andDo(nil);
-    OCMStub([self.clientMock createDirectChatForUser:[OCMArg any]])
-        .andReturn(self.clientMock.Chat().name(@"chat-engine#user#tester#write.#direct").autoConnect(NO).create());
-    OCMStub([self.clientMock createFeedChatForUser:[OCMArg any]])
-        .andReturn(self.clientMock.Chat().name(@"chat-engine#user#tester#read.#feed").autoConnect(NO).create());
-    OCMStub([self.clientMock me]).andReturn([CENMe userWithUUID:@"tester" state:@{} chatEngine:self.clientMock]);
-    
-    OCMStub([self.clientMock connectToChat:[OCMArg any] withCompletion:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
-        void(^handleBlock)(NSDictionary *) = nil;
-        
-        [invocation getArgument:&handleBlock atIndex:3];
-        handleBlock(nil);
-    });
-}
-
 
 #pragma mark - Tests :: searchEventsInChat
 
 - (void)testSearchEventsInChat_ShouldReturnSearcherInstance {
     
-    CENChat *chat = self.clientMock.Chat().autoConnect(NO).create();
+    self.usesMockedObjects = YES;
+    CENChat *chat = self.client.Chat().autoConnect(NO).create();
     
-    OCMExpect([self.clientMock storeTemporaryObject:[OCMArg any]]);
     
-    CENSearch *search = [self.clientMock searchEventsInChat:chat sentBy:nil withName:nil limit:0 pages:0 count:0 start:nil end:nil];
-    
-    OCMVerifyAll((id)self.clientMock);
-    XCTAssertNotNil(search);
+    id recorded = OCMExpect([self.client storeTemporaryObject:[OCMArg any]]);
+    [self waitForObject:self.client recordedInvocationCall:recorded withinInterval:self.testCompletionDelay afterBlock:^{
+        XCTAssertNotNil([self.client searchEventsInChat:chat sentBy:nil withName:nil limit:0 pages:0 count:0 start:nil end:nil]);
+    }];
 }
 
 - (void)testSearchEventsInChat_ShouldNotReturnSearcherInstance_WhenNonCENChatInstancePassed {
     
     CENChat *chat = (id)@2010;
+    
     
     XCTAssertNil([self.client searchEventsInChat:chat sentBy:nil withName:nil limit:0 pages:0 count:0 start:nil end:nil]);
 }
