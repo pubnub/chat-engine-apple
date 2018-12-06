@@ -8,7 +8,7 @@
 
 #pragma mark Constants
 
-static BOOL const kCENTShouldPublishTestMessages = YES;
+static BOOL const kCENTShouldPublishTestMessages = NO;
 static NSUInteger const kCENTPublishedMessagesCount = 250;
 
 
@@ -69,12 +69,14 @@ static NSUInteger const kCENTPublishedMessagesCount = 250;
 
 - (void)testSearch_AddMessagesToChat_WhenRecordingNewCassette {
     
-    NSString *fixturesPath = @"/Volumes/Develop/Projects/Xcode/PubNub/chat-engine-apple/Tests/Tests/Fixtures";
-    NSString *cassette = [NSStringFromClass([self class]) stringByAppendingPathExtension:@"bundle"];
-    NSString *cassettesPath = [fixturesPath stringByAppendingPathComponent:cassette];
-    
-    if (kCENTShouldPublishTestMessages && ![[NSFileManager defaultManager] fileExistsAtPath:cassettesPath isDirectory:nil]) {
-        [self publishTestMessages];
+    if (kCENTShouldPublishTestMessages) {
+        NSString *fixturesPath = @"/Volumes/Develop/Projects/Xcode/PubNub/chat-engine-apple/Tests/Tests/Fixtures";
+        NSString *cassette = [NSStringFromClass([self class]) stringByAppendingPathExtension:@"bundle"];
+        NSString *cassettesPath = [fixturesPath stringByAppendingPathComponent:cassette];
+        
+        if (![[NSFileManager defaultManager] fileExistsAtPath:cassettesPath isDirectory:nil]) {
+            [self publishTestMessages];
+        }
     }
 }
 
