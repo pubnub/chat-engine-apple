@@ -16,7 +16,7 @@ podfile: ./Tests/Podfile
 
 before_install:
   - sudo gem install xcpretty-travis-formatter
-  - sudo gem install cocoapods -v '1.5.3'
+  - sudo gem install cocoapods --pre
   - cd ./Tests && pod update && cd ..
 
 script:
