@@ -395,7 +395,6 @@
 		79CA5E1020BC24FA00290354 /* CENChatEngineChatMetaIntegrationTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CENChatEngineChatMetaIntegrationTest.m; sourceTree = "<group>"; };
 		79CA5E1120BC24FA00290354 /* CENChatEngineChatInviteIntegrationTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CENChatEngineChatInviteIntegrationTest.m; sourceTree = "<group>"; };
 		79CA5E1220BC24FA00290354 /* CENChatEngineChatIntegrationTest.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CENChatEngineChatIntegrationTest.m; sourceTree = "<group>"; };
-		79D3E8422087742F0051D3A4 /* buildkeysset.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = buildkeysset.sh; sourceTree = "<group>"; };
 		79D63E5120C69BE5008ECBC7 /* CENOnlineSearchPluginIntegrationTest.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = CENOnlineSearchPluginIntegrationTest.m; sourceTree = "<group>"; };
 		79D63E5420C69C91008ECBC7 /* CENGravatarPluginIntegrationTest.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = CENGravatarPluginIntegrationTest.m; sourceTree = "<group>"; };
 		79D63E5720C69CEB008ECBC7 /* CENRandomUsernamePluginIntegrationTest.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = CENRandomUsernamePluginIntegrationTest.m; sourceTree = "<group>"; };
@@ -737,7 +736,6 @@
 		797ED02A205846C9007E15F5 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
-				79D3E840208773D90051D3A4 /* scripts */,
 				797ED02B205846F1007E15F5 /* test-keysset.plist */,
 			);
 			path = Resources;
@@ -924,14 +922,6 @@
 			path = Plugins;
 			sourceTree = "<group>";
 		};
-		79D3E840208773D90051D3A4 /* scripts */ = {
-			isa = PBXGroup;
-			children = (
-				79D3E8422087742F0051D3A4 /* buildkeysset.sh */,
-			);
-			path = scripts;
-			sourceTree = "<group>";
-		};
 		79E8347720876B7900CE089B /* [Test] Code Coverage (Full) */ = {
 			isa = PBXGroup;
 			children = (
@@ -1030,7 +1020,6 @@
 			buildConfigurationList = 799EC68C21B7F9CA00B85E29 /* Build configuration list for PBXNativeTarget "[Test] Code Coverage (Integration)" */;
 			buildPhases = (
 				799EC64621B7F9CA00B85E29 /* [CP] Check Pods Manifest.lock */,
-				799EC64721B7F9CA00B85E29 /* Create Test Keys file */,
 				799EC64821B7F9CA00B85E29 /* Sources */,
 				799EC68621B7F9CA00B85E29 /* Frameworks */,
 				799EC68821B7F9CA00B85E29 /* Resources */,
@@ -1052,7 +1041,6 @@
 			buildConfigurationList = 79A1D2C42073A99600D97E64 /* Build configuration list for PBXNativeTarget "[Test] Code Coverage (Full)" */;
 			buildPhases = (
 				07A9536F98F644A37A75ED86 /* [CP] Check Pods Manifest.lock */,
-				79E8347B20876EFB00CE089B /* Create Test Keys file */,
 				79A1D2B32073A99600D97E64 /* Sources */,
 				79A1D2BF2073A99600D97E64 /* Frameworks */,
 				79A1D2C12073A99600D97E64 /* Resources */,
@@ -1094,7 +1082,6 @@
 			buildConfigurationList = 79A8260A206CC89C00648EE5 /* Build configuration list for PBXNativeTarget "[Test] Code Coverage (Unit)" */;
 			buildPhases = (
 				50AA2DDB0205FF370ACA7DC6 /* [CP] Check Pods Manifest.lock */,
-				79D3E843208774E70051D3A4 /* Create Test Keys file */,
 				79A825FF206CC89C00648EE5 /* Sources */,
 				79A82600206CC89C00648EE5 /* Frameworks */,
 				79A82601206CC89C00648EE5 /* Resources */,
@@ -1422,20 +1409,6 @@
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
 		};
-		799EC64721B7F9CA00B85E29 /* Create Test Keys file */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-			);
-			name = "Create Test Keys file";
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "/bin/sh \"${SRCROOT}/Tests/Resources/scripts/buildkeysset.sh\"\n";
-		};
 		799EC68A21B7F9CA00B85E29 /* [CP] Embed Pods Frameworks */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
@@ -1558,34 +1531,6 @@
 			shellPath = /bin/sh;
 			shellScript = "find \"${TARGET_TEMP_DIR}\" -name 'Script-*.sh' -exec rm -rf {} \\;\n";
 			showEnvVarsInLog = 0;
-		};
-		79D3E843208774E70051D3A4 /* Create Test Keys file */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-			);
-			name = "Create Test Keys file";
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "/bin/sh \"${SRCROOT}/Tests/Resources/scripts/buildkeysset.sh\"\n";
-		};
-		79E8347B20876EFB00CE089B /* Create Test Keys file */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-			);
-			name = "Create Test Keys file";
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "/bin/sh \"${SRCROOT}/Tests/Resources/scripts/buildkeysset.sh\"";
 		};
 		FC7CB1FB4B0F29DB6BB8D3FF /* [CP] Embed Pods Frameworks */ = {
 			isa = PBXShellScriptBuildPhase;

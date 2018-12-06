@@ -18,6 +18,7 @@ before_install:
   - sudo gem install xcpretty-travis-formatter
   - sudo gem install cocoapods --pre
   - cd ./Tests && pod update && cd ..
+  - mv ./Tests/Tests/Resources/demo-test-keysset.plist ./Tests/Tests/Resources/test-keysset.plist
 
 script:
   - set -o pipefail
