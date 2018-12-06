@@ -57,7 +57,7 @@ To run tests, follow next steps:
 * Ensure what latest CocoaPods installed by calling from Terminal:  
   ```sudo gem install cocoapods```  
 * Clone repository and navigate to it's root  
-* Pull out dependencies by calling from Terminal:  
+* Navigate to `Tests` subdirectory pull out dependencies by calling from Terminal:  
   ```pod install```  
 * Navigate to `Tests/Tests/Resources` subdirectory and rename `demo-test-keysset.plist` to `test-keysset.plist`. This file values (publish / subscribe keys) used only in case of new Fixtures generation.  
 * Navigate to `Tests` subdirectory and open `ChatEngine Tests.xcworkspace`  
