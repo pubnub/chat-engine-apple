@@ -49,3 +49,7 @@ Uses Gravatar service to create an avatar based on user state information.
 ## [Random Usernames](https://github.com/pubnub/chat-engine-apple/wiki/plugins-random-username)
 
 A plugin that gives every use a random username combining a color and an animal.
+
+## Support
+
+- If you **need help**, have a **general question** a **feature request** or to file a **bug**, contact <support@pubnub.com>
