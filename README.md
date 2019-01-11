@@ -1,5 +1,9 @@
 ![](https://raw.githubusercontent.com/pubnub/chat-engine/master/images/logo.png)
 
+[![Build Status](https://travis-ci.org/pubnub/chat-engine-apple.svg?branch=master)](https://travis-ci.com/pubnub/chat-engine-apple)
+
+[Documentation](https://www.pubnub.com/docs/chat-engine)
+
 PubNub ChatEngine is an object oriented event emitter based framework for building chat applications in Objective-C. It reduces the time to build chat applications drastically and provides essential components like typing indicators, online presence monitoring and message history out of the box.
 
 The real time server component is provided by PubNub. ChatEngine is designed to be extensible and includes a plugin framework to make adding new features simple.
@@ -49,3 +53,7 @@ Uses Gravatar service to create an avatar based on user state information.
 ## [Random Usernames](https://github.com/pubnub/chat-engine-apple/wiki/plugins-random-username)
 
 A plugin that gives every use a random username combining a color and an animal.
+
+## Support
+
+- If you **need help**, have a **general question** a **feature request** or to file a **bug**, contact <support@pubnub.com>
