@@ -1,7 +1,7 @@
 /**
  * @author Serhii Mamontov
- * @version 1.0.0
- * @copyright © 2009-2018 PubNub, Inc.
+ * @version 0.0.2
+ * @copyright © 2010-2019 PubNub, Inc.
  */
 #import "CENPushNotificationsMiddleware.h"
 #import <CENChatEngine/CEPMiddleware+Developer.h>
@@ -19,47 +19,51 @@ NS_ASSUME_NONNULL_BEGIN
 #pragma mark - Formatters
 
 /**
- * @brief      Compose default notification payload for known events.
- * @discussion Format notifications for \c message and/or \c invite events.
+ * @brief Create default notifications payload for known events (\c message and \c $.invite).
  *
- * @param cePayload Reference on \b ChatEngine generate payload which should be used to compose notification payload.
+ * @param chatEngineEvent Payload from \b {CENChatEngine} for which payload for push
+ *     notification services should be created.
  *
- * @return Push notification payload which should be merged with \c cePayload before sending.
+ * @return Payload which contain data required by \b PubNub service to trigger push notifications.
  */
-- (NSDictionary *)defaultNotificationPayloadFrom:(NSDictionary *)cePayload;
+- (NSDictionary *)defaultPayloadFrom:(NSDictionary *)chatEngineEvent;
 
 /**
- * @brief      Compose push notification ACK payload.
- * @discussion Compose notification payload which silently will be delivered to other devices and hide 'seen' notifications.
+ * @brief Create payload for notification \c ACK.
  *
- * @param cePayload Reference on \b ChatEngine generate payload which should be used to compose notification payload.
+ * @discussion Payload which will be silently delivered to other devices and hide 'seen'
+ * notifications.
  *
- * @return Push notification payload which should be merged with \c cePayload before sending.
+ * @param chatEngineEvent Payload from \b {CENChatEngine} which contain information which
+ *     should be used to create silent notification for 'seen' feature.
+ *
+ * @return Payload which contain data required by \b PubNub service to trigger push notifications.
  */
-- (NSDictionary *)seenNotificationPayloadFrom:(NSDictionary *)cePayload;
+- (NSDictionary *)seenPayloadFrom:(NSDictionary *)chatEngineEvent;
 
 /**
- * @brief      Complete notification payload configuraiton.
- * @discussion Ensure what event information is included as part of notification payload.
+ * @brief Complete notification payload configuration.
  *
  * @param payload Reference on current message payload which may contain notification payloads.
- * @param ceEvent Reference on name of event for which data has been emitted.
+ * @param chatEngineEvent Reference on name of event for which data has been emitted.
  *
- * @return Reference on same or normalized dictionary with all information which is required to handle notification.
+ * @return \b {CENChatEngine} compatible payload which can be emitted to target
+ * \b {chat CENChat}.
  */
-- (NSDictionary *)normalizedNotificationPayload:(NSDictionary *)payload forEvent:(NSDictionary *)ceEvent;
+- (NSDictionary *)normalizedPayloadFrom:(NSDictionary *)payload
+                               forEvent:(NSDictionary *)chatEngineEvent;
 
 
 #pragma mark - Misc
 
 /**
- * @brief  Compose name of notification category basing on ChatEngine event.
+ * @brief Compose name of notification category basing on ChatEngine event.
  *
- * @param event Reference on name of event for which category should be created.
+ * @param event Name of event for which category should be created.
  *
- * @return Reference on name of category which is unique for this plugin.
+ * @return Name of category which is unique for this plugin.
  */
-- (NSString *)notificationCategoryFromEvent:(NSString *)event;
+- (NSString *)categoryFromEvent:(NSString *)event;
 
 #pragma mark -
 
@@ -89,65 +93,78 @@ NS_ASSUME_NONNULL_END
 
 #pragma mark - Call
 
-- (void)runForEvent:(NSString *)event withData:(NSMutableDictionary *)data completion:(void (^)(BOOL rejected))block {
+- (void)runForEvent:(NSString *)event
+           withData:(NSMutableDictionary *)data
+         completion:(void (^)(BOOL rejected))block {
     
+    CENPushNotificationFormatterCallback formatter = nil;
     NSDictionary *notificationsPayload = nil;
     
     if ([event isEqualToString:@"$notifications.seen"]) {
-        notificationsPayload = [self normalizedNotificationPayload:[self seenNotificationPayloadFrom:data] forEvent:data];
+        notificationsPayload = [self seenPayloadFrom:data];
     } else {
-        NSDictionary * (^payloadFormatter)(NSDictionary *) = self.configuration[CENPushNotificationsConfiguration.formatter];
+        formatter = self.configuration[CENPushNotificationsConfiguration.formatter];
         
-        if (payloadFormatter) {
-            notificationsPayload = [self normalizedNotificationPayload:payloadFormatter(data) forEvent:data];
+        if (formatter) {
+            notificationsPayload = formatter(data);
         }
         
-        if (!payloadFormatter || (payloadFormatter && !notificationsPayload)) {
-            notificationsPayload = [self normalizedNotificationPayload:[self defaultNotificationPayloadFrom:data] forEvent:data];
+        if (!formatter || (formatter && !notificationsPayload)) {
+            notificationsPayload = [self defaultPayloadFrom:data];
         }
     }
     
-    [data addEntriesFromDictionary:notificationsPayload];
+    [data addEntriesFromDictionary:[self normalizedPayloadFrom:notificationsPayload forEvent:data]];
+    
+    if (((NSNumber *)self.configuration[CENPushNotificationsConfiguration.debug]).boolValue) {
+        data[@"pn_debug"] = @YES;
+    }
+    
     block(NO);
 }
 
 
 #pragma mark - Formatters
 
-- (NSDictionary *)defaultNotificationPayloadFrom:(NSDictionary *)cePayload {
+- (NSDictionary *)defaultPayloadFrom:(NSDictionary *)chatEngineEvent {
     
-    NSString *chatName = ((CENChat *)cePayload[CENEventData.chat]).name;
+    NSString *chatName = ((CENChat *)chatEngineEvent[CENEventData.chat]).name;
+    NSDictionary *eventData = chatEngineEvent[CENEventData.data];
+    NSString *sender = chatEngineEvent[CENEventData.sender];
     NSMutableDictionary *payload = [NSMutableDictionary new];
-    NSString *notificationTitle = nil;
-    NSString *notificationBody = nil;
-    NSString *notificationTicker = nil;
-    NSString *notificationCategory = nil;
+    NSString *title = nil;
+    NSString *body = nil;
+    NSString *ticker = nil;
+    NSString *category = nil;
     
-    if ([cePayload[CENEventData.event] isEqualToString:@"message"]) {
-        notificationTitle = [NSString stringWithFormat:@"%@ sent message in %@", cePayload[CENEventData.sender], chatName];
-        notificationBody = cePayload[CENEventData.data][@"message"] ?: cePayload[CENEventData.data][@"text"];
-        notificationTicker = @"New chat message";
-        notificationCategory = @"CATEGORY_MESSAGE";
-    } else if ([cePayload[CENEventData.event] isEqualToString:@"$.invite"]) {
-        notificationTitle = [NSString stringWithFormat:@"Invitation from  %@", cePayload[CENEventData.sender]];
-        notificationBody = [NSString stringWithFormat:@"%@ invited you to join '%@'", cePayload[CENEventData.sender], chatName];
-        notificationTicker = @"New invitation to chat";
-        notificationCategory = @"CATEGORY_SOCIAL";
+    if ([chatEngineEvent[CENEventData.event] isEqualToString:@"message"]) {
+        title = [NSString stringWithFormat:@"%@ sent message in %@", sender, chatName];
+        body = eventData[@"message"] ?: eventData[@"text"];
+        ticker = @"New chat message";
+        category = @"CATEGORY_MESSAGE";
+    } else if ([chatEngineEvent[CENEventData.event] isEqualToString:@"$.invite"]) {
+        NSString *channel = chatEngineEvent[CENEventData.data][@"channel"];
+        chatName = [channel componentsSeparatedByString:@"#"].lastObject;
+
+        title = [NSString stringWithFormat:@"Invitation from  %@", sender];
+        body = [NSString stringWithFormat:@"%@ invited you to join '%@'", sender, chatName];
+        ticker = @"New invitation to chat";
+        category = @"CATEGORY_SOCIAL";
     }
     
-    if (notificationTitle && notificationBody) {
+    if (title && body) {
         for (NSString *service in self.configuration[CENPushNotificationsConfiguration.services]) {
             if ([service isEqualToString:CENPushNotificationsService.apns]) {
-                payload[service] = @{ @"aps": @{ @"alert": @{ @"title": notificationTitle, @"body": notificationBody} } };
+                payload[service] = @{ @"aps": @{ @"alert": @{ @"title": title, @"body": body} } };
             } else if ([service isEqualToString:CENPushNotificationsService.fcm]) {
                 NSMutableDictionary *data = [NSMutableDictionary dictionaryWithDictionary:@{
-                    @"contentTitle": notificationTitle,
-                    @"contentText": notificationBody,
-                    @"ticker": notificationTicker,
-                    @"category": notificationCategory
+                    @"contentTitle": title,
+                    @"contentText": body,
+                    @"ticker": ticker,
+                    @"category": category
                 }];
                 
-                if ([cePayload[CENEventData.event] isEqualToString:@"$.invite"]) {
+                if ([chatEngineEvent[CENEventData.event] isEqualToString:@"$.invite"]) {
                     data[@"actions"] = @[@"Accept", @"Ignore"];
                 }
                 
@@ -159,42 +176,45 @@ NS_ASSUME_NONNULL_END
     return payload;
 }
 
-- (NSDictionary *)seenNotificationPayloadFrom:(NSDictionary *)cePayload {
-    
-    BOOL servicesSpecified = ((NSArray *)self.configuration[CENPushNotificationsConfiguration.services]).count > 0;
-    NSDictionary *eventData = @{ @"data": (cePayload[CENEventData.data] ?: @{}) };
+- (NSDictionary *)seenPayloadFrom:(NSDictionary *)chatEngineEvent {
+ 
+    NSDictionary *eventData = @{ @"data": (chatEngineEvent[CENEventData.data] ?: @{}) };
     NSMutableDictionary *payload = [NSMutableDictionary new];
     
     for (NSString *service in self.configuration[CENPushNotificationsConfiguration.services]) {
         if ([service isEqualToString:CENPushNotificationsService.apns]) {
-            payload[service] = @{ @"aps": @{ @"content-available": @1, @"sound": @"" }, @"cepayload": eventData };
+            payload[service] = @{
+                @"aps": @{ @"content-available": @1, @"sound": @"" },
+                @"cepayload": eventData
+            };
         } else if ([service isEqualToString:CENPushNotificationsService.fcm]) {
             payload[service] = @{ @"data": @{ @"cepayload": eventData } };
         }
     }
     
-    return servicesSpecified ? payload : @{};
+    return payload;
 }
 
-- (NSDictionary *)normalizedNotificationPayload:(NSDictionary *)payload forEvent:(NSDictionary *)ceEvent {
+- (NSDictionary *)normalizedPayloadFrom:(NSDictionary *)payload
+                               forEvent:(NSDictionary *)chatEngineEvent {
     
-    // Normalize ChatEngine payload, so it can be included into notification payload and available for user when it will arrive.
-    NSMutableDictionary *normalizedChatEngineEvent = [ceEvent mutableCopy];
-    normalizedChatEngineEvent[CENEventData.chat] = ((CENChat *)ceEvent[CENEventData.chat]).channel;
-    normalizedChatEngineEvent[@"category"] = [self notificationCategoryFromEvent:ceEvent[CENEventData.event]];
-    NSMutableDictionary *normalizedNotificationPayload = [NSMutableDictionary new];
+    NSMutableDictionary *eventPayload = [chatEngineEvent mutableCopy];
+    eventPayload[CENEventData.chat] = ((CENChat *)chatEngineEvent[CENEventData.chat]).channel;
+    eventPayload[@"category"] = [self categoryFromEvent:chatEngineEvent[CENEventData.event]];
+    NSMutableDictionary *payloads = [NSMutableDictionary new];
     
     for (NSString *service in self.configuration[CENPushNotificationsConfiguration.services]) {
-        NSMutableDictionary *servicePayload = [NSMutableDictionary dictionaryWithDictionary:payload[service]];
-        NSDictionary *notificationCEPayload = servicePayload[@"cepayload"] ?: servicePayload[@"data"][@"cepayload"];
+        NSMutableDictionary *servicePayload = [(payload[service] ?: @{}) mutableCopy];
+        NSDictionary *notificationCEPayload = (servicePayload[@"cepayload"] ?:
+                                               servicePayload[@"data"][@"cepayload"]);
         
         if (!servicePayload.count) {
             continue;
         }
         
-        NSMutableDictionary *cePayload = [NSMutableDictionary dictionaryWithDictionary:normalizedChatEngineEvent];
-        cePayload[@"data"] = [NSMutableDictionary dictionaryWithDictionary:normalizedChatEngineEvent[@"data"]];
-        [(NSMutableDictionary *)cePayload[@"data"] addEntriesFromDictionary:notificationCEPayload[@"data"]];
+        NSMutableDictionary *cePayload = [(eventPayload ?: (id)@{}) mutableCopy];
+        cePayload[@"data"] = [(eventPayload[@"data"] ?: @{}) mutableCopy];
+        [cePayload[@"data"] addEntriesFromDictionary:notificationCEPayload[@"data"]];
         cePayload[@"category"] = notificationCEPayload[@"category"] ?: cePayload[@"category"];
         
         if ([service isEqualToString:CENPushNotificationsService.apns]) {
@@ -202,13 +222,13 @@ NS_ASSUME_NONNULL_END
                 cePayload[@"category"] = servicePayload[@"aps"][@"category"];
             }
             
-            NSMutableDictionary *aps = [NSMutableDictionary dictionaryWithDictionary:servicePayload[@"aps"]];
+            NSMutableDictionary *aps = [(servicePayload[@"aps"] ?: @{}) mutableCopy];
             aps[@"category"] = cePayload[@"category"];
             
             servicePayload[@"aps"] = aps;
             servicePayload[@"cepayload"] = cePayload;
         } else if ([service isEqualToString:CENPushNotificationsService.fcm]) {
-            servicePayload[@"data"] = [NSMutableDictionary dictionaryWithDictionary:servicePayload[@"data"]];
+            servicePayload[@"data"] = [(servicePayload[@"data"] ?: @{}) mutableCopy];
             
             if (servicePayload[@"data"][@"category"]) {
                 cePayload[@"category"] = servicePayload[@"data"][@"category"];
@@ -218,16 +238,16 @@ NS_ASSUME_NONNULL_END
             servicePayload[@"data"][@"cepayload"] = cePayload;
         }
         
-        normalizedNotificationPayload[[@"pn_" stringByAppendingString:service]] = servicePayload;
+        payloads[[@"pn_" stringByAppendingString:service]] = servicePayload;
     }
     
-    return normalizedNotificationPayload;
+    return payloads;
 }
 
 
 #pragma mark - Misc
 
-- (NSString *)notificationCategoryFromEvent:(NSString *)event {
+- (NSString *)categoryFromEvent:(NSString *)event {
     
     if ([event hasPrefix:@"$."]) {
         event = [event substringFromIndex:2];

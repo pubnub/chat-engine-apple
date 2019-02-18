@@ -1,10 +1,9 @@
 /**
- * @brief  Define list of macro which used by clien't component to print out messages using
- *         \b PNLLogger.
+ * @brief Macro which used by client's component to print out messages using \b PNLLogger.
  *
  * @author Serhii Mamontov
- * @version 0.9.0
- * @copyright © 2009-2018 PubNub, Inc.
+ * @version 0.9.2
+ * @copyright © 2010-2019 PubNub, Inc.
  */
 #import <PubNub/PNLLogger.h>
 #import "CENStructures.h"

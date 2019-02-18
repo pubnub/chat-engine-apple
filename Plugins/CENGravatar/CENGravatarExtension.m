@@ -1,20 +1,30 @@
 /**
  * @author Serhii Mamontov
- * @version 1.0.0
- * @copyright © 2009-2018 PubNub, Inc.
+ * @version 0.0.2
+ * @copyright © 2010-2019 PubNub, Inc.
  */
 #import "CENGravatarExtension.h"
 #import <CommonCrypto/CommonDigest.h>
 #import <CENChatEngine/CENObject+PluginsDeveloper.h>
 #import <CENChatEngine/CEPExtension+Developer.h>
 #import <CENChatEngine/CENMe+Interface.h>
+#import <CENChatEngine/ChatEngine.h>
 #import "CENGravatarPlugin.h"
+
+
+#pragma mark Contants
+
+/**
+ * @brief Gravatar API endpoint URI.
+ *
+ * @since 0.0.2
+ */
+static NSString * const kCENGravatarAPI = @"https://www.gravatar.com/avatar";
 
 
 NS_ASSUME_NONNULL_BEGIN
 
-
-#pragma mark Protected interface declaration
+#pragma mark - Protected interface declaration
 
 @interface CENGravatarExtension ()
 
@@ -22,18 +32,17 @@ NS_ASSUME_NONNULL_BEGIN
 #pragma mark - Information
 
 /**
- * @brief  Stores reference on events handling block.
- * @note   Reference on block required to make it possible to remove it from event listeners.
+ * @brief Events handling block.
  */
-@property (nonatomic, copy, nullable) void(^eventHandlerBlock)(CENUser *user);
+@property (nonatomic, copy, nullable) CENEventHandlerBlock eventHandlerBlock;
 
 
 #pragma mark - Handlers
 
 /**
- * @brief  Handle local user state change.
+ * @brief Handle local user state change.
  *
- * @param user Reference on instance of user which changed his state.
+ * @param user \b {User CENUser} which changed his state.
  */
 - (void)handleUserStateChange:(CENUser *)user;
 
@@ -41,13 +50,36 @@ NS_ASSUME_NONNULL_BEGIN
 #pragma mark - Misc
 
 /**
- * @brief  Generate hash from email which is required by Gravatar REST API.
+ * @brief Generate hash from email which is required by Gravatar REST API.
  *
- * @param email Reference on email from which hash should be created.
+ * @param email Email address from which hash should be created.
  *
  * @return Email address hash value.
  */
 - (NSString *)hashFromEmail:(NSString *)email;
+
+/**
+ * @brief Update value in \c dictionary.
+ *
+ * @param value Object which should be stored at specified location.
+ * @param keyPath Key or path to location where \c value should be stored.
+ * @param dictionary \a NSMutableDictionary with mutable content which should be modified.
+ */
+- (void)setValue:(id)value
+      forKeyPath:(NSString *)keyPath
+    inDictionary:(NSMutableDictionary *)dictionary;
+
+/**
+ * @brief Create mutable copy from \a NSDictionary by replacing other \a NSDictionary values in it
+ * with \a NSMutableDictionary.
+ *
+ * @param dictionary \a NSDictionary from which deep mutable copy should be created.
+ *
+ * @return Mutable dictionary with mutable content.
+ *
+ * @since 0.0.2
+ */
+- (NSMutableDictionary *)dictionaryDeepMutableFrom:(NSDictionary *)dictionary;
 
 #pragma mark -
 
@@ -66,11 +98,12 @@ NS_ASSUME_NONNULL_END
 
 - (void)onCreate {
     
-    NSString *identifier = self.identifier;
-    self.eventHandlerBlock = ^(CENUser * user) {
-        [user extensionWithIdentifier:identifier context:^(CENGravatarExtension *extension) {
-            [extension handleUserStateChange:user];
-        }];
+    __weak __typeof(self) weakSelf = self;
+    self.eventHandlerBlock = ^(CENEmittedEvent *event) {
+        __strong __typeof(weakSelf) strongSelf = weakSelf;
+        CENUser *user = event.data;
+        
+        [strongSelf handleUserStateChange:user];
     };
     
     [self.object.chatEngine handleEvent:@"$.state" withHandlerBlock:self.eventHandlerBlock];
@@ -84,20 +117,23 @@ NS_ASSUME_NONNULL_END
 
 - (void)handleUserStateChange:(CENUser *)user {
     
-    NSDictionary *userState = user.state;
-    NSString *email = userState[self.configuration[CENGravatarPluginConfiguration.emailKey]];
-
+    NSString *gravatarKey = self.configuration[CENGravatarPluginConfiguration.gravatarURLKey];
+    NSString *emailKey = self.configuration[CENGravatarPluginConfiguration.emailKey];
+    NSDictionary *userState = user.state ?: @{};
+    NSString *email = [userState valueForKeyPath:emailKey];
+    
     if (![user isKindOfClass:[CENMe class]] || !email) {
         return;
     }
     
-    NSString *gravatarURL = [@"https://www.gravatar.com/avatar" stringByAppendingPathComponent:[self hashFromEmail:email]];
+    NSString *hash = [self hashFromEmail:email];
+    NSString *gravatarURL = [@[kCENGravatarAPI, hash] componentsJoinedByString:@"/"];
     
     // Check whether there is any need to update local user state information or not.
-    if (![gravatarURL isEqualToString:userState[self.configuration[CENGravatarPluginConfiguration.gravatarURLKey]]]) {
-        NSMutableDictionary *state = [NSMutableDictionary dictionaryWithDictionary:userState];
-        state[self.configuration[CENGravatarPluginConfiguration.gravatarURLKey]] = gravatarURL;
+    if (![gravatarURL isEqualToString:[userState valueForKeyPath:gravatarKey]]) {
+        NSMutableDictionary *state = [self dictionaryDeepMutableFrom:userState];
         
+        [self setValue:gravatarURL forKeyPath:gravatarKey inDictionary:state];
         [(CENMe *)user updateState:state];
     }
 }
@@ -118,6 +154,44 @@ NS_ASSUME_NONNULL_END
     }
     
     return emailHash;
+}
+
+- (void)setValue:(id)value
+      forKeyPath:(NSString *)keyPath
+    inDictionary:(NSMutableDictionary *)dictionary {
+    
+    NSArray<NSString *> *pathComponents = [keyPath componentsSeparatedByString:@"."];
+    
+    if (pathComponents.count > 1) {
+        NSRange pathSubRange = NSMakeRange(0, pathComponents.count - 1);
+        NSArray *pathSubComponents = [pathComponents subarrayWithRange:pathSubRange];
+        NSMutableDictionary *currentRoot = dictionary;
+        
+        for (NSString *key in pathSubComponents) {
+            if (!currentRoot[key]) {
+                currentRoot[key] = [NSMutableDictionary new];
+            }
+            
+            currentRoot = currentRoot[key];
+        }
+        
+        [currentRoot setValue:value forKeyPath:pathComponents.lastObject];
+    } else {
+        [dictionary setValue:value forKeyPath:keyPath];
+    }
+}
+
+- (NSMutableDictionary *)dictionaryDeepMutableFrom:(NSDictionary *)dictionary {
+    
+    NSMutableDictionary *mutable = [NSMutableDictionary dictionaryWithDictionary:dictionary];
+    
+    for (NSString *key in dictionary) {
+        if ([dictionary[key] isKindOfClass:[NSDictionary class]]) {
+            mutable[key] = [self dictionaryDeepMutableFrom:dictionary[key]];
+        }
+    }
+    
+    return mutable;
 }
 
 #pragma mark -

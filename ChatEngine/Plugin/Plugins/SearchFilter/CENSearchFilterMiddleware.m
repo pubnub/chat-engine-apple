@@ -1,6 +1,7 @@
 /**
  * @author Serhii Mamontov
- * @copyright © 2009-2018 PubNub, Inc.
+ * @version 0.9.2
+ * @copyright © 2010-2019 PubNub, Inc.
  */
 #import "CENSearchFilterMiddleware.h"
 #import "CEPMiddleware+Developer.h"
@@ -15,29 +16,33 @@
 #pragma mark - Information
 
 + (NSString *)location {
-    
+
     return CEPMiddlewareLocation.on;
 }
 
 + (NSArray<NSString *> *)events {
-    
+
     static NSArray<NSString *> *_searchFilterMiddlewareEvents;
     static dispatch_once_t onceToken;
+    
     dispatch_once(&onceToken, ^{
         _searchFilterMiddlewareEvents = @[@"*"];
     });
-    
+
     return _searchFilterMiddlewareEvents;
 }
 
 
 #pragma mark - Call
 
-- (void)runForEvent:(NSString *)event withData:(NSMutableDictionary *)data completion:(void (^)(BOOL))block {
+- (void)runForEvent:(NSString *)event
+           withData:(NSMutableDictionary *)data
+         completion:(void (^)(BOOL))block {
     
     BOOL rejected = NO;
+    
     if (data) {
-        NSString *senderUUID = ((CENUser *)data[CENEventData.sender]).uuid;
+        NSString *senderUUID = data[CENEventData.sender];
         
         if (self.configuration[@"sender"]) {
             rejected = ![self.configuration[@"sender"] isEqualToString:senderUUID];

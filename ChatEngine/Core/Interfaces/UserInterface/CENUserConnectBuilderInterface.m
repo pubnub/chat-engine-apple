@@ -1,7 +1,7 @@
 /**
- * author Serhii Mamontov
- * @version 0.9.0
- * @copyright © 2009-2017 PubNub, Inc.
+ * @author Serhii Mamontov
+ * @version 0.9.2
+ * @copyright © 2010-2019 PubNub, Inc.
  */
 #import "CENUserConnectBuilderInterface.h"
 #import "CENInterfaceBuilder+Private.h"
@@ -25,10 +25,10 @@
     };
 }
 
-- (CENUserConnectBuilderInterface * (^)(NSString *authKey))authKey {
+- (CENUserConnectBuilderInterface * (^)(id authKey))authKey {
     
-    return ^CENUserConnectBuilderInterface * (NSString *authKey) {
-        if ([authKey isKindOfClass:[NSString class]]) {
+    return ^CENUserConnectBuilderInterface * (id authKey) {
+        if ([authKey isKindOfClass:[NSString class]] || [authKey isKindOfClass:[NSNumber class]]) {
             [self setArgument:authKey forParameter:NSStringFromSelector(_cmd)];
         }
         

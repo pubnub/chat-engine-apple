@@ -1,9 +1,10 @@
 /**
  * @author Serhii Mamontov
- * @version 0.9.0
- * @copyright © 2009-2018 PubNub, Inc.
+ * @version 0.9.2
+ * @copyright © 2010-2019 PubNub, Inc.
  */
 #import "CENObject+Private.h"
+#import "CENStateRestoreAugmentationPlugin.h"
 #import "CENChatEngine+UserInterface.h"
 #import "CENChatEngine+EventEmitter.h"
 #import "CENEventEmitter+Private.h"
@@ -14,11 +15,20 @@
 
 #pragma mark Externs
 
-CENObjectTypes CENObjectType = { .user = @"user", .me = @"me", .chat = @"chat", .search = @"search" };
+/**
+ * @brief Typedef structure fields assignment.
+ */
+CENObjectTypes CENObjectType = {
+    .user = @"user",
+    .me = @"me",
+    .chat = @"chat",
+    .search = @"search",
+    .event = @"event",
+    .session = @"session"
+};
 
 
 NS_ASSUME_NONNULL_BEGIN
-
 
 #pragma mark - Protected interface declaration
 
@@ -27,12 +37,11 @@ NS_ASSUME_NONNULL_BEGIN
 
 #pragma mark - Information
 
-@property (nonatomic, strong) NSMutableDictionary<NSString *, NSMutableDictionary *> *extensionsData;
-@property (nonatomic, strong) NSMutableDictionary<NSString *, NSMutableDictionary *> *middlewareData;
 @property (nonatomic, strong) dispatch_queue_t resourceAccessQueue;
+@property (nonatomic, readonly, weak) CENChat *defaultStateChat;
+@property (nonatomic, getter = isValid, assign) BOOL valid;
 @property (nonatomic, weak) CENChatEngine *chatEngine;
 @property (nonatomic, copy) NSString *identifier;
-
 
 #pragma mark -
 
@@ -51,7 +60,8 @@ NS_ASSUME_NONNULL_END
 
 - (instancetype)init {
     
-    [NSException raise:NSInternalInconsistencyException format:@"-init not implemented, please use: -initWithChatEngine:"];
+    [NSException raise:NSInternalInconsistencyException
+                format:@"-init not implemented, please use: -initWithChatEngine:"];
     
     return nil;
 }
@@ -59,25 +69,45 @@ NS_ASSUME_NONNULL_END
 - (instancetype)initWithChatEngine:(CENChatEngine *)chatEngine {
     
     if ((self = [super init])) {
-        NSString *resourceQueueIdentifier = [NSString stringWithFormat:@"com.chatengine.%@.%p", [[self class] objectType], self];
-        _resourceAccessQueue = dispatch_queue_create([resourceQueueIdentifier UTF8String], DISPATCH_QUEUE_SERIAL);
+        NSString *type = [[self class] objectType];
+        NSString *identifier = [NSString stringWithFormat:@"com.chatengine.%@.%p", type, self];
+        _resourceAccessQueue = dispatch_queue_create([identifier UTF8String], DISPATCH_QUEUE_SERIAL);
         _identifier = [[NSUUID UUID] UUIDString];
-        _extensionsData = [NSMutableDictionary new];
-        _middlewareData = [NSMutableDictionary new];
         _chatEngine = chatEngine;
+        _valid = YES;
         
-        CELogResourceAllocation(_chatEngine.logger, @"<ChatEngine::%@> Allocate instance: %@", NSStringFromClass([self class]), self);
+        CELogResourceAllocation(_chatEngine.logger, @"<ChatEngine::%@> Allocate instance: %@",
+            NSStringFromClass([self class]), self);
     }
     
     return self;
 }
 
 
+#pragma mark - Presence state
+
+- (void)restoreStateForChat:(CENChat *)chat {
+    
+    chat = chat ?: ([self defaultStateChat] ?: self.chatEngine.global);
+    if ([[[self class] objectType] isEqualToString:CENObjectType.chat]) {
+        chat = self.chatEngine.global;
+    }
+    
+    if ([self hasPlugin:[CENStateRestoreAugmentationPlugin class]] || !chat) {
+        return;
+    }
+    
+    [self registerPlugin:[CENStateRestoreAugmentationPlugin class]
+       withConfiguration:@{ CENStateRestoreAugmentationConfiguration.chat: chat }];
+}
+
+
 #pragma mark - Event emitting
 
 - (void)emitEventLocally:(NSString *)event withParameters:(NSArray *)parameters {
-
-    [self.chatEngine emitEventLocally:event withParameters:[@[self] arrayByAddingObjectsFromArray:parameters]];
+    
+    [self.chatEngine emitEventLocally:event
+                       withParameters:[@[self] arrayByAddingObjectsFromArray:parameters]];
     [super emitEventLocally:event withParameters:parameters];
 }
 
@@ -86,13 +116,18 @@ NS_ASSUME_NONNULL_END
 
 - (void)onCreate {
     
-    [self.chatEngine triggerEventLocallyFrom:self event:[@[@"$.created", [[self class] objectType]] componentsJoinedByString:@"."], nil];
+    NSString *type = [[self class] objectType];
+    NSString *event = [@[@"$.created", type] componentsJoinedByString:@"."];
+    
+    [self.chatEngine triggerEventLocallyFrom:self event:event, nil];
 }
 
 
 #pragma mark - Clean up
 
 - (void)destruct {
+    
+    self.valid = NO;
     
     [self.chatEngine unregisterAllFromObjects:self];
     [super destruct];
@@ -110,7 +145,8 @@ NS_ASSUME_NONNULL_END
 
 - (void)dealloc {
     
-    CELogResourceAllocation(self.chatEngine.logger, @"<ChatEngine::%@> Deallocate instance: %@", NSStringFromClass([self class]), self);
+    CELogResourceAllocation(self.chatEngine.logger, @"<ChatEngine::%@> Deallocate instance: %@",
+        NSStringFromClass([self class]), self);
 }
 
 #pragma mark -

@@ -1,7 +1,7 @@
 /**
  * @author Serhii Mamontov
- * @version 0.9.0
- * @copyright © 2009-2018 PubNub, Inc.
+ * @version 0.9.2
+ * @copyright © 2010-2019 PubNub, Inc.
  */
 #import "CENChatEngine+Publish.h"
 #import "CENChatEngine+PluginsPrivate.h"
@@ -22,14 +22,26 @@
 
 @implementation CENChatEngine (Publish)
 
-- (CENEvent *)publishToChat:(CENChat *)chat eventWithName:(NSString *)eventName data:(NSDictionary *)data {
+
+#pragma mark - Event publish
+
+- (CENEvent *)publishToChat:(CENChat *)chat
+              eventWithName:(NSString *)eventName
+                       data:(NSDictionary *)data {
     
     data = data ?: @{};
+    
     if (![data isKindOfClass:[NSDictionary class]]) {
-        NSDictionary *errorInformation = @{ NSLocalizedDescriptionKey: @"The payload should be instance of NSDictionary" };
-        NSError *error = [NSError errorWithDomain:kCENErrorDomain code:kCENMalformedPayloadError userInfo:errorInformation];
+        NSDictionary *errorInformation = @{
+            NSLocalizedDescriptionKey: @"The payload should be instance of NSDictionary"
+        };
+        NSError *error = [NSError errorWithDomain:kCENErrorDomain
+                                             code:kCENMalformedPayloadError
+                                         userInfo:errorInformation];
         
-        @throw [NSException exceptionWithName:@"ChatEngine Exception" reason:error.localizedDescription userInfo:@{ NSUnderlyingErrorKey: error }];
+        @throw [NSException exceptionWithName:kCENErrorDomain
+                                       reason:error.localizedDescription
+                                     userInfo:@{ NSUnderlyingErrorKey: error }];
     }
     
     if (!self.me) {
@@ -44,14 +56,20 @@
         CENEventData.chat: chat,
         CENEventData.event: eventName,
         CENEventData.eventID: eventID,
-        CENEventData.sdk: [@"objc/" stringByAppendingString:kCELibraryVersion]
+        CENEventData.sdk: [@"objc/" stringByAppendingString:kCENLibraryVersion]
     };
     
     [self storeTemporaryObject:tracer];
-    [self runMiddlewaresAtLocation:@"emit" forEvent:eventName object:chat withPayload:payload
-                        completion:^(__unused BOOL rejected, NSMutableDictionary *processedData) {
-        [processedData removeObjectForKey:CENEventData.chat];
-        [tracer publish:processedData];
+    [self setupProtoPluginsForObject:(id)tracer withCompletion:^{
+        [self runMiddlewaresAtLocation:@"emit"
+                              forEvent:eventName
+                                object:chat
+                           withPayload:payload
+                            completion:^(__unused BOOL rejected, NSMutableDictionary *processed) {
+
+            [processed removeObjectForKey:CENEventData.chat];
+            [tracer publish:processed];
+        }];
     }];
     
     return tracer;
@@ -63,11 +81,18 @@
                withData:(NSDictionary *)data
              completion:(void(^)(NSNumber *))block {
     
-    [self publishStorable:shouldStoreInHistory data:data toChannel:channel withCompletion:^(PNPublishStatus *status) {
+    [self publishStorable:shouldStoreInHistory
+                     data:data
+                toChannel:channel
+           withCompletion:^(PNPublishStatus *status) {
+
         if (status.isError) {
             NSError *error = [CENError errorFromPubNubStatus:status];
             
-            [self throwError:error forScope:@"emitter" from:event propagateFlow:CEExceptionPropagationFlow.direct];
+            [self throwError:error
+                    forScope:@"emitter"
+                        from:event
+               propagateFlow:CEExceptionPropagationFlow.direct];
             
             return;
         }
@@ -75,5 +100,8 @@
         block(status.data.timetoken);
     }];
 }
+
+#pragma mark -
+
 
 @end

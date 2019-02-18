@@ -4,96 +4,104 @@
 NS_ASSUME_NONNULL_BEGIN
 
 /**
- * @brief      \b ChatEngine client interface for \c plugins management.
- * @discussion This interface used when builder interface usage not configured.
+ * @brief \b {CENChatEngine} client interface for \c plugins management.
  *
  * @author Serhii Mamontov
- * @version 0.9.0
- * @copyright © 2009-2018 PubNub, Inc.
+ * @version 0.9.2
+ * @copyright © 2010-2019 PubNub, Inc.
  */
 @interface CENChatEngine (Plugins)
 
-
-#pragma mark - Plugins
-
 /**
- * @brief  Check whether there is proto plugin registered for specified \b ChatEngine object type or not.
+ * @brief Check whether there is proto plugin registered for specified \b {CENChatEngine}
+ * object type or not.
  *
- * @discussion Chek proto plugin registered using it's class:
+ * @discussion Check whether proto plugin registered using it's class for \c Chat or not
  * @code
- * CENConfiguration *configuration = [CENConfiguration configurationWithPublishKey:@"demo-36" subscribeKey:@"demo-36"];
- * self.client = [CENChatEngine clientWithConfiguration:configuration];
- * // .....
+ * // objc fccb32cf-dd1c-4f6f-a5ce-47f0eb35a817
+ *
  * if (![self.client hasProtoPlugin:[AwesomeChatPlugin class] forObjectType:@"Chat"]) {
  *     // Looks like 'Chat' objects doesn't have proto plugin from AwesomeChatPlugin.
  * }
  * @endcode
  *
- * @param cls  Reference on plugin class (subclass of \b CEPPlugin) which should be used for search in \c type proto plugins
- *             list.
- * @param type Reference on one of known types: Chat, User, Me or Search.
+ * @param cls Class of plugin (subclass of \b {CEPPlugin}) which should be used for search in
+ *     \c type proto plugins list.
+ * @param type One of known types: \c Chat, \c User, \c Me or \c Search.
+ *
+ * @return Whether proto plugin registered or not.
+ *
+ * @ref df0791d4-92ea-48ad-8ad3-c89f0b1cc179
  */
 - (BOOL)hasProtoPlugin:(Class)cls forObjectType:(NSString *)type;
 
 /**
- * @brief  Check whether there is proto plugin with \c identifier registered for specified \b ChatEngine object type or not.
+ * @brief Check whether there is proto plugin with \c identifier registered for specified
+ * \b {CENChatEngine} object type or not.
  *
- * @discussion Chek proto plugin registered using it's identifier:
- *
+ * @discussion Check whether proto plugin registered using it's identifier for \c Chat or not
  * @code
- * CENConfiguration *configuration = [CENConfiguration configurationWithPublishKey:@"demo-36" subscribeKey:@"demo-36"];
- * self.client = [CENChatEngine clientWithConfiguration:configuration];
- * // .....
- * if (![self.client hasProtoPluginWithIdentifier:@"com.chatengine.emoji" forObjectType:@"Chat"]) {
- *     // Looks like 'Chat' objects doesn't have proto plugin with 'com.chatengine.emoji' identifier.
+ * // objc 2c947a51-1963-4a1f-9527-bb2d81c5e113
+ *
+ * if (![self.client hasProtoPluginWithIdentifier:@"chatengine.emoji" forObjectType:@"Chat"]) {
+ *     // Looks like 'Chat' objects doesn't have proto plugin with 'chatengine.emoji' identifier.
  * }
  * @endcode
  *
- * @param identifier Reference on plugin unique identifier which should be used for search in \c type proto plugins list.
- * @param type       Reference on one of known types: Chat, User, Me or Search.
+ * @param identifier Plugin identifier which has been used during registration.
+ * @param type One of known types: \c Chat, \c User, \c Me or \c Search.
+ *
+ * @return Whether proto plugin registered or not.
+ *
+ * @ref 0d0e3dd9-c636-4272-a243-f7e51708f486
  */
 - (BOOL)hasProtoPluginWithIdentifier:(NSString *)identifier forObjectType:(NSString *)type;
 
 /**
- * @brief      Register proto plugin for specified \b ChatEngine object type.
- * @discussion Registered proto plugins will be applied to objects of specified type when they will be created.
+ * @brief Register proto plugin for specified \b {CENChatEngine} object type.
  *
- * @discussion Register proto plugin w/o initialization configuration:
+ * @discussion Register proto plugin class w/o \c configuration for \c Chat
  * @code
- * CENConfiguration *configuration = [CENConfiguration configurationWithPublishKey:@"demo-36" subscribeKey:@"demo-36"];
- * self.client = [CENChatEngine clientWithConfiguration:configuration];
- * [self.client registerProtoPlugin:[AwesomeChatPlugin class] forObjectType:@"Chat" configuration:nil];
+ * // objc a9b4d909-f198-4ff6-b125-49bbaa2b4637
+ *
+ * [self.client registerProtoPlugin:[AwesomeChatPlugin class]
+ *                    forObjectType:@"Chat"
+ *                    configuration:nil];
  * @endcode
  *
- * @param cls           Reference on plugin class (subclass of \b CEPPlugin) which should be called, when new object of
- *                      \c type will be created.
- * @param configuration Reference on dictionary which can be used to pass configuration to \c plugin during instantiation
- *                      process.
- * @param type          Reference on one of known types: Chat, User, Me or Search.
+ * @param cls Class of plugin (subclass of \b {CEPPlugin}) which should be registered for object of
+ *     \c type.
+ * @param configuration Dictionary with configuration for \c plugin.
+ * @param type One of known types: \c Chat, \c User, \c Me or \c Search.
+ *
+ * @ref 41e188a3-f2dc-4f17-a11a-e12ac0a99b8f
  */
-- (void)registerProtoPlugin:(Class)cls withConfiguration:(nullable NSDictionary *)configuration forObjectType:(NSString *)type;
+- (void)registerProtoPlugin:(Class)cls
+          withConfiguration:(nullable NSDictionary *)configuration
+              forObjectType:(NSString *)type;
 
 /**
- * @brief      Register proto plugin with identifier for specified \b ChatEngine object type.
- * @discussion Registered proto plugins will be applied to objects of specified type when they will be created.
+ * @brief Register proto plugin with identifier for specified \b {CENChatEngine} object
+ * type.
  *
- * @discussion Register proto plugin with initialization configuration:
+ * @discussion Register proto plugin with custom \c identifier with \c configuration for \c Chat
  * @code
- * CENConfiguration *configuration = [CENConfiguration configurationWithPublishKey:@"demo-36" subscribeKey:@"demo-36"];
- * self.client = [CENChatEngine clientWithConfiguration:configuration];
+ * // objc f3f5c385-7d01-4a32-aca5-dfca10d01fd0
+ *
  * [self.client registerProtoPlugin:[AwesomeChatPlugin class]
  *                   withIdentifier:@"com.awesome.plugin"
  *                    forObjectType:@"Chat"
  *                    configuration:@{ @"api-key": @"secret" }];
  * @endcode
  *
- * @param cls           Reference on plugin class (subclass of \b CEPPlugin) which should be called, when new object of
- *                      \c type will be created.
- * @param identifier    Reference on plugin unique identifier with which plugin will be registered for instance of \c type
- *                      object.
- * @param configuration Reference on dictionary which can be used to pass configuration to \c plugin during instantiation
- *                      process.
- * @param type          Reference on one of known types: Chat, User, Me or Search.
+ * @param cls Class of plugin (subclass of \b {CEPPlugin}) which should be registered for object of
+ *     \c type.
+ * @param identifier Unique plugin identifier with which plugin will be registered for instance of
+ *     \c type object.
+ * @param configuration Dictionary with configuration for \c plugin.
+ * @param type One of known types: \c Chat, \c User, \c Me or \c Search.
+ *
+ * @ref 691b3c6f-ff89-4c39-9bd2-d9b493a36dac
  */
 - (void)registerProtoPlugin:(Class)cls
              withIdentifier:(NSString *)identifier
@@ -101,36 +109,38 @@ NS_ASSUME_NONNULL_BEGIN
               forObjectType:(NSString *)type;
 
 /**
- * @brief  Un-register proto plugin for specified \b ChatEngine object type.
+ * @brief Un-register proto plugin from specified \b {CENChatEngine} object type along
+ * with already instantiated plugins.
  *
- * @discussion Unregister proto plugin using it's class:
+ * @discussion Unregister proto plugin using it's class from \c Chat
  * @code
- * CENConfiguration *configuration = [CENConfiguration configurationWithPublishKey:@"demo-36" subscribeKey:@"demo-36"];
- * self.client = [CENChatEngine clientWithConfiguration:configuration];
- * // .....
+ * // objc 59bea506-4ef8-4384-94e8-bf4b68c8b82b
+ *
  * [self.client unregisterProtoPlugin:[AwesomeChatPlugin class] forObjectType:@"Chat"];
  * @endcode
  *
- * @param cls  Reference on plugin class (subclass of \b CEPPlugin) which should be called, when new object of \c type will
- *             be created.
- * @param type Reference on one of known types: Chat, User, Me or Search.
+ * @param cls Class of plugin (subclass of \b {CEPPlugin}) which should be removed.
+ * @param type One of known types: \c Chat, \c User, \c Me or \c Search.
+ *
+ * @ref 77a3d358-3582-477b-918f-84221d7735f7
  */
 - (void)unregisterProtoPlugin:(Class)cls forObjectType:(NSString *)type;
 
 /**
- * @brief  Un-register proto plugin by it's identifier for specified \b ChatEngine object type.
+ * @brief Un-register proto plugin by it's identifier from specified \b {CENChatEngine}
+ * object type along with already instantiated plugins.
  *
- * @discussion Unregister proto plugin using it's identifier:
+ * @discussion Unregister proto plugin using it's identifier from \c Chat
  * @code
- * CENConfiguration *configuration = [CENConfiguration configurationWithPublishKey:@"demo-36" subscribeKey:@"demo-36"];
- * self.client = [CENChatEngine clientWithConfiguration:configuration];
- * // .....
+ * // objc ae5dbd06-9843-4ca7-a810-a6fc3a5e8d57
+ *
  * [self.client unregisterProtoPluginWithIdentifier:@"com.awesome.plugin" forObjectType:@"Chat"];
  * @endcode
  *
- * @param identifier Reference on plugin unique identifier which should be used to find and remove plugin from \c type object
- *                   plugins list.
- * @param type       Reference on one of known types: Chat, User, Me or Search.
+ * @param identifier Unique identifier from plugin which should be removed.
+ * @param type One of known types: \c Chat, \c User, \c Me or \c Search.
+ *
+ * @ref e9347636-fb97-475b-a3f2-4591aa9367e3
  */
 - (void)unregisterProtoPluginWithIdentifier:(NSString *)identifier forObjectType:(NSString *)type;
 

@@ -1,7 +1,7 @@
 /**
  * @author Serhii Mamontov
- * @version 0.9.0
- * @copyright © 2009-2018 PubNub, Inc.
+ * @version 0.9.2
+ * @copyright © 2010-2019 PubNub, Inc.
  */
 #import "CENSession+Private.h"
 #import "CENChatEngine+ChatInterface.h"
@@ -14,30 +14,53 @@
 #import "CENObject+Private.h"
 #import "CENChat+Interface.h"
 #import "CENChat+Private.h"
-#import "CENLogMacro.h"
+#import "CENEmittedEvent.h"
+#import "CENDefines.h"
 #import "CENMe.h"
 
 
 NS_ASSUME_NONNULL_BEGIN
 
-
 #pragma mark Proteced interface declaration
-
 
 @interface CENSession ()
 
 
 #pragma mark - Information
 
+/**
+ * @brief Map of group names to map of channel names and \b {chats CENChat} which has been
+ * synchronized between \b {local user CENMe} devices.
+ */
 @property (nonatomic, strong) NSMutableDictionary<NSString *, NSMapTable<NSString *, CENChat *> *> *groupsToChatsMap;
+
+/**
+ * @brief Resource access serialization queue.
+ */
 @property (nonatomic, strong) dispatch_queue_t sessionAccessQueue;
+
+/**
+ * @brief Special \b { chat CENChat} which is used by user's devices to sync up changes in chats
+ * list.
+ */
 @property (nonatomic, strong) CENChat *sync;
 
 
 #pragma mark - Handlers
 
-- (void)handleJoinToChat:(NSDictionary *)chatData;
-- (void)handleLeaveFromChat:(NSDictionary *)chatData;
+/**
+ * @brief Handle chat join event from one of user's devices.
+ *
+ * @param data \a NSDictionary which contain serialized \b {chat CENChat} information.
+ */
+- (void)handleJoinToChat:(NSDictionary *)data;
+
+/**
+ * @brief Handle chat leave event from one of user's devices.
+ *
+ * @param data \a NSDictionary which contain serialized \b {chat CENChat} information.
+ */
+- (void)handleLeaveFromChat:(NSDictionary *)data;
 
 #pragma mark -
 
@@ -56,21 +79,15 @@ NS_ASSUME_NONNULL_END
 
 + (NSString *)objectType {
     
-    return @"session";
+    return CENObjectType.session;
 }
 
-- (NSDictionary<NSString *, NSDictionary<NSString *, CENChat *> *> *)chats {
+- (NSDictionary<NSString *, CENChat *> *)chats {
     
-    NSMutableDictionary *chats = [NSMutableDictionary new];
+    __block NSDictionary *chats = nil;
     
     dispatch_sync(self.resourceAccessQueue, ^{
-        for (NSString *group in self.groupsToChatsMap) {
-            NSDictionary *groupChats = [self.groupsToChatsMap[group] dictionaryRepresentation];
-            
-            if (groupChats.count) {
-                chats[group] = groupChats;
-            }
-        }
+        chats = [self.groupsToChatsMap[CENChatGroup.custom] dictionaryRepresentation];
     });
     
     return chats.count ? chats : nil;
@@ -87,7 +104,8 @@ NS_ASSUME_NONNULL_END
 - (instancetype)initWithChatEngine:(CENChatEngine *)chatEngine {
     
     if ((self = [super initWithChatEngine:chatEngine])) {
-        _sessionAccessQueue = dispatch_queue_create("com.chatengine.session", DISPATCH_QUEUE_SERIAL);
+        const char *identifier = "com.chatengine.session";
+        _sessionAccessQueue = dispatch_queue_create(identifier, DISPATCH_QUEUE_SERIAL);
         _groupsToChatsMap = [NSMutableDictionary dictionary];
     }
     
@@ -112,19 +130,31 @@ NS_ASSUME_NONNULL_END
     
     self.sync = [self.chatEngine synchronizationChat];
     
-    __weak __typeof__(self) weakSelf = self;
-    [self.sync handleEvent:@"$.session.notify.chat.join" withHandlerBlock:^(NSDictionary *payload) {
-        [weakSelf handleJoinToChat:payload[CENEventData.data][@"subject"]];
+    CENWeakify(self)
+    [self.sync handleEvent:@"$.session.notify.chat.join"
+          withHandlerBlock:^(CENEmittedEvent *event) {
+        CENStrongify(self)
+              
+        NSDictionary *payload = event.data;
+        
+        [self handleJoinToChat:payload[CENEventData.data][@"subject"]];
     }];
     
-    [self.sync handleEvent:@"$.session.notify.chat.leave" withHandlerBlock:^(NSDictionary *payload) {
-        [weakSelf handleLeaveFromChat:payload[CENEventData.data][@"subject"]];
+    [self.sync handleEvent:@"$.session.notify.chat.leave"
+          withHandlerBlock:^(CENEmittedEvent *event) {
+        CENStrongify(self)
+              
+        NSDictionary *payload = event.data;
+              
+        [self handleLeaveFromChat:payload[CENEventData.data][@"subject"]];
     }];
 }
 
 - (void)restore {
     
-    [self.chatEngine synchronizeSessionChatsWithCompletion:^(NSString *group, NSArray<NSString *> *chats) {
+    [self.chatEngine synchronizeSessionWithCompletion:^(NSString *group, NSArray *chats) {
+        [self.groupsToChatsMap removeObjectForKey:group];
+        
         for (NSString *channelName in chats) {
             [self handleJoinToChat:@{
                 CENChatData.channel: channelName,
@@ -132,8 +162,10 @@ NS_ASSUME_NONNULL_END
                 CENChatData.group: group
             }];
         };
-        
-        [self.chatEngine triggerEventLocallyFrom:self event:@"$.group.restored", group, nil];
+
+        dispatch_async(self.resourceAccessQueue, ^{
+            [self.chatEngine triggerEventLocallyFrom:self event:@"$.group.restored", group, nil];
+        });
     }];
 }
 
@@ -145,18 +177,22 @@ NS_ASSUME_NONNULL_END
     dispatch_sync(self.resourceAccessQueue, ^{
         alreadySynchronized = [self.groupsToChatsMap[chat.group] objectForKey:chat.channel] != nil;
     });
+
+    if (alreadySynchronized) {
+        return;
+    }
     
     dispatch_async(self.sessionAccessQueue, ^{
-        if (!alreadySynchronized) {
-            [self.sync emitEvent:@"$.session.notify.chat.join" withData:@{ @"subject": [chat dictionaryRepresentation] }];
-        }
+        [self.sync emitEvent:@"$.session.notify.chat.join"
+                    withData:@{ @"subject": [chat dictionaryRepresentation] }];
     });
 }
 
 - (void)leaveChat:(CENChat *)chat {
     
     dispatch_async(self.sessionAccessQueue, ^{
-        [self.sync emitEvent:@"$.session.notify.chat.leave" withData:@{ @"subject": [chat dictionaryRepresentation] }];
+        [self.sync emitEvent:@"$.session.notify.chat.leave"
+                    withData:@{ @"subject": [chat dictionaryRepresentation] }];
     });
 }
 
@@ -180,7 +216,11 @@ NS_ASSUME_NONNULL_END
         if (chat) {
             [self.groupsToChatsMap[group] setObject:chat forKey:internalName];
         } else {
-            chat = [self.chatEngine createChatWithName:internalName group:group private:isPrivate autoConnect:NO metaData:meta];
+            chat = [self.chatEngine createChatWithName:internalName
+                                                 group:group
+                                               private:isPrivate
+                                           autoConnect:NO
+                                              metaData:meta];
             
             [self.groupsToChatsMap[group] setObject:chat forKey:internalName];
             [self.chatEngine triggerEventLocallyFrom:self event:@"$.chat.join", chat, nil];
@@ -207,28 +247,24 @@ NS_ASSUME_NONNULL_END
 
 #pragma mark - Misc
 
-- (BOOL)isSynchronizationChat:(CENChat *)chat {
-    
-    return self.sync ? [self.sync isEqual:chat] : NO;
-}
-
 - (NSString *)description {
     
-    NSMutableArray *groupsInformation = [NSMutableArray new];
+    NSMutableArray *groups = [NSMutableArray new];
     dispatch_sync(self.resourceAccessQueue, ^{
         for (NSString *group in self.groupsToChatsMap.allKeys) {
             NSUInteger chatsInGroup = self.groupsToChatsMap[group].count;
             
-            [groupsInformation addObject:[NSString stringWithFormat:@"%@ (contains %@ chats)", group, @(chatsInGroup)]];
+            NSString *groupInformation = [NSString stringWithFormat:@"%@ (contains %@ chats)",
+                                          group, @(chatsInGroup)];
+            [groups addObject:groupInformation];
         }
     });
     
-    groupsInformation = groupsInformation.count ? groupsInformation : nil;
+    groups = groups.count ? groups : nil;
     
     
     return [NSString stringWithFormat:@"<CENSession:%p user: '%@'; groups: %@>",
-            self, self.chatEngine.me.uuid,
-            [groupsInformation componentsJoinedByString:@", "] ?: @"none"];
+            self, self.chatEngine.me.uuid, [groups componentsJoinedByString:@", "] ?: @"none"];
 }
 
 #pragma mark -

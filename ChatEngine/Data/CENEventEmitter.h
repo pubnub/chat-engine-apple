@@ -1,26 +1,29 @@
 #import <Foundation/Foundation.h>
+#import "CENStructures.h"
 
 
 NS_ASSUME_NONNULL_BEGIN
 
 /**
- * @brief      Events signalling.
- * @discussion This class provide interface to subscribe and emit events for it's subclasses.
+ * @brief Events signalling.
+ *
+ * @discussion Provides interface to subscribe and emit events for it's subclasses.
+ *
+ * @ref 5c70b850-8e2a-46e5-8a19-cfbf4591c11f
  *
  * @author Serhii Mamontov
- * @version 0.9.0
- * @copyright © 2009-2018 PubNub, Inc.
+ * @version 0.9.2
+ * @copyright © 2010-2019 PubNub, Inc.
  */
 @interface CENEventEmitter : NSObject
 
 
-#pragma mark - Information
+#pragma mark Information
 
 /**
- * @brief      Stores reference on block which can be used to get list of events.
- * @discussion Gets list of events for which emitter has registered handlers.
+ * @brief List of event names on which object has registered handler block.
  *
- * @discussion Block return list of event names.
+ * @ref ba33c082-1d5f-4dda-b877-2cde8b48ba2e
  */
 @property (nonatomic, readonly, strong) NSArray<NSString *> *eventNames;
 

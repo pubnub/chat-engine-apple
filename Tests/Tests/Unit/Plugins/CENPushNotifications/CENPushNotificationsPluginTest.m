@@ -1,12 +1,15 @@
 /**
  * @author Serhii Mamontov
- * @copyright © 2009-2018 PubNub, Inc.
+ * @copyright © 2010-2018 PubNub, Inc.
  */
 #import <CENChatEngine/CENPushNotificationsMiddleware.h>
 #import <CENChatEngine/CENPushNotificationsExtension.h>
 #import <CENChatEngine/CENPushNotificationsPlugin.h>
 #import <CENChatEngine/CENChatEngine+ChatPrivate.h>
 #import <CENChatEngine/CEPMiddleware+Developer.h>
+#if TARGET_OS_IOS || TARGET_OS_WATCH
+#import <UserNotifications/UserNotifications.h>
+#endif
 #import <CENChatEngine/CEPPlugin+Private.h>
 #import <CENChatEngine/CENUser+Private.h>
 #import <OCMock/OCMock.h>
@@ -18,11 +21,13 @@
 
 #pragma mark - Information
 
-@property (nonatomic, nullable, weak) CENChatEngine<PNObjectEventListener> *client;
-@property (nonatomic, nullable, weak) CENChatEngine *clientMock;
+@property (nonatomic, nullable, strong) CENPushNotificationsPlugin *plugin;
+@property (nonatomic, nullable, strong) NSData *token;
 
-@property (nonatomic, nullable, strong) CENPushNotificationsPlugin *defaultPlugin;
-@property (nonatomic, nullable, strong) NSData *defaultToken;
+
+#pragma mark - Misc
+
+- (void)stubLocalUser;
 
 
 #pragma mark -
@@ -31,13 +36,22 @@
 @end
 
 
+#pragma mark - Tests
+
 @implementation CENPushNotificationsPluginTest
 
 
 #pragma mark - Setup / Tear down
 
+- (BOOL)hasMockedObjectsInTestCaseWithName:(NSString *)name {
+
+    return ([name rangeOfString:@"testEnableForChats"].location != NSNotFound ||
+            [name rangeOfString:@"testDisableForChats"].location != NSNotFound ||
+            [name rangeOfString:@"testDisableAllForUser"].location != NSNotFound);
+}
+
 - (BOOL)shouldSetupVCR {
-    
+
     return NO;
 }
 
@@ -45,25 +59,14 @@
     
     [super setUp];
     
-    self.defaultToken = [@"00000000000000000000000000000000" dataUsingEncoding:NSUTF8StringEncoding];
-    self.defaultPlugin = [CENPushNotificationsPlugin pluginWithIdentifier:@"test" configuration:nil];
-    
-    CENConfiguration *configuration = [CENConfiguration configurationWithPublishKey:@"test-36" subscribeKey:@"test-36"];
-    self.client = (CENChatEngine<PNObjectEventListener> *)[self chatEngineWithConfiguration:configuration];
-    self.clientMock = [self partialMockForObject:self.client];
-    
-    OCMStub([self.clientMock fetchParticipantsForChat:[OCMArg any]]).andDo(nil);
-    OCMStub([self.clientMock createDirectChatForUser:[OCMArg any]])
-        .andReturn(self.clientMock.Chat().name(@"chat-engine#user#tester#write.#direct").autoConnect(NO).create());
-    OCMStub([self.clientMock createFeedChatForUser:[OCMArg any]])
-        .andReturn(self.clientMock.Chat().name(@"chat-engine#user#tester#read.#feed").autoConnect(NO).create());
-    OCMStub([self.clientMock me]).andReturn([CENMe userWithUUID:@"tester" state:@{} chatEngine:self.clientMock]);
+    self.token = [@"00000000000000000000000000000000" dataUsingEncoding:NSUTF8StringEncoding];
+    self.plugin = [CENPushNotificationsPlugin pluginWithIdentifier:@"test" configuration:nil];
 }
 
 
 #pragma mark - Tests :: Information
 
-- (void)testIdentifier_ShouldHavePropertIdentifier {
+- (void)testIdentifier_ShouldHavePropertyIdentifier {
     
     XCTAssertEqualObjects(CENPushNotificationsPlugin.identifier, @"com.chatengine.plugin.push-notifications");
 }
@@ -73,7 +76,8 @@
 
 - (void)testConfiguration_ShouldAddEvent_WhenNilConfigurationPassed {
     
-    NSArray<NSString *> *events = self.defaultPlugin.configuration[CENPushNotificationsConfiguration.events];
+    NSArray<NSString *> *events = self.plugin.configuration[CENPushNotificationsConfiguration.events];
+    
     
     XCTAssertNotNil(events);
     XCTAssertTrue([events containsObject:@"$notifications.seen"]);
@@ -83,6 +87,7 @@
     
     NSDictionary *configuration = @{ CENPushNotificationsConfiguration.events: @[@"custom"] };
     CENPushNotificationsPlugin *plugin = [CENPushNotificationsPlugin pluginWithIdentifier:@"test" configuration:configuration];
+    
     
     NSArray<NSString *> *events = plugin.configuration[CENPushNotificationsConfiguration.events];
     
@@ -97,6 +102,7 @@
     NSDictionary *configuration = @{ CENPushNotificationsConfiguration.events: @[@"custom"] };
     [CENPushNotificationsPlugin pluginWithIdentifier:@"test" configuration:configuration];
     
+    
     NSArray<NSString *> *events = CENPushNotificationsMiddleware.events;
     
     XCTAssertEqual(events.count, 2);
@@ -108,8 +114,13 @@
 #pragma mark - Tests :: Extension
 
 - (void)testExtension_ShouldProvideExtension_WhenCENMeInstancePassed {
+
+    self.usesMockedObjects = YES;
+
+
+    [self stubLocalUser];
     
-    Class extensionClass = [self.defaultPlugin extensionClassFor:self.client.me];
+    Class extensionClass = [self.plugin extensionClassFor:self.client.me];
     
     XCTAssertNotNil(extensionClass);
     XCTAssertEqualObjects(extensionClass, [CENPushNotificationsExtension class]);
@@ -117,7 +128,7 @@
 
 - (void)testExtension_ShouldNotProvideExtension_WhenNonCENMeInstancePassed {
     
-    Class extensionClass = [self.defaultPlugin extensionClassFor:(id)@2010];
+    Class extensionClass = [self.plugin extensionClassFor:(id)@2010];
     
     XCTAssertNil(extensionClass);
 }
@@ -127,7 +138,10 @@
 
 - (void)testMiddleware_ShouldProvideMiddleware_WhenCENChatInstancePassedForEmitLocation {
     
-    Class middlewareClass = [self.defaultPlugin middlewareClassForLocation:CEPMiddlewareLocation.emit object:self.client.me.direct];
+    CENChat *chat = self.client.Chat().name([NSUUID UUID].UUIDString).autoConnect(NO).create();
+    
+    
+    Class middlewareClass = [self.plugin middlewareClassForLocation:CEPMiddlewareLocation.emit object:chat];
     
     XCTAssertNotNil(middlewareClass);
     XCTAssertEqualObjects(middlewareClass, [CENPushNotificationsMiddleware class]);
@@ -135,304 +149,393 @@
 
 - (void)testMiddleware_ShouldNotProvideMiddleware_WhenNonCENChatInstancePassedForEmitLocation {
     
-    Class middlewareClass = [self.defaultPlugin middlewareClassForLocation:CEPMiddlewareLocation.emit object:(id)@2010];
+    Class middlewareClass = [self.plugin middlewareClassForLocation:CEPMiddlewareLocation.emit object:(id)@2010];
     XCTAssertNil(middlewareClass);
 }
 
 - (void)testMiddleware_ShouldNotProvideMiddleware_WhenCENChatInstancePassedForUnexpectedLocation {
     
-    Class middlewareClass = [self.defaultPlugin middlewareClassForLocation:CEPMiddlewareLocation.on object:self.client.me.direct];
+    CENChat *chat = self.client.Chat().name([NSUUID UUID].UUIDString).autoConnect(NO).create();
+    
+    
+    Class middlewareClass = [self.plugin middlewareClassForLocation:CEPMiddlewareLocation.on object:chat];
     XCTAssertNil(middlewareClass);
 }
 
 
 #pragma mark - Tests :: Enable Notifications
 
-- (void)testEnableNotifications_ShouldCallExtension_WhenDeviceTokenAndChatsListPassed {
+- (void)testEnablePushNotificationsForChats_ShouldForwardCall {
     
-    id mePartialMock = [self partialMockForObject:self.client.me];
-    OCMExpect([mePartialMock extensionWithIdentifier:CENPushNotificationsPlugin.identifier context:[OCMArg any]]);
+    NSArray<CENChat *> *chats = @[self.client.Chat().name([NSUUID UUID].UUIDString).autoConnect(NO).create()];
     
-    [CENPushNotificationsPlugin enablePushNotificationsForChats:@[self.client.me.direct] withDeviceToken:self.defaultToken completion:nil];
     
-    OCMVerifyAll(mePartialMock);
+    id pluginMock = [self mockForObject:[CENPushNotificationsPlugin class]];
+    id recorded = OCMExpect([pluginMock enableForChats:chats withDeviceToken:self.token completion:[OCMArg any]]);
+    [self waitForObject:pluginMock recordedInvocationCall:recorded afterBlock:^{
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+        [CENPushNotificationsPlugin enablePushNotificationsForChats:chats withDeviceToken:self.token
+                                                         completion:^(NSError *error) { }];
+#pragma GCC diagnostic pop
+    }];
 }
 
-- (void)testEnableNotifications_ShouldCallExtensionMethod_WhenDeviceTokenAndChatsListPassed {
-    
+- (void)testEnableForChats_ShouldCallExtensionMethod_WhenDeviceTokenAndChatsListPassed {
+
+    NSArray<CENChat *> *chats = @[self.client.Chat().name([NSUUID UUID].UUIDString).autoConnect(NO).create()];
     CENPushNotificationsExtension *extension = [CENPushNotificationsExtension new];
-    NSArray<CENChat *> *expectedChats = @[self.client.me.direct];
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    void(^completionHandler)(NSError *) = ^(NSError *error) { };
+
+
+    [self stubLocalUser];
     
-    id mePartialMock = [self partialMockForObject:self.client.me];
-    id extensionPartialMock = [self partialMockForObject:extension];
+    id userMock = [self mockForObject:self.client.me];
+    OCMStub([userMock extensionWithIdentifier:CENPushNotificationsPlugin.identifier]).andReturn(extension);
     
-    OCMStub([mePartialMock extensionWithIdentifier:CENPushNotificationsPlugin.identifier context:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
-        void(^block)(CENPushNotificationsExtension *) = nil;
-        [invocation getArgument:&block atIndex:3];
-        
-        block(extension);
-    });
-    
-    OCMExpect([extension enablePushNotifications:YES forChats:expectedChats withDeviceToken:self.defaultToken completion:completionHandler]);
-    
-    [CENPushNotificationsPlugin enablePushNotificationsForChats:expectedChats withDeviceToken:self.defaultToken completion:completionHandler];
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.delayedCheck * NSEC_PER_SEC)));
-    OCMVerifyAll(extensionPartialMock);
+    id extensionMock = [self mockForObject:extension];
+    id recorded = OCMExpect([extensionMock enable:YES forChats:chats withDeviceToken:self.token completion:[OCMArg any]]);
+    [self waitForObject:extensionMock recordedInvocationCall:recorded afterBlock:^{
+        [CENPushNotificationsPlugin enableForChats:chats withDeviceToken:self.token completion:^(NSError *error) { }];
+    }];
 }
 
-- (void)testEnableNotifications_ShouldNotCallExtension_WhenDeviceTokenNotPassed {
-    
+- (void)testEnableForChats_ShouldNotCallExtension_WhenDeviceTokenNotPassed {
+
+    NSArray<CENChat *> *chats = @[self.client.Chat().name([NSUUID UUID].UUIDString).autoConnect(NO).create()];
     NSData *token = nil;
     
-    id mePartialMock = [self partialMockForObject:self.client.me];
-    OCMExpect([[mePartialMock reject] extensionWithIdentifier:CENPushNotificationsPlugin.identifier context:[OCMArg any]]);
     
-    [CENPushNotificationsPlugin enablePushNotificationsForChats:@[self.client.me.direct] withDeviceToken:token completion:nil];
+    [self stubLocalUser];
     
-    OCMVerifyAll(mePartialMock);
+    id userMock = [self mockForObject:self.client.me];
+    id recorded = OCMExpect([[userMock reject] extensionWithIdentifier:[OCMArg any]]);
+    [self waitForObject:userMock recordedInvocationNotCall:recorded afterBlock:^{
+        [CENPushNotificationsPlugin enableForChats:chats withDeviceToken:token completion:nil];
+    }];
 }
 
-- (void)testEnableNotifications_ShouldNotCallExtension_WhenEmptyDeviceTokenPassed {
-    
+- (void)testEnableForChats_ShouldNotCallExtension_WhenEmptyDeviceTokenPassed {
+
+    NSArray<CENChat *> *chats = @[self.client.Chat().name([NSUUID UUID].UUIDString).autoConnect(NO).create()];
     NSData *token = [NSData new];
     
-    id mePartialMock = [self partialMockForObject:self.client.me];
-    OCMExpect([[mePartialMock reject] extensionWithIdentifier:CENPushNotificationsPlugin.identifier context:[OCMArg any]]);
     
-    [CENPushNotificationsPlugin enablePushNotificationsForChats:@[self.client.me.direct] withDeviceToken:token completion:nil];
+    [self stubLocalUser];
     
-    OCMVerifyAll(mePartialMock);
+    id userMock = [self mockForObject:self.client.me];
+    id recorded = OCMExpect([[userMock reject] extensionWithIdentifier:[OCMArg any]]);
+    [self waitForObject:userMock recordedInvocationNotCall:recorded afterBlock:^{
+        [CENPushNotificationsPlugin enableForChats:chats withDeviceToken:token completion:nil];
+    }];
 }
 
-- (void)testEnableNotifications_ShouldNotCallExtension_WhenChatsListNotPassed {
+- (void)testEnableForChats_ShouldNotCallExtension_WhenChatsListNotPassed {
     
     NSArray<CENChat *> *chats = nil;
     
-    id mePartialMock = [self partialMockForObject:self.client.me];
-    OCMExpect([[mePartialMock reject] extensionWithIdentifier:CENPushNotificationsPlugin.identifier context:[OCMArg any]]);
     
-    [CENPushNotificationsPlugin enablePushNotificationsForChats:chats withDeviceToken:self.defaultToken completion:nil];
+    [self stubLocalUser];
     
-    OCMVerifyAll(mePartialMock);
+    id userMock = [self mockForObject:self.client.me];
+    id recorded = OCMExpect([[userMock reject] extensionWithIdentifier:[OCMArg any]]);
+    [self waitForObject:userMock recordedInvocationNotCall:recorded afterBlock:^{
+        [CENPushNotificationsPlugin enableForChats:chats withDeviceToken:self.token completion:nil];
+    }];
 }
 
-- (void)testEnableNotifications_ShouldNotCallExtension_WhenEmptyChatsListPassed {
+- (void)testEnableForChats_ShouldNotCallExtension_WhenEmptyChatsListPassed {
     
     NSArray<CENChat *> *chats = [NSArray new];
     
-    id mePartialMock = [self partialMockForObject:self.client.me];
-    OCMExpect([[mePartialMock reject] extensionWithIdentifier:CENPushNotificationsPlugin.identifier context:[OCMArg any]]);
     
-    [CENPushNotificationsPlugin enablePushNotificationsForChats:chats withDeviceToken:self.defaultToken completion:nil];
+    [self stubLocalUser];
     
-    OCMVerifyAll(mePartialMock);
+    id userMock = [self mockForObject:self.client.me];
+    id recorded = OCMExpect([[userMock reject] extensionWithIdentifier:[OCMArg any]]);
+    [self waitForObject:userMock recordedInvocationNotCall:recorded afterBlock:^{
+        [CENPushNotificationsPlugin enableForChats:chats withDeviceToken:self.token completion:nil];
+    }];
 }
 
 
 #pragma mark - Tests :: Disable Notifications
 
-- (void)testDisableNotifications_ShouldCallExtension_WhenDeviceTokenAndChatsListPassed {
+- (void)testDisablePushNotificationsForChats_ShouldForwardCall {
     
-    id mePartialMock = [self partialMockForObject:self.client.me];
-    OCMExpect([mePartialMock extensionWithIdentifier:CENPushNotificationsPlugin.identifier context:[OCMArg any]]);
+    NSArray<CENChat *> *chats = @[self.client.Chat().name([NSUUID UUID].UUIDString).autoConnect(NO).create()];
     
-    [CENPushNotificationsPlugin disablePushNotificationsForChats:@[self.client.me.direct] withDeviceToken:self.defaultToken completion:nil];
     
-    OCMVerifyAll(mePartialMock);
+    id pluginMock = [self mockForObject:[CENPushNotificationsPlugin class]];
+    id recorded = OCMExpect([pluginMock disableForChats:chats withDeviceToken:self.token completion:[OCMArg any]]);
+    [self waitForObject:pluginMock recordedInvocationCall:recorded afterBlock:^{
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+        [CENPushNotificationsPlugin disablePushNotificationsForChats:chats withDeviceToken:self.token
+                                                          completion:^(NSError *error) { }];
+#pragma GCC diagnostic pop
+    }];
 }
 
-- (void)testDisableNotifications_ShouldCallExtensionMethod_WhenDeviceTokenAndChatsListPassed {
-    
+- (void)testDisableForChats_ShouldCallExtensionMethod_WhenDeviceTokenAndChatsListPassed {
+
+    NSArray<CENChat *> *chats = @[self.client.Chat().name([NSUUID UUID].UUIDString).autoConnect(NO).create()];
     CENPushNotificationsExtension *extension = [CENPushNotificationsExtension new];
-    NSArray<CENChat *> *expectedChats = @[self.client.me.direct];
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    void(^completionHandler)(NSError *) = ^(NSError *error) {};
     
-    id mePartialMock = [self partialMockForObject:self.client.me];
-    id extensionPartialMock = [self partialMockForObject:extension];
     
-    OCMStub([mePartialMock extensionWithIdentifier:CENPushNotificationsPlugin.identifier context:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
-        void(^block)(CENPushNotificationsExtension *) = nil;
-        [invocation getArgument:&block atIndex:3];
-        
-        block(extension);
-    });
+    [self stubLocalUser];
     
-    OCMExpect([extension enablePushNotifications:NO forChats:expectedChats withDeviceToken:self.defaultToken completion:completionHandler]);
+    id userMock = [self mockForObject:self.client.me];
+    OCMStub([userMock extensionWithIdentifier:CENPushNotificationsPlugin.identifier]).andReturn(extension);
     
-    [CENPushNotificationsPlugin disablePushNotificationsForChats:expectedChats withDeviceToken:self.defaultToken completion:completionHandler];
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.delayedCheck * NSEC_PER_SEC)));
-    OCMVerifyAll(extensionPartialMock);
+    id extensionMock = [self mockForObject:extension];
+    id recorded = OCMExpect([extensionMock enable:NO forChats:chats withDeviceToken:self.token completion:[OCMArg any]]);
+    [self waitForObject:extensionMock recordedInvocationCall:recorded afterBlock:^{
+        [CENPushNotificationsPlugin disableForChats:chats withDeviceToken:self.token completion:^(NSError *error) { }];
+    }];
 }
 
-- (void)testDisableNotifications_ShouldNotCallExtension_WhenDeviceTokenNotPassed {
-    
+- (void)testDisableForChats_ShouldNotCallExtension_WhenDeviceTokenNotPassed {
+
+    NSArray<CENChat *> *chats = @[self.client.Chat().name([NSUUID UUID].UUIDString).autoConnect(NO).create()];
     NSData *token = nil;
     
-    id mePartialMock = [self partialMockForObject:self.client.me];
-    OCMExpect([[mePartialMock reject] extensionWithIdentifier:CENPushNotificationsPlugin.identifier context:[OCMArg any]]);
     
-    [CENPushNotificationsPlugin disablePushNotificationsForChats:@[self.client.me.direct] withDeviceToken:token completion:nil];
+    [self stubLocalUser];
     
-    OCMVerifyAll(mePartialMock);
+    id userMock = [self mockForObject:self.client.me];
+    id recorded = OCMExpect([[userMock reject] extensionWithIdentifier:[OCMArg any]]);
+    [self waitForObject:userMock recordedInvocationNotCall:recorded afterBlock:^{
+        [CENPushNotificationsPlugin disableForChats:chats withDeviceToken:token completion:nil];
+    }];
 }
 
-- (void)testDisableNotifications_ShouldNotCallExtension_WhenEmptyDeviceTokenPassed {
-    
+- (void)testDisableForChats_ShouldNotCallExtension_WhenEmptyDeviceTokenPassed {
+
+    NSArray<CENChat *> *chats = @[self.client.Chat().name([NSUUID UUID].UUIDString).autoConnect(NO).create()];
     NSData *token = [NSData new];
     
-    id mePartialMock = [self partialMockForObject:self.client.me];
-    OCMExpect([[mePartialMock reject] extensionWithIdentifier:CENPushNotificationsPlugin.identifier context:[OCMArg any]]);
     
-    [CENPushNotificationsPlugin disablePushNotificationsForChats:@[self.client.me.direct] withDeviceToken:token completion:nil];
+    [self stubLocalUser];
     
-    OCMVerifyAll(mePartialMock);
+    id userMock = [self mockForObject:self.client.me];
+    id recorded = OCMExpect([[userMock reject] extensionWithIdentifier:[OCMArg any]]);
+    [self waitForObject:userMock recordedInvocationNotCall:recorded afterBlock:^{
+        [CENPushNotificationsPlugin disableForChats:chats withDeviceToken:token completion:nil];
+    }];
 }
 
-- (void)testDisableNotifications_ShouldNotCallExtension_WhenChatsListNotPassed {
+- (void)testDisableForChats_ShouldNotCallExtension_WhenChatsListNotPassed {
     
     NSArray<CENChat *> *chats = nil;
     
-    id mePartialMock = [self partialMockForObject:self.client.me];
-    OCMExpect([[mePartialMock reject] extensionWithIdentifier:CENPushNotificationsPlugin.identifier context:[OCMArg any]]);
     
-    [CENPushNotificationsPlugin disablePushNotificationsForChats:chats withDeviceToken:self.defaultToken completion:nil];
+    [self stubLocalUser];
     
-    OCMVerifyAll(mePartialMock);
+    id userMock = [self mockForObject:self.client.me];
+    id recorded = OCMExpect([[userMock reject] extensionWithIdentifier:[OCMArg any]]);
+    [self waitForObject:userMock recordedInvocationNotCall:recorded afterBlock:^{
+        [CENPushNotificationsPlugin disableForChats:chats withDeviceToken:self.token completion:nil];
+    }];
 }
 
-- (void)testDisableNotifications_ShouldNotCallExtension_WhenEmptyChatsListPassed {
+- (void)testDisableForChats_ShouldNotCallExtension_WhenEmptyChatsListPassed {
     
     NSArray<CENChat *> *chats = [NSArray new];
     
-    id mePartialMock = [self partialMockForObject:self.client.me];
-    OCMExpect([[mePartialMock reject] extensionWithIdentifier:CENPushNotificationsPlugin.identifier context:[OCMArg any]]);
     
-    [CENPushNotificationsPlugin disablePushNotificationsForChats:chats withDeviceToken:self.defaultToken completion:nil];
+    [self stubLocalUser];
     
-    OCMVerifyAll(mePartialMock);
+    id userMock = [self mockForObject:self.client.me];
+    id recorded = OCMExpect([[userMock reject] extensionWithIdentifier:[OCMArg any]]);
+    [self waitForObject:userMock recordedInvocationNotCall:recorded afterBlock:^{
+        [CENPushNotificationsPlugin disableForChats:chats withDeviceToken:self.token completion:nil];
+    }];
 }
 
 
 #pragma mark - Tests :: Disable All Notifications
 
-
-- (void)testDisableAllNotifications_ShouldCallExtension_WhenDeviceTokenAndChatsListPassed {
+- (void)testDisableAllForUser_ShouldForwardCall {
     
-    id mePartialMock = [self partialMockForObject:self.client.me];
-    OCMExpect([mePartialMock extensionWithIdentifier:CENPushNotificationsPlugin.identifier context:[OCMArg any]]);
+    [self stubLocalUser];
+    CENMe *me = self.client.me;
     
-    [CENPushNotificationsPlugin disableAllPushNotificationsForUser:self.client.me withDeviceToken:self.defaultToken completion:nil];
-    
-    OCMVerifyAll(mePartialMock);
+    id pluginMock = [self mockForObject:[CENPushNotificationsPlugin class]];
+    id recorded = OCMExpect([pluginMock disableAllForUser:me withDeviceToken:self.token completion:[OCMArg any]]);
+    [self waitForObject:pluginMock recordedInvocationCall:recorded afterBlock:^{
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+        [CENPushNotificationsPlugin disableAllPushNotificationsForUser:me withDeviceToken:self.token
+                                                            completion:^(NSError *error) { }];
+#pragma GCC diagnostic pop
+    }];
 }
 
-- (void)testDisableAllNotifications_ShouldCallExtensionMethod_WhenDeviceTokenAndChatsListPassed {
+- (void)testDisableAllForUser_ShouldCallExtensionMethod_WhenDeviceTokenAndChatsListPassed {
     
     CENPushNotificationsExtension *extension = [CENPushNotificationsExtension new];
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    void(^completionHandler)(NSError *) = ^(NSError *error) {};
     
-    id mePartialMock = [self partialMockForObject:self.client.me];
-    id extensionPartialMock = [self partialMockForObject:extension];
     
-    OCMStub([mePartialMock extensionWithIdentifier:CENPushNotificationsPlugin.identifier context:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
-        void(^block)(CENPushNotificationsExtension *) = nil;
-        [invocation getArgument:&block atIndex:3];
-        
-        block(extension);
-    });
+    [self stubLocalUser];
+    CENMe *me = self.client.me;
     
-    OCMExpect([extension enablePushNotifications:NO forChats:nil withDeviceToken:self.defaultToken completion:completionHandler]);
+    id userMock = [self mockForObject:self.client.me];
+    OCMStub([userMock extensionWithIdentifier:CENPushNotificationsPlugin.identifier]).andReturn(extension);
     
-    [CENPushNotificationsPlugin disableAllPushNotificationsForUser:self.client.me withDeviceToken:self.defaultToken completion:completionHandler];
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.delayedCheck * NSEC_PER_SEC)));
-    OCMVerifyAll(extensionPartialMock);
+    id extensionMock = [self mockForObject:extension];
+    id recorded = OCMExpect([extensionMock enable:NO forChats:nil withDeviceToken:self.token completion:[OCMArg any]]);
+    [self waitForObject:extensionMock recordedInvocationCall:recorded afterBlock:^{
+        [CENPushNotificationsPlugin disableAllForUser:me withDeviceToken:self.token completion:^(NSError *error) { }];
+    }];
 }
 
 
-- (void)testDisableAllNotifications_ShouldNotCallExtension_WhenDeviceTokenNotPassed {
+- (void)testDisableAllForUser_ShouldNotCallExtension_WhenDeviceTokenNotPassed {
     
     NSData *token = nil;
     
-    id mePartialMock = [self partialMockForObject:self.client.me];
-    OCMExpect([[mePartialMock reject] extensionWithIdentifier:CENPushNotificationsPlugin.identifier context:[OCMArg any]]);
     
-    [CENPushNotificationsPlugin disableAllPushNotificationsForUser:self.client.me withDeviceToken:token completion:nil];
+    [self stubLocalUser];
     
-    OCMVerifyAll(mePartialMock);
+    id userMock = [self mockForObject:self.client.me];
+    id recorded = OCMExpect([[userMock reject] extensionWithIdentifier:[OCMArg any]]);
+    [self waitForObject:userMock recordedInvocationNotCall:recorded afterBlock:^{
+        [CENPushNotificationsPlugin disableAllForUser:self.client.me withDeviceToken:token completion:nil];
+    }];
 }
 
-- (void)testDisableAllNotifications_ShouldNotCallExtension_WhenEmptyDeviceTokenPassed {
+- (void)testDisableAllForUser_ShouldNotCallExtension_WhenEmptyDeviceTokenPassed {
     
     NSData *token = [NSData new];
     
-    id mePartialMock = [self partialMockForObject:self.client.me];
-    OCMExpect([[mePartialMock reject] extensionWithIdentifier:CENPushNotificationsPlugin.identifier context:[OCMArg any]]);
     
-    [CENPushNotificationsPlugin disableAllPushNotificationsForUser:self.client.me withDeviceToken:token completion:nil];
+    [self stubLocalUser];
     
-    OCMVerifyAll(mePartialMock);
+    id userMock = [self mockForObject:self.client.me];
+    id recorded = OCMExpect([[userMock reject] extensionWithIdentifier:[OCMArg any]]);
+    [self waitForObject:userMock recordedInvocationNotCall:recorded afterBlock:^{
+        [CENPushNotificationsPlugin disableAllForUser:self.client.me withDeviceToken:token completion:nil];
+    }];
 }
 
 
 #pragma mark - Tests :: Mark Notifications As Seen
 
-- (void)testMarkNotificationAsSeen_ShouldCallExtensionMethod {
+- (void)testMarkNotificationAsSeen_ShouldForwardCall {
     
-    NSNotification *expectedNotification = [NSNotification notificationWithName:@"Test" object:@"PubNub"];
+    NSNotification *notification = [NSNotification notificationWithName:@"Test" object:@"PubNub"];
+    self.usesMockedObjects = YES;
+    
+    
+    [self stubLocalUser];
+    CENMe *me = self.client.me;
+    
+    id pluginMock = [self mockForObject:[CENPushNotificationsPlugin class]];
+    id recorded = OCMExpect([pluginMock markAsSeen:notification forUser:me withCompletion:[OCMArg any]]);
+    [self waitForObject:pluginMock recordedInvocationCall:recorded afterBlock:^{
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+        [CENPushNotificationsPlugin markNotificationAsSeen:notification forUser:me withCompletion:^(NSError *error) { }];
+#pragma GCC diagnostic pop
+    }];
+}
+
+- (void)testMarkAsSeen_ShouldCallExtensionMethod {
+    
+    NSNotification *notification = [NSNotification notificationWithName:@"Test" object:@"PubNub"];
     CENPushNotificationsExtension *extension = [CENPushNotificationsExtension new];
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    void(^completionHandler)(NSError *) = ^(NSError *error) {};
+    self.usesMockedObjects = YES;
     
-    id mePartialMock = [self partialMockForObject:self.client.me];
-    id extensionPartialMock = [self partialMockForObject:extension];
     
-    OCMStub([mePartialMock extensionWithIdentifier:CENPushNotificationsPlugin.identifier context:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
-        void(^block)(CENPushNotificationsExtension *) = nil;
-        [invocation getArgument:&block atIndex:3];
-        
-        block(extension);
-    });
+    [self stubLocalUser];
     
-    OCMExpect([extension markNotificationAsSeen:expectedNotification withCompletion:completionHandler]);
+    id userMock = [self mockForObject:self.client.me];
+    OCMStub([userMock extensionWithIdentifier:CENPushNotificationsPlugin.identifier]).andReturn(extension);
     
-    [CENPushNotificationsPlugin markNotificationAsSeen:expectedNotification forUser:self.client.me withCompletion:completionHandler];
+    id extensionMock = [self mockForObject:extension];
+    id recorded = OCMExpect([extensionMock markAsSeen:notification withCompletion:[OCMArg any]]);
+    [self waitForObject:extensionMock recordedInvocationCall:recorded afterBlock:^{
+        [CENPushNotificationsPlugin markAsSeen:notification forUser:self.client.me withCompletion:^(NSError *error) { }];
+    }];
+}
+
+- (void)testMarkAsSeen_ShouldNotCallExtensionMethod_WhenNonCENMePassed {
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.delayedCheck * NSEC_PER_SEC)));
-    OCMVerifyAll(extensionPartialMock);
+    NSNotification *notification = [NSNotification notificationWithName:@"Test" object:@"PubNub"];
+    CENUser *user = self.client.User([NSUUID UUID].UUIDString).create();
+    
+    
+    id userMock = [self mockForObject:user];
+    id recorded = OCMStub([[userMock reject] extensionWithIdentifier:[OCMArg any]]);
+    [self waitForObject:userMock recordedInvocationNotCall:recorded afterBlock:^{
+        [CENPushNotificationsPlugin markAsSeen:notification forUser:(id)user withCompletion:^(NSError *error) { }];
+    }];
 }
 
 
 #pragma mark - Tests :: Mark All Notifications As Seen
 
-- (void)testMarkAllNotificationAsSeen_ShouldCallExtensionMethod {
+- (void)testMarkAllNotificationAsSeen_ShouldForwardCall {
+
+    self.usesMockedObjects = YES;
+
+
+    [self stubLocalUser];
+    CENMe *me = self.client.me;
+    
+    id pluginMock = [self mockForObject:[CENPushNotificationsPlugin class]];
+    id recorded = OCMExpect([pluginMock markAllAsSeenForUser:me withCompletion:[OCMArg any]]);
+    [self waitForObject:pluginMock recordedInvocationCall:recorded afterBlock:^{
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+        [CENPushNotificationsPlugin markAllNotificationAsSeenForUser:me withCompletion:^(NSError *error) { }];
+#pragma GCC diagnostic pop
+    }];
+}
+
+- (void)testMarkAllAsSeen_ShouldCallExtensionMethod {
     
     CENPushNotificationsExtension *extension = [CENPushNotificationsExtension new];
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    void(^completionHandler)(NSError *) = ^(NSError *error) {};
+    self.usesMockedObjects = YES;
     
-    id mePartialMock = [self partialMockForObject:self.client.me];
-    id extensionPartialMock = [self partialMockForObject:extension];
     
-    OCMStub([mePartialMock extensionWithIdentifier:CENPushNotificationsPlugin.identifier context:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
-        void(^block)(CENPushNotificationsExtension *) = nil;
-        [invocation getArgument:&block atIndex:3];
-        
-        block(extension);
-    });
+    [self stubLocalUser];
     
-    OCMExpect([extension markAllNotificationAsSeenWithCompletion:completionHandler]);
+    id userMock = [self mockForObject:self.client.me];
+    OCMStub([userMock extensionWithIdentifier:CENPushNotificationsPlugin.identifier]).andReturn(extension);
     
-    [CENPushNotificationsPlugin markAllNotificationAsSeenForUser:self.client.me withCompletion:completionHandler];
+    id extensionMock = [self mockForObject:extension];
+    id recorded = OCMExpect([extensionMock markAllAsSeenWithCompletion:[OCMArg any]]);
+    [self waitForObject:extensionMock recordedInvocationCall:recorded afterBlock:^{
+        [CENPushNotificationsPlugin markAllAsSeenForUser:self.client.me withCompletion:^(NSError *error) { }];
+    }];
+}
+
+- (void)testMarkAllAsSeen_ShouldNotCallExtensionMethod_WhenNonCENMePassed {
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.delayedCheck * NSEC_PER_SEC)));
-    OCMVerifyAll(extensionPartialMock);
+    CENUser *user = self.client.User([NSUUID UUID].UUIDString).create();
+    
+    
+    id userMock = [self mockForObject:user];
+    id recorded = OCMStub([[userMock reject] extensionWithIdentifier:[OCMArg any]]);
+    [self waitForObject:userMock recordedInvocationNotCall:recorded afterBlock:^{
+        [CENPushNotificationsPlugin markAllAsSeenForUser:(id)user withCompletion:^(NSError *error) { }];
+    }];
+}
+
+
+#pragma mark - Misc
+
+- (void)stubLocalUser {
+
+    [self completeChatEngineConfiguration:self.client];
+
+    XCTAssertTrue([self isObjectMocked:self.client]);
+
+    [self stubChatConnection];
+    
+    CENMe *user = [CENMe userWithUUID:[NSUUID UUID].UUIDString state:@{} chatEngine:self.client];
+    OCMStub([self.client me]).andReturn(user);
 }
 
 #pragma mark -

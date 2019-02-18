@@ -1,7 +1,7 @@
 /**
  * @author Serhii Mamontov
- * @version 0.9.0
- * @copyright © 2009-2018 PubNub, Inc.
+ * @version 0.9.2
+ * @copyright © 2010-2019 PubNub, Inc.
  */
 #import "CENObject+Private.h"
 #import "CENObject+PluginsPrivate.h"
@@ -12,7 +12,6 @@
     #import "CENPluginsBuilderInterface.h"
 #endif // CHATENGINE_USE_BUILDER_INTERFACE
 
-#import "CEPPlugablePropertyStorage+Private.h"
 #import "CENChatEngine+PluginsPrivate.h"
 #import "CEPMiddleware+Private.h"
 #import "CEPExtension+Private.h"
@@ -27,14 +26,12 @@
 #pragma mark - Plugins
 
 #if CHATENGINE_USE_BUILDER_INTERFACE
-
 - (CENPluginsBuilderInterface * (^)(id plugin))plugin {
     
-    CENPluginsBuilderInterface *builder;
-    builder = [CENPluginsBuilderInterface builderWithExecutionBlock:^id(NSArray<NSString *> *flags, NSDictionary *arguments) {
-        NSDictionary *configuration = arguments[NSStringFromSelector(@selector(configuration))];
-        NSString *identifier = arguments[NSStringFromSelector(@selector(identifier))];
-        id plugin = arguments[@"plugin"];
+    CENInterfaceCallCompletionBlock block = ^id (NSArray<NSString *> *flags, NSDictionary *args) {
+        NSDictionary *configuration = args[NSStringFromSelector(@selector(configuration))];
+        NSString *identifier = args[NSStringFromSelector(@selector(identifier))];
+        id plugin = args[@"plugin"];
         id result = nil;
         
         if ([CEPPlugin isPluginClass:plugin]) {
@@ -52,32 +49,25 @@
         }
         
         return result;
-    }];
+    };
+    
+    CENPluginsBuilderInterface *builder;
+    builder = [CENPluginsBuilderInterface builderWithExecutionBlock:block];
     
     return ^CENPluginsBuilderInterface * (id plugin) {
         [builder setArgument:plugin forParameter:@"plugin"];
-        
         return builder;
     };
 }
 
-- (CENObject * (^)(id plugin, void (^contextBlock)(CEPExtension *extension)))extension {
+- (id (^)(id plugin))extension {
     
-    return ^CENObject * (id plugin, void (^contextBlock)(CEPExtension *extension)) {
-        NSString *identifier = nil;
+    return ^(id plugin) {
+        NSString *identifier = [CEPPlugin isPluginClass:plugin] ? [plugin identifier] : plugin;
         
-        if ([CEPPlugin isPluginClass:plugin]) {
-            identifier = [plugin identifier];
-        } else  {
-            identifier = plugin;
-        }
-        
-        [self extensionWithIdentifier:identifier context:contextBlock];
-        
-        return self;
+        return [self extensionWithIdentifier:identifier];
     };
 }
-
 #endif // CHATENGINE_USE_BUILDER_INTERFACE
 
 - (BOOL)hasPlugin:(Class)cls {
@@ -91,10 +81,6 @@
 
 - (BOOL)hasPluginWithIdentifier:(NSString *)identifier {
     
-    if (![CEPPlugin isValidIdentifier:identifier]) {
-        return NO;
-    }
-    
     return [self.chatEngine hasPluginWithIdentifier:identifier forObject:self];
 }
 
@@ -107,20 +93,18 @@
     [self registerPlugin:cls withIdentifier:[cls identifier] configuration:configuration];
 }
 
-- (void)registerPlugin:(Class)cls withIdentifier:(NSString *)identifier configuration:(NSDictionary *)configuration {
+- (void)registerPlugin:(Class)cls
+        withIdentifier:(NSString *)identifier
+         configuration:(NSDictionary *)configuration {
 
     [self registerPlugin:cls withIdentifier:identifier configuration:configuration firstInList:NO];
 }
 
 - (void)registerPlugin:(Class)cls
         withIdentifier:(NSString *)identifier
-         configuration:(nullable NSDictionary *)configuration
+         configuration:(NSDictionary *)configuration
            firstInList:(BOOL)shouldBeFirstInList {
-    
-    if (![CEPPlugin isValidIdentifier:identifier] || ![CEPPlugin isPluginClass:cls]) {
-        return;
-    }
-    
+
     [self.chatEngine registerPlugin:cls
                      withIdentifier:identifier
                       configuration:configuration
@@ -140,106 +124,26 @@
 
 - (void)unregisterPluginWithIdentifier:(NSString *)identifier {
     
-    if (![CEPPlugin isValidIdentifier:identifier]) {
-        return;
-    }
-    
     [self.chatEngine unregisterObjects:self pluginWithIdentifier:identifier];
 }
 
 
 #pragma mark - Extension
 
-- (void)extension:(Class)cls withContext:(void(^)(id extension))block {
-    
-    if (![CEPPlugin isPluginClass:cls]) {
-        if (block) {
-            block(nil);
-        }
-        return;
+- (id)extension:(Class)cls {
+
+    id extension = nil;
+
+    if ([CEPPlugin isPluginClass:cls]) {
+        extension = [self extensionWithIdentifier:[cls identifier]];
     }
         
-    [self extensionWithIdentifier:[cls identifier] context:block];
+    return extension;
 }
 
-- (void)extensionWithIdentifier:(NSString *)identifier context:(void(^)(id extension))block; {
-    
-    if (block) {
-        if (![CEPPlugin isValidIdentifier:identifier] || ![self hasPluginWithIdentifier:identifier]) {
-            block(nil);
-            return;
-        }
-        
-        [self.chatEngine extensionForObject:self withIdentifier:identifier context:block];
-    }
-}
+- (id)extensionWithIdentifier:(NSString *)identifier {
 
-- (NSMutableDictionary *)propertiesStorageForExtension:(CEPExtension *)extension {
-    
-    __block NSMutableDictionary *propertiesStorage = nil;
-    
-    dispatch_sync(self.resourceAccessQueue, ^{
-        if (!self.extensionsData[extension.identifier]) {
-            self.extensionsData[extension.identifier] = [CEPExtension newStorageForProperties];
-        }
-        
-        propertiesStorage = self.extensionsData[extension.identifier];
-    });
-    
-    return propertiesStorage;
-}
-
-- (void)invalidateExtensionProperties:(CEPExtension *)extension {
-    
-    dispatch_async(self.resourceAccessQueue, ^{
-        NSMutableDictionary *storage = self.extensionsData[extension.identifier];
-        
-        [storage enumerateKeysAndObjectsUsingBlock:^(__unused NSString *property, id value, __unused BOOL *stop) {
-            if ([value isKindOfClass:[NSTimer class]] && ((NSTimer *)value).isValid) {
-                [(NSTimer *)value invalidate];
-            }
-        }];
-        
-        [storage removeAllObjects];
-        [self.extensionsData removeObjectForKey:extension.identifier];
-    });
-}
-
-
-#pragma mark - Middleware
-
-- (NSMutableDictionary *)propertiesStorageForMiddleware:(CEPMiddleware *)middleware {
-    
-    __block NSMutableDictionary *propertiesStorage = nil;
-    
-    dispatch_sync(self.resourceAccessQueue, ^{
-        NSString *identifier = [@[middleware.identifier, [[middleware class] location]] componentsJoinedByString:@"."];
-        
-        if (!self.middlewareData[identifier]) {
-            self.middlewareData[identifier] = [CEPMiddleware newStorageForProperties];
-        }
-        
-        propertiesStorage = self.middlewareData[identifier];
-    });
-    
-    return propertiesStorage;
-}
-
-- (void)invalidateMiddlewareProperties:(CEPMiddleware *)middleware {
-    
-    dispatch_async(self.resourceAccessQueue, ^{
-        NSString *identifier = [@[middleware.identifier, [[middleware class] location]] componentsJoinedByString:@"."];
-        NSMutableDictionary *storage = self.middlewareData[identifier];
-        
-        [storage enumerateKeysAndObjectsUsingBlock:^(__unused NSString *property, id value, __unused BOOL *stop) {
-            if ([value isKindOfClass:[NSTimer class]] && ((NSTimer *)value).isValid) {
-                [(NSTimer *)value invalidate];
-            }
-        }];
-        
-        [storage removeAllObjects];
-        [self.middlewareData removeObjectForKey:identifier];
-    });
+    return [self.chatEngine extensionForObject:self withIdentifier:identifier];
 }
 
 #pragma mark -

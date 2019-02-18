@@ -1,7 +1,7 @@
 /**
  * @author Serhii Mamontov
- * @version 0.9.0
- * @copyright © 2009-2018 PubNub, Inc.
+ * @version 0.9.2
+ * @copyright © 2010-2019 PubNub, Inc.
  */
 #import "CENTemporaryObjectsManager.h"
 #import "CENConstants.h"
@@ -10,43 +10,55 @@
 #pragma mark Structures
 
 /**
- * @brief  Structure which describe keys under which temporary object data is stored.
+ * @brief Structure which provide keys to describe stored object and clean up time.
  */
 struct CETemporaryObjectDataKeys {
-    
     /**
-     * @brief  Stores reference on key name under which stored unixtimestamp which represent date
-     *         when object should be removed from temporary storage.
+     * @brief Timetoken which represent timestamp when object should be removed from temporary
+     * storage.
      */
     __unsafe_unretained NSString *cleanUpDate;
     
     /**
-     * @brief  Stores reference on key name under which temporary object is stored.
+     * @brief Object which should be stored.
      */
     __unsafe_unretained NSString *object;
-} CETemporaryObjectData = {
-    .cleanUpDate = @"cd",
-    .object = @"o"
-};
+} CETemporaryObjectData = { .cleanUpDate = @"cd", .object = @"o" };
 
 
 NS_ASSUME_NONNULL_BEGIN
 
-
-#pragma mark Protected interface declaration
+#pragma mark - Protected interface declaration
 
 @interface CENTemporaryObjectsManager ()
 
 
 #pragma mark - Information
 
-@property (nonatomic, nullable, strong) NSMutableArray *temporaryObjects;
+/**
+ * @brief \a NSMutableArray with \a NSDictionary instances containing information about stored
+ * object and it's clean up date.
+ */
+@property (nonatomic, nullable, strong) NSMutableArray<NSDictionary *> *temporaryObjects;
+
+/**
+ * @brief Resource access serialization queue.
+ */
 @property (nonatomic, strong) dispatch_queue_t resourceAccessQueue;
+
+/**
+ * @brief Temporary storage clean up timer.
+ */
 @property (nonatomic, nullable, strong) NSTimer *cleanUpTimer;
 
 
 #pragma mark - Handlers
 
+/**
+ * @brief Handle clean up timer fire event to trigger clean up process.
+ *
+ * @param timer \a NSTimer which called this handler.
+ */
 - (void)handleCleanUpTimer:(NSTimer *)timer;
 
 #pragma mark -
@@ -68,10 +80,11 @@ NS_ASSUME_NONNULL_END
 - (instancetype)init {
     
     if ((self = [super init])) {
-        NSString *resourceQueueIdentifier = [NSString stringWithFormat:@"com.chatengine.manager.temporary-objects.%p", self];
-        _resourceAccessQueue = dispatch_queue_create([resourceQueueIdentifier UTF8String], DISPATCH_QUEUE_SERIAL);
+        NSString *identifier = [NSString stringWithFormat:@"com.chatengine.manager.temporar.%p",
+                                self];
+        _resourceAccessQueue = dispatch_queue_create([identifier UTF8String], DISPATCH_QUEUE_SERIAL);
         _temporaryObjects = [NSMutableArray new];
-        _cleanUpTimer = [NSTimer scheduledTimerWithTimeInterval:kCETemporaryStoreCleanUpInterval
+        _cleanUpTimer = [NSTimer scheduledTimerWithTimeInterval:kCENTemporaryStoreCleanUpInterval
                                                          target:self
                                                        selector:@selector(handleCleanUpTimer:)
                                                        userInfo:nil
@@ -86,8 +99,9 @@ NS_ASSUME_NONNULL_END
 
 - (void)storeTemporaryObject:(id)object {
     
+    NSNumber *timestamp = @([NSDate date].timeIntervalSince1970 + kCENMaximumTemporaryStoreTime);
     NSDictionary *objectData = @{
-        CETemporaryObjectData.cleanUpDate: @([NSDate date].timeIntervalSince1970 + kCEMaximumTemporaryStoreTime),
+        CETemporaryObjectData.cleanUpDate: timestamp,
         CETemporaryObjectData.object: object
     };
     
@@ -105,8 +119,13 @@ NS_ASSUME_NONNULL_END
         NSTimeInterval currentTimestamp = [NSDate date].timeIntervalSince1970;
         NSMutableArray *oldObjects = [NSMutableArray new];
         
-        [self.temporaryObjects enumerateObjectsUsingBlock:^(NSDictionary *data, __unused NSUInteger idx, __unused BOOL *stop) {
-            if (((NSNumber *)data[CETemporaryObjectData.cleanUpDate]).doubleValue < currentTimestamp) {
+        [self.temporaryObjects enumerateObjectsUsingBlock:^(NSDictionary *data,
+                                                            __unused NSUInteger idx,
+                                                            __unused BOOL *stop) {
+            
+            NSNumber *timestamp = data[CETemporaryObjectData.cleanUpDate];
+            
+            if (timestamp.doubleValue < currentTimestamp) {
                 [oldObjects addObject:data];
             }
         }];
@@ -125,10 +144,7 @@ NS_ASSUME_NONNULL_END
     }
     
     self.cleanUpTimer = nil;
-    
-    dispatch_async(self.resourceAccessQueue, ^{
-        [self.temporaryObjects removeAllObjects];
-    });
+    [self.temporaryObjects removeAllObjects];
 }
 
 #pragma mark -

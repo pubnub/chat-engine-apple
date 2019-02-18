@@ -1,7 +1,7 @@
 /**
  * @author Serhii Mamontov
- * @version 0.9.0
- * @copyright © 2009-2018 PubNub, Inc.
+ * @version 0.9.2
+ * @copyright © 2010-2019 PubNub, Inc.
  */
 #import "CENChatsManager.h"
 #import "CENChatEngine+PluginsPrivate.h"
@@ -18,7 +18,6 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-
 #pragma mark Protected interface declaration
 
 @interface CENChatsManager ()
@@ -26,9 +25,24 @@ NS_ASSUME_NONNULL_BEGIN
 
 #pragma mark - Information
 
+/**
+ * @brief Map of channel names to \b {chat CENChat} instance which they represent.
+ */
 @property (nonatomic, nullable, strong) NSMapTable<NSString *, CENChat *> *chatsMap;
+
+/**
+ * @brief Resource access serialization queue.
+ */
 @property (nonatomic, strong) dispatch_queue_t resourceAccessQueue;
+
+/**
+ * @brief \b {CENChatEngine} which instantiated this manager.
+ */
 @property (nonatomic, nullable, weak) CENChatEngine *chatEngine;
+
+/**
+ * @brief Global communication \b {chat CENChat}.
+ */
 @property (nonatomic, nullable, strong) CENChat *global;
 
 #pragma mark -
@@ -78,7 +92,8 @@ NS_ASSUME_NONNULL_END
 
 - (instancetype)init {
     
-    [NSException raise:NSDestinationInvalidException format:@"-init not implemented, please use: +managerForChatEngine:"];
+    [NSException raise:NSDestinationInvalidException
+                format:@"-init not implemented, please use: +managerForChatEngine:"];
     
     return nil;
 }
@@ -86,12 +101,13 @@ NS_ASSUME_NONNULL_END
 - (instancetype)initWithChatEngine:(CENChatEngine *)chatEngine {
     
     if ((self = [super init])) {
-        NSString *resourceQueueIdentifier = [NSString stringWithFormat:@"com.chatengine.manager.chats.%p", self];
-        _resourceAccessQueue = dispatch_queue_create([resourceQueueIdentifier UTF8String], DISPATCH_QUEUE_CONCURRENT);
+        NSString *queue = [NSString stringWithFormat:@"com.chatengine.manager.chats.%p", self];
+        _resourceAccessQueue = dispatch_queue_create([queue UTF8String], DISPATCH_QUEUE_CONCURRENT);
         _chatsMap = [NSMapTable strongToStrongObjectsMapTable];
         _chatEngine = chatEngine;
         
-        CELogResourceAllocation(self.chatEngine.logger, @"<ChatEngine::Manager::Chats> %p instance allocation", self);
+        CELogResourceAllocation(self.chatEngine.logger,
+            @"<ChatEngine::Manager::Chats> %p instance allocation", self);
     }
     
     return self;
@@ -108,6 +124,16 @@ NS_ASSUME_NONNULL_END
     });
 }
 
+- (void)resetChatsConnection {
+    
+    dispatch_async(self.resourceAccessQueue, ^{
+        NSArray<CENChat *> *chats = [self.chatsMap objectEnumerator].allObjects;
+        
+        [chats makeObjectsPerformSelector:@selector(resetConnection)];
+        [self->_global resetConnection];
+    });
+}
+
 - (void)disconnectChats {
     
     dispatch_async(self.resourceAccessQueue, ^{
@@ -119,30 +145,40 @@ NS_ASSUME_NONNULL_END
 
 #pragma mark - Creation
 
-- (CENChat *)createChatWithName:(NSString *)name
-                         group:(NSString *)group
-                       private:(BOOL)isPrivate
-                   autoConnect:(BOOL)shouldAutoConnect
-                      metaData:(NSDictionary *)meta {
+- (CENChat *)createGlobalChat:(BOOL)isGlobal
+                     withName:(NSString *)name
+                        group:(NSString *)group
+                      private:(BOOL)isPrivate
+                  autoConnect:(BOOL)autoConnect
+                     metaData:(NSDictionary *)meta {
     
     __block CENChat *chat = nil;
     __block BOOL chatCreated = NO;
     NSString *namespace = self.chatEngine.configuration.globalChannel;
-    BOOL isGlobal = [name isEqualToString:namespace];
     name = name ?: @((NSUInteger)[[NSDate date] timeIntervalSince1970]).stringValue;
     NSString *internalName = [CENChat internalNameFor:name inNamespace:namespace private:isPrivate];
-    group = [(group ?: CENChatGroup.custom) componentsSeparatedByString:@"#"].lastObject;
+    group = group ?: CENChatGroup.custom;
     meta = meta ?: @{};
+
+    if (!isGlobal && [internalName isEqualToString:name]) {
+        isPrivate = [CENChat isPrivate:internalName];
+    }
     
-    CELogAPICall(self.chatEngine.logger, @"<ChatEngine::API> Create '%@' %@ chat in '%@' group%@.%@", name, isPrivate ? @"private" : @"public",
-                 group, shouldAutoConnect ? @" and connect" : @"", meta.count ? [@[@" Meta: ", meta] componentsJoinedByString:@""] : @"");
+    CELogAPICall(self.chatEngine.logger, @"<ChatEngine::API> Create '%@' %@chat in '%@' group%@.%@",
+        name, isPrivate ? @"private " : @"public ", group, autoConnect ? @" and connect" : @"",
+        meta.count ? [@[@" Meta: ", meta] componentsJoinedByString:@""] : @"");
     
     dispatch_barrier_sync(self.resourceAccessQueue, ^{
         chat = isGlobal ? self->_global : [self.chatsMap objectForKey:internalName];
         
         if (!chat) {
             chatCreated = YES;
-            chat = [CENChat chatWithName:name namespace:namespace group:group private:isPrivate metaData:meta chatEngine:self.chatEngine];
+            chat = [CENChat chatWithName:name
+                               namespace:namespace
+                                   group:group
+                                 private:isPrivate
+                                metaData:meta
+                              chatEngine:self.chatEngine];
             
             if (isGlobal) {
                 self.global = chat;
@@ -152,11 +188,16 @@ NS_ASSUME_NONNULL_END
         }
     });
     
+    if (![group isEqualToString:CENChatGroup.system] || isGlobal) {
+        // By default restore event sender's state using global chat (pre-0.10.0).
+        [chat restoreStateForChat:nil];
+    }
+    
     if (chat && chatCreated) {
         [self.chatEngine setupProtoPluginsForObject:chat withCompletion:^{
             [chat onCreate];
             
-            if (shouldAutoConnect) {
+            if (autoConnect) {
                 [chat connectChat];
             }
         }];
@@ -174,10 +215,13 @@ NS_ASSUME_NONNULL_END
     
     if ([name isKindOfClass:[NSString class]] && name.length) {
         NSString *namespace = self.chatEngine.configuration.globalChannel;
-        BOOL isGlobal = [name isEqualToString:namespace];
-        NSString *internalName = [CENChat internalNameFor:name inNamespace:namespace private:isPrivate];
+        NSString *internalName = [CENChat internalNameFor:name
+                                              inNamespace:namespace
+                                                  private:isPrivate];
         
         dispatch_sync(self.resourceAccessQueue, ^{
+            BOOL isGlobal = ([self->_global.name isEqualToString:name] ||
+                             [self->_global.channel isEqualToString:name]);
             chat = isGlobal ? self->_global : [self.chatsMap objectForKey:internalName];
         });
     }
@@ -210,7 +254,7 @@ NS_ASSUME_NONNULL_END
 }
 
 - (void)handleChat:(CENChat *)chat presenceEvent:(PNPresenceEventData *)information {
-
+    
     if (!chat) {
         return;
     }
@@ -221,24 +265,29 @@ NS_ASSUME_NONNULL_END
     NSArray<NSString *> *leave = presenceData.leave.count ? presenceData.leave : nil;
     NSArray<NSString *> *timeout = presenceData.timeout.count ? presenceData.timeout : nil;
     NSArray<NSString *> *stateChange = nil;
+    NSMutableDictionary *usersState = [NSMutableDictionary new];
+    BOOL onStateChange = NO;
     
     if (([eventType isEqualToString:@"join"] && !join)) {
         join = @[presenceData.uuid];
+        usersState[presenceData.uuid] = presenceData.state;
     } else if ([eventType isEqualToString:@"leave"]) {
         leave = @[presenceData.uuid];
     } else if ([eventType isEqualToString:@"timeout"]) {
         timeout = @[presenceData.uuid];
     } else if ([eventType isEqualToString:@"state-change"]) {
+        usersState[presenceData.uuid] = presenceData.state;
         stateChange = @[presenceData.uuid];
-        CENUser *user = [self.chatEngine.usersManager createUserWithUUID:presenceData.uuid state:presenceData.state];
-        
-        [user assignState:presenceData.state];
+        join = @[presenceData.uuid];
+        onStateChange = YES;
     }
     
-    [chat handleRemoteUsersJoin:[self.chatEngine.usersManager createUsersWithUUID:join]];
+    [chat handleRemoteUsersJoin:[self.chatEngine.usersManager createUsersWithUUID:join]
+                     withStates:usersState onStateChange:onStateChange];
     [chat handleRemoteUsersLeave:[self.chatEngine.usersManager createUsersWithUUID:leave]];
     [chat handleRemoteUsersDisconnect:[self.chatEngine.usersManager createUsersWithUUID:timeout]];
-    [chat handleRemoteUsersStateChange:[self.chatEngine.usersManager createUsersWithUUID:stateChange]];
+    [chat handleRemoteUsers:[self.chatEngine.usersManager createUsersWithUUID:stateChange]
+                stateChange:usersState];
 }
 
 
@@ -247,7 +296,8 @@ NS_ASSUME_NONNULL_END
 - (void)destroy {
     
     dispatch_barrier_async(self.resourceAccessQueue, ^{
-        [[self.chatsMap objectEnumerator].allObjects makeObjectsPerformSelector:@selector(destruct)];
+        NSArray<CENChat *> *chats = [self.chatsMap objectEnumerator].allObjects;
+        [chats makeObjectsPerformSelector:@selector(destruct)];
         [self.chatsMap removeAllObjects];
         [self->_global destruct];
         self->_global = nil;
@@ -256,7 +306,8 @@ NS_ASSUME_NONNULL_END
 
 - (void)dealloc {
     
-    CELogResourceAllocation(self.chatEngine.logger, @"<ChatEngine::Manager::Chats> %p instance deallocation", self);
+    CELogResourceAllocation(self.chatEngine.logger,
+        @"<ChatEngine::Manager::Chats> %p instance deallocation", self);
 }
 
 #pragma mark -

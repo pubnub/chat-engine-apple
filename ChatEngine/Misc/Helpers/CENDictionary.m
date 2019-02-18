@@ -1,12 +1,12 @@
 /**
  * @author Serhii Mamontov
- * @version 0.9.0
- * @copyright © 2009-2018 PubNub, Inc.
+ * @version 0.9.2
+ * @copyright © 2010-2019 PubNub, Inc.
  */
 #import "CENDictionary.h"
 
 
-#pragma mark - Interface implementation
+#pragma mark Interface implementation
 
 @implementation CENDictionary
 
@@ -16,10 +16,11 @@
 + (NSString *)queryStringFrom:(NSDictionary *)dictionary {
     
     NSMutableString *query = [NSMutableString new];
-    NSCharacterSet *allowedCharacters = [NSCharacterSet URLQueryAllowedCharacterSet];
+    NSCharacterSet *allowed = [NSCharacterSet URLQueryAllowedCharacterSet];
     
     for (NSString *queryKey in dictionary) {
-        NSString *encodedValue = [(NSString *)dictionary[queryKey] stringByAddingPercentEncodingWithAllowedCharacters:allowedCharacters];
+        NSString *value = dictionary[queryKey];
+        NSString *encodedValue = [value stringByAddingPercentEncodingWithAllowedCharacters:allowed];
         [query appendFormat:@"%@%@=%@", (query.length ? @"&" : @""), queryKey, encodedValue];
     }
     

@@ -1,6 +1,6 @@
 /**
  * @author Serhii Mamontov
- * @copyright © 2009-2018 PubNub, Inc.
+ * @copyright © 2010-2018 PubNub, Inc.
  */
 #import <CENChatEngine/CENPushNotificationsMiddleware.h>
 #import <CENChatEngine/CENPushNotificationsPlugin.h>
@@ -17,10 +17,7 @@
 
 #pragma mark - Information
 
-@property (nonatomic, nullable, weak) CENChatEngine<PNObjectEventListener> *client;
-@property (nonatomic, nullable, weak) CENChatEngine *clientMock;
-
-@property (nonatomic, nullable, strong) CENPushNotificationsMiddleware *defaultMiddleware;
+@property (nonatomic, nullable, strong) CENPushNotificationsMiddleware *middleware;
 @property (nonatomic, nullable, strong) NSMutableDictionary *preFormattedLeavePayload;
 @property (nonatomic, nullable, strong) NSMutableDictionary *preFormattedSeenPayload;
 @property (nonatomic, nullable, strong) NSMutableDictionary *defaultMessagePayload;
@@ -29,7 +26,7 @@
 @property (nonatomic, nullable, strong) NSMutableDictionary *pluginPayload;
 @property (nonatomic, nullable, strong) NSMutableDictionary *seenPayload;
 @property (nonatomic, nullable, strong) NSMutableDictionary *userPayload;
-@property (nonatomic, nullable, strong) CENChat *defaultChat;
+@property (nonatomic, nullable, strong) CENChat *chat;
 
 
 #pragma mark - Misc
@@ -49,13 +46,15 @@
 @end
 
 
+#pragma mark - Tests
+
 @implementation CENPushNotificationsMiddlewareTest
 
 
 #pragma mark - Setup / Tear down
 
 - (BOOL)shouldSetupVCR {
-    
+
     return NO;
 }
 
@@ -63,17 +62,18 @@
     
     [super setUp];
     
+    
     NSMutableDictionary *middlewareConfiguration = [@{
         CENPushNotificationsConfiguration.events: @[@"message", @"$.invite"],
         CENPushNotificationsConfiguration.services: @[CENPushNotificationsService.apns, CENPushNotificationsService.fcm]
     } mutableCopy];
 
-    if ([self.name rangeOfString:@"BoundledChatEngineEvent"].location != NSNotFound ||
+    if ([self.name rangeOfString:@"BundledChatEngineEvent"].location != NSNotFound ||
         [self.name rangeOfString:@"GenerateBySystem"].location != NSNotFound ||
         [self.name rangeOfString:@"GenerateByPlugin"].location != NSNotFound ||
         [self.name rangeOfString:@"GenerateByUser"].location != NSNotFound) {
         middlewareConfiguration[CENPushNotificationsConfiguration.formatter] = ^NSDictionary * (NSDictionary *cePayload) {
-            if ([self.name rangeOfString:@"BoundledChatEngineEvent"].location == NSNotFound) {
+            if ([self.name rangeOfString:@"BundledChatEngineEvent"].location == NSNotFound) {
                 return self.preFormattedLeavePayload;
             }
             
@@ -81,17 +81,15 @@
         };
     }
     
-    CENConfiguration *chatEngineConfiguration = [CENConfiguration configurationWithPublishKey:@"test-36" subscribeKey:@"test-36"];
-    self.client = (CENChatEngine<PNObjectEventListener> *)[self chatEngineWithConfiguration:chatEngineConfiguration];
-    self.clientMock = [self partialMockForObject:self.client];
+    if ([self.name rangeOfString:@"PushNotificationsDebugEnabled"].location != NSNotFound) {
+        middlewareConfiguration[CENPushNotificationsConfiguration.debug] = @YES;
+    }
     
-    self.defaultChat = [CENChat chatWithName:@"test" namespace:@"test" group:CENChatGroup.custom private:NO metaData:@{} chatEngine:self.client];
+    self.middleware = [CENPushNotificationsMiddleware new];
+    id middlewareMock = [self mockForObject:self.middleware];
+    OCMStub([middlewareMock configuration]).andReturn(middlewareConfiguration);
     
-    self.defaultMiddleware = [CENPushNotificationsMiddleware new];
-    id defaultMiddlewareMock = [self partialMockForObject:self.defaultMiddleware];
-    OCMStub([defaultMiddlewareMock configuration]).andReturn(middlewareConfiguration);
-    
-    OCMStub([self.clientMock fetchParticipantsForChat:[OCMArg any]]).andDo(nil);
+    self.chat = self.client.Chat().name(@"test").autoConnect(NO).create();
     
     [self prepareMessagePayload];
     [self prepareInvitePayload];
@@ -106,6 +104,21 @@
 
 #pragma mark - Tests :: Information
 
+- (void)testEvents_ShouldContainList {
+    
+    // Restore previous implementation if has been replaced.
+    if ([CENPushNotificationsMiddleware respondsToSelector:NSSelectorFromString(@"cen_orig_events")]) {
+        SEL eventsCurrentGetter = NSSelectorFromString(@"events");
+        SEL eventsOriginalGetter = NSSelectorFromString(@"cen_orig_events");
+        
+        Method originalMethod = class_getClassMethod([CENPushNotificationsMiddleware class], eventsOriginalGetter);
+        Method currentMethod = class_getClassMethod([CENPushNotificationsMiddleware class], eventsCurrentGetter);
+        method_exchangeImplementations(originalMethod, currentMethod);
+    }
+    
+    XCTAssertGreaterThanOrEqual(CENPushNotificationsMiddleware.events.count, 1);
+}
+
 - (void)testLocation_ShouldBeSetToEmit {
     
     XCTAssertEqualObjects(CENPushNotificationsMiddleware.location, CEPMiddlewareLocation.emit);
@@ -115,98 +128,77 @@
 #pragma mark - Tests :: Default formatter
 
 - (void)testDefaultFormatter_ShouldCreateServicesPayload_WhenMessageEventWithMessageDataKeyPassed {
-    
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    __block BOOL handlerCalled =  NO;
-    
-    [self.defaultMiddleware runForEvent:@"message" withData:self.defaultMessagePayload completion:^(BOOL rejected) {
-        handlerCalled = YES;
-        
-        XCTAssertNotNil(self.defaultMessagePayload[@"pn_apns"]);
-        XCTAssertNotNil(self.defaultMessagePayload[@"pn_apns"][@"aps"][@"alert"][@"title"]);
-        XCTAssertNotNil(self.defaultMessagePayload[@"pn_apns"][@"aps"][@"alert"][@"body"]);
-        XCTAssertNotNil(self.defaultMessagePayload[@"pn_gcm"]);
-        XCTAssertNotNil(self.defaultMessagePayload[@"pn_gcm"][@"data"][@"contentTitle"]);
-        XCTAssertNotNil(self.defaultMessagePayload[@"pn_gcm"][@"data"][@"contentText"]);
-        XCTAssertNotNil(self.defaultMessagePayload[@"pn_gcm"][@"data"][@"ticker"]);
-        XCTAssertNotNil(self.defaultMessagePayload[@"pn_gcm"][@"data"][@"category"]);
-        XCTAssertEqualObjects(self.defaultMessagePayload[@"pn_gcm"][@"data"][@"category"], @"CATEGORY_MESSAGE");
-        dispatch_semaphore_signal(semaphore);
+
+    [self waitToCompleteIn:self.testCompletionDelay codeBlock:^(dispatch_block_t handler) {
+        [self.middleware runForEvent:@"message" withData:self.defaultMessagePayload completion:^(BOOL rejected) {
+            XCTAssertNotNil(self.defaultMessagePayload[@"pn_apns"]);
+            XCTAssertNotNil(self.defaultMessagePayload[@"pn_apns"][@"aps"][@"alert"][@"title"]);
+            XCTAssertNotNil(self.defaultMessagePayload[@"pn_apns"][@"aps"][@"alert"][@"body"]);
+            XCTAssertNotNil(self.defaultMessagePayload[@"pn_gcm"]);
+            XCTAssertNotNil(self.defaultMessagePayload[@"pn_gcm"][@"data"][@"contentTitle"]);
+            XCTAssertNotNil(self.defaultMessagePayload[@"pn_gcm"][@"data"][@"contentText"]);
+            XCTAssertNotNil(self.defaultMessagePayload[@"pn_gcm"][@"data"][@"ticker"]);
+            XCTAssertNotNil(self.defaultMessagePayload[@"pn_gcm"][@"data"][@"category"]);
+            XCTAssertEqualObjects(self.defaultMessagePayload[@"pn_gcm"][@"data"][@"category"], @"CATEGORY_MESSAGE");
+            handler();
+        }];
     }];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
-    XCTAssertTrue(handlerCalled);
 }
 
 - (void)testDefaultFormatter_ShouldCreateServicesPayload_WhenMessageEventWithTextDataKeyPassed {
     
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    __block BOOL handlerCalled =  NO;
-    
-    [self.defaultMiddleware runForEvent:@"message" withData:self.defaultMessagePayload completion:^(BOOL rejected) {
-        handlerCalled = YES;
-        
-        XCTAssertNotNil(self.defaultMessagePayload[@"pn_apns"]);
-        XCTAssertNotNil(self.defaultMessagePayload[@"pn_apns"][@"aps"][@"alert"][@"title"]);
-        XCTAssertNotNil(self.defaultMessagePayload[@"pn_apns"][@"aps"][@"alert"][@"body"]);
-        XCTAssertNotNil(self.defaultMessagePayload[@"pn_gcm"]);
-        XCTAssertNotNil(self.defaultMessagePayload[@"pn_gcm"][@"data"][@"contentTitle"]);
-        XCTAssertNotNil(self.defaultMessagePayload[@"pn_gcm"][@"data"][@"contentText"]);
-        XCTAssertNotNil(self.defaultMessagePayload[@"pn_gcm"][@"data"][@"ticker"]);
-        XCTAssertNotNil(self.defaultMessagePayload[@"pn_gcm"][@"data"][@"category"]);
-        XCTAssertEqualObjects(self.defaultMessagePayload[@"pn_gcm"][@"data"][@"category"], @"CATEGORY_MESSAGE");
-        dispatch_semaphore_signal(semaphore);
+    [self waitToCompleteIn:self.testCompletionDelay codeBlock:^(dispatch_block_t handler) {
+        [self.middleware runForEvent:@"message" withData:self.defaultMessagePayload completion:^(BOOL rejected) {
+            XCTAssertNotNil(self.defaultMessagePayload[@"pn_apns"]);
+            XCTAssertNotNil(self.defaultMessagePayload[@"pn_apns"][@"aps"][@"alert"][@"title"]);
+            XCTAssertNotNil(self.defaultMessagePayload[@"pn_apns"][@"aps"][@"alert"][@"body"]);
+            XCTAssertNotNil(self.defaultMessagePayload[@"pn_gcm"]);
+            XCTAssertNotNil(self.defaultMessagePayload[@"pn_gcm"][@"data"][@"contentTitle"]);
+            XCTAssertNotNil(self.defaultMessagePayload[@"pn_gcm"][@"data"][@"contentText"]);
+            XCTAssertNotNil(self.defaultMessagePayload[@"pn_gcm"][@"data"][@"ticker"]);
+            XCTAssertNotNil(self.defaultMessagePayload[@"pn_gcm"][@"data"][@"category"]);
+            XCTAssertEqualObjects(self.defaultMessagePayload[@"pn_gcm"][@"data"][@"category"], @"CATEGORY_MESSAGE");
+            handler();
+        }];
     }];
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
-    XCTAssertTrue(handlerCalled);
 }
 
 - (void)testDefaultFormatter_ShouldCreateServicesPayload_WhenInviteEventPassed {
     
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    __block BOOL handlerCalled =  NO;
-    
-    [self.defaultMiddleware runForEvent:@"$.invite" withData:self.defaultInvitePayload completion:^(BOOL rejected) {
-        handlerCalled = YES;
-        
-        XCTAssertNotNil(self.defaultInvitePayload[@"pn_apns"]);
-        XCTAssertNotNil(self.defaultInvitePayload[@"pn_apns"][@"aps"][@"alert"][@"title"]);
-        XCTAssertNotNil(self.defaultInvitePayload[@"pn_apns"][@"aps"][@"alert"][@"body"]);
-        XCTAssertNotNil(self.defaultInvitePayload[@"pn_gcm"]);
-        XCTAssertNotNil(self.defaultInvitePayload[@"pn_gcm"][@"data"][@"contentTitle"]);
-        XCTAssertNotNil(self.defaultInvitePayload[@"pn_gcm"][@"data"][@"contentText"]);
-        XCTAssertNotNil(self.defaultInvitePayload[@"pn_gcm"][@"data"][@"ticker"]);
-        XCTAssertNotNil(self.defaultInvitePayload[@"pn_gcm"][@"data"][@"category"]);
-        XCTAssertEqualObjects(self.defaultInvitePayload[@"pn_gcm"][@"data"][@"category"], @"CATEGORY_SOCIAL");
-        dispatch_semaphore_signal(semaphore);
+    [self waitToCompleteIn:self.testCompletionDelay codeBlock:^(dispatch_block_t handler) {
+        [self.middleware runForEvent:@"$.invite" withData:self.defaultInvitePayload completion:^(BOOL rejected) {
+            XCTAssertNotNil(self.defaultInvitePayload[@"pn_apns"]);
+            XCTAssertNotNil(self.defaultInvitePayload[@"pn_apns"][@"aps"][@"alert"][@"title"]);
+            XCTAssertNotNil(self.defaultInvitePayload[@"pn_apns"][@"aps"][@"alert"][@"body"]);
+            XCTAssertNotNil(self.defaultInvitePayload[@"pn_gcm"]);
+            XCTAssertNotNil(self.defaultInvitePayload[@"pn_gcm"][@"data"][@"contentTitle"]);
+            XCTAssertNotNil(self.defaultInvitePayload[@"pn_gcm"][@"data"][@"contentText"]);
+            XCTAssertNotNil(self.defaultInvitePayload[@"pn_gcm"][@"data"][@"ticker"]);
+            XCTAssertNotNil(self.defaultInvitePayload[@"pn_gcm"][@"data"][@"category"]);
+            XCTAssertEqualObjects(self.defaultInvitePayload[@"pn_gcm"][@"data"][@"category"], @"CATEGORY_SOCIAL");
+            handler();
+        }];
     }];
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
-    XCTAssertTrue(handlerCalled);
 }
 
 
 - (void)testDefaultFormatter_ShouldCreateServicesPayload_WhenSeenEventPassed {
     
     NSString *expected = @"com.pubnub.chat-engine.notifications.seen";
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    __block BOOL handlerCalled =  NO;
     
-    [self.defaultMiddleware runForEvent:@"$notifications.seen" withData:self.seenPayload completion:^(BOOL rejected) {
-        handlerCalled = YES;
-        
-        XCTAssertNotNil(self.seenPayload[@"pn_apns"]);
-        XCTAssertEqualObjects(self.seenPayload[@"pn_apns"][@"aps"][@"category"], expected);
-        XCTAssertNotNil(self.seenPayload[@"pn_apns"][@"cepayload"]);
-        XCTAssertNotNil(self.seenPayload[@"pn_gcm"]);
-        XCTAssertEqualObjects(self.seenPayload[@"pn_gcm"][@"data"][@"category"], expected);
-        XCTAssertNotNil(self.seenPayload[@"pn_gcm"][@"data"][@"cepayload"]);
-        dispatch_semaphore_signal(semaphore);
+    
+    [self waitToCompleteIn:self.testCompletionDelay codeBlock:^(dispatch_block_t handler) {
+        [self.middleware runForEvent:@"$notifications.seen" withData:self.seenPayload completion:^(BOOL rejected) {
+            XCTAssertNotNil(self.seenPayload[@"pn_apns"]);
+            XCTAssertEqualObjects(self.seenPayload[@"pn_apns"][@"aps"][@"category"], expected);
+            XCTAssertNotNil(self.seenPayload[@"pn_apns"][@"cepayload"]);
+            XCTAssertNotNil(self.seenPayload[@"pn_gcm"]);
+            XCTAssertEqualObjects(self.seenPayload[@"pn_gcm"][@"data"][@"category"], expected);
+            XCTAssertNotNil(self.seenPayload[@"pn_gcm"][@"data"][@"cepayload"]);
+            handler();
+        }];
     }];
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
-    XCTAssertTrue(handlerCalled);
 }
 
 
@@ -214,107 +206,109 @@
 
 - (void)testPayloadNormalization_ShouldAddChatEngineEventToPayload {
     
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    __block BOOL handlerCalled =  NO;
-    
-    [self.defaultMiddleware runForEvent:@"$.invite" withData:self.defaultInvitePayload completion:^(BOOL rejected) {
-        handlerCalled = YES;
-        
-        XCTAssertNotNil(self.defaultInvitePayload[@"pn_apns"][@"cepayload"]);
-        XCTAssertNotNil(self.defaultInvitePayload[@"pn_apns"][@"cepayload"][CENEventData.chat]);
-        XCTAssertNotNil(self.defaultInvitePayload[@"pn_apns"][@"cepayload"][CENEventData.data]);
-        XCTAssertNotNil(self.defaultInvitePayload[@"pn_apns"][@"cepayload"][CENEventData.event]);
-        XCTAssertNotNil(self.defaultInvitePayload[@"pn_apns"][@"cepayload"][CENEventData.sender]);
-        XCTAssertNotNil(self.defaultInvitePayload[@"pn_gcm"][@"data"][@"cepayload"]);
-        XCTAssertNotNil(self.defaultInvitePayload[@"pn_gcm"][@"data"][@"cepayload"][CENEventData.chat]);
-        XCTAssertNotNil(self.defaultInvitePayload[@"pn_gcm"][@"data"][@"cepayload"][CENEventData.data]);
-        XCTAssertNotNil(self.defaultInvitePayload[@"pn_gcm"][@"data"][@"cepayload"][CENEventData.event]);
-        XCTAssertNotNil(self.defaultInvitePayload[@"pn_gcm"][@"data"][@"cepayload"][CENEventData.sender]);
-        dispatch_semaphore_signal(semaphore);
+    [self waitToCompleteIn:self.testCompletionDelay codeBlock:^(dispatch_block_t handler) {
+        [self.middleware runForEvent:@"$.invite" withData:self.defaultInvitePayload completion:^(BOOL rejected) {
+            XCTAssertNotNil(self.defaultInvitePayload[@"pn_apns"][@"cepayload"]);
+            XCTAssertNotNil(self.defaultInvitePayload[@"pn_apns"][@"cepayload"][CENEventData.chat]);
+            XCTAssertNotNil(self.defaultInvitePayload[@"pn_apns"][@"cepayload"][CENEventData.data]);
+            XCTAssertNotNil(self.defaultInvitePayload[@"pn_apns"][@"cepayload"][CENEventData.event]);
+            XCTAssertNotNil(self.defaultInvitePayload[@"pn_apns"][@"cepayload"][CENEventData.sender]);
+            XCTAssertNotNil(self.defaultInvitePayload[@"pn_gcm"][@"data"][@"cepayload"]);
+            XCTAssertNotNil(self.defaultInvitePayload[@"pn_gcm"][@"data"][@"cepayload"][CENEventData.chat]);
+            XCTAssertNotNil(self.defaultInvitePayload[@"pn_gcm"][@"data"][@"cepayload"][CENEventData.data]);
+            XCTAssertNotNil(self.defaultInvitePayload[@"pn_gcm"][@"data"][@"cepayload"][CENEventData.event]);
+            XCTAssertNotNil(self.defaultInvitePayload[@"pn_gcm"][@"data"][@"cepayload"][CENEventData.sender]);
+            handler();
+        }];
     }];
+}
+
+- (void)testPayloadNormalization_ShouldAddDebugFlag_WhenPushNotificationsDebugEnabled {
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
-    XCTAssertTrue(handlerCalled);
+    [self waitToCompleteIn:self.testCompletionDelay codeBlock:^(dispatch_block_t handler) {
+        [self.middleware runForEvent:@"$.invite" withData:self.defaultInvitePayload completion:^(BOOL rejected) {
+            XCTAssertNotNil(self.defaultInvitePayload[@"pn_debug"]);
+            XCTAssertTrue(((NSNumber *)self.defaultInvitePayload[@"pn_debug"]).boolValue);
+            handler();
+        }];
+    }];
 }
 
 - (void)testPayloadNormalization_ShouldGenerateCategory_WhenEventNameGenerateBySystem {
     
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     NSString *expected = @"com.pubnub.chat-engine.leave";
-    __block BOOL handlerCalled =  NO;
     
-    [self.defaultMiddleware runForEvent:@"$.leave" withData:self.defaultLeavePayload completion:^(BOOL rejected) {
-        handlerCalled = YES;
-        
-        XCTAssertNotNil(self.defaultLeavePayload[@"pn_apns"][@"aps"][@"category"]);
-        XCTAssertEqualObjects(self.defaultLeavePayload[@"pn_apns"][@"aps"][@"category"], expected);
-        XCTAssertNotNil(self.defaultLeavePayload[@"pn_gcm"][@"data"][@"category"]);
-        XCTAssertEqualObjects(self.defaultLeavePayload[@"pn_gcm"][@"data"][@"category"], expected);
-        dispatch_semaphore_signal(semaphore);
+    
+    [self waitToCompleteIn:self.testCompletionDelay codeBlock:^(dispatch_block_t handler) {
+        [self.middleware runForEvent:@"$.leave" withData:self.defaultLeavePayload completion:^(BOOL rejected) {
+            XCTAssertNotNil(self.defaultLeavePayload[@"pn_apns"][@"aps"][@"category"]);
+            XCTAssertEqualObjects(self.defaultLeavePayload[@"pn_apns"][@"aps"][@"category"], expected);
+            XCTAssertNotNil(self.defaultLeavePayload[@"pn_gcm"][@"data"][@"category"]);
+            XCTAssertEqualObjects(self.defaultLeavePayload[@"pn_gcm"][@"data"][@"category"], expected);
+            handler();
+        }];
     }];
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
-    XCTAssertTrue(handlerCalled);
 }
 
 - (void)testPayloadNormalization_ShouldGenerateCategory_WhenEventNameGenerateByPlugin {
     
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     NSString *expected = @"com.pubnub.chat-engine.seen";
-    __block BOOL handlerCalled =  NO;
     
-    [self.defaultMiddleware runForEvent:@"$seen" withData:self.pluginPayload completion:^(BOOL rejected) {
-        handlerCalled = YES;
-        
-        XCTAssertNotNil(self.pluginPayload[@"pn_apns"][@"aps"][@"category"]);
-        XCTAssertEqualObjects(self.pluginPayload[@"pn_apns"][@"aps"][@"category"], expected);
-        XCTAssertNotNil(self.pluginPayload[@"pn_gcm"][@"data"][@"category"]);
-        XCTAssertEqualObjects(self.pluginPayload[@"pn_gcm"][@"data"][@"category"], expected);
-        dispatch_semaphore_signal(semaphore);
+    
+    [self waitToCompleteIn:self.testCompletionDelay codeBlock:^(dispatch_block_t handler) {
+        [self.middleware runForEvent:@"$seen" withData:self.pluginPayload completion:^(BOOL rejected) {
+            XCTAssertNotNil(self.pluginPayload[@"pn_apns"][@"aps"][@"category"]);
+            XCTAssertEqualObjects(self.pluginPayload[@"pn_apns"][@"aps"][@"category"], expected);
+            XCTAssertNotNil(self.pluginPayload[@"pn_gcm"][@"data"][@"category"]);
+            XCTAssertEqualObjects(self.pluginPayload[@"pn_gcm"][@"data"][@"category"], expected);
+            handler();
+        }];
     }];
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
-    XCTAssertTrue(handlerCalled);
 }
 
 - (void)testPayloadNormalization_ShouldGenerateCategory_WhenEventNameGenerateByUser {
     
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     NSString *expected = @"com.pubnub.chat-engine.my-event";
-    __block BOOL handlerCalled =  NO;
     
-    [self.defaultMiddleware runForEvent:@"my-event" withData:self.userPayload completion:^(BOOL rejected) {
-        handlerCalled = YES;
-        
-        XCTAssertNotNil(self.userPayload[@"pn_apns"][@"aps"][@"category"]);
-        XCTAssertEqualObjects(self.userPayload[@"pn_apns"][@"aps"][@"category"], expected);
-        XCTAssertNotNil(self.userPayload[@"pn_gcm"][@"data"][@"category"]);
-        XCTAssertEqualObjects(self.userPayload[@"pn_gcm"][@"data"][@"category"], expected);
-        dispatch_semaphore_signal(semaphore);
+    
+    [self waitToCompleteIn:self.testCompletionDelay codeBlock:^(dispatch_block_t handler) {
+        [self.middleware runForEvent:@"my-event" withData:self.userPayload completion:^(BOOL rejected) {
+            XCTAssertNotNil(self.userPayload[@"pn_apns"][@"aps"][@"category"]);
+            XCTAssertEqualObjects(self.userPayload[@"pn_apns"][@"aps"][@"category"], expected);
+            XCTAssertNotNil(self.userPayload[@"pn_gcm"][@"data"][@"category"]);
+            XCTAssertEqualObjects(self.userPayload[@"pn_gcm"][@"data"][@"category"], expected);
+            handler();
+        }];
     }];
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
-    XCTAssertTrue(handlerCalled);
 }
 
-- (void)testPayloadNormalization_ShouldUseProvidedCategory_WhenCategoryIsPresentInNotificationBoundledChatEngineEvent {
+- (void)testPayloadNormalization_ShouldUseProvidedCategory_WhenCategoryIsPresentInNotificationBundledChatEngineEvent {
     
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    __block BOOL handlerCalled =  NO;
     NSString *expected = @"seen";
     
-    [self.defaultMiddleware runForEvent:@"message" withData:self.defaultMessagePayload completion:^(BOOL rejected) {
-        handlerCalled = YES;
-        
-        XCTAssertNotNil(self.defaultMessagePayload[@"pn_apns"][@"aps"][@"category"]);
-        XCTAssertEqualObjects(self.defaultMessagePayload[@"pn_apns"][@"aps"][@"category"], expected);
-        XCTAssertNotNil(self.defaultMessagePayload[@"pn_gcm"][@"data"][@"category"]);
-        XCTAssertEqualObjects(self.defaultMessagePayload[@"pn_gcm"][@"data"][@"category"], expected);
-        dispatch_semaphore_signal(semaphore);
-    }];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
-    XCTAssertTrue(handlerCalled);
+    [self waitToCompleteIn:self.testCompletionDelay codeBlock:^(dispatch_block_t handler) {
+        [self.middleware runForEvent:@"message" withData:self.defaultMessagePayload completion:^(BOOL rejected) {
+            XCTAssertNotNil(self.defaultMessagePayload[@"pn_apns"][@"aps"][@"category"]);
+            XCTAssertEqualObjects(self.defaultMessagePayload[@"pn_apns"][@"aps"][@"category"], expected);
+            XCTAssertNotNil(self.defaultMessagePayload[@"pn_gcm"][@"data"][@"category"]);
+            XCTAssertEqualObjects(self.defaultMessagePayload[@"pn_gcm"][@"data"][@"category"], expected);
+            handler();
+        }];
+    }];
+}
+
+- (void)testPayloadNormalization_ShouldNotChangePayload_WhenFormatterDoesntCreateDefaultPayload {
+    
+    NSMutableDictionary *expectedPayload = [self.userPayload mutableCopy];
+    
+    
+    [self waitToCompleteIn:self.testCompletionDelay codeBlock:^(dispatch_block_t handler) {
+        [self.middleware runForEvent:@"my-event" withData:self.userPayload completion:^(BOOL rejected) {
+            XCTAssertEqualObjects(self.userPayload, expectedPayload);
+            handler();
+        }];
+    }];
 }
 
 
@@ -344,7 +338,7 @@
     data[key] = @"Hello there";
     
     self.defaultMessagePayload = [@{
-        CENEventData.chat: self.defaultChat,
+        CENEventData.chat: self.chat,
         CENEventData.data: data,
         CENEventData.event: @"message",
         CENEventData.eventID: @"1234567890",
@@ -355,7 +349,7 @@
 - (void)prepareInvitePayload {
     
     self.defaultInvitePayload = [@{
-        CENEventData.chat: self.defaultChat,
+        CENEventData.chat: self.chat,
         CENEventData.data: @{ @"channel": @"secret-channel" },
         CENEventData.event: @"$.invite",
         CENEventData.eventID: @"1234567890",
@@ -366,7 +360,7 @@
 - (void)prepareLeavePayload {
     
     self.defaultLeavePayload = [@{
-        CENEventData.chat: self.defaultChat,
+        CENEventData.chat: self.chat,
         CENEventData.data: @{ @"channel": @"secret-channel" },
         CENEventData.event: @"$.leave",
         CENEventData.eventID: @"1234567890",
@@ -377,7 +371,7 @@
 - (void)preparePluginPayload {
     
     self.pluginPayload = [@{
-        CENEventData.chat: self.defaultChat,
+        CENEventData.chat: self.chat,
         CENEventData.data: @{ @"important": @"data" },
         CENEventData.event: @"$seen",
         CENEventData.eventID: @"1234567890",
@@ -388,7 +382,7 @@
 - (void)prepareSeenPayload {
     
     self.seenPayload = [@{
-        CENEventData.chat: self.defaultChat,
+        CENEventData.chat: self.chat,
         CENEventData.data: @{ CENEventData.eventID: @"1234567890" },
         CENEventData.event: @"$notifications.seen",
         CENEventData.eventID: @"1234567891",
@@ -399,14 +393,14 @@
 - (void)prepareUserPayload {
     
     self.userPayload = [@{
-        CENEventData.chat: self.defaultChat,
+        CENEventData.chat: self.chat,
         CENEventData.data: @{ @"my": @"data" },
         CENEventData.event: @"my-event",
         CENEventData.eventID: @"1234567890",
         CENEventData.sender: @"tester"
     } mutableCopy];
 }
-
+ 
 #pragma mark -
 
 

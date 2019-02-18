@@ -1,14 +1,12 @@
 /**
  * @author Serhii Mamontov
- * @copyright © 2009-2018 PubNub, Inc.
+ * @copyright © 2010-2018 PubNub, Inc.
  */
-#import <CENChatEngine/CEPPlugablePropertyStorage+Private.h>
 #import <CENChatEngine/CENUnreadMessagesExtension.h>
 #import <CENChatEngine/CENChatEngine+ChatPrivate.h>
 #import <CENChatEngine/CENUnreadMessagesPlugin.h>
 #import <CENChatEngine/CEPExtension+Private.h>
 #import <CENChatEngine/CENUser+Private.h>
-#import <CENChatEngine/CENEventEmitter.h>
 #import <OCMock/OCMock.h>
 #import "CENTestCase.h"
 
@@ -18,13 +16,8 @@
 
 #pragma mark - Information
 
-@property (nonatomic, nullable, weak) CENChatEngine<PNObjectEventListener> *client;
-@property (nonatomic, nullable, weak) CENChatEngine *clientMock;
-
 @property (nonatomic, nullable, strong) CENUnreadMessagesExtension *extension;
-@property (nonatomic, nullable, strong) NSMutableDictionary *extensionStorage;
-@property (nonatomic, nullable, strong) NSDictionary *extensionConfiguration;
-
+@property (nonatomic, nullable, strong) CENChat *chat;
 
 #pragma mark -
 
@@ -32,13 +25,20 @@
 @end
 
 
+#pragma mark - Tests
+
 @implementation CENUnreadMessagesExtensionTest
 
 
 #pragma mark - Setup / Tear down
 
+- (BOOL)hasMockedObjectsInTestCaseWithName:(NSString *)__unused name {
+
+    return YES;
+}
+
 - (BOOL)shouldSetupVCR {
-    
+
     return NO;
 }
 
@@ -46,60 +46,126 @@
     
     [super setUp];
     
-    self.extensionStorage = [NSMutableDictionary new];
-    self.extensionConfiguration = @{ CENUnreadMessagesConfiguration.events: @[@"$unread-test", @"$read-test"] };
-    self.extension = [CENUnreadMessagesExtension extensionWithIdentifier:@"test" configuration:self.extensionConfiguration];
-    self.extension.storage = self.extensionStorage;
+
+    self.chat = [self publicChatWithChatEngine:self.client];
     
-    CENConfiguration *clientConfiguration = [CENConfiguration configurationWithPublishKey:@"test-36" subscribeKey:@"test-36"];
-    self.client = (CENChatEngine<PNObjectEventListener> *)[self chatEngineWithConfiguration:clientConfiguration];
-    self.clientMock = [self partialMockForObject:self.client];
+    [self stubUserAuthorization];
     
-    OCMStub([self.clientMock fetchParticipantsForChat:[OCMArg any]]).andDo(nil);
-    OCMStub([self.clientMock createDirectChatForUser:[OCMArg any]])
-        .andReturn(self.clientMock.Chat().name(@"chat-engine#user#tester#write.#direct").autoConnect(NO).create());
-    OCMStub([self.clientMock createFeedChatForUser:[OCMArg any]])
-        .andReturn(self.clientMock.Chat().name(@"chat-engine#user#tester#read.#feed").autoConnect(NO).create());
-    OCMStub([self.clientMock me]).andReturn([CENMe userWithUUID:@"tester" state:@{} chatEngine:self.clientMock]);
-    
-    OCMStub([self.clientMock connectToChat:[OCMArg any] withCompletion:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
-        void(^handleBlock)(NSDictionary *) = nil;
-        
-        [invocation getArgument:&handleBlock atIndex:3];
-        handleBlock(nil);
-    });
-    
-    [self.clientMock createGlobalChat];
+    NSDictionary *configuration = @{ CENUnreadMessagesConfiguration.events: @[@"$unread-test", @"$read-test"] };
+    self.extension = [CENUnreadMessagesExtension extensionForObject:self.chat withIdentifier:@"test" configuration:configuration];
 }
 
 
-#pragma mark - Tests :: Destructor
+#pragma mark - Tests :: Constructor / Destructor
 
-- (void)testOnCreate_ShouldSubscribeFromEvents {
+- (void)testOnCreate_ShouldSubscribeOnEvents {
     
-    NSArray *expectedEvents = self.extensionConfiguration[CENUnreadMessagesConfiguration.events];
-    self.extension.object = self.client.global;
+    NSArray<NSString *> *expectedEvents = self.extension.configuration[CENUnreadMessagesConfiguration.events];
+    CENChat *chat = [self publicChatWithChatEngine:self.client];
     
-    [self.extension onCreate];
     
-    XCTAssertTrue([self.client.global.eventNames containsObject:expectedEvents.firstObject]);
-    XCTAssertTrue([self.client.global.eventNames containsObject:expectedEvents.lastObject]);
+    CENUnreadMessagesExtension *extension = [CENUnreadMessagesExtension extensionForObject:chat withIdentifier:@"test"
+                                                                             configuration:self.extension.configuration];
+    
+    [extension onCreate];
+    
+    XCTAssertTrue([chat.eventNames containsObject:expectedEvents.firstObject]);
+    XCTAssertTrue([chat.eventNames containsObject:expectedEvents.lastObject]);
+    XCTAssertFalse(extension.isActive);
 }
 
 - (void)testOnDestruct_ShouldUnsubscribeFromEvents {
     
-    NSArray *expectedEvents = self.extensionConfiguration[CENUnreadMessagesConfiguration.events];
-    self.extension.object = self.client.global;
+    NSArray<NSString *> *expectedEvents = self.extension.configuration[CENUnreadMessagesConfiguration.events];
+    CENChat *chat = [self publicChatWithChatEngine:self.client];
+    
+    
+    CENUnreadMessagesExtension *extension = [CENUnreadMessagesExtension extensionForObject:chat withIdentifier:@"test"
+                                                                             configuration:self.extension.configuration];
+    
+    [extension onCreate];
+    
+    XCTAssertTrue([chat.eventNames containsObject:expectedEvents.firstObject]);
+    XCTAssertTrue([chat.eventNames containsObject:expectedEvents.lastObject]);
+    
+    [extension onDestruct];
+    
+    XCTAssertFalse([chat.eventNames containsObject:expectedEvents.firstObject]);
+    XCTAssertFalse([chat.eventNames containsObject:expectedEvents.lastObject]);
+}
+
+
+#pragma mark - Tests :: Active / Inactive
+
+- (void)testActive_ShouldResetUnreadCount_WhenReceivedEvents {
+    
+    CENUser *user = [CENUser userWithUUID:@"test-user" state:@{} chatEngine:self.client];
+    
     
     [self.extension onCreate];
     
-    XCTAssertTrue([self.client.global.eventNames containsObject:expectedEvents.firstObject]);
-    XCTAssertTrue([self.client.global.eventNames containsObject:expectedEvents.lastObject]);
+    [self object:self.chat shouldHandleEvent:@"$unread" withHandler:^CENEventHandlerBlock (dispatch_block_t handler) {
+        return ^(CENEmittedEvent *event) {
+            NSDictionary *eventPayload = event.data;
+            
+            XCTAssertEqualObjects(eventPayload[CENUnreadMessagesEvent.count], @1);
+            XCTAssertEqual(self.extension.unreadCount, 1);
+            XCTAssertFalse(self.extension.isActive);
+            
+            [self.extension active];
+            
+            XCTAssertEqual(self.extension.unreadCount, 0);
+            XCTAssertTrue(self.extension.isActive);
+            handler();
+        };
+    } afterBlock:^{
+        [self.chat emitEventLocally:@"$unread-test",
+         @{ CENEventData.chat: self.chat, CENEventData.sender: user, CENEventData.data: @{} }, nil];
+    }];
+}
+
+
+#pragma mark - Tests :: handleEvent
+
+- (void)testHandleEvent_ShouldUpdateUnreadCount_WhenChatIsInactive {
     
-    [self.extension onDestruct];
+    CENUser *user = [CENUser userWithUUID:@"test-user" state:@{} chatEngine:self.client];
+    NSDictionary *expected = @{ CENEventData.chat: self.chat, CENEventData.sender: user, CENEventData.data: @{} };
     
-    XCTAssertFalse([self.client.global.eventNames containsObject:expectedEvents.firstObject]);
-    XCTAssertFalse([self.client.global.eventNames containsObject:expectedEvents.lastObject]);
+    
+    [self.extension onCreate];
+    [self.extension inactive];
+    
+    [self object:self.chat shouldHandleEvent:@"$unread" withHandler:^CENEventHandlerBlock (dispatch_block_t handler) {
+        return ^(CENEmittedEvent *event) {
+            NSDictionary *eventPayload = event.data;
+            
+            XCTAssertEqualObjects(eventPayload[CENUnreadMessagesEvent.count], @1);
+            XCTAssertEqualObjects(eventPayload[CENUnreadMessagesEvent.event], expected);
+            handler();
+        };
+    } afterBlock:^{
+        [self.chat emitEventLocally:@"$unread-test", expected, nil];
+    }];
+}
+
+- (void)testHandleEvent_ShouldNotUpdateUnreadCount_WhenChatIsActive {
+    
+    CENUser *user = [CENUser userWithUUID:@"test-user" state:@{} chatEngine:self.client];
+    
+    
+    [self.extension onCreate];
+    [self.extension active];
+    
+    [self object:self.chat shouldNotHandleEvent:@"$unread" withinInterval:self.falseTestCompletionDelay
+     withHandler:^CENEventHandlerBlock (dispatch_block_t handler) {
+         return ^(CENEmittedEvent *event) {
+             handler();
+         };
+    } afterBlock:^{
+        [self.chat emitEventLocally:@"$unread-test",
+         @{ CENEventData.chat: self.chat, CENEventData.sender: user, CENEventData.data: @{} }, nil];
+    }];
 }
 
 #pragma mark -

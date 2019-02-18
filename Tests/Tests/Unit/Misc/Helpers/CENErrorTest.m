@@ -1,6 +1,6 @@
 /**
  * @author Serhii Mamontov
- * @copyright © 2009-2018 PubNub, Inc.
+ * @copyright © 2010-2018 PubNub, Inc.
  */
 #import <CENChatEngine/CENErrorCodes.h>
 #import <PubNub/PNResult+Private.h>
@@ -13,14 +13,13 @@
 @interface CENErrorTest : XCTestCase
 
 
-#pragma mark - Misc
-
-
 #pragma mark -
 
 
 @end
 
+
+#pragma mark - Tests
 
 @implementation CENErrorTest
 
@@ -94,7 +93,8 @@
     
     NSString *expected = @"Some test description";
     
-    NSError *error = [CENError errorFromPubNubStatus:[self errorStatusWithCategory:PNMalformedResponseCategory] withDescription:expected];
+    NSError *error = [CENError errorFromPubNubStatus:[self errorStatusWithCategory:PNMalformedResponseCategory]
+                                     withDescription:expected];
     
     XCTAssertNotNil(error);
     XCTAssertEqualObjects(error.domain, kCENPNErrorDomain);
@@ -167,16 +167,16 @@
     NSString *expected = @"Unknown error";
     
     NSError *error = [CENError errorFromPubNubFunctionError:@[] withDescription:expected];
-    NSError *underlyingerror = error.userInfo[NSUnderlyingErrorKey];
+    NSError *underlyingError = error.userInfo[NSUnderlyingErrorKey];
     
     XCTAssertNotNil(error);
-    XCTAssertNotNil(underlyingerror);
+    XCTAssertNotNil(underlyingError);
     XCTAssertEqualObjects(error.domain, kCENPNFunctionErrorDomain);
-    XCTAssertEqualObjects(underlyingerror.domain, NSURLErrorDomain);
+    XCTAssertEqualObjects(underlyingError.domain, NSURLErrorDomain);
     XCTAssertEqual(error.code, kCENUnknownErrorCode);
-    XCTAssertEqual(underlyingerror.code, NSURLErrorUnknown);
+    XCTAssertEqual(underlyingError.code, NSURLErrorUnknown);
     XCTAssertEqualObjects(error.localizedDescription, expected);
-    XCTAssertEqualObjects(underlyingerror.localizedDescription, expected);
+    XCTAssertEqualObjects(underlyingError.localizedDescription, expected);
 }
 
 
@@ -188,7 +188,8 @@
     processedData[@"information"] = [self informationForCategory:category];
     processedData[@"status"] = [self statusForCategory:category];
     
-    PNErrorStatus *status = [PNErrorStatus objectForOperation:PNSubscribeOperation completedWithTask:nil processedData:processedData processingError:nil];
+    PNErrorStatus *status = [PNErrorStatus objectForOperation:PNSubscribeOperation completedWithTask:nil
+                                                processedData:processedData processingError:nil];
     status.category = category;
     
     return status;
@@ -196,7 +197,7 @@
 
 - (NSString *)informationForCategory:(PNStatusCategory)category {
     
-    NSDictionary *informations = @{
+    NSDictionary *information = @{
         @(PNAccessDeniedCategory).stringValue: @"Access denied",
         @(PNTimeoutCategory).stringValue: @"Request timeout",
         @(PNNetworkIssuesCategory).stringValue: @"Network issues",
@@ -205,7 +206,7 @@
         @(PNMalformedResponseCategory).stringValue: @"Malformed response",
     };
     
-    return informations[@(category).stringValue];
+    return information[@(category).stringValue];
 }
 
 - (NSNumber *)statusForCategory:(PNStatusCategory)category {

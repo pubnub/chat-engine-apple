@@ -9,11 +9,11 @@
 NS_ASSUME_NONNULL_BEGIN
 
 /**
- * @brief  \b ChatEngine client interface for \c chat instance management.
+ * @brief \b {CENChatEngine} client interface for \b {chats CENChat} management.
  *
  * @author Serhii Mamontov
- * @version 0.9.0
- * @copyright © 2009-2018 PubNub, Inc.
+ * @version 0.9.2
+ * @copyright © 2010-2019 PubNub, Inc.
  */
 @interface CENChatEngine (Chat)
 
@@ -21,14 +21,17 @@ NS_ASSUME_NONNULL_BEGIN
 #pragma mark - Information
 
 /**
- * @brief      Stores reference on list of known chats.
- * @discussion List contain chats created by user and \b ChatEngine client itself.
+ * @brief A map of all known \b {chats CENChat in this \b {CENChatEngine} client.
+ *
+ * @ref 383d09f5-6b39-464f-bb22-8061943555b1
  */
 @property (nonatomic, readonly, strong) NSDictionary<NSString *, CENChat *> *chats;
 
 /**
- * @brief      Stores reference on chat to which join all \b ChatEngine users.
- * @discussion This chat can be useful to send announCENMents, alerts, and global events.
+ * @brief A global \b {chat CENChat} to which join all \b {users CENUser} when
+ * \b {CENChatEngine} client connects.
+ *
+ * @ref f7b47331-33ee-437a-bc60-ec6770dccf47
  */
 @property (nonatomic, readonly, strong) CENChat *global;
 

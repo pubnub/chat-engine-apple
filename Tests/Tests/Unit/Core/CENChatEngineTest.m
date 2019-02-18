@@ -1,9 +1,7 @@
 /**
  * @author Serhii Mamontov
- * @copyright © 2009-2018 PubNub, Inc.
+ * @copyright © 2010-2018 PubNub, Inc.
  */
-#import <XCTest/XCTest.h>
-#import <OCMock/OCMock.h>
 #import <CENChatEngine/CENChatEngine+ConnectionInterface.h>
 #import <CENChatEngine/CENChatEngine+PluginsPrivate.h>
 #import <CENChatEngine/CENChatEngine+PubNubPrivate.h>
@@ -15,17 +13,12 @@
 #import <CENChatEngine/CENObject+Private.h>
 #import <CENChatEngine/CENConstants.h>
 #import <CENChatEngine/ChatEngine.h>
+#import <OCMock/OCMock.h>
 #import "CENTestCase.h"
 
 
 @interface CENChatEngineTest : CENTestCase
 
-
-#pragma mark - Information
-
-@property (nonatomic, nullable, weak) CENChatEngine *client;
-@property (nonatomic, nullable, weak) CENChatEngine *clientMock;
-@property (nonatomic, nullable, weak) id loggerClassMock;
 
 #pragma mark -
 
@@ -41,22 +34,21 @@
 #pragma mark - Setup / Tear down
 
 - (BOOL)shouldSetupVCR {
-    
+
     return NO;
+}
+
+- (BOOL)shouldSynchronizeSessionForTestCaseWithName:(NSString *)name {
+    
+    return [name rangeOfString:@"SessionSynchronizationEnabled"].location != NSNotFound;
 }
 
 - (void)setUp {
     
     [super setUp];
+
     
-    self.loggerClassMock = [self mockForClass:[PNLLogger class]];
-    
-    CENConfiguration *configuration = [CENConfiguration configurationWithPublishKey:@"test-36" subscribeKey:@"test-36"];
-    self.client = [self chatEngineWithConfiguration:configuration];
-    self.clientMock = [self partialMockForObject:self.client];
-    self.client.logger.logLevel = CENExceptionsLogLevel;
-    
-    id objectClassMock = [self mockForClass:[CENObject class]];
+    id objectClassMock = [self mockForObject:[CENObject class]];
     OCMStub([objectClassMock objectType]).andReturn(CENObjectType.me);
 }
 
@@ -69,29 +61,63 @@
     XCTAssertNotNil(self.client.temporaryObjectsManager);
     XCTAssertNil(self.client.synchronizationSession);
     XCTAssertNotNil(self.client.pubNubConfiguration);
-    XCTAssertNotNil(self.client.functionsClient);
+    XCTAssertNotNil(self.client.functionClient);
     XCTAssertNotNil(self.client.pluginsManager);
     XCTAssertNotNil(self.client.chatsManager);
     XCTAssertNotNil(self.client.usersManager);
     XCTAssertFalse(self.client.isReady);
 }
 
-- (void)testConstructor_ShouldCreateSynchronizationInstance_WhenRequestedByConfiguration {
+- (void)testConstructor_ShouldCreateSynchronizationInstance_WhenSessionSynchronizationEnabled {
     
-    CENConfiguration *configuration = [CENConfiguration configurationWithPublishKey:@"test-36" subscribeKey:@"test-36"];
-    configuration.synchronizeSession = YES;
-    CENChatEngine *client = [self chatEngineWithConfiguration:configuration];
-    
-    XCTAssertNotNil(client.synchronizationSession);
+    XCTAssertNotNil(self.client.synchronizationSession);
 }
 
 - (void)testConstructor_ShouldNotChangeConfiguration_WhenChangedPassedInstance {
     
     CENConfiguration *configuration = [CENConfiguration configurationWithPublishKey:@"test-36" subscribeKey:@"test-36"];
-    CENChatEngine *client = [self chatEngineWithConfiguration:configuration];
+    configuration.throwExceptions = NO;
+    CENChatEngine *client = [self createChatEngineWithConfiguration:configuration];
     configuration.throwExceptions = YES;
     
+    
     XCTAssertNotEqual(client.configuration.shouldThrowExceptions, configuration.shouldThrowExceptions);
+}
+
+- (void)testConstructor_ShouldSetupEventsDebugger {
+    
+    CENConfiguration *configuration = [CENConfiguration configurationWithPublishKey:@"test-36" subscribeKey:@"test-36"];
+    configuration.debugEvents = YES;
+    CENChatEngine *client = [self createChatEngineWithConfiguration:configuration];
+    
+    
+    XCTAssertTrue([client.eventNames containsObject:@"*"]);
+}
+
+- (void)testConstructor_ShouldHandleAnyEventsWhenDebugEnabled {
+    
+    CENConfiguration *configuration = [CENConfiguration configurationWithPublishKey:@"test-36" subscribeKey:@"test-36"];
+    configuration.debugEvents = YES;
+    CENChatEngine *client = [self createChatEngineWithConfiguration:configuration];
+    CENObject *object = [[CENObject alloc] initWithChatEngine:client];
+    NSString *event = [NSUUID UUID].UUIDString;
+    NSDictionary *data = @{ @"event": event };
+    
+    
+    [self object:client shouldHandleEvent:@"*" withHandler:^CENEventHandlerBlock (dispatch_block_t handler) {
+        return ^(CENEmittedEvent *emittedEvent) {
+            if ([emittedEvent.event.lowercaseString isEqualToString:event.lowercaseString]) {
+                XCTAssertNotNil(emittedEvent.event);
+                XCTAssertNotNil(emittedEvent.emitter);
+                XCTAssertNotNil(emittedEvent.data);
+                XCTAssertEqualObjects(emittedEvent.emitter, object);
+                XCTAssertEqualObjects(emittedEvent.data, data);
+                handler();
+            }
+        };
+    } afterBlock:^{
+        [object emitEventLocally:event, data, nil];
+    }];
 }
 
 
@@ -99,14 +125,14 @@
 
 - (void)testStoreTemporaryObject_ShouldStorePassedObject {
     
-    id managerPartialMock = [self partialMockForObject:self.client.temporaryObjectsManager];
     CENObject *object = [[CENObject alloc] initWithChatEngine:self.client];
     
-    OCMExpect([managerPartialMock storeTemporaryObject:object]).andDo(nil);
     
-    [self.client storeTemporaryObject:object];
-    
-    OCMVerifyAll(managerPartialMock);
+    id managerMock = [self mockForObject:self.client.temporaryObjectsManager];
+    id recorded = OCMExpect([managerMock storeTemporaryObject:object]);
+    [self waitForObject:managerMock recordedInvocationCall:recorded afterBlock:^{
+        [self.client storeTemporaryObject:object];
+    }];
 }
 
 
@@ -114,36 +140,41 @@
 
 - (void)testUnregisterAllFromObjects_ShouldRequestPluginsRemoval {
     
+    self.usesMockedObjects = YES;
     CENObject *object = [[CENObject alloc] initWithChatEngine:self.client];
     
-    OCMExpect([self.clientMock unregisterAllPluginsFromObjects:object]);
     
-    [self.clientMock unregisterAllFromObjects:object];
-    
-    OCMExpect((id)self.clientMock);
+    id recorded = OCMExpect([self.client unregisterAllPluginsFromObjects:object]);
+    [self waitForObject:self.client recordedInvocationCall:recorded afterBlock:^{
+        [self.client unregisterAllFromObjects:object];
+    }];
 }
 
 
 #pragma mark - Tests :: destroy
 
-- (void)testDestroy_ShouldCleanUpResrcoues {
+- (void)testDestroy_ShouldCleanUpResources {
     
-    OCMExpect([self.clientMock destroySession]).andDo(nil);
-    OCMExpect([self.clientMock disconnectUser]).andDo(nil);
-    OCMExpect([self.clientMock destroyPubNub]).andDo(nil);
-    OCMExpect([self.clientMock destroyPlugins]).andDo(nil);
-    OCMExpect([self.clientMock destroyUsers]).andDo(nil);
-    OCMExpect([self.clientMock destroyChats]).andDo(nil);
+    self.usesMockedObjects = YES;
+    [self.client currentConfiguration];
+    
+    
+    OCMExpect([self.client destroySession]).andDo(nil);
+    OCMExpect([self.client disconnectUser]).andDo(nil);
+    OCMExpect([self.client destroyPubNub]).andDo(nil);
+    OCMExpect([self.client destroyPlugins]).andDo(nil);
+    OCMExpect([self.client destroyUsers]).andDo(nil);
+    OCMExpect([self.client destroyChats]).andDo(nil);
     
     [self.client destroy];
     
-    OCMVerifyAll((id)self.clientMock);
+    OCMVerifyAll((id)self.client);
 }
 
 
 #pragma mark - Tests :: currentConfiguration
 
-- (void)testCurrentConfiguration_ShouldNotChangeClientConfguration_WhenReturnedInstanceModified {
+- (void)testCurrentConfiguration_ShouldNotChangeClientConfiguration_WhenReturnedInstanceModified {
     
     CENConfiguration *configuration = self.client.currentConfiguration;
     configuration.throwExceptions = YES;
@@ -156,7 +187,7 @@
 
 - (void)testSDKVersion_ShouldBeEqualToConstant {
     
-    XCTAssertEqualObjects(CENChatEngine.sdkVersion, kCELibraryVersion);
+    XCTAssertEqualObjects(CENChatEngine.sdkVersion, kCENLibraryVersion);
 }
 
 
@@ -165,6 +196,31 @@
 - (void)testLogger_ShouldHaveConfiguredLogger {
     
     XCTAssertNotNil(self.client.logger);
+}
+
+- (void)testLogger_ShouldPrintLoggerConfiguration {
+    
+    self.client.logger.logLevel = CENVerboseLogLevel;
+    
+    id loggerMock = [self mockForObject:self.client.logger];
+    id recorded = OCMExpect([loggerMock log:CENInfoLogLevel message:[OCMArg any]]);
+    [self waitForObject:loggerMock recordedInvocationCall:recorded afterBlock:^{ }];
+}
+
+- (void)testLogger_ShouldPrintLoggerConfiguration_WhenChanged {
+    
+    self.client.logger.logLevel = CENVerboseLogLevel;
+    
+    
+    id loggerMock = [self mockForObject:self.client.logger];
+    id recorded = OCMExpect([loggerMock log:CENInfoLogLevel message:[OCMArg any]]);
+    [self waitForObject:loggerMock recordedInvocationCall:recorded afterBlock:^{ }];
+    
+    OCMExpect([loggerMock log:CENInfoLogLevel message:[OCMArg any]]);
+    [self.client.logger enableLogLevel:CENResourcesAllocationLogLevel];
+    
+    [self waitTask:@"waitingForChange" completionFor:self.delayedCheck];
+    OCMVerifyAll(loggerMock);
 }
 
 #pragma maek -

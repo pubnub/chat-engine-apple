@@ -1,11 +1,10 @@
 /**
  * @author Serhii Mamontov
- * @copyright © 2009-2018 PubNub, Inc.
+ * @copyright © 2010-2018 PubNub, Inc.
  */
 #import <XCTest/XCTest.h>
 #import <CENChatEngine/CENConfiguration+Private.h>
 #import <CENChatEngine/CENConstants.h>
-#import <CENChatEngine/ChatEngine.h>
 #import "CENTestCase.h"
 
 
@@ -22,13 +21,15 @@
 @end
 
 
+#pragma mark - Tests
+
 @implementation CENConfigurationTest
 
 
 #pragma mark - Setup / Tear down
 
 - (BOOL)shouldSetupVCR {
-    
+
     return NO;
 }
 
@@ -39,12 +40,6 @@
     self.configuration = [CENConfiguration configurationWithPublishKey:@"test-36" subscribeKey:@"test-36"];
 }
 
-- (void)tearDown {
-    
-    [super tearDown];
-    
-}
-
 
 #pragma mark - Tests :: Constructor
 
@@ -52,12 +47,12 @@
     
     XCTAssertNotNil(self.configuration.publishKey);
     XCTAssertNotNil(self.configuration.subscribeKey);
-    XCTAssertEqual(self.configuration.presenceHeartbeatValue, kCEDefaultPresenceHeartbeatValue);
-    XCTAssertEqual(self.configuration.presenceHeartbeatInterval, kCEDefaultPresenceHeartbeatInterval);
-    XCTAssertEqualObjects(self.configuration.globalChannel, kCEDefaultGlobalChannel);
-    XCTAssertEqual(self.configuration.shouldSynchronizeSession, kCEDefaultShouldSynchronizeSession);
+    XCTAssertEqual(self.configuration.presenceHeartbeatValue, kCENDefaultPresenceHeartbeatValue);
+    XCTAssertEqual(self.configuration.presenceHeartbeatInterval, kCENDefaultPresenceHeartbeatInterval);
+    XCTAssertEqualObjects(self.configuration.globalChannel, kCENDefaultGlobalChannel);
+    XCTAssertEqual(self.configuration.shouldSynchronizeSession, kCENDefaultShouldSynchronizeSession);
     XCTAssertNotNil(self.configuration.functionEndpoint);
-    XCTAssertTrue([self.configuration.functionEndpoint hasPrefix:kCEPNFunctionsBaseURI]);
+    XCTAssertTrue([self.configuration.functionEndpoint hasPrefix:kCENPNFunctionsBaseURI]);
 }
 
 - (void)testNew_ShouldThrow_WhenUsed {
@@ -97,8 +92,8 @@
 
 - (void)testCopy_ShouldCreateIdenticalCopy {
     
-    self.configuration.presenceHeartbeatInterval = 20.f;
-    self.configuration.presenceHeartbeatValue = 60.f;
+    self.configuration.presenceHeartbeatInterval = 20;
+    self.configuration.presenceHeartbeatValue = 60;
     self.configuration.functionEndpoint = @"https://pubnub.com";
     self.configuration.synchronizeSession = YES;
     self.configuration.throwExceptions = YES;
@@ -119,7 +114,7 @@
 
 - (void)testSetPublishKey_ShouldChange_WhenNonEmptyNSStringPassed {
     
-    NSString *expected = @"tets-2010";
+    NSString *expected = @"test-2010";
     
     self.configuration.publishKey = expected;
     
@@ -160,7 +155,7 @@
 
 - (void)testSetSubscribeKey_ShouldChange_WhenNonEmptyNSStringPassed {
     
-    NSString *expected = @"tets-2010";
+    NSString *expected = @"test-2010";
     
     self.configuration.subscribeKey = expected;
     
@@ -268,7 +263,7 @@
 - (void)testSetPresenceHeartbeatValue_ShouldNotChangeHeartbeatInterval_WhenHeartbeatIntervalIsSet {
     
     NSInteger heartbeatValue = 10;
-    NSInteger expected = 20.f;
+    NSInteger expected = 20;
     self.configuration.presenceHeartbeatInterval = expected;
     
     self.configuration.presenceHeartbeatValue = heartbeatValue;

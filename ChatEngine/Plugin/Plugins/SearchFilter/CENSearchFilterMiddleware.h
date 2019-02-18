@@ -1,13 +1,14 @@
 #import "CEPMiddleware.h"
 
 
+NS_ASSUME_NONNULL_BEGIN
+
 /**
- * @brief      \b CENSearch output filter middleware.
- * @discussion Plugin workhorse which use passed configured to figure out whether event should be rejected or passed.
+ * @brief \b {Search CENSearch} results filter middleware.
  *
  * @author Serhii Mamontov
- * @version 0.9.0
- * @copyright © 2009-2018 PubNub, Inc.
+ * @version 0.9.2
+ * @copyright © 2010-2019 PubNub, Inc.
  */
 @interface CENSearchFilterMiddleware : CEPMiddleware
 
@@ -16,3 +17,5 @@
 
 
 @end
+
+NS_ASSUME_NONNULL_END

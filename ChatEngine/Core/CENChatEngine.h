@@ -10,12 +10,15 @@
 NS_ASSUME_NONNULL_BEGIN
 
 /**
- * @brief  \b ChatEngine client core class which is responsible for organization of user(s) interaction through chat
- *         application and provide responses back to completion block/delegates.
+ * @brief \b {CENChatEngine} client which is responsible for organization of
+ * \b {users CENUser} interaction through \b {chats CENChat} and provide responses back to
+ * completion block / closure / delegate.
+ *
+ * @ref e302742b-aac3-4c58-8be9-097590e66126
  *
  * @author Serhii Mamontov
- * @version 0.9.0
- * @copyright © 2009-2018 PubNub, Inc.
+ * @version 0.9.2
+ * @copyright © 2010-2019 PubNub, Inc.
  */
 @interface CENChatEngine : CENEventEmitter
 
@@ -23,18 +26,24 @@ NS_ASSUME_NONNULL_BEGIN
 #pragma mark - Information
 
 /**
- * @brief  Retrieve copy of configuration instance which has been used to setup \b ChatEngine.
+ * @brief Current \b {CENChatEngine} client configuration.
+ *
+ * @ref 13e9732b-1efc-4236-b9fa-154e9af2578b
  */
 @property (nonatomic, readonly, copy) CENConfiguration *currentConfiguration;
 
 /**
- * @brief  Stores reference on current \b ChatEngine SDK version.
+ * @brief \b {CENChatEngine} SDK version.
+ *
+ * @ref 9ae8cb0a-b677-4353-b79d-1797ca49c31d
  */
 @property (class, nonatomic, readonly, strong) NSString *sdkVersion;
 
 /**
- * @brief  Reference on \b ChatEngine client logger instance which can be used to inser additional logs into console (if
- *         enabled) and file (if enabled).
+ * @brief \b {CENChatEngine} logger which can be used to insert additional logs to console
+ * (if enabled) and file (if enabled).
+ *
+ * @ref b91d4811-bd79-4590-930c-cd656fd50dbd
  */
 @property (nonatomic, readonly, strong) PNLLogger *logger;
 
@@ -42,63 +51,36 @@ NS_ASSUME_NONNULL_BEGIN
 #pragma mark - Initialization and Configuration
 
 /**
- * @brief      Create and configure new \b ChatEngine client instance with pre-defined configuration.
- * @discussion If all keys will be specified, client will be able to connect to chat(s) and send messages to other connected
- *             user(s).
- * @note       Client will make configuration deep copy and further changes in \b CENConfiguration after it has been passed to
- *             the client won't take any effect on client.
+ * @brief Create and configure new \b {CENChatEngine} client instance.
  *
- * @discussion \b ChatEngine itself may emit following events:
+ * @discussion Create \b {CENChatEngine} client instance
  * @code
- * // To handle properly next events, handler block should accept additional parameter and it will have reference on
- * // PubNub status object when called:
- * // '$.network.down.offline' - when ChatEngine has been unexpectedly disconnected from real-time network.
- * // '$.network.down.issue' - when ChatEngine has been disconnected from real-time network because of issues with connection.
- * // '$.network.down.denied' - when ChatEngine has been disconnected from real-time network because of unauthorized attempt
- * //                           to access to chats to which local user doesn't have access.
- * // '$.network.down.disconnected' - when ChatEngine has been disconnected from real-time network on user request.
- * // '$.network.down.tlsuntrusted' - when ChatEngine was unable to connect to real-time network because of SSL/TLS issues.
- * // '$.network.down.badrequest' - when ChatEngine was unable to connect to real-time network because of incomplete
- * //                               configuration of used PubNub client API.
- * // '$.network.down.decryption' - when ChatEngine was unabled to decrypt received data.
- * // '$.network.up.connected' - when ChatEngine has been connected to real-time network on user request.
- * // '$.network.up.reconnected' - when ChatEngine has been re-connected to real-time network after connection issues.
- * //
- * // To handle properly next events, handler block should accept additional parameter which will have reference on
- * // NSError when called:
- * // '$.error.sync' - when ChatEngine was unabled to synchronize local user session.
- * //
- * // To handle properly next events, handler block should accept additional parameter which will have reference on
- * // CENMe instance when called:
- * // '$.ready' - when ChatEngine complete local user initialization and connection to real-time network.
- * //
- * // To handle properly next events, handler block should accept additional parameter which will have reference on
- * // CENUser instance when called:
- * // '$.state' - when ChatEngine user instance updates it's state information.
- * @endcode
+ * // objc 9a490db3-fccc-4e9b-9147-361b774f08dd
  *
- * @discussion \b Example:
- * @code
- * CENConfiguration *configuration = [CENConfiguration configurationWithPublishKey:@"demo-36" subscribeKey:@"demo-36"];
+ * CENConfiguration *configuration = [CENConfiguration configurationWithPublishKey:@"demo-36"
+ *                                                                    subscribeKey:@"demo-36"];
  * self.client = [CENChatEngine clientWithConfiguration:configuration];
  * @endcode
 
- * @param configuration Reference on instance which store all user-provided information about how client should operate and
- *                      handle events.
+ * @param configuration User-provided information about how client should operate and handle events.
  *
- * @throws NSException Session restore issues (if \c throwExceptions is set).
+ * @return Configured and ready to use \b {CENChatEngine} client.
  *
- * @return Configured and ready to use \b CENChatEngine client.
+ * @ref 595db2ef-9b6a-43dc-9069-f69cd328ce7c
  */
-+ (instancetype)clientWithConfiguration:(CENConfiguration *)configuration NS_SWIFT_NAME(clientWithConfiguration(_:));
++ (instancetype)clientWithConfiguration:(CENConfiguration *)configuration
+    NS_SWIFT_NAME(clientWithConfiguration(_:));
 
 
 #pragma mark - Clean up
 
 /**
- * @brief      Completely terminate \b ChatEngine.
- * @discussion This method should be always called, when there is no more need in \b ChatEngine instance. It ensure, what all
- *             accrued resources will be released.
+ * @brief Completely terminate \b {ChatEngine  CENChatEngine}.
+ *
+ * @discussion Call this method when there is no more need in \b {CENChatEngine}. It
+ * ensure, what all accrued resources will be released.
+ *
+ * @ref b73f8803-db74-4bdc-a62b-5de0c2f7d838
  */
 - (void)destroy;
 

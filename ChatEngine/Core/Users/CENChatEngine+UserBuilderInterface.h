@@ -9,12 +9,11 @@
 NS_ASSUME_NONNULL_BEGIN
 
 /**
- * @brief      \b ChatEngine client interface for \c user instance management.
- * @discussion This is extended Objective-C interface to provide builder pattern for methods invocation.
+ * @brief \b {CENChatEngine} client interface for \c user instance management.
  *
  * @author Serhii Mamontov
- * @version 0.9.0
- * @copyright © 2009-2018 PubNub, Inc.
+ * @version 0.9.2
+ * @copyright © 2010-2019 PubNub, Inc.
  */
 @interface CENChatEngine (UserBuilderInterface)
 
@@ -22,38 +21,35 @@ NS_ASSUME_NONNULL_BEGIN
 #pragma mark - User
 
 /**
- * @brief      Create/check existence of user (depending from used builder commiting function).
- * @discussion Builder block allow to specify \b required field - user unique identifier which later can be used to get
- *             instance on this user back.
- * @discussion Available builder parameters can be specified in different variations depending from needs.
+ * @brief \b {Users CENUser} management API builder.
  *
- * @discussion Rreate user w/o state information:
+ * @note Builder parameters can be specified in different variations depending from needs.
+ *
+ * @discussion Create user w/o state
  * @code
- * CENConfiguration *configuration = [CENConfiguration configurationWithPublishKey:@"demo-36" subscribeKey:@"demo-36"];
- * self.client = [CENChatEngine clientWithConfiguration:configuration];
- * self.client.once(@"$.ready", ^(CENMe *me) {
- *     CENUser *user = self.client.User(@"ChatEngineUser").create();
- * });
- * self.client.connect(@"ChatEngine").perform();
+ * // objc 163ed912-6ccb-4455-adcc-a800115e0ffe
+ *
+ * CENUser *user = self.client.User(@"ChatEngineUser").create();
  * @endcode
  *
- * @discussion Rreate user w/ state information:
+ * @discussion Create user w/ state
  * @code
- * CENConfiguration *configuration = [CENConfiguration configurationWithPublishKey:@"demo-36" subscribeKey:@"demo-36"];
- * self.client = [CENChatEngine clientWithConfiguration:configuration];
- * self.client.once(@"$.ready", ^(CENMe *me) {
- *     CENUser *user = self.client.User(@"ChatEngineUser").state(@{ @"name": @"PubNub" }).create();
- * });
- * self.client.connect(@"ChatEngine").perform();
+ * // objc 146a891a-3d6f-46ce-b3ce-f9a5bde1e573
+ *
+ * CENUser *user = self.client.User(@"ChatEngineUser").state(@{ @"name": @"PubNub" }).create();
  * @endcode
  *
- * @discussion Retrieve previously created/noticed user:
+ * @discussion Retrieve previously created / online user
  * @code
- * CENConfiguration *configuration = [CENConfiguration configurationWithPublishKey:@"demo-36" subscribeKey:@"demo-36"];
- * self.client = [CENChatEngine clientWithConfiguration:configuration];
- * // .....
+ * // objc e734dc26-a698-4932-824f-6d77c45ef40d
+ *
  * CENUser *user = self.client.User(@"ChatEngineUser").get();
  * @endcode
+ *
+ * @param uuid Unique alphanumeric identifier for this \b {user CENUser}. It can be a device id,
+ *     username, user id, email, etc.
+ *
+ * @return Builder instance which allow to complete users management call configuration.
  */
 @property (nonatomic, readonly, strong) CENUserBuilderInterface * (^User)(NSString *uuid);
 

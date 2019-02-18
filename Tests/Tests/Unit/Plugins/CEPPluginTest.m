@@ -1,8 +1,9 @@
 /**
  * @author Serhii Mamontov
- * @copyright © 2009-2018 PubNub, Inc.
+ * @copyright © 2010-2018 PubNub, Inc.
  */
 #import <CENChatEngine/CENPrivateStructures.h>
+#import <CENChatEngine/CENObject+Private.h>
 #import <CENChatEngine/CEPPlugin+Private.h>
 #import <OCMock/OCMock.h>
 #import "CEDummyPlugin.h"
@@ -10,12 +11,6 @@
 
 
 @interface CEPPluginTest : CENTestCase
-
-
-#pragma mark - Information
-
-@property (nonatomic, strong) CEPPlugin *plugin;
-@property (nonatomic, weak) id pluginClassMock;
 
 
 #pragma mark -
@@ -34,14 +29,6 @@
     return NO;
 }
 
-- (void)setUp {
-    
-    [super setUp];
-    
-    self.pluginClassMock = [self mockForClass:[CEPPlugin class]];
-    self.plugin = [CEPPlugin pluginWithIdentifier:@"test" configuration:@{ @"test": @"configuration" }];
-}
-
 
 #pragma mark - Tests :: Information
 
@@ -58,6 +45,7 @@
     NSDictionary *configuration = @{ @"test": @"configuration" };
     NSString *identifier = @"test";
     
+    
     CEPPlugin *plugin = [CEPPlugin pluginWithIdentifier:identifier configuration:configuration];
     
     XCTAssertNotNil(plugin);
@@ -70,7 +58,10 @@
     NSDictionary *configuration = @{ @"test": @"configuration" };
     NSString *expectedIdentifier = @"ChatEnginePlugin";
     
-    OCMStub(ClassMethod([self.pluginClassMock identifier])).andReturn(expectedIdentifier);
+    
+    id classMock = [self mockForObject:[CEPPlugin class]];
+    OCMStub(ClassMethod([classMock identifier])).andReturn(expectedIdentifier);
+    
     CEPPlugin *plugin = [CEPPlugin pluginWithIdentifier:nil configuration:configuration];
     
     XCTAssertNotNil(plugin);
@@ -82,7 +73,10 @@
     
     NSDictionary *configuration = (id)@2010;
     
-    OCMStub(ClassMethod([self.pluginClassMock identifier])).andReturn(@"ChatEnginePlugin");
+    
+    id classMock = [self mockForObject:[CEPPlugin class]];
+    OCMStub(ClassMethod([classMock identifier])).andReturn(@"ChatEnginePlugin");
+    
     CEPPlugin *plugin = [CEPPlugin pluginWithIdentifier:@"test" configuration:configuration];
     
     XCTAssertNotNil(plugin);
@@ -91,7 +85,8 @@
 
 - (void)testConstructor_ShouldSetEmptyDictionaryConfiguration_WhenConfigurationNotPassed {
     
-    OCMStub(ClassMethod([self.pluginClassMock identifier])).andReturn(@"ChatEnginePlugin");
+    id classMock = [self mockForObject:[CEPPlugin class]];
+    OCMStub(ClassMethod([classMock identifier])).andReturn(@"ChatEnginePlugin");
     CEPPlugin *plugin = [CEPPlugin pluginWithIdentifier:@"test" configuration:nil];
     
     XCTAssertNotNil(plugin);
@@ -103,7 +98,10 @@
 
 - (void)testExtensionClassFor_ShouldReturnNilByDefault {
     
-    XCTAssertNil([self.plugin extensionClassFor:(id)@"ChatEngine"]);
+    CEPPlugin *plugin = [CEPPlugin pluginWithIdentifier:@"ChatEnginePlugin" configuration:nil];
+    
+    
+    XCTAssertNil([plugin extensionClassFor:(id)@"ChatEngine"]);
 }
 
 
@@ -111,30 +109,34 @@
 
 - (void)testMiddlewareClassForLocation_ShouldReturnNilByDefault {
     
-    XCTAssertNil([self.plugin middlewareClassForLocation:@"test" object:(id)@"ChatEngine"]);
+    CEPPlugin *plugin = [CEPPlugin pluginWithIdentifier:@"ChatEnginePlugin" configuration:nil];
+    
+    
+    XCTAssertNil([plugin middlewareClassForLocation:@"test" object:(id)@"ChatEngine"]);
 }
 
 
 #pragma mark - Tests :: isValidIdentifier
 
-- (void)testisValidIdentifier_ShouldReturnYES_WhenValidIdentifierPassed {
+- (void)testIsValidIdentifier_ShouldReturnYES_WhenValidIdentifierPassed {
     
     XCTAssertTrue([CEPPlugin isValidIdentifier:@"test.plugin-identifier"]);
 }
 
-- (void)testisValidIdentifier_ShouldReturnNO_WhenNonNSStringPassed {
+- (void)testIsValidIdentifier_ShouldReturnNO_WhenNonNSStringPassed {
     
     XCTAssertFalse([CEPPlugin isValidIdentifier:(id)@2010]);
 }
 
-- (void)testisValidIdentifier_ShouldReturnNO_WhenEmptyStringPassed {
+- (void)testIsValidIdentifier_ShouldReturnNO_WhenEmptyStringPassed {
     
     XCTAssertFalse([CEPPlugin isValidIdentifier:@""]);
 }
 
-- (void)testisValidIdentifier_ShouldReturnNO_WhenNilPassed {
+- (void)testIsValidIdentifier_ShouldReturnNO_WhenNilPassed {
     
     NSString *identifier = nil;
+    
     
     XCTAssertFalse([CEPPlugin isValidIdentifier:identifier]);
 }
@@ -142,39 +144,86 @@
 
 #pragma mark - Tests :: isValidObjectType
 
-- (void)testisValidObjectType_ShoulReturnYES_WhenOneOfKnownObjectTypesPassed {
+- (void)testIsValidObjectType_ShouldReturnYES_WhenOneOfKnownObjectTypesPassed {
     
     XCTAssertTrue([CEPPlugin isValidObjectType:CENObjectType.chat]);
 }
 
-- (void)testisValidObjectType_ShoulReturnNO_WhenUnknownObjectTypesPassed {
+- (void)testIsValidObjectType_ShouldReturnNO_WhenUnknownObjectTypesPassed {
     
     XCTAssertFalse([CEPPlugin isValidObjectType:@"test"]);
 }
 
-- (void)testisValidObjectType_ShoulReturnNO_WhenNilObjectTypesPassed {
+- (void)testIsValidObjectType_ShouldReturnNO_WhenNilObjectTypesPassed {
     
     NSString *type = nil;
+    
     
     XCTAssertFalse([CEPPlugin isValidObjectType:type]);
 }
 
 
+#pragma mark - Tests :: isValidObject
+
+- (void)testIsValidObject_ShouldReturnYES_WhenCENObjectInstancePassed {
+    
+    CENUser *user = self.client.User([NSUUID UUID].UUIDString).create();
+    
+    
+    XCTAssertTrue([CEPPlugin isValidObject:user]);
+}
+
+- (void)testIsValidObject_ShouldReturnNO_WhenNonCENObjectInstancePassed {
+    
+    XCTAssertFalse([CEPPlugin isValidObject:(id)@"test"]);
+}
+
+- (void)testIsValidObject_ShouldReturnNO_WhenNilInstancePassed {
+    
+    id object = nil;
+    
+    
+    XCTAssertFalse([CEPPlugin isValidObject:object]);
+}
+
+
+#pragma mark - Tests :: isValidConfiguration
+
+- (void)testIsValidConfiguration_ShouldReturnYES_WhenNSDictionaryPassed {
+    
+    XCTAssertTrue([CEPPlugin isValidConfiguration:@{ @"test": @"configuration" }]);
+}
+
+- (void)testIsValidConfiguration_ShouldReturnNO_WhenNonNSDictionaryPassed {
+    
+    XCTAssertFalse([CEPPlugin isValidConfiguration:(id)@"test"]);
+}
+
+- (void)testIsValidConfiguration_ShouldReturnNO_WhenNilPassed {
+    
+    id configuration = nil;
+    
+    
+    XCTAssertFalse([CEPPlugin isValidConfiguration:configuration]);
+}
+
+
 #pragma mark - Tests :: isPluginClass
 
-- (void)testisPluginClass_ShoulReturnYES_WhenCEPPluginSubclassPassed {
+- (void)testisPluginClass_ShouldReturnYES_WhenCEPPluginSubclassPassed {
     
     XCTAssertTrue([CEPPlugin isPluginClass:[CEDummyPlugin class]]);
 }
 
-- (void)testisPluginClass_ShoulReturnNO_WhenNotCEPPluginSubclassPassed {
+- (void)testisPluginClass_ShouldReturnNO_WhenNotCEPPluginSubclassPassed {
     
     XCTAssertFalse([CEPPlugin isPluginClass:[NSArray class]]);
 }
 
-- (void)testisPluginClass_ShoulReturnNO_WhenNilPassed {
+- (void)testisPluginClass_ShouldReturnNO_WhenNilPassed {
     
     Class cls = nil;
+    
     
     XCTAssertFalse([CEPPlugin isPluginClass:cls]);
 }

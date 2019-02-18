@@ -1,15 +1,19 @@
 /**
  * @author Serhii Mamontov
- * @copyright © 2009-2018 PubNub, Inc.
+ * @copyright © 2010-2018 PubNub, Inc.
  */
-#import <XCTest/XCTest.h>
 #import <CENChatEngine/CENUserConnectBuilderInterface.h>
 #import <CENChatEngine/CENInterfaceBuilder+Private.h>
 #import <OCMock/OCMock.h>
+#import "CENTestCase.h"
 
 
-@interface CENUserConnectBuilderInterfaceTest : XCTestCase
+@interface CENUserConnectBuilderInterfaceTest : CENTestCase
 
+
+#pragma mark - Misc
+
+- (CENUserConnectBuilderInterface *)builder;
 
 #pragma mark -
 
@@ -22,56 +26,49 @@
 @implementation CENUserConnectBuilderInterfaceTest
 
 
+#pragma mark - Setup / Tear down
+
+- (BOOL)shouldSetupVCR {
+
+    return NO;
+}
+
+
 #pragma mark - Tests :: state
 
 - (void)testState_ShouldReturnReferenceOnBuilder_WhenCalled {
     
-    CEInterfaceCallCompletionBlock block = ^id (NSArray<NSString *> *flags, NSDictionary *arguments) {
-        return nil;
-    };
+    CENUserConnectBuilderInterface *builder = [self builder];
     
-    CENUserConnectBuilderInterface *builder = [CENUserConnectBuilderInterface builderWithExecutionBlock:block];
-    XCTAssertEqualObjects(builder.state(@{ }), builder);
+    XCTAssertEqualObjects(builder.state(@{}), builder);
 }
 
-- (void)testState_ShouldSetUserConnectionState_WhenNSDictionaryPassed {
+- (void)testState_ShouldSetState_WhenNSDictionaryPassed {
     
-    __block BOOL blockCalled = NO;
-    NSDictionary *expected = @{ @"PubNub": @2010 };
-    CEInterfaceCallCompletionBlock block = ^id (NSArray<NSString *> *flags, NSDictionary *arguments) {
-        blockCalled = YES;
-        
-        XCTAssertGreaterThan(arguments.count, 0);
-        XCTAssertEqualObjects(arguments[@"state"], expected);
-        
-        return nil;
-    };
+    CENUserConnectBuilderInterface *builder = [self builder];
+    NSString *mockedParameter = @"ocmock_replaced_state";
+    NSDictionary *expected = @{ @"test": @"state" };
     
-    CENUserConnectBuilderInterface *builder = [CENUserConnectBuilderInterface builderWithExecutionBlock:block];
-    builder.state(expected);
-    [builder performWithReturnValue];
     
-    XCTAssertTrue(blockCalled);
+    id builderMock = [self mockForObject:builder];
+    id recorded = OCMExpect([builderMock setArgument:expected forParameter:mockedParameter]);
+    [self waitForObject:builderMock recordedInvocationCall:recorded afterBlock:^{
+        builder.state(expected);
+    }];
 }
 
-- (void)testState_ShouldNotSetUserConnectionState_WhenNonNSDictionaryPassed {
+- (void)testState_ShouldNotSetState_WhenNonNSDictionaryPassed {
     
-    __block BOOL blockCalled = NO;
+    CENUserConnectBuilderInterface *builder = [self builder];
+    NSString *mockedParameter = @"ocmock_replaced_state";
     NSDictionary *expected = (id)@2010;
-    CEInterfaceCallCompletionBlock block = ^id (NSArray<NSString *> *flags, NSDictionary *arguments) {
-        blockCalled = YES;
-        
-        XCTAssertEqual(arguments.count, 0);
-        XCTAssertNil(arguments[@"state"]);
-        
-        return nil;
-    };
     
-    CENUserConnectBuilderInterface *builder = [CENUserConnectBuilderInterface builderWithExecutionBlock:block];
-    builder.state(expected);
-    [builder performWithReturnValue];
     
-    XCTAssertTrue(blockCalled);
+    id builderMock = [self mockForObject:builder];
+    id recorded = OCMExpect([[builderMock reject] setArgument:expected forParameter:mockedParameter]);
+    [self waitForObject:builderMock recordedInvocationNotCall:recorded afterBlock:^{
+        builder.state(expected);
+    }];
 }
 
 
@@ -79,52 +76,52 @@
 
 - (void)testAuthKey_ShouldReturnReferenceOnBuilder_WhenCalled {
     
-    CEInterfaceCallCompletionBlock block = ^id (NSArray<NSString *> *flags, NSDictionary *arguments) {
-        return nil;
-    };
+    CENUserConnectBuilderInterface *builder = [self builder];
     
-    CENUserConnectBuilderInterface *builder = [CENUserConnectBuilderInterface builderWithExecutionBlock:block];
+    
     XCTAssertEqualObjects(builder.authKey(@"PubNub"), builder);
 }
 
 - (void)testAuthKey_ShouldSetUserAuthKey_WhenNSStringPassed {
     
-    __block BOOL blockCalled = NO;
+    CENUserConnectBuilderInterface *builder = [self builder];
+    NSString *mockedParameter = @"ocmock_replaced_authKey";
     NSString *expected = @"PubNub";
-    CEInterfaceCallCompletionBlock block = ^id (NSArray<NSString *> *flags, NSDictionary *arguments) {
-        blockCalled = YES;
-        
-        XCTAssertGreaterThan(arguments.count, 0);
-        XCTAssertEqualObjects(arguments[@"authKey"], expected);
-        
-        return nil;
-    };
     
-    CENUserConnectBuilderInterface *builder = [CENUserConnectBuilderInterface builderWithExecutionBlock:block];
-    builder.authKey(expected);
-    [builder performWithReturnValue];
     
-    XCTAssertTrue(blockCalled);
+    id builderMock = [self mockForObject:builder];
+    id recorded = OCMExpect([builderMock setArgument:expected forParameter:mockedParameter]);
+    [self waitForObject:builderMock recordedInvocationCall:recorded afterBlock:^{
+        builder.authKey(expected);
+    }];
 }
 
-- (void)testAuthKey_ShouldNotSetUserAuthKey_WhenNonNSStringPassed {
+- (void)testAuthKey_ShouldSetUserAuthKey_WhenNSNumberPassed {
     
-    __block BOOL blockCalled = NO;
-    NSString *expected = (id)@2010;
-    CEInterfaceCallCompletionBlock block = ^id (NSArray<NSString *> *flags, NSDictionary *arguments) {
-        blockCalled = YES;
-        
-        XCTAssertEqual(arguments.count, 0);
-        XCTAssertNil(arguments[@"authKey"]);
-        
-        return nil;
-    };
+    CENUserConnectBuilderInterface *builder = [self builder];
+    NSString *mockedParameter = @"ocmock_replaced_authKey";
+    NSNumber *expected = @2010;
     
-    CENUserConnectBuilderInterface *builder = [CENUserConnectBuilderInterface builderWithExecutionBlock:block];
-    builder.authKey(expected);
-    [builder performWithReturnValue];
     
-    XCTAssertTrue(blockCalled);
+    id builderMock = [self mockForObject:builder];
+    id recorded = OCMExpect([builderMock setArgument:expected forParameter:mockedParameter]);
+    [self waitForObject:builderMock recordedInvocationCall:recorded afterBlock:^{
+        builder.authKey(expected);
+    }];
+}
+
+- (void)testAuthKey_ShouldNotSetUserAuthKey_WhenUnsupportedTypePassed {
+    
+    CENUserConnectBuilderInterface *builder = [self builder];
+    NSString *mockedParameter = @"ocmock_replaced_authKey";
+    NSString *expected = (id)[NSArray new];
+    
+    
+    id builderMock = [self mockForObject:builder];
+    id recorded = OCMExpect([[builderMock reject] setArgument:expected forParameter:mockedParameter]);
+    [self waitForObject:builderMock recordedInvocationNotCall:recorded afterBlock:^{
+        builder.authKey(expected);
+    }];
 }
 
 
@@ -132,18 +129,26 @@
 
 - (void)testPerform_ShouldPerformWithReturnValue_WhenCalled {
     
-    CEInterfaceCallCompletionBlock block = ^id (NSArray<NSString *> *flags, NSDictionary *arguments) {
+    CENUserConnectBuilderInterface *builder = [self builder];
+    
+    
+    id builderMock = [self mockForObject:builder];
+    id recorded = OCMExpect([builderMock performWithReturnValue]);
+    [self waitForObject:builderMock recordedInvocationCall:recorded afterBlock:^{
+        builder.perform();
+    }];
+}
+
+
+#pragma mark - Misc
+
+- (CENUserConnectBuilderInterface *)builder {
+    
+    CENInterfaceCallCompletionBlock block = ^id (NSArray<NSString *> *flags, NSDictionary *arguments) {
         return nil;
     };
     
-    CENUserConnectBuilderInterface *builder = [CENUserConnectBuilderInterface builderWithExecutionBlock:block];
-    id builderPartialMock = OCMPartialMock(builder);
-    OCMExpect([builderPartialMock performWithReturnValue]);
-    
-    builder.perform();
-    
-    OCMVerifyAll(builderPartialMock);
-    [builderPartialMock stopMocking];
+    return [CENUserConnectBuilderInterface builderWithExecutionBlock:block];
 }
 
 #pragma mark -
