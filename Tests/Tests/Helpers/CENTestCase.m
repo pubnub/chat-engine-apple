@@ -19,7 +19,7 @@
 
 #pragma mark - Defines
 
-#define WRITING_CASSETTES 1
+#define WRITING_CASSETTES 0
 #define CEN_LOGGER_ENABLED NO
 #define CEN_PUBNUB_LOGGER_ENABLED NO
 #define CENT_DEBUG_CONNECTION_FLOW 0
@@ -333,7 +333,7 @@ static char kCENTChatEngineTestStateInformationKey;
 
 - (NSString *)fixturesLocation {
     
-    return @"/Volumes/Develop/Projects/Xcode/PubNub/chat-engine-apple-0.9.x/Tests/Tests/Fixtures";
+    return @"/Volumes/Develop/Projects/Xcode/PubNub/chat-engine-apple/Tests/Tests/Fixtures";
 }
 
 
