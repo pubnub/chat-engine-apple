@@ -1,14 +1,16 @@
 #import <CENChatEngine/CEPMiddleware.h>
 
 
+NS_ASSUME_NONNULL_BEGIN
+
 /**
- * @brief      \b CENChat events Markdown markup parser.
- * @discussion Middleware pre-process received events, for which it has been configured. If Markdown markup has been found in
- *             message payload under configured key, middleware will replace original data with \a NSAttributedString.
+ * @brief \b {Chat CENChat} events augmentation for \c Markdown markup support.
+ *
+ * @ref dc6c677f-d85e-4f10-a0b6-762ff7da5936
  *
  * @author Serhii Mamontov
- * @version 1.0.0
- * @copyright © 2009-2018 PubNub, Inc.
+ * @version 0.0.2
+ * @copyright © 2010-2019 PubNub, Inc.
  */
 @interface CENMarkdownMiddleware : CEPMiddleware
 
@@ -17,3 +19,5 @@
 
 
 @end
+
+NS_ASSUME_NONNULL_END

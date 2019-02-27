@@ -1,28 +1,23 @@
 /**
  * @author Serhii Mamontov
- * @copyright © 2009-2018 PubNub, Inc.
+ * @copyright © 2010-2018 PubNub, Inc.
  */
-#import <XCTest/XCTest.h>
-#import <OCMock/OCMock.h>
 #import <CENChatEngine/CENChatEngine+AuthorizationPrivate.h>
 #import <CENChatEngine/CENChatEngine+ConnectionInterface.h>
 #import <CENChatEngine/CENChatEngine+PubNubPrivate.h>
 #import <CENChatEngine/CENChatEngine+ChatPrivate.h>
+#import <CENChatEngine/CENEventEmitter+Interface.h>
+#import <CENChatEngine/CENEventEmitter+Private.h>
 #import <CENChatEngine/CENChatEngine+Private.h>
-#import <CENChatEngine/CENPNFunctionClient.h>
-#import <CENChatEngine/CENChat+Private.h>
+#import <CENChatEngine/CENChat+Interface.h>
 #import <CENChatEngine/CENUser+Private.h>
 #import <CENChatEngine/ChatEngine.h>
+#import <OCMock/OCMock.h>
 #import "CENTestCase.h"
 
 
 @interface CENChatEngineAuthorizationTest : CENTestCase
 
-
-#pragma mark - Information
-
-@property (nonatomic, nullable, weak) CENChatEngine *client;
-@property (nonatomic, nullable, weak) CENChatEngine *clientMock;
 
 #pragma mark -
 
@@ -37,322 +32,632 @@
 
 #pragma mark - Setup / Tear down
 
+- (BOOL)hasMockedObjectsInTestCaseWithName:(NSString *)name {
+
+    return ([name rangeOfString:@"testAuthorizeLocalUserWithUUID"].location == NSNotFound &&
+            [name rangeOfString:@"testHandshakeChatAccess_ShouldEmitError_WhenPubNubClientNotReady"].location == NSNotFound);
+}
+
 - (BOOL)shouldSetupVCR {
     
     return NO;
 }
 
+- (BOOL)shouldEnableGlobalChatForTestCaseWithName:(NSString *)name {
+    
+    return [name rangeOfString:@"GlobalChatEnabled"].location != NSNotFound;
+}
+
+- (BOOL)shouldEnableMetaForTestCaseWithName:(NSString *)name {
+    
+    return [name rangeOfString:@"MetaSynchronizationEnabled"].location != NSNotFound;
+}
+
+- (BOOL)shouldThrowExceptionForTestCaseWithName:(NSString *)name {
+    
+    return [name rangeOfString:@"ShouldThrow"].location != NSNotFound;
+}
+
 - (void)setUp {
-    
+
     [super setUp];
-    
-    CENConfiguration *configuration = [CENConfiguration configurationWithPublishKey:@"test-36" subscribeKey:@"test-36"];
-    configuration.enableMeta = [self.name rangeOfString:@"testHandshakeChatAccess_ShouldRequestMetaWhenConfigured"].location != NSNotFound;
-    self.client = [self chatEngineWithConfiguration:configuration];
-    self.clientMock = [self partialMockForObject:self.client];
 
-    OCMStub([self.clientMock fetchParticipantsForChat:[OCMArg any]]).andDo(nil);
-    OCMStub([self.clientMock createDirectChatForUser:[OCMArg any]])
-        .andReturn(self.clientMock.Chat().name(@"chat-engine#user#tester#write.#direct").autoConnect(NO).create());
-    OCMStub([self.clientMock createFeedChatForUser:[OCMArg any]])
-        .andReturn(self.clientMock.Chat().name(@"chat-engine#user#tester#read.#feed").autoConnect(NO).create());
-    OCMStub([self.clientMock me]).andReturn([CENMe userWithUUID:@"tester" state:@{} chatEngine:self.clientMock]);
 
-    OCMStub([self.clientMock connectToChat:[OCMArg any] withCompletion:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
-        void(^handleBlock)(NSDictionary *) = nil;
-
-        [invocation getArgument:&handleBlock atIndex:3];
-        handleBlock(nil);
-    });
-    
-    [self.clientMock createGlobalChat];
-    id partialGlobalChatMock = [self partialMockForObject:self.client.global];
-    OCMStub([self.clientMock global]).andReturn(partialGlobalChatMock);
-    OCMStub([self.clientMock.global connected]).andReturn(YES);
+    if ([self hasMockedObjectsInTestCaseWithName:self.name]) {
+        [self completeChatEngineConfiguration:self.client];
+    }
 }
 
 
 #pragma mark - Tests :: reauthorize / reauthorizeUserWithKey
 
-- (void)testReauthorize_ShouldChangePubNubClientConfiguration {
+- (void)testReauthorize_ShouldUseRandomAuthorizationKey_WhenAuthorizationKeyIsNil {
 
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    NSString *expectedAuthorizationKey = @"PubNub";
-    __block BOOL handlerCalled = NO;
-    
-    OCMExpect([self.clientMock changePubNubAuthorizationKey:expectedAuthorizationKey withCompletion:[OCMArg any]])
-        .andDo(^(NSInvocation *invocation) {
-            handlerCalled = YES;
-        
-            dispatch_semaphore_signal(semaphore);
-        });
+    CENChat *chat = [self publicChatWithChatEngine:self.client];
 
-    self.clientMock.reauthorize(expectedAuthorizationKey);
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(3.f * NSEC_PER_SEC)));
-    OCMVerifyAll((id)self.clientMock);
-    XCTAssertTrue(handlerCalled);
+    XCTAssertTrue([self isObjectMocked:self.client]);
+    
+    id chatMock = [self mockForObject:chat];
+    OCMStub([(CENChat *)chatMock connected]).andReturn(YES);
+    
+    OCMStub([self.client global]).andReturn(chat);
+
+    id recorded = OCMExpect([self.client changePubNubAuthorizationKey:[OCMArg any] withCompletion:[OCMArg any]]);
+    [self waitForObject:self.client recordedInvocationCall:recorded afterBlock:^{
+        self.client.reauthorize(nil);
+    }];
 }
 
-- (void)testReauthorize_ShouldChangeFunctionsClientConfiguration {
+- (void)testReauthorize_ShouldUseNSNumberAuthorizationKey {
+
+    CENChat *chat = [self publicChatWithChatEngine:self.client];
+    NSNumber *authorizationKey = @2010;
+
+
+    XCTAssertTrue([self isObjectMocked:self.client]);
     
-    id functionsClientPartialMock = [self partialMockForObject:self.client.functionsClient];
-    NSString *globalChat = self.client.currentConfiguration.globalChannel;
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    NSString *userUUID = [self.client pubNubUUID];
-    NSString *expectedAuthorizationKey = @"PubNub";
-    __block BOOL handlerCalled = NO;
+    id chatMock = [self mockForObject:chat];
+    OCMStub([(CENChat *)chatMock connected]).andReturn(YES);
     
-    OCMStub([self.clientMock reconnectUser]).andDo(nil);
-    OCMExpect([self.clientMock changePubNubAuthorizationKey:[OCMArg any] withCompletion:[OCMArg any]])
+    OCMStub([self.client global]).andReturn(chat);
+
+    id recorded = OCMExpect([self.client changePubNubAuthorizationKey:authorizationKey.stringValue withCompletion:[OCMArg any]]);
+    [self waitForObject:self.client recordedInvocationCall:recorded afterBlock:^{
+        self.client.reauthorize(authorizationKey);
+    }];
+}
+
+- (void)testReauthorize_ShouldDisconnectLocalUser {
+
+    NSString *authorizationKey = @"PubNub";
+
+
+    XCTAssertTrue([self isObjectMocked:self.client]);
+
+    OCMStub([self.client changePubNubAuthorizationKey:authorizationKey withCompletion:[OCMArg any]]).andDo(nil);
+    
+    id recorded = OCMExpect([self.client disconnectUser]);
+    [self waitForObject:self.client recordedInvocationCall:recorded afterBlock:^{
+        self.client.reauthorize(authorizationKey);
+    }];
+}
+
+- (void)testReauthorize_ShouldChangePubNubConfiguration {
+
+    CENChat *chat = [self publicChatWithChatEngine:self.client];
+    NSString *authorizationKey = @"PubNub";
+
+
+    XCTAssertTrue([self isObjectMocked:self.client]);
+    
+    id chatMock = [self mockForObject:chat];
+    OCMStub([(CENChat *)chatMock connected]).andReturn(YES);
+    
+    OCMStub([self.client global]).andReturn(chat);
+
+    id recorded = OCMExpect([self.client changePubNubAuthorizationKey:authorizationKey withCompletion:[OCMArg any]]);
+    [self waitForObject:self.client recordedInvocationCall:recorded afterBlock:^{
+        self.client.reauthorize(authorizationKey);
+    }];
+}
+
+- (void)testReauthorize_ShouldChangePubNubConfiguration_WhenGlobalDisconnect {
+
+    CENChat *chat = [self publicChatWithChatEngine:self.client];
+    NSString *authorizationKey = @"PubNub";
+
+
+    XCTAssertTrue([self isObjectMocked:self.client]);
+
+    id chatMock = [self mockForObject:chat];
+    OCMExpect([chatMock handleEventOnce:@"$.disconnected" withHandlerBlock:[OCMArg any]]).andForwardToRealObject();
+    
+    OCMStub([self.client global]).andReturn(chat);
+    
+    id recorded = OCMExpect([self.client changePubNubAuthorizationKey:authorizationKey withCompletion:[OCMArg any]]);
+    [self waitForObject:self.client recordedInvocationCall:recorded afterBlock:^{
+        self.client.reauthorize(authorizationKey);
+        [self.client.global emitEventLocally:@"$.disconnected", nil];
+    }];
+    
+    OCMVerifyAll(chatMock);
+}
+
+- (void)testReauthorize_ShouldNotChangePubNubConfiguration_WhenGlobalNotDisconnected {
+
+    CENChat *chat = [self publicChatWithChatEngine:self.client];
+    NSString *authorizationKey = @"PubNub";
+
+
+    XCTAssertTrue([self isObjectMocked:self.client]);
+
+    id chatMock = [self mockForObject:chat];
+    OCMExpect([chatMock handleEventOnce:@"$.disconnected" withHandlerBlock:[OCMArg any]]).andForwardToRealObject();
+    
+    OCMStub([self.client global]).andReturn(chat);
+    
+    id recorded = OCMExpect([[(id)self.client reject] changePubNubAuthorizationKey:authorizationKey withCompletion:[OCMArg any]]);
+    [self waitForObject:self.client recordedInvocationNotCall:recorded afterBlock:^{
+        self.client.reauthorize(authorizationKey);
+    }];
+    
+    OCMVerifyAll(chatMock);
+}
+
+- (void)testReauthorize_ShouldUpdateFunctionsManagerConfiguration {
+
+    CENChat *chat = [self publicChatWithChatEngine:self.client];
+    NSString *uuid = [self.client pubNubUUID];
+    NSString *authorizationKey = @"PubNub";
+
+
+    XCTAssertTrue([self isObjectMocked:self.client]);
+    
+    id chatMock = [self mockForObject:chat];
+    OCMStub([(CENChat *)chatMock connected]).andReturn(YES);
+    
+    OCMStub([self.client global]).andReturn(chat);
+
+    OCMStub([self.client reconnectUser]).andDo(nil);
+    OCMStub([self.client changePubNubAuthorizationKey:[OCMArg any] withCompletion:[OCMArg any]])
         .andDo(^(NSInvocation *invocation) {
-            dispatch_block_t handlerBlock = nil;
-            
-            [invocation getArgument:&handlerBlock atIndex:3];
-            handlerBlock();
+            dispatch_block_t block = [self objectForInvocation:invocation argumentAtIndex:2];
+            block();
+        });
+
+    id clientMock = [self mockForObject:self.client.functionClient];
+    id recorded = OCMExpect([clientMock setWithNamespace:[OCMArg any] userUUID:uuid userAuth:authorizationKey]);
+    [self waitForObject:clientMock recordedInvocationCall:recorded afterBlock:^{
+        self.client.reauthorize(authorizationKey);
+    }];
+}
+
+- (void)testReauthorize_ShouldReconnectUser {
+
+    CENChat *chat = [self publicChatWithChatEngine:self.client];
+    NSString *authorizationKey = @"PubNub";
+
+
+    XCTAssertTrue([self isObjectMocked:self.client]);
+    
+    id chatMock = [self mockForObject:chat];
+    OCMStub([(CENChat *)chatMock connected]).andReturn(YES);
+    
+    OCMStub([self.client global]).andReturn(chat);
+
+    id clientMock = [self mockForObject:self.client.functionClient];
+    OCMStub([clientMock setWithNamespace:[OCMArg any] userUUID:[OCMArg any] userAuth:[OCMArg any]]).andDo(nil);
+    
+    OCMStub([self.client changePubNubAuthorizationKey:[OCMArg any] withCompletion:[OCMArg any]])
+        .andDo(^(NSInvocation *invocation) {
+            dispatch_block_t block = [self objectForInvocation:invocation argumentAtIndex:2];
+            block();
         });
     
-    OCMExpect([functionsClientPartialMock setDefaultDataWithGlobalChat:globalChat userUUID:userUUID userAuth:expectedAuthorizationKey])
-        .andDo(^(NSInvocation *invocation) {
-            handlerCalled = YES;
-            
-            dispatch_semaphore_signal(semaphore);
-        });
-    
-    self.clientMock.global.once(@"$.connected", ^{
-        self.clientMock.reauthorize(expectedAuthorizationKey);
-    });
-    
-    self.clientMock.global.connect();
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5f * NSEC_PER_SEC)));
-    OCMVerifyAll(functionsClientPartialMock);
-    OCMVerifyAll((id)self.clientMock);
-    XCTAssertTrue(handlerCalled);
+    id recorded = OCMExpect([self.client reconnectUser]);
+    [self waitForObject:self.client recordedInvocationCall:recorded afterBlock:^{
+        self.client.reauthorize(authorizationKey);
+    }];
 }
 
 
 #pragma mark - Tests :: authorizeLocalUserWithCompletion
 
 - (void)testAuthorizeLocalUserWithCompletion_ShouldRequestAuthorizationWithLocalUserData {
+
+    NSString *uuid = [self.client pubNubUUID];
+    NSString *authorizationKey = @"PubNub";
+
+
+    XCTAssertTrue([self isObjectMocked:self.client]);
+
+    OCMStub([self.client pubNubAuthKey]).andReturn(authorizationKey);
     
-    NSString *expectedUUID = [self.client pubNubUUID];
-    NSString *expectedAuthKey = @"secret-auth-key";
-    
-    OCMStub([self.clientMock pubNubAuthKey]).andReturn(expectedAuthKey);
-    
-    OCMExpect([self.clientMock authorizeLocalUserWithUUID:expectedUUID authorizationKey:expectedAuthKey completion:[OCMArg any]]).andDo(nil);
-    
-    [self.clientMock authorizeLocalUserWithCompletion:^{ }];
-    
-    OCMVerifyAll((id)self.clientMock);
+    id recorded = OCMExpect([self.client authorizeLocalUserWithUUID:uuid authorizationKey:authorizationKey
+                                                         completion:[OCMArg any]]);
+    [self waitForObject:self.client recordedInvocationCall:recorded afterBlock:^{
+        [self.client authorizeLocalUserWithCompletion:^{ }];
+    }];
 }
 
 
 #pragma mark - Tests :: authorizeLocalUserWithUUID
 
-- (void)testAuthorizeLocalUserWithUUID_ShouldConfigureFunctionsClientAndCallSetOfEndpoints {
+- (void)testAuthorizeLocalUserWithUUID_ShouldConfigureFunctionsClient {
     
-    id functionsClientPartialMock = [self partialMockForObject:self.client.functionsClient];
-    NSString *expectedGlobalChat = self.client.currentConfiguration.globalChannel;
-    NSString *expectedAuthKey = @"secret-auth-key";
-     NSArray<NSDictionary *> *expectedRoutes = @[
+    NSString *uuid = [NSUUID UUID].UUIDString;
+    NSString *authorizationKey = @"PubNub";
+
+    
+    id clientMock = [self mockForObject:self.client.functionClient];
+    OCMStub([clientMock callRouteSeries:[OCMArg any] withCompletion:[OCMArg any]]).andDo(nil);
+    
+    id recorded = OCMExpect([clientMock setWithNamespace:[OCMArg any] userUUID:uuid userAuth:authorizationKey]);
+    [self waitForObject:clientMock recordedInvocationCall:recorded afterBlock:^{
+        [self.client authorizeLocalUserWithUUID:uuid authorizationKey:authorizationKey completion:^{ }];
+    }];
+}
+
+- (void)testAuthorizeLocalUserWithUUID_ShouldCallSetOfEndpoints {
+    
+    NSString *uuid = [NSUUID UUID].UUIDString;
+    NSString *authorizationKey = @"PubNub";
+    NSArray *routes = @[
         @{ @"route": @"bootstrap", @"method": @"post" },
         @{ @"route": @"user_read", @"method": @"post" },
         @{ @"route": @"user_write", @"method": @"post" },
         @{ @"route": @"group", @"method": @"post" }
     ];
-    NSString *expectedUUID = @"test-user";
     
-    OCMExpect([functionsClientPartialMock setDefaultDataWithGlobalChat:expectedGlobalChat userUUID:expectedUUID userAuth:expectedAuthKey]).andDo(nil);
-    OCMExpect([functionsClientPartialMock callRouteSeries:expectedRoutes withCompletion:[OCMArg any]]).andDo(nil);
     
-    [self.client authorizeLocalUserWithUUID:expectedUUID authorizationKey:expectedAuthKey completion:^{}];
+    id clientMock = [self mockForObject:self.client.functionClient];
+    OCMStub([clientMock setWithNamespace:[OCMArg any] userUUID:[OCMArg any] userAuth:[OCMArg any]]).andDo(nil);
     
-    OCMVerifyAll((id)functionsClientPartialMock);
-}
-
-- (void)testAuthorizeLocalUserWithUUID_ShouldCallBlockOnSuccess {
-    
-    id functionsClientPartialMock = [self partialMockForObject:self.client.functionsClient];
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    __block BOOL handlerCalled = NO;
-    
-    OCMExpect([functionsClientPartialMock setDefaultDataWithGlobalChat:[OCMArg any] userUUID:[OCMArg any] userAuth:[OCMArg any]]).andDo(nil);
-    OCMExpect([functionsClientPartialMock callRouteSeries:[OCMArg any] withCompletion:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
-        void(^handlerBlock)(BOOL, NSArray *) = nil;
-        
-        [invocation getArgument:&handlerBlock atIndex:3];
-        handlerBlock(YES, nil);
-    });
-    
-    [self.client authorizeLocalUserWithUUID:[OCMArg any] authorizationKey:[OCMArg any] completion:^{
-        handlerCalled = YES;
-        
-        dispatch_semaphore_signal(semaphore);
+    id recorded = OCMExpect([clientMock callRouteSeries:routes withCompletion:[OCMArg any]]);
+    [self waitForObject:clientMock recordedInvocationCall:recorded afterBlock:^{
+        [self.client authorizeLocalUserWithUUID:uuid authorizationKey:authorizationKey completion:^{ }];
     }];
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
-    OCMVerifyAll((id)functionsClientPartialMock);
-    XCTAssertTrue(handlerCalled);
 }
 
-- (void)testAuthorizeLocalUserWithUUID_ShouldThrowEmitErrorOnFailure {
+- (void)testAuthorizeLocalUserWithUUID_ShouldCallBlock_WhenAuthorizationSuccess {
     
-    id functionsClientPartialMock = [self partialMockForObject:self.client.functionsClient];
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    __block BOOL handlerCalled = NO;
+    NSString *uuid = [NSUUID UUID].UUIDString;
+    NSString *authorizationKey = @"PubNub";
     
-    OCMExpect([functionsClientPartialMock setDefaultDataWithGlobalChat:[OCMArg any] userUUID:[OCMArg any] userAuth:[OCMArg any]]).andDo(nil);
-    OCMExpect([functionsClientPartialMock callRouteSeries:[OCMArg any] withCompletion:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
-        void(^handlerBlock)(BOOL, NSArray *) = nil;
-        
-        [invocation getArgument:&handlerBlock atIndex:3];
-        handlerBlock(NO, @[[NSError errorWithDomain:@"TestDomain" code:0 userInfo:nil]]);
+    
+    id clientMock = [self mockForObject:self.client.functionClient];
+    OCMStub([clientMock setWithNamespace:[OCMArg any] userUUID:[OCMArg any] userAuth:[OCMArg any]]).andDo(nil);
+    
+    OCMStub([clientMock callRouteSeries:[OCMArg any] withCompletion:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
+        void(^block)(BOOL, NSArray *) = [self objectForInvocation:invocation argumentAtIndex:2];
+        block(YES, @[]);
     });
     
-    self.client.once(@"$.error.auth", ^(NSError *error) {
-        handlerCalled = YES;
-        
-        XCTAssertNotNil(error);
-        dispatch_semaphore_signal(semaphore);
-    });
-    
-    [self.client authorizeLocalUserWithUUID:[OCMArg any] authorizationKey:[OCMArg any] completion:^{ }];
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
-    OCMVerifyAll((id)functionsClientPartialMock);
-    XCTAssertTrue(handlerCalled);
+    [self waitToCompleteIn:self.testCompletionDelay codeBlock:^(dispatch_block_t handler) {
+        [self.client authorizeLocalUserWithUUID:uuid authorizationKey:authorizationKey completion:handler];
+    }];
 }
 
-- (void)testAuthorizeLocalUserWithUUID_ShouldThrowEmitErrorOnUnknownFailure {
+- (void)testAuthorizeLocalUserWithUUID_ShouldThrow_WhenAuthorizationDidFail {
     
-    id functionsClientPartialMock = [self partialMockForObject:self.client.functionsClient];
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    __block BOOL handlerCalled = NO;
+    NSError *error = [NSError errorWithDomain:@"TestDomain" code:-1 userInfo:nil];
+    NSString *uuid = [NSUUID UUID].UUIDString;
+    NSString *authorizationKey = @"PubNub";
     
-    OCMExpect([functionsClientPartialMock setDefaultDataWithGlobalChat:[OCMArg any] userUUID:[OCMArg any] userAuth:[OCMArg any]]).andDo(nil);
-    OCMExpect([functionsClientPartialMock callRouteSeries:[OCMArg any] withCompletion:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
-        void(^handlerBlock)(BOOL, NSArray *) = nil;
-        
-        [invocation getArgument:&handlerBlock atIndex:3];
-        handlerBlock(NO, nil);
+    
+    id clientMock = [self mockForObject:self.client.functionClient];
+    OCMStub([clientMock setWithNamespace:[OCMArg any] userUUID:[OCMArg any] userAuth:[OCMArg any]]).andDo(nil);
+    
+    OCMStub([clientMock callRouteSeries:[OCMArg any] withCompletion:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
+        void(^block)(BOOL, NSArray *) = [self objectForInvocation:invocation argumentAtIndex:2];
+        block(NO, @[error]);
     });
     
-    self.client.once(@"$.error.auth", ^(NSError *error) {
-        handlerCalled = YES;
-        
-        XCTAssertNotNil(error.userInfo[NSUnderlyingErrorKey]);
-        XCTAssertEqualObjects(((NSError *)error.userInfo[NSUnderlyingErrorKey]).localizedDescription, @"Unknown error");
-        dispatch_semaphore_signal(semaphore);
+    XCTAssertThrowsSpecificNamed([self.client authorizeLocalUserWithUUID:uuid authorizationKey:authorizationKey
+                                                              completion:^{}],
+                                 NSException, kCENPNFunctionErrorDomain);
+}
+
+- (void)testAuthorizeLocalUserWithUUID_ShouldEmitError_WhenAuthorizationDidFail {
+    
+    NSError *error = [NSError errorWithDomain:@"TestDomain" code:-1 userInfo:nil];
+    NSString *uuid = [NSUUID UUID].UUIDString;
+    NSString *authorizationKey = @"PubNub";
+    
+    
+    id clientMock = [self mockForObject:self.client.functionClient];
+    OCMStub([clientMock callRouteSeries:[OCMArg any] withCompletion:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
+        void(^handlerBlock)(BOOL, NSArray *) = [self objectForInvocation:invocation argumentAtIndex:2];
+        handlerBlock(NO, @[error]);
     });
     
-    [self.client authorizeLocalUserWithUUID:[OCMArg any] authorizationKey:[OCMArg any] completion:^{ }];
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
-    OCMVerifyAll((id)functionsClientPartialMock);
-    XCTAssertTrue(handlerCalled);
+    [self object:self.client shouldHandleEvent:@"$.error.auth"
+     withHandler:^CENEventHandlerBlock (dispatch_block_t handler) {
+         
+        return ^(CENEmittedEvent *emittedEvent) {
+            NSError *emittedError = emittedEvent.data;
+            
+            XCTAssertNotNil(emittedError);
+            XCTAssertEqualObjects(emittedError.userInfo[NSUnderlyingErrorKey], error);
+            handler();
+        };
+    } afterBlock:^{
+        [self.client authorizeLocalUserWithUUID:uuid authorizationKey:authorizationKey completion:^{}];
+    }];
 }
 
 
 #pragma mark - Tests :: handshakeChatAccess
 
 - (void)testHandshakeChatAccess_ShouldCallSetOfEndpoints {
-    
-    NSDictionary *dictionaryRepresentation = [self.client.me.direct dictionaryRepresentation];
-    id functionsClientPartialMock = [self partialMockForObject:self.client.functionsClient];
-    PubNub *client = [PubNub clientWithConfiguration:self.client.pubNubConfiguration];
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    __block NSArray<NSDictionary *> *expectedRoutes = @[
-        @{ @"route": @"grant", @"method": @"post",  @"body": @{ @"chat": dictionaryRepresentation } },
-        @{ @"route": @"join", @"method": @"post",  @"body": @{ @"chat": dictionaryRepresentation } },
+
+    CENChat *chat = [self publicChatWithChatEngine:self.client];
+    NSDictionary *representation = [chat dictionaryRepresentation];
+    NSArray *routes = @[
+        @{ @"route": @"grant", @"method": @"post", @"body": @{ @"chat": representation } },
+        @{ @"route": @"join", @"method": @"post", @"body": @{ @"chat": representation } },
     ];
-    __block BOOL handlerCalled = NO;
-    
-    OCMStub([self.clientMock pubnub]).andReturn(client);
-    OCMExpect([functionsClientPartialMock callRouteSeries:expectedRoutes withCompletion:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
-        handlerCalled = YES;
-        
-        dispatch_semaphore_signal(semaphore);
-    });
-    
-    [self.clientMock handshakeChatAccess:self.client.me.direct withCompletion:^(BOOL error, NSDictionary * _Nonnull meta) { }];
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
-    OCMVerifyAll((id)functionsClientPartialMock);
-    XCTAssertTrue(handlerCalled);
-}
 
-- (void)testHandshakeChatAccess_ShouldCallBlockOnSuccess {
+
+    XCTAssertTrue([self isObjectMocked:self.client]);
+
+    OCMStub([self.client pubnub]).andReturn(@"PubNub");
     
-    id functionsClientPartialMock = [self partialMockForObject:self.client.functionsClient];
-    PubNub *client = [PubNub clientWithConfiguration:self.client.pubNubConfiguration];
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    __block BOOL handlerCalled = NO;
-    
-    OCMStub([self.clientMock pubnub]).andReturn(client);
-    OCMStub([functionsClientPartialMock callRouteSeries:[OCMArg any] withCompletion:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
-        void(^handlerBlock)(BOOL, NSArray *) = nil;
-        
-        [invocation getArgument:&handlerBlock atIndex:3];
-        handlerBlock(YES, nil);
-    });
-    
-    [self.clientMock handshakeChatAccess:self.client.me.direct withCompletion:^(BOOL error, NSDictionary * _Nonnull meta) {
-        handlerCalled = YES;
-        
-        dispatch_semaphore_signal(semaphore);
+    id clientMock = [self mockForObject:self.client.functionClient];
+    id recorded = OCMExpect([clientMock callRouteSeries:routes withCompletion:[OCMArg any]]);
+    [self waitForObject:clientMock recordedInvocationCall:recorded afterBlock:^{
+        [self.client handshakeChatAccess:chat withCompletion:^{ }];
     }];
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
-    XCTAssertTrue(handlerCalled);
 }
 
-- (void)testHandshakeChatAccess_ShouldThrowEmitError_WhenPubNubInstanceNotSet {
+- (void)testHandshakeChatAccess_ShouldCallBlock_WhenHandshakeSuccess {
+
+    CENChat *chat = [self publicChatWithChatEngine:self.client];
+
+
+    XCTAssertTrue([self isObjectMocked:self.client]);
+
+    OCMStub([self.client pubnub]).andReturn(@"PubNub");
     
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    __block BOOL handlerCalled = NO;
-    
-    self.client.once(@"$.error.auth", ^(NSError *error) {
-        handlerCalled = YES;
-        
-        XCTAssertNotNil(error);
-        dispatch_semaphore_signal(semaphore);
+    id clientMock = [self mockForObject:self.client.functionClient];
+    OCMStub([clientMock callRouteSeries:[OCMArg any] withCompletion:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
+        void(^block)(BOOL, NSArray *) = [self objectForInvocation:invocation argumentAtIndex:2];
+        block(YES, @[]);
     });
     
-    [self.client handshakeChatAccess:self.client.me.direct withCompletion:^(BOOL error, NSDictionary *meta) { }];
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
-    XCTAssertTrue(handlerCalled);
+    [self waitToCompleteIn:self.testCompletionDelay codeBlock:^(dispatch_block_t handler) {
+        [self.client handshakeChatAccess:chat withCompletion:handler];
+    }];
 }
 
-- (void)testHandshakeChatAccess_ShouldRequestMetaWhenConfigured {
-    
-    __block id functionsClientPartialMock = [self partialMockForObject:self.client.functionsClient];
-    PubNub *pubNub = [PubNub clientWithConfiguration:self.client.pubNubConfiguration];
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    __block BOOL handlerCalled = NO;
-    
-    OCMStub([self.clientMock pubnub]).andReturn(pubNub);
-    OCMStub([functionsClientPartialMock callRouteSeries:[OCMArg any] withCompletion:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
-        void(^handlerBlock)(BOOL, NSArray *) = nil;
+- (void)testHandshakeChatAccess_ShouldCallBlock_WhenMetaSynchronizationEnabledSuccess {
 
-        [invocation getArgument:&handlerBlock atIndex:3];
-        [functionsClientPartialMock stopMocking];
-        handlerBlock(YES, nil);
+    CENChat *chat = [self publicChatWithChatEngine:self.client];
+
+
+    XCTAssertTrue([self isObjectMocked:self.client]);
+
+    OCMStub([self.client pubnub]).andReturn(@"PubNub");
+    
+    id clientMock = [self mockForObject:self.client.functionClient];
+    OCMStub([clientMock callRouteSeries:[OCMArg any] withCompletion:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
+        void(^block)(BOOL, NSArray *) = [self objectForInvocation:invocation argumentAtIndex:2];
+        block(YES, @[]);
     });
     
-    OCMExpect([self.clientMock fetchRemoteStateForChat:[OCMArg any] withCompletion:[OCMArg any]]).andDo(^(NSInvocation *baseInvocation) {
-        handlerCalled = YES;
-        
-        dispatch_semaphore_signal(semaphore);
+    [self waitToCompleteIn:self.testCompletionDelay codeBlock:^(dispatch_block_t handler) {
+        [self.client handshakeChatAccess:chat withCompletion:handler];
+    }];
+}
+
+- (void)testHandshakeChatAccess_ShouldNotCallBlock_WhenHandshakeSuccessAndMetaSynchronizationEnabledNotCompleted {
+
+    CENChat *chat = [self publicChatWithChatEngine:self.client];
+
+
+    XCTAssertTrue([self isObjectMocked:self.client]);
+
+    OCMStub([self.client pubnub]).andReturn(@"PubNub");
+    OCMStub([self.client fetchMetaForChat:chat withCompletion:[OCMArg any]]).andDo(nil);
+    
+    id clientMock = [self mockForObject:self.client.functionClient];
+    OCMStub([clientMock callRouteSeries:[OCMArg any] withCompletion:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
+        void(^block)(BOOL, NSArray *) = [self objectForInvocation:invocation argumentAtIndex:2];
+        block(YES, @[]);
     });
     
-    [self.clientMock handshakeChatAccess:self.client.me.direct withCompletion:^(BOOL error, NSDictionary * _Nonnull meta) { }];
+    [self waitToNotCompleteIn:self.falseTestCompletionDelay codeBlock:^(dispatch_block_t handler) {
+        [self.client handshakeChatAccess:chat withCompletion:handler];
+    }];
+}
+
+- (void)testHandshakeChatAccess_ShouldRequestMetaForChat_WhenMetaSynchronizationEnabled {
+
+    CENChat *chat = [self publicChatWithChatEngine:self.client];
+
+
+    XCTAssertTrue([self isObjectMocked:self.client]);
+
+    OCMStub([self.client pubnub]).andReturn(@"PubNub");
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.25f * NSEC_PER_SEC)));
-    OCMVerifyAll((id)self.clientMock);
-    XCTAssertTrue(handlerCalled);
+    id clientMock = [self mockForObject:self.client.functionClient];
+    OCMStub([clientMock callRouteSeries:[OCMArg any] withCompletion:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
+        void(^block)(BOOL, NSArray *) = [self objectForInvocation:invocation argumentAtIndex:2];
+        block(YES, @[]);
+    });
+    
+    id recorded = OCMExpect([self.client fetchMetaForChat:chat withCompletion:[OCMArg any]]);
+    [self waitForObject:self.client recordedInvocationCall:recorded afterBlock:^{
+        [self.client handshakeChatAccess:chat withCompletion:^{ }];
+    }];
+}
+
+- (void)testHandshakeChatAccess_ShouldNotRequestMetaForChat_WhenSystemChatPassedAndMetaSynchronizationEnabledNotCompleted {
+
+    CENChat *chat = [self publicChatFromGroup:CENChatGroup.system withChatEngine:self.client];
+
+
+    XCTAssertTrue([self isObjectMocked:self.client]);
+
+    OCMStub([self.client pubnub]).andReturn(@"PubNub");
+    
+    id clientMock = [self mockForObject:self.client.functionClient];
+    OCMStub([clientMock callRouteSeries:[OCMArg any] withCompletion:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
+        void(^block)(BOOL, NSArray *) = [self objectForInvocation:invocation argumentAtIndex:2];
+        block(YES, @[]);
+    });
+    
+    id recorded = OCMExpect([[(id)self.client reject] fetchMetaForChat:chat withCompletion:[OCMArg any]]);
+    [self waitForObject:self.client recordedInvocationNotCall:recorded afterBlock:^{
+        [self.client handshakeChatAccess:chat withCompletion:^{ }];
+    }];
+}
+
+- (void)testHandshakeChatAccess_ShouldNotRequestMetaForChat_WhenGlobalChatPassedAndMetaSynchronizationEnabledNotCompleted {
+
+    CENChat *chat = [self publicChatWithChatEngine:self.client];
+
+
+    XCTAssertTrue([self isObjectMocked:self.client]);
+
+    OCMStub([self.client pubnub]).andReturn(@"PubNub");
+    OCMStub([self.client global]).andReturn(chat);
+    
+    id clientMock = [self mockForObject:self.client.functionClient];
+    OCMStub([clientMock callRouteSeries:[OCMArg any] withCompletion:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
+        void(^block)(BOOL, NSArray *) = [self objectForInvocation:invocation argumentAtIndex:2];
+        block(YES, @[]);
+    });
+    
+    id recorded = OCMExpect([[(id)self.client reject] fetchMetaForChat:chat withCompletion:[OCMArg any]]);
+    [self waitForObject:self.client recordedInvocationNotCall:recorded afterBlock:^{
+        [self.client handshakeChatAccess:chat withCompletion:^{ }];
+    }];
+}
+
+- (void)testHandshakeChatAccess_ShouldThrow_WhenPubNubClientNotReady {
+    
+    CENChat *chat = [self publicChatWithChatEngine:self.client];
+
+    
+    XCTAssertThrowsSpecificNamed([self.client handshakeChatAccess:chat withCompletion:^{ }], NSException,
+                                 kCENErrorDomain);
+}
+
+- (void)testHandshakeChatAccess_ShouldEmitError_WhenPubNubClientNotReady {
+    
+    CENChat *chat = [self publicChatWithChatEngine:self.client];
+
+    
+    [self object:self.client shouldHandleEvent:@"$.error.auth"
+     withHandler:^CENEventHandlerBlock (dispatch_block_t handler) {
+
+        return ^(CENEmittedEvent *emittedEvent) {
+            XCTAssertNotNil(emittedEvent.emitter);
+            XCTAssertNotNil(emittedEvent.data);
+            XCTAssertEqualObjects(emittedEvent.emitter, chat);
+            handler();
+        };
+    } afterBlock:^{
+        [self.client handshakeChatAccess:chat withCompletion:^{ }];
+    }];
+}
+
+- (void)testHandshakeChatAccess_ShouldThrow_WhenHandshakeDidFail {
+
+    NSError *error = [NSError errorWithDomain:@"TestDomain" code:-1 userInfo:nil];
+    CENChat *chat = [self publicChatWithChatEngine:self.client];
+
+
+    XCTAssertTrue([self isObjectMocked:self.client]);
+
+    OCMStub([self.client pubnub]).andReturn(@"PubNub");
+    
+    id clientMock = [self mockForObject:self.client.functionClient];
+    OCMStub([clientMock callRouteSeries:[OCMArg any] withCompletion:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
+        void(^block)(BOOL, NSArray *) = [self objectForInvocation:invocation argumentAtIndex:2];
+        block(NO, @[error]);
+    });
+    
+    XCTAssertThrowsSpecificNamed([self.client handshakeChatAccess:chat withCompletion:^{ }], NSException,
+                                 kCENPNFunctionErrorDomain);
+}
+
+- (void)testHandshakeChatAccess_ShouldEmitError_WhenHandshakeDidFail {
+
+    NSError *error = [NSError errorWithDomain:@"TestDomain" code:-1 userInfo:nil];
+    CENChat *chat = [self publicChatWithChatEngine:self.client];
+
+
+    XCTAssertTrue([self isObjectMocked:self.client]);
+
+    OCMStub([self.client pubnub]).andReturn(@"PubNub");
+    
+    id clientMock = [self mockForObject:self.client.functionClient];
+    OCMStub([clientMock callRouteSeries:[OCMArg any] withCompletion:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
+        void(^block)(BOOL, NSArray *) = [self objectForInvocation:invocation argumentAtIndex:2];
+        block(NO, @[error]);
+    });
+    
+    [self object:self.client shouldHandleEvent:@"$.error.auth"
+     withHandler:^CENEventHandlerBlock (dispatch_block_t handler) {
+
+        return ^(CENEmittedEvent *emittedEvent) {
+            NSError *emittedError = emittedEvent.data;
+            
+            XCTAssertNotNil(emittedEvent.emitter);
+            XCTAssertNotNil(emittedError);
+            XCTAssertEqualObjects(emittedEvent.emitter, chat);
+            XCTAssertEqualObjects(emittedError.userInfo[NSUnderlyingErrorKey], error);
+            handler();
+        };
+    } afterBlock:^{
+        [self.client handshakeChatAccess:chat withCompletion:^{ }];
+    }];
+}
+
+
+
+- (void)testHandshakeChatAccess_ShouldThrow_WhenMetaSynchronizationEnabledDidFail {
+
+    NSError *error = [NSError errorWithDomain:@"TestDomain" code:-1 userInfo:nil];
+    CENChat *chat = [self publicChatWithChatEngine:self.client];
+    __block BOOL shouldReturnError = NO;
+
+
+    XCTAssertTrue([self isObjectMocked:self.client]);
+
+    OCMStub([self.client pubnub]).andReturn(@"PubNub");
+    
+    id clientMock = [self mockForObject:self.client.functionClient];
+    OCMStub([clientMock callRouteSeries:[OCMArg any] withCompletion:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
+        void(^block)(BOOL, NSArray *) = [self objectForInvocation:invocation argumentAtIndex:2];
+        BOOL reportSuccess = !shouldReturnError;
+        NSArray *response = !shouldReturnError ? @[] : @[error];
+        shouldReturnError = YES;
+        block(reportSuccess, response);
+    });
+    
+    XCTAssertThrowsSpecificNamed([self.client handshakeChatAccess:chat withCompletion:^{ }], NSException,
+                                 kCENPNFunctionErrorDomain);
+}
+
+- (void)testHandshakeChatAccess_ShouldEmitError_WhenMetaSynchronizationEnabledDidFail {
+
+    NSError *error = [NSError errorWithDomain:@"TestDomain" code:-1 userInfo:nil];
+    CENChat *chat = [self publicChatWithChatEngine:self.client];
+    __block BOOL shouldReturnError = NO;
+
+
+    XCTAssertTrue([self isObjectMocked:self.client]);
+
+    OCMStub([self.client pubnub]).andReturn(@"PubNub");
+    
+    id clientMock = [self mockForObject:self.client.functionClient];
+    OCMStub([clientMock callRouteSeries:[OCMArg any] withCompletion:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
+        void(^block)(BOOL, NSArray *) = [self objectForInvocation:invocation argumentAtIndex:2];
+        BOOL reportSuccess = !shouldReturnError;
+        NSArray *response = !shouldReturnError ? @[] : @[error];
+        shouldReturnError = YES;
+        block(reportSuccess, response);
+    });
+    
+    [self object:self.client shouldHandleEvent:@"$.error.auth"
+     withHandler:^CENEventHandlerBlock (dispatch_block_t handler) {
+
+        return ^(CENEmittedEvent *emittedEvent) {
+            NSError *emittedError = emittedEvent.data;
+            
+            XCTAssertNotNil(emittedEvent.emitter);
+            XCTAssertNotNil(emittedError);
+            XCTAssertEqualObjects(emittedEvent.emitter, chat);
+            XCTAssertEqualObjects(emittedError.userInfo[NSUnderlyingErrorKey], error);
+            handler();
+        };
+    } afterBlock:^{
+        [self.client handshakeChatAccess:chat withCompletion:^{ }];
+    }];
 }
 
 #pragma mark -

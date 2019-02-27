@@ -1,7 +1,7 @@
 /**
  * @author Serhii Mamontov
- * @version 0.9.0
- * @copyright © 2009-2018 PubNub, Inc.
+ * @version 0.9.2
+ * @copyright © 2010-2019 PubNub, Inc.
  */
 #import "CENChatEngine+PubNubPrivate.h"
 #import "CENChatEngine+EventEmitter.h"
@@ -11,14 +11,12 @@
 #import "CENStructures.h"
 #import "CENErrorCodes.h"
 
-#import "CENChatEngine+User.h"
-#import "CENMe.h"
 
 NS_ASSUME_NONNULL_BEGIN
 
 #pragma mark Protected interface declaration
 
-@interface CENChatEngine (PubNubPotected) <PNObjectEventListener>
+@interface CENChatEngine (PubNubProtected) <PNObjectEventListener>
 
 
 #pragma mark -
@@ -28,6 +26,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 NS_ASSUME_NONNULL_END
 
+
+#pragma mark - Interface implementation
 
 @implementation CENChatEngine (PubNub)
 
@@ -56,10 +56,12 @@ NS_ASSUME_NONNULL_END
     self.pubNubConfiguration.uuid = uuid;
     self.pubNubConfiguration.authKey = authorizationKey ?: [[NSUUID UUID] UUIDString];
     
-    self.pubnub = [PubNub clientWithConfiguration:self.pubNubConfiguration callbackQueue:self.pubNubCallbackQueue];
+    self.pubnub = [PubNub clientWithConfiguration:self.pubNubConfiguration
+                                    callbackQueue:self.pubNubCallbackQueue];
 }
 
-- (void)changePubNubAuthorizationKey:(NSString *)authorizationKey withCompletion:(dispatch_block_t)block {
+- (void)changePubNubAuthorizationKey:(NSString *)authorizationKey
+                      withCompletion:(dispatch_block_t)block {
     
     PNConfiguration *configuration = [self.pubNubConfiguration copy];
     configuration.authKey = authorizationKey ?: [[NSUUID UUID] UUIDString];
@@ -75,11 +77,10 @@ NS_ASSUME_NONNULL_END
 
 #pragma mark - Connection
 
-- (void)connectToPubNub {
+- (void)connectToPubNubWithCompletion:(dispatch_block_t)completion {
     
     NSString *uuid = self.pubnub.currentConfiguration.uuid;
     NSArray<NSString *> *channelGroups = @[
-        [@[self.configuration.globalChannel, uuid, @"rooms"] componentsJoinedByString:@"#"],
         [@[self.configuration.globalChannel, uuid, @"system"] componentsJoinedByString:@"#"],
         [@[self.configuration.globalChannel, uuid, @"custom"] componentsJoinedByString:@"#"]
     ];
@@ -87,6 +88,7 @@ NS_ASSUME_NONNULL_END
     [self.pubnub removeListener:self];
     [self.pubnub addListener:self];
     
+    self.pubNubSubscribeCompletion = completion;
     [self.pubnub subscribeToChannelGroups:channelGroups withPresence:YES];
 }
 
@@ -98,30 +100,43 @@ NS_ASSUME_NONNULL_END
 
 #pragma mark - History
 
-- (void)searchMessagesIn:(NSString *)channel withStart:(NSNumber *)date limit:(NSUInteger)limit completion:(PNHistoryCompletionBlock)block {
+- (void)searchMessagesIn:(NSString *)channel
+               withStart:(NSNumber *)date
+                   limit:(NSUInteger)limit
+              completion:(PNHistoryCompletionBlock)block {
     
     if (![channel isKindOfClass:[NSString class]] || !channel.length) {
         return;
     }
     
-    [self.pubnub historyForChannel:channel start:date end:nil limit:limit reverse:NO includeTimeToken:YES withCompletion:block];
+    [self.pubnub historyForChannel:channel
+                             start:date
+                               end:nil
+                             limit:limit
+                           reverse:NO
+                  includeTimeToken:YES
+                    withCompletion:block];
 }
 
 
 #pragma mark - State
 
-- (void)fetchParticipantsForChannel:(NSString *)channel withState:(BOOL)fetchState completion:(PNHereNowCompletionBlock)block {
+- (void)fetchParticipantsForChannel:(NSString *)channel completion:(PNHereNowCompletionBlock)block {
     
     if (![channel isKindOfClass:[NSString class]] || !channel.length) {
         return;
     }
     
-    [self.pubnub hereNowForChannel:channel withVerbosity:(fetchState ? PNHereNowState : PNHereNowUUID) completion:block];
+    [self.pubnub hereNowForChannel:channel withVerbosity:PNHereNowState completion:block];
 }
 
-- (void)setClientState:(NSDictionary *)state forChannel:(NSString *)channel withCompletion:(PNSetStateCompletionBlock)block {
+- (void)setClientState:(NSDictionary *)state
+            forChannel:(NSString *)channel
+        withCompletion:(PNSetStateCompletionBlock)block {
     
-    if (![state isKindOfClass:[NSDictionary class]] || ![channel isKindOfClass:[NSString class]] || !channel.length) {
+    if (![state isKindOfClass:[NSDictionary class]] ||
+        ![channel isKindOfClass:[NSString class]] || !channel.length) {
+        
         return;
     }
     
@@ -129,34 +144,34 @@ NS_ASSUME_NONNULL_END
 }
 
 
-#pragma mark - Subscription
-
-- (void)unsubscribeFromChannels:(NSArray<NSString *> *)channels {
-    
-    [self.pubnub unsubscribeFromChannels:channels withPresence:YES];
-}
-
-
 #pragma mark - Publishing
 
-- (void)publishStorable:(BOOL)shouldStoreInHisotry
+- (void)publishStorable:(BOOL)shouldStoreInHistory
                    data:(NSDictionary *)data
               toChannel:(NSString *)channel
          withCompletion:(PNPublishCompletionBlock)block {
     
-    if (![data isKindOfClass:[NSDictionary class]] || !data.count || ![channel isKindOfClass:[NSString class]] || !channel.length) {
+    if (![data isKindOfClass:[NSDictionary class]] || !data.count ||
+        ![channel isKindOfClass:[NSString class]] || !channel.length) {
+        
         return;
     }
     
-    [self.pubnub publish:data toChannel:channel storeInHistory:shouldStoreInHisotry withCompletion:block];
+    [self.pubnub publish:data
+               toChannel:channel
+          storeInHistory:shouldStoreInHistory
+          withCompletion:block];
 }
 
 
 #pragma mark - Stream controller
 
-- (void)channelsForGroup:(NSString *)group withCompletion:(void(^)(NSArray<NSString *> *chats, PNErrorStatus *status))block {
+- (void)channelsForGroup:(NSString *)group
+          withCompletion:(void(^)(NSArray<NSString *> *chats, PNErrorStatus *status))block {
     
-    [self.pubnub channelsForGroup:group withCompletion:^(PNChannelGroupChannelsResult * result, PNErrorStatus * status) {
+    [self.pubnub channelsForGroup:group
+                   withCompletion:^(PNChannelGroupChannelsResult * result, PNErrorStatus * status) {
+                       
         block(result.data.channels, status);
     }];
 }
@@ -168,24 +183,36 @@ NS_ASSUME_NONNULL_END
     
     BOOL shouldHandleStatusChange = YES;
     if (status.operation == PNUnsubscribeOperation) {
-        shouldHandleStatusChange = ![client channels].count && ![client presenceChannels].count && ![client channelGroups].count;
+        shouldHandleStatusChange = ![client channelGroups].count;
     } else {
-        if (status.operation == PNSubscribeOperation && (status.category == PNConnectedCategory || status.category == PNReconnectedCategory)) {
+        BOOL isConnectedCategory = (status.category == PNConnectedCategory ||
+                                    status.category == PNReconnectedCategory);
+
+        if (status.operation == PNSubscribeOperation && isConnectedCategory) {
             shouldHandleStatusChange = !self.connectedToPubNub;
             self.connectedToPubNub = YES;
         }
     }
     
-    if (status.category == PNUnexpectedDisconnectCategory || status.category == PNNetworkIssuesCategory ||
-        status.category == PNAccessDeniedCategory || status.category == PNTLSUntrustedCertificateCategory ||
+    if (status.category == PNUnexpectedDisconnectCategory ||
+        status.category == PNNetworkIssuesCategory ||
+        status.category == PNAccessDeniedCategory ||
+        status.category == PNTLSUntrustedCertificateCategory ||
         status.category == PNBadRequestCategory) {
         
         self.connectedToPubNub = NO;
     }
     
+    if (self.pubNubSubscribeCompletion) {
+        self.pubNubSubscribeCompletion();
+        
+        self.pubNubSubscribeCompletion = nil;
+    }
+    
     NSString *category = [self connectionCategories][@(status.category)];
     if (shouldHandleStatusChange && category) {
-        [self emitEventLocally:[@[@"$", @"network", category] componentsJoinedByString:@"."], status, nil];
+        [self emitEventLocally:[@[@"$", @"network", category] componentsJoinedByString:@"."],
+                               status, nil];
     }
 }
 
@@ -195,6 +222,11 @@ NS_ASSUME_NONNULL_END
     CENChat *chat = [self.chatsManager chatWithName:message.data.channel private:isPrivate];
     NSMutableDictionary *messageWithTimetoken = [message.data.message mutableCopy];
     messageWithTimetoken[CENEventData.timetoken] = message.data.timetoken;
+
+    // Compatibility with libraries which doesn't support event ID assignment.
+    if (!messageWithTimetoken[CENEventData.eventID]) {
+        messageWithTimetoken[CENEventData.eventID] = message.data.timetoken.stringValue;
+    }
     
     [self.chatsManager handleChat:chat message:messageWithTimetoken];
 }
@@ -203,7 +235,10 @@ NS_ASSUME_NONNULL_END
     
     BOOL isPrivate = [CENChat isPrivate:event.data.channel];
     CENChat *chat = [self.chatsManager chatWithName:event.data.channel private:isPrivate];
-    [self.chatsManager handleChat:chat presenceEvent:event.data];
+    
+    if (![chat.group isEqualToString:CENChatGroup.system] || [chat isEqual:self.global]) {
+        [self.chatsManager handleChat:chat presenceEvent:event.data];
+    }
 }
 
 
@@ -222,6 +257,7 @@ NS_ASSUME_NONNULL_END
     
     static NSDictionary *categories;
     static dispatch_once_t onceToken;
+
     dispatch_once(&onceToken, ^{
         categories = @{
             @(PNUnexpectedDisconnectCategory): @"down.offline",

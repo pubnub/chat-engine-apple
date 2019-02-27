@@ -1,142 +1,128 @@
+/**
+ * @author Serhii Mamontov
+ * @version 0.9.2
+ * @copyright © 2010-2019 PubNub, Inc.
+ */
 #import "CENObject.h"
-
-
-#pragma mark Clas forward
-
-@class CEPExtension;
 
 
 NS_ASSUME_NONNULL_BEGIN
 
-/**
- * @brief  \b CENObject interface for \c plugins management.
- *
- * @author Serhii Mamontov
- * @version 0.9.0
- * @copyright © 2009-2018 PubNub, Inc.
- */
+#pragma mark Plugins interface declaration
+
 @interface CENObject (Plugins)
 
 
 #pragma mark - Plugins
 
 /**
- * @brief  Check whether there is plugin with specified class already registered for object or not.
+ * @brief Check whether plugin with specified class already registered for receiver or not.
  *
- * @discussion Chek plugin registered using it's class:
+ * @discussion Check whether plugin registered using it's class or not
  * @code
- * CENConfiguration *configuration = [CENConfiguration configurationWithPublishKey:@"demo-36" subscribeKey:@"demo-36"];
- * self.client = [CENChatEngine clientWithConfiguration:configuration];
- * ...
- * if (![self.client.me hasPlugin:[AwesomeChatPlugin class]) {
- *     // Looks like local user doesn't have plugin from AwesomeChatPlugin.
+ * // objc 5a79f0b7-b8bf-44c6-9ec1-344947934d44
+ *
+ * if (![self.object hasPlugin:[AwesomeChatPlugin class]) {
+ *     // Looks like object doesn't have plugin from AwesomeChatPlugin.
  * }
  * @endcode
  *
- * @param cls Reference on plugin class (subclass of \b CEPPlugin) which should be used for check.
+ * @param cls Class (subclass of \b {CEPPlugin}) which should be used for check.
  *
- * @return \c YES in case if plugin with same class already registered for object.
+ * @return Whether plugin with specified class currently registered for receiver or not.
+ *
+ * @ref 0548677f-7eac-4670-9af2-54c0d118d313
  */
 - (BOOL)hasPlugin:(Class)cls;
 
 /**
- * @brief  Check whether there is plugin with specified identifier already registered for object or not.
+ * @brief Check whether plugin with specified identifier already registered for receiver or not.
  *
- * @discussion Chek plugin registered using it's identifier:
- *
+ * @discussion Check whether proto plugin registered using it's identifier or not
  * @code
- * CENConfiguration *configuration = [CENConfiguration configurationWithPublishKey:@"demo-36" subscribeKey:@"demo-36"];
- * self.client = [CENChatEngine clientWithConfiguration:configuration];
- * ...
- * if (![self.client.me hasPluginWithIdentifier:@"com.chatengine.emoji") {
- *     // Looks like local user doesn't have plugin with 'com.chatengine.emoji' identifier.
+ * // objc e232ad0c-3f2f-48c0-8dc8-ad0b45caf8b0
+ *
+ * if (![self.object hasPluginWithIdentifier:@"com.chatengine.emoji") {
+ *     // Looks like object doesn't have plugin with 'com.chatengine.emoji' identifier.
  * }
  * @endcode
  *
- * @param identifier Reference on plugin unique identifier which should be used for check.
+ * @param identifier Unique plugin identifier.
  *
- * @return \c YES in case if plugin with same identifier already registered for object.
+ * @return Whether plugin with specified identifier currently registered for receiver or not.
+ *
+ * @ref 83033313-8a03-490e-8e87-622438b85111
  */
 - (BOOL)hasPluginWithIdentifier:(NSString *)identifier;
 
 /**
- * @brief  Register plugin for specified \b ChatEngine object type.
+ * @brief Register plugin for receiver.
  *
- * @discussion Register plugin w/o initialization configuration:
+ * @discussion Register plugin class w/o \c configuration
  * @code
- * CENConfiguration *configuration = [CENConfiguration configurationWithPublishKey:@"demo-36" subscribeKey:@"demo-36"];
- * self.client = [CENChatEngine clientWithConfiguration:configuration];
- * [self.client handleEventOnce:@"$.ready" withHandlerBlock:^(CENMe *me) {
- *     [me registerPlugin:[AwesomeChatPlugin class] withConfiguration:nil];
- * }];
- * [self.client connectUser:@"ChatEngine"];
+ * // objc 89073a82-ff7a-4765-a6c4-e778e775775d
+ *
+ * [self.object registerPlugin:[AwesomeChatPlugin class] withConfiguration:nil];
  * @endcode
  *
- * @param cls           Reference on plugin class (subclass of \b CEPPlugin) which should be registered.
- * @param configuration Reference on dictionary which contain plugin configuration and will be passed to bundled extensions
- *                      and middlewares during instantiation.
+ * @param cls Class of plugin which will provide extension and middleware for receiver.
+ * @param configuration Configuration object with data which will be passed to plugin instance.
+ *     \b Default: \c @{}
+ *
+ * @ref d2e396e7-d9f2-4762-a822-619d0819e9a8
  */
 - (void)registerPlugin:(Class)cls withConfiguration:(nullable NSDictionary *)configuration;
 
 /**
- * @brief      Register plugin with custom identifier for specified \b ChatEngine object.
+ * @brief Register plugin with custom identifier for receiver.
  *
- * @discussion Register plugin with initialization configuration:
+ * @discussion Register plugin with custom \c identifier with \c configuration
  * @code
- * CENConfiguration *configuration = [CENConfiguration configurationWithPublishKey:@"demo-36" subscribeKey:@"demo-36"];
- * self.client = [CENChatEngine clientWithConfiguration:configuration];
- * [self.client handleEventOnce:@"$.ready" withHandlerBlock:^(CENMe *me) {
- *     [me registerPlugin:[AwesomeChatPlugin class]
- *         withIdentifier:@"com.awesome.plugin"
- *          configuration:@{ @"api-key": @"secret" }];
- * }];
- * [self.client connectUser:@"ChatEngine"];
+ * // objc 6b181727-6701-4f26-a404-f491a9be5e8a
+ *
+ * [self.object registerPlugin:[AwesomeChatPlugin class] withIdentifier:@"com.awesome.plugin"
+ *               configuration:@{ @"api-key": @"secret" }];
  * @endcode
  *
- * @param cls           Reference on plugin class (subclass of \b CEPPlugin) which should be registered.
- * @param identifier    Reference on plugin unique identifier with which plugin will be registered.
- * @param configuration Reference on dictionary which contain plugin configuration and will be passed to bundled extensions
- *                      and middlewares during instantiation.
+ * @param cls Class of plugin which will provide extension and middleware for receiver.
+ * @param identifier Unique plugin identifier under which it should be registered.
+ * @param configuration Configuration object with data which will be passed to plugin instance.
+ *     \b Default: @{}
+ *
+ * @ref 4b1033e0-2398-4706-9bfd-7a91e68c1ef8
  */
-- (void)registerPlugin:(Class)cls withIdentifier:(NSString *)identifier configuration:(nullable NSDictionary *)configuration;
+- (void)registerPlugin:(Class)cls
+        withIdentifier:(NSString *)identifier
+         configuration:(nullable NSDictionary *)configuration;
 
 /**
- * @brief      Un-register plugin from specified \b ChatEngine object.
+ * @brief Unregister plugin from specified receiver.
  *
- * @discussion Unregister plugin using it's class:
+ * @discussion Unregister proto plugin using it's class
  * @code
- * CENConfiguration *configuration = [CENConfiguration configurationWithPublishKey:@"demo-36" subscribeKey:@"demo-36"];
- * self.client = [CENChatEngine clientWithConfiguration:configuration];
- * [self.client handleEventOnce:@"$.ready" withHandlerBlock:^(CENMe *me) {
- *     [me registerPlugin:[AwesomeChatPlugin class] withConfiguration:nil];
- * }];
- * [self.client connectUser:@"ChatEngine"];
- * ...
- * [self.client.me unregisterPlugin:[AwesomeChatPlugin class]];
+ * // objc e88fe74c-516e-45b1-ae58-12dd34efb34f
+ *
+ * [self.object unregisterPlugin:[AwesomeChatPlugin class]];
  * @endcode
  *
- * @param cls Reference on plugin class (subclass of \b CEPPlugin) which should be un-registered.
+ * @param cls Class of plugin (subclass of \b {CEPPlugin}) which should be unregistered.
+ *
+ * @ref e9ca8ed1-9851-4853-af27-c14848295793
  */
 - (void)unregisterPlugin:(Class)cls;
 
 /**
- * @brief      Un-register plugin with custom identifier from specified \b ChatEngine object.
+ * @brief Unregister plugin with custom identifier from specified receiver.
  *
- * @discussion Unregister proto plugin using it's identifier:
  * @code
- * CENConfiguration *configuration = [CENConfiguration configurationWithPublishKey:@"demo-36" subscribeKey:@"demo-36"];
- * self.client = [CENChatEngine clientWithConfiguration:configuration];
- * [self.client handleEventOnce:@"$.ready" withHandlerBlock:^(CENMe *me) {
- *     [me registerPlugin:[AwesomeChatPlugin class]
- *         withIdentifier:@"com.awesome.plugin"
- *          configuration:@{ @"api-key": @"secret" }];
- * }];
- * [self.client connectUser:@"ChatEngine"];
- * ...
- * [self.client.me unregisterPluginWithIdentifier:@"com.awesome.plugin"];
+ * // objc 2b753421-8463-4d69-92eb-da1dba1e45d9
+ *
+ * [self.object unregisterPluginWithIdentifier:@"com.awesome.plugin"];
  * @endcode
  *
- * @param identifier Reference on plugin unique identifier which should be used to find and remove plugin.
+ * @param identifier Unique plugin identifier which has been used during registration.
+ *
+ * @ref cd21bcb8-369a-4b1d-bfa9-c6c00cb471ff
  */
 - (void)unregisterPluginWithIdentifier:(NSString *)identifier;
 
@@ -144,59 +130,42 @@ NS_ASSUME_NONNULL_BEGIN
 #pragma mark - Extension
 
 /**
- * @brief      Retrieve reference on extension for specified plugin class.
- * @discussion Retrieve reference on previously registered object extension using class of plugin which has been used to
- *             register it.
- * @discussion Requested extension can be used only within execution context block. Extension state and methods can be
- *             accessed only within execution context block.
+ * @brief Find receiver's extension by class.
  *
- * @discussion Use previously registered extension by it's plugin class:
+ * @discussion Find extension by plugin's class
  * @code
- * CENConfiguration *configuration = [CENConfiguration configurationWithPublishKey:@"demo-36" subscribeKey:@"demo-36"];
- * self.client = [CENChatEngine clientWithConfiguration:configuration];
- * [self.client handleEventOnce:@"$.ready" withHandlerBlock:^(CENMe *me) {
- *     [self.client.global registerPlugin:[AwesomeChatPlugin class] withConfiguration:nil];
- * }];
- * [self.client connectUser:@"ChatEngine"];
- * ...
- * [self.client.global extension:[AwesomeChatPlugin class] withContext:^(AwesomeChatExtension *extension) {
+ * // objc 7c2a6fcf-3e36-4e66-b80e-3c09b5a46c8d
  *
- *     // Use extension's methods within provided execution context.
- * }];
+ * AwesomeChatExtension *extension = [self.object extension:[AwesomeChatPlugin class]];
  * @endcode
  *
- * @param cls   Reference on plugin class (subclass of \b CEPPlugin) which provides requested extension.
- * @param block Reference on extension execution context block. Block pass one argument - reference on extension instance
- *              which can be used.
+ * @param cls Class of plugin (subclass of \b {CEPPlugin}) which provides requested extension.
+ *
+ * @return Extension instance which can be used or \c nil if there is no extension with specified
+ * \c class.
+ *
+ * @ref 831bbbae-50fe-441c-a564-34373ca54ca1
  */
-- (void)extension:(Class)cls withContext:(void(^)(id __nullable extension))block;
+- (nullable id)extension:(Class)cls;
 
 /**
- * @brief      Retrieve reference on extension by it's unique identifier.
- * @discussion Retrieve reference on previously registered object extension using identifier which has been used during
- *             registration.
- * @discussion Requested extension can be used only within execution context block. Extension state and methods can be
- *             accessed only within execution context block.
+ * @brief Find receiver's extension by identifier.
  *
- * @discussion Use previously registered extension using it's identifier:
+ * @discussion Find extension by custom identifier
  * @code
- * CENConfiguration *configuration = [CENConfiguration configurationWithPublishKey:@"demo-36" subscribeKey:@"demo-36"];
- * self.client = [CENChatEngine clientWithConfiguration:configuration];
- * [self.client handleEventOnce:@"$.ready" withHandlerBlock:^(CENMe *me) {
- *     [self.client.global registerPlugin:[AwesomeChatPlugin class] withConfiguration:nil];
- * }];
- * [self.client connectUser:@"ChatEngine"];
- * ...
- * [self.client.global extensionWithIdentifier:@"com.awesome.plugin" withContext:^(AwesomeChatExtension *extension) {
+ * // objc 32c5ec2c-2b11-40d8-99c5-a848985de453
  *
- *     // Use extension's methods within provided execution context.
- * }];
+ * AwesomeChatExtension *extension = [self.object extensionWithIdentifier:@"com.awesome.plugin"];
+ * @endcode
  *
- * @param identifier Reference on unique identifier which has been provided during plugin registration.
- * @param block      Reference on extension execution context block. Block pass one argument - reference on extension
- *                   instance which can be used.
+ * @param identifier Unique plugin identifier which used during registration.
+ *
+ * @return Extension instance which can be used or \c nil if there is no extension with specified
+ * \c identifier.
+ *
+ * @ref 0c24d012-571f-4829-94bb-e3f3261ad54a
  */
-- (void)extensionWithIdentifier:(NSString *)identifier context:(void(^)(id __nullable extension))block;
+- (nullable id)extensionWithIdentifier:(NSString *)identifier;
 
 #pragma mark -
 

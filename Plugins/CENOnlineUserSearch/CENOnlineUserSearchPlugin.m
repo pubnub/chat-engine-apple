@@ -1,7 +1,7 @@
 /**
  * @author Serhii Mamontov
- * @version 1.0.0
- * @copyright © 2009-2018 PubNub, Inc.
+ * @version 0.0.2
+ * @copyright © 2010-2019 PubNub, Inc.
  */
 #import "CENOnlineUserSearchPlugin.h"
 #import <CENChatEngine/CEPPlugin+Developer.h>
@@ -11,7 +11,13 @@
 
 #pragma mark Externs
 
-CENOnlineUserSearchConfigurationKeys CENOnlineUserSearchConfiguration = { .propertyName = @"pn", .caseSensitive = @"cs" };
+/**
+ * @brief Typedef structure fields assignment.
+ */
+CENOnlineUserSearchConfigurationKeys CENOnlineUserSearchConfiguration = {
+    .caseSensitive = @"cs",
+    .propertyName = @"pn"
+};
 
 
 #pragma mark - Interface implementation
@@ -40,11 +46,20 @@ CENOnlineUserSearchConfigurationKeys CENOnlineUserSearchConfiguration = { .prope
     return extensionClass;
 }
 
-+ (void)search:(NSString *)criteria inChat:(CENChat *)chat withCompletion:(void(^)(NSArray<CENUser *> *))block {
-    
-    [chat extensionWithIdentifier:[self identifier] context:^(CENOnlineUserSearchExtension *extension) {
-        [extension searchFor:criteria withCompletion:block];
-    }];
++ (NSArray<CENUser *> *)search:(NSString *)criteria inChat:(CENChat *)chat {
+
+    CENOnlineUserSearchExtension *extension = [chat extensionWithIdentifier:[self identifier]];
+
+    return [extension usersMatchingCriteria:criteria];
+}
+
++ (void)search:(NSString *)criteria
+            inChat:(CENChat *)chat
+    withCompletion:(void(^)(NSArray<CENUser *> *))block {
+
+    CENOnlineUserSearchExtension *extension = [chat extensionWithIdentifier:[self identifier]];
+
+    block([extension usersMatchingCriteria:criteria]);
 }
 
 
@@ -52,7 +67,7 @@ CENOnlineUserSearchConfigurationKeys CENOnlineUserSearchConfiguration = { .prope
 
 - (void)onCreate {
     
-    NSMutableDictionary *configuration = [NSMutableDictionary dictionaryWithDictionary:self.configuration];
+    NSMutableDictionary *configuration = [(self.configuration ?: @{}) mutableCopy];
     
     if (!configuration[CENOnlineUserSearchConfiguration.propertyName]) {
         configuration[CENOnlineUserSearchConfiguration.propertyName] = @"uuid";

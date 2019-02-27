@@ -1,22 +1,25 @@
 /**
  * @author Serhii Mamontov
- * @version 0.9.0
- * @copyright © 2009-2018 PubNub, Inc.
+ * @version 0.10.0
+ * @copyright © 2010-2019 PubNub, Inc.
  */
 #import "CEPMiddleware+Private.h"
-#import "CEPPlugablePropertyStorage+Private.h"
-#import "CEPStructures.h"
+#import <CENChatEngine/CENEvent.h>
 #import <objc/runtime.h>
-#import "CENObject.h"
 
 
 #pragma mark Externs
 
-CEPMiddlewareLocations CEPMiddlewareLocation = { .emit = @"emit", .on = @"on" };
+/**
+ * @brief Typedef structure fields assignment.
+ */
+CEPMiddlewareLocations CEPMiddlewareLocation = {
+    .emit = @"emit",
+    .on = @"on"
+};
 
 
 NS_ASSUME_NONNULL_BEGIN
-
 
 #pragma mark - Protected interface declaration
 
@@ -25,37 +28,40 @@ NS_ASSUME_NONNULL_BEGIN
 
 #pragma mark - Information
 
-@property (nonatomic, nullable, strong) NSDictionary *configuration;
-
 /**
- * @brief  Stores reference on list of events which can't be handled by middleware (after verification).
+ * @brief List of events which can't be handled by middleware (after verification).
  */
 @property (nonatomic, strong) NSMutableArray<NSString *> *ignoredEvents;
 
 /**
- * @brief  Stores reference on list of events for which middleware already verified ability to handle them.
+ * @brief List of events for which middleware already verified ability to handle them.
  */
 @property (nonatomic, strong) NSMutableArray<NSString *> *checkedEvents;
 
+/**
+ * @brief Whether middleware is able to handle any events or not.
+ */
 @property (nonatomic, assign, getter=shouldHandleAllEvents) BOOL handleAllEvents;
 
-/**
- * @brief  Stores reference on unique identifier of plugin which instantiated this middleware.
- */
+@property (nonatomic, nullable, copy) NSDictionary *configuration;
+@property (nonatomic, nullable, weak) CENObject *object;
 @property (nonatomic, copy) NSString *identifier;
 
 
 #pragma mark -  Initialization and Configuration
 
 /**
- * @brief  Initialize middleware instance.
+ * @brief Initialize middleware instance.
  *
- * @param identifier    Reference on unique identifier of plugin which provided this middleware.
- * @param configuration Reference on dictionary which is passed during plugin registration.
+ * @param object \b {Object CENObject} for which middleware will be created.
+ * @param identifier Unique identifier of plugin which provided this middleware.
+ * @param configuration \a NSDictionary which is passed during plugin registration.
  *
  * @return Initialized and ready to use plugin instance.
  */
-- (instancetype)initWithIdentifier:(NSString *)identifier configuration:(nullable NSDictionary *)configuration;
+- (instancetype)initForObject:(CENObject *)object
+               withIdentifier:(NSString *)identifier
+                configuration:(nullable NSDictionary *)configuration;
 
 #pragma mark -
 
@@ -101,21 +107,36 @@ NS_ASSUME_NONNULL_END
 
 + (void)replaceEventsWith:(NSArray<NSString *> *)events {
     
+    events = [events copy];
     SEL eventsGetter = NSSelectorFromString(@"events");
+    SEL eventsOriginalGetter = NSSelectorFromString(@"cen_orig_events");
     IMP swizzledEventsGetter = imp_implementationWithBlock(^id (Class __unused _self) {
         return events;
     });
     
     Method method = class_getClassMethod(self, eventsGetter);
+    
+    if (![self respondsToSelector:eventsOriginalGetter]) {
+        IMP originalImplementation = method_getImplementation(method);
+        const char *typeEncoding = method_getTypeEncoding(method);
+        
+        class_addMethod(self, eventsOriginalGetter, originalImplementation, typeEncoding);
+    }
+    
     method_setImplementation(method, swizzledEventsGetter);
 }
 
 
 #pragma mark -  Initialization and Configuration
 
-+ (instancetype)middlewareWithIdentifier:(NSString *)identifier configuration:(NSDictionary *)configuration {
++ (instancetype)middlewareForObject:(CENObject *)object
+                     withIdentifier:(NSString *)identifier
+                      configuration:(NSDictionary *)configuration {
     
-    if (!identifier || ![identifier isKindOfClass:[NSString class]] || !identifier.length) {
+    BOOL isValidObject = ([object isKindOfClass:[CENObject class]] ||
+                          [object isKindOfClass:[CENEvent class]]);
+    
+    if (!isValidObject || ![identifier isKindOfClass:[NSString class]] || !identifier.length) {
         return nil;
     }
     
@@ -123,16 +144,21 @@ NS_ASSUME_NONNULL_END
         configuration = @{};
     }
     
-    return [[self alloc] initWithIdentifier:identifier configuration:configuration];
+    return [[self alloc] initForObject:object
+                        withIdentifier:identifier
+                         configuration:configuration];
 }
 
-- (instancetype)initWithIdentifier:(NSString *)identifier configuration:(NSDictionary *)configuration {
+- (instancetype)initForObject:(CENObject *)object
+               withIdentifier:(NSString *)identifier
+                configuration:(NSDictionary *)configuration {
     
     if ((self = [super init])) {
         _ignoredEvents = [NSMutableArray new];
         _checkedEvents = [NSMutableArray new];
         _configuration = configuration;
         _identifier = identifier;
+        _object = object;
         
         _handleAllEvents = [[[self class] events] containsObject:@"*"];
     }
@@ -166,15 +192,17 @@ NS_ASSUME_NONNULL_END
         NSArray<NSString *> *eventComponents = [event componentsSeparatedByString:@"."];
         BOOL eventAsPath = eventComponents.count > 1;
         
-        for (NSString *registeredEvent in events) {
+        for (NSString *rEvent in events) {
             if (!eventAsPath) {
-                registeredForEvent = [event isEqualToString:registeredEvent];
+                registeredForEvent = [event isEqualToString:rEvent];
             } else {
-                NSArray<NSString *> *registeredEventComponents = [registeredEvent componentsSeparatedByString:@"."];
-                if (registeredEventComponents.count > eventComponents.count) {
+                NSArray<NSString *> *rEventComponents = [rEvent componentsSeparatedByString:@"."];
+
+                if (rEventComponents.count > eventComponents.count) {
                     registeredForEvent = NO;
                 } else {
-                    registeredForEvent = [self partlyMatchEvent:eventComponents toEvent:registeredEventComponents];
+                    registeredForEvent = [self partlyMatchEvent:eventComponents
+                                                        toEvent:rEventComponents];
                 }
             }
             
@@ -197,9 +225,13 @@ NS_ASSUME_NONNULL_END
 
     __block BOOL partlyMatch = YES;
     
-    [tEvent enumerateObjectsUsingBlock:^(NSString *eventComponent, NSUInteger componentIdx, BOOL *stop) {
-        NSString *registeredEventComponent = componentIdx < rEvent.count ? rEvent[componentIdx] : rEvent.lastObject;
-        
+    [tEvent enumerateObjectsUsingBlock:^(NSString *eventComponent,
+                                         NSUInteger componentIdx,
+                                         BOOL *stop) {
+
+        NSString *registeredEventComponent = (componentIdx < rEvent.count ? rEvent[componentIdx]
+                                                                          : rEvent.lastObject);
+
         if (![eventComponent isEqualToString:registeredEventComponent]) {
             if ([registeredEventComponent isEqualToString:@"*"]) {
                 partlyMatch = (tEvent.count - rEvent.count) == 0;
@@ -225,20 +257,6 @@ NS_ASSUME_NONNULL_END
 - (void)onDestruct {
     
     // Default implementation doesn't do anything.
-}
-
-
-#pragma mark - Properties bind
-
-+ (NSArray<NSString *> *)nonbindableProperties {
-    
-    return @[
-        @"configuration",
-        @"identifier",
-        @"ignoredEvents",
-        @"checkedEvents",
-        @"handleAllEvents"
-    ];
 }
 
 #pragma mark -

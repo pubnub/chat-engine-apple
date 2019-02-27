@@ -9,12 +9,11 @@
 NS_ASSUME_NONNULL_BEGIN
 
 /**
- * @brief      \b ChatEngine client interface for \c user instance management.
- * @discussion This interface used when builder interface usage not configured.
+ * @brief \b {CENChatEngine} client interface for \c user instance management.
  *
  * @author Serhii Mamontov
- * @version 0.9.0
- * @copyright © 2009-2018 PubNub, Inc.
+ * @version 0.9.2
+ * @copyright © 2010-2019 PubNub, Inc.
  */
 @interface CENChatEngine (UserInterface)
 
@@ -22,43 +21,52 @@ NS_ASSUME_NONNULL_BEGIN
 #pragma mark - User
 
 /**
- * @brief  Create and configure new \b CENUser instance.
+ * @brief Create or retrieve reference on previously created \b {user CENUser} instance.
  *
- * @discussion Create user w/o state information:
+ * @warning If specified user never used \b {CENChatEngine} client, further manipulation
+ * with instance may fail.
+ *
+ * @discussion Create user w/o state
  * @code
- * CENConfiguration *configuration = [CENConfiguration configurationWithPublishKey:@"demo-36" subscribeKey:@"demo-36"];
- * self.client = [CENChatEngine clientWithConfiguration:configuration];
- * [self.client handleEventOnce:@"$.ready" withHandlerBlock:^(CENMe *me) {
- *     CENUser *user = [self.client createUserWithUUID:@"ChatEngineUser" state:nil];
- * }];
- * [self.client connectUser:@"ChatEngine"];
+ * // objc 163ed912-6ccb-4455-adcc-a800115e0ffe
+ *
+ * CENUser *user = [self.client createUserWithUUID:@"ChatEngineUser" state:nil];
  * @endcode
  *
- * @discussion After user has been created, it is possible to try to invite him to chat.
- * @warning    If specified user never used \b ChatEngine network, further manipulation with instance may fail.
+ * @discussion Create user w/ state
+ * @code
+ * // objc 146a891a-3d6f-46ce-b3ce-f9a5bde1e573
  *
- * @param uuid  Reference on unique user's identifier.
- * @param state Reference on dictionary which may conatin additional information about \c user and publicly available from
- *              \b ChatEngine network.
+ * CENUser *user = [self.client createUserWithUUID:@"ChatEngineUser"
+ *                                           state:@{ @"name": @"PubNub" }];
+ * @endcode
  *
- * @return Configured and ready to use \b CENChat instance.
+ * @param uuid Unique alphanumeric identifier for this \b {user CENUser}. It can be a device id,
+ *     username, user id, email, etc.
+ * @param state \a NSDictionary with \c user's information synchronized between all clients of the
+ *     chat.
+ *
+ * @return Configured and ready to use \b {CENUser} instance.
+ *
+ * @ref 50cd442e-2aee-4ce7-bbd6-68ea40c42bca
  */
-- (CENUser *)createUserWithUUID:(NSString *)uuid state:(nullable NSDictionary *)state;
+- (nullable CENUser *)createUserWithUUID:(NSString *)uuid state:(nullable NSDictionary *)state;
 
 /**
- * @brief  Try to find and return previously created \b CENUser instance.
+ * @brief Try to find and return previously created \b {user CENUser} instance.
  *
- * @discussion Retrieve previously created/noticed user:
+ * @discussion Retrieve previously created / online user
  * @code
- * CENConfiguration *configuration = [CENConfiguration configurationWithPublishKey:@"demo-36" subscribeKey:@"demo-36"];
- * self.client = [CENChatEngine clientWithConfiguration:configuration];
- * // .....
+ * // objc e734dc26-a698-4932-824f-6d77c45ef40d
+ *
  * CENUser *user = [self.client userWithUUID:@"ChatEngineUser"];
  * @endcode
  *
- * @param uuid Reference on unique user's instance identifier which has been created before.
+ * @param uuid Identifier of user which has been created before.
  *
- * @return Previously created \b CENUser instance or \c nil in case if it doesn't exists.
+ * @return Previously created \b {user CENUser} instance or \c nil in case if it doesn't exists.
+ *
+ * @ref e6f42c44-c5eb-4da2-8ad3-a0faac1e521f
  */
 - (nullable CENUser *)userWithUUID:(NSString *)uuid;
 

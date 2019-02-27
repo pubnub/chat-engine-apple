@@ -1,12 +1,15 @@
 #import "CENChatEngine.h"
 
 
+NS_ASSUME_NONNULL_BEGIN
+
 /**
- * @brief  \b ChatEngine interface for communication with \b PubNub real-time network.
+ * @brief \b {CENChatEngine} client interface for communication with \b PubNub real-time
+ * network.
  *
  * @author Serhii Mamontov
- * @version 0.9.0
- * @copyright © 2009-2018 PubNub, Inc.
+ * @version 0.9.2
+ * @copyright © 2010-2019 PubNub, Inc.
  */
 @interface CENChatEngine (PubNub)
 
@@ -14,8 +17,10 @@
 #pragma mark - Information
 
 /**
- * @brief  Stores reference on \b PubNub client instance which is used to access live data-stream and use it for chat(s) and
- *         messaging.
+ * @brief \b PubNub client instance, the networking infrastructure that powers the realtime
+ * communication between \b {users CENUser} in \b {chats CENChat}.
+ *
+ * @ref cbb641c8-2819-4864-8a17-d74c0511d18e
  */
 @property (nonatomic, nullable, readonly, strong) PubNub *pubnub;
 
@@ -23,3 +28,5 @@
 
 
 @end
+
+NS_ASSUME_NONNULL_END

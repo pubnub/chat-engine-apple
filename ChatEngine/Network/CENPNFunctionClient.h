@@ -1,72 +1,80 @@
 #import <Foundation/Foundation.h>
 
+
+#pragma mark Class forward
+
 @class CENChatEngine, PNLLogger;
 
 
 NS_ASSUME_NONNULL_BEGIN
 
 /**
- * @brief      \b PubNub function access class.
- * @discussion \b ChatEngine server-side implemented with \b PubNub Functions. This class provide ability to call particular
- *             endpoints on running \b PubNub Function.
+ * @brief \b PubNub function access class.
+ *
+ * @discussion \b {CENChatEngine} server-side implemented with \b PubNub Functions.
+ * This class provide ability to call particular endpoints on running \b PubNub Function.
  *
  * @author Serhii Mamontov
- * @version 0.9.0
- * @copyright © 2009-2018 PubNub, Inc.
+ * @version 0.9.2
+ * @copyright © 2010-2019 PubNub, Inc.
  */
 @interface CENPNFunctionClient : NSObject
 
 
 #pragma mark - Information
 
+/**
+ * @brief \b PubNub Function location URI.
+ */
 @property (nonatomic, readonly, copy) NSString *endpointURL;
 
 
 #pragma mark - Initialization and Configuration
 
 /**
- * @brief      Create and configure \b PubNub Functions access client at specified endpoint.
- * @discussion Client allow to perform series of requests on \b PubNub Function and gather responses.
+ * @brief Create and configure \b PubNub Function client.
  *
- * @param endpoint Reference on endpoint which is used to access various \b PubNub Functions in configured account scope.
- * @param logger   Reference on ChatEngine instance logger which should be used to output debug information.
+ * @param endpoint \b PubNub Function location URI.
+ * @Param logger \b {CENChatEngine} \b logger for updates output.
  *
- * @return Configured and ready to use \b PubNub Functions client.
+ * @return Configured and ready to use functions client.
  */
 + (instancetype)clientWithEndpoint:(NSString *)endpoint logger:(PNLLogger *)logger;
 
 /**
- * @brief  Instantiation should be done using class method \c +clientWithEndpoint:.
+ * @brief Instantiate \b PubNub Function client.
  *
- * @throws \a NSException
- * @return \c nil reference because instance can't be created this way.
+ * @throws \a NSDestinationInvalidException exception in following cases:
+ * - attempt to create instance using \c new.
+ *
+ * @return \c nil.
  */
 - (instancetype) __unavailable init;
 
 /**
- * @brief  Set / update default data object which is sent along with every request to \b PubNub Functions.
+ * @brief Client's configuration refresh.
  *
- * @param globalChat Reference on name of global chat (basically used as namespace).
- * @param uuid       Reference on unique identifier of local user on behalf of which requests will be performed.
- * @param authKey    Reference on local user authentication key which is used to ensure access rights for performed
- *                   operations.
+ * @param namespace Namespace inside of which \b {chats CENChat} will be created.
+ * @param uuid Unique identifier which will be used by \b {local user CENMe}.
+ * @param authKey User authentication secret key. Will be sent to authentication backend for
+ *     validation. This is usually an access token.
  */
-- (void)setDefaultDataWithGlobalChat:(NSString *)globalChat userUUID:(NSString *)uuid userAuth:(NSString *)authKey;
+- (void)setWithNamespace:(NSString *)namespace
+                userUUID:(NSString *)uuid
+                userAuth:(NSString *)authKey;
 
 
 #pragma mark - REST API call
 
 /**
- * @brief      Call set of REST API endpoints one by one.
- * @discussion Call endpoints from passed list one by one. If one of request fails, next REST API call(s) will be cancelled.
+ * @brief Perform series of requests to \b PubNub Function.
  *
- * @param series Reference on list of dictionaries with following keys: route, method, query and body. These keys allow to
- *               configure call to one of REST API routes.
- * @param block  Reference on complection block which will be called at the end of all operations. Block pass two arguments:
- *               \success - whether all operations has been performed successfully or not; \c responses - list of service
- *               response for each of passed API call route.
+ * @param series \a NSArray with list of route call objects which should be performed one-by-one.
+ * @param block Block / closure which will be called at the end of \c series of request completion
+ *     and pass service response or error (if not \c success).
  */
-- (void)callRouteSeries:(NSArray<NSDictionary *> *)series withCompletion:(void(^)(BOOL success, NSArray * __nullable responses))block;
+- (void)callRouteSeries:(NSArray<NSDictionary *> *)series
+         withCompletion:(void(^)(BOOL success, NSArray * __nullable responses))block;
 
 #pragma mark -
 

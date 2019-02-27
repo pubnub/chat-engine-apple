@@ -1,7 +1,7 @@
 /**
  * @author Serhii Mamontov
- * @version 0.9.0
- * @copyright © 2009-2018 PubNub, Inc.
+ * @version 0.9.2
+ * @copyright © 2010-2019 PubNub, Inc.
  */
 #import "CENObject+Plugins.h"
 #import <CENChatEngine/CENChatEngine+ConnectionInterface.h>
@@ -13,7 +13,7 @@
 #import <CENChatEngine/CENChatEngine.h>
 
 
-#pragma mark Private interface declaration
+#pragma mark Developer interface declaration
 
 @interface CENObject (PluginsDeveloper)
 
@@ -21,7 +21,9 @@
 #pragma mark - Information
 
 /**
- * @brief  Stores reference on \b ChatEngine instance which created this object.
+ * @brief \b {CENChatEngine} instance which manage instantiated subclass.
+ *
+ * @ref 9fd7aa4b-7907-41f3-a1eb-67c28f39306c
  */
 @property (nonatomic, readonly, weak) CENChatEngine *chatEngine;
 
@@ -29,12 +31,11 @@
 #pragma mark - Events emitting
 
 /**
- * @brief      Emit specified \c event with passed variadic list of arguments locally.
- * @discussion This method is able to handle up to \b 5 parameters forwarding to handling \c block.
- * @discussion Event will be emitted on behalf of receiving object and it's containing \b ChatEngine instance.
+ * @brief Emit specific \c event locally to all listeners.
  *
- * @param event Reference on name of event which should be emitted.
- * @param ...   Reference on list of parameters which should be passed to listener's handler block.
+ * @param event Name of event for which listeners should be notified.
+ * @param ... Dynamic list of arguments which should be passed along with emitted event (maximum can
+ *     be passed one value terminated by \c nil).
  */
 - (void)emitEventLocally:(NSString *)event, ... NS_REQUIRES_NIL_TERMINATION;
 

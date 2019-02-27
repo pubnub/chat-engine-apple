@@ -1,5 +1,4 @@
 #import "CEDummyOnMiddleware.h"
-#import <CENChatEngine/CEPPlugablePropertyStorage+Private.h>
 #import <CENChatEngine/CEPMiddleware+Developer.h>
 
 

@@ -1,0 +1,2153 @@
+[
+  {
+    "id" : "0334FC5B-7D55-45E7-8552-9855E6C825DE",
+    "data" : {
+      "method" : "post",
+      "cls" : "NSURLRequest",
+      "cellular" : true,
+      "network" : 0,
+      "cache" : 1,
+      "timeout" : 60,
+      "cookies" : true,
+      "headers" : {
+        "Accept" : "*\/*",
+        "Content-Length" : "94",
+        "Connection" : "keep-alive",
+        "Accept-Encoding" : "gzip,deflate",
+        "Content-Type" : "application\/json;charset=UTF-8"
+      },
+      "body" : {
+        "cls" : "NSData",
+        "base64" : "eyJnbG9iYWwiOiJjaGF0LWVuZ2luZSIsImF1dGhLZXkiOiJpYW4iLCJ1dWlkIjoiaWFuIn0="
+      },
+      "pipeline" : false,
+      "url" : "https:\/\/pubsub.pubnub.com\/v1\/blocks\/sub-key\/demo-36\/chat-engine-server?route=bootstrap"
+    },
+    "type" : 0
+  },
+  {
+    "id" : "0334FC5B-7D55-45E7-8552-9855E6C825DE",
+    "data" : {
+      "status" : 200,
+      "cls" : "NSHTTPURLResponse",
+      "url" : "https:\/\/pubsub.pubnub.com\/v1\/blocks\/sub-key\/demo-36\/chat-engine-server?route=bootstrap",
+      "headers" : {
+        "Access-Control-Allow-Credentials" : "true",
+        "Content-Type" : "text\/plain; charset=utf-8",
+        "Access-Control-Expose-Headers" : "Access-Control-Allow-Origin, Access-Control-Allow-Headers, Access-Control-Allow-Methods",
+        "Access-Control-Allow-Methods" : "GET, POST, OPTIONS, PUT, DELETE",
+        "Date" : "Sun, 10 Feb 2019 22:16:37 GMT",
+        "Access-Control-Allow-Headers" : "Origin, X-Requested-With, Content-Type, Accept",
+        "Content-Length" : "0",
+        "Connection" : "keep-alive"
+      }
+    },
+    "type" : 1
+  },
+  {
+    "id" : "0334FC5B-7D55-45E7-8552-9855E6C825DE",
+    "data" : {
+      "cls" : "NSData",
+      "base64" : ""
+    },
+    "type" : 2
+  },
+  {
+    "id" : "0334FC5B-7D55-45E7-8552-9855E6C825DE",
+    "type" : 4
+  },
+  {
+    "id" : "F6F5F250-47E4-424A-9C4A-982C4B53E189",
+    "data" : {
+      "method" : "post",
+      "cls" : "NSURLRequest",
+      "cellular" : true,
+      "network" : 0,
+      "cache" : 1,
+      "timeout" : 60,
+      "cookies" : true,
+      "headers" : {
+        "Accept" : "*\/*",
+        "Content-Length" : "94",
+        "Connection" : "keep-alive",
+        "Accept-Encoding" : "gzip,deflate",
+        "Content-Type" : "application\/json;charset=UTF-8"
+      },
+      "body" : {
+        "cls" : "NSData",
+        "base64" : "eyJnbG9iYWwiOiJjaGF0LWVuZ2luZSIsImF1dGhLZXkiOiJpYW4iLCJ1dWlkIjoiaWFuIn0="
+      },
+      "pipeline" : false,
+      "url" : "https:\/\/pubsub.pubnub.com\/v1\/blocks\/sub-key\/demo-36\/chat-engine-server?route=user_read"
+    },
+    "type" : 0
+  },
+  {
+    "id" : "F6F5F250-47E4-424A-9C4A-982C4B53E189",
+    "data" : {
+      "status" : 200,
+      "cls" : "NSHTTPURLResponse",
+      "url" : "https:\/\/pubsub.pubnub.com\/v1\/blocks\/sub-key\/demo-36\/chat-engine-server?route=user_read",
+      "headers" : {
+        "Access-Control-Allow-Credentials" : "true",
+        "Content-Type" : "text\/plain; charset=utf-8",
+        "Access-Control-Expose-Headers" : "Access-Control-Allow-Origin, Access-Control-Allow-Headers, Access-Control-Allow-Methods",
+        "Access-Control-Allow-Methods" : "GET, POST, OPTIONS, PUT, DELETE",
+        "Date" : "Sun, 10 Feb 2019 22:16:37 GMT",
+        "Access-Control-Allow-Headers" : "Origin, X-Requested-With, Content-Type, Accept",
+        "Content-Length" : "0",
+        "Connection" : "keep-alive"
+      }
+    },
+    "type" : 1
+  },
+  {
+    "id" : "F6F5F250-47E4-424A-9C4A-982C4B53E189",
+    "data" : {
+      "cls" : "NSData",
+      "base64" : ""
+    },
+    "type" : 2
+  },
+  {
+    "id" : "F6F5F250-47E4-424A-9C4A-982C4B53E189",
+    "type" : 4
+  },
+  {
+    "id" : "A41CDF55-66B2-4AEF-8B13-AF162E1F7491",
+    "data" : {
+      "method" : "post",
+      "cls" : "NSURLRequest",
+      "cellular" : true,
+      "network" : 0,
+      "cache" : 1,
+      "timeout" : 60,
+      "cookies" : true,
+      "headers" : {
+        "Accept" : "*\/*",
+        "Content-Length" : "94",
+        "Connection" : "keep-alive",
+        "Accept-Encoding" : "gzip,deflate",
+        "Content-Type" : "application\/json;charset=UTF-8"
+      },
+      "body" : {
+        "cls" : "NSData",
+        "base64" : "eyJnbG9iYWwiOiJjaGF0LWVuZ2luZSIsImF1dGhLZXkiOiJpYW4iLCJ1dWlkIjoiaWFuIn0="
+      },
+      "pipeline" : false,
+      "url" : "https:\/\/pubsub.pubnub.com\/v1\/blocks\/sub-key\/demo-36\/chat-engine-server?route=user_write"
+    },
+    "type" : 0
+  },
+  {
+    "id" : "A41CDF55-66B2-4AEF-8B13-AF162E1F7491",
+    "data" : {
+      "status" : 200,
+      "cls" : "NSHTTPURLResponse",
+      "url" : "https:\/\/pubsub.pubnub.com\/v1\/blocks\/sub-key\/demo-36\/chat-engine-server?route=user_write",
+      "headers" : {
+        "Access-Control-Allow-Credentials" : "true",
+        "Content-Type" : "text\/plain; charset=utf-8",
+        "Access-Control-Expose-Headers" : "Access-Control-Allow-Origin, Access-Control-Allow-Headers, Access-Control-Allow-Methods",
+        "Access-Control-Allow-Methods" : "GET, POST, OPTIONS, PUT, DELETE",
+        "Date" : "Sun, 10 Feb 2019 22:16:37 GMT",
+        "Access-Control-Allow-Headers" : "Origin, X-Requested-With, Content-Type, Accept",
+        "Content-Length" : "0",
+        "Connection" : "keep-alive"
+      }
+    },
+    "type" : 1
+  },
+  {
+    "id" : "A41CDF55-66B2-4AEF-8B13-AF162E1F7491",
+    "data" : {
+      "cls" : "NSData",
+      "base64" : ""
+    },
+    "type" : 2
+  },
+  {
+    "id" : "A41CDF55-66B2-4AEF-8B13-AF162E1F7491",
+    "type" : 4
+  },
+  {
+    "id" : "863375A9-BAD5-4F3A-9A97-E4C16A77DAD8",
+    "data" : {
+      "method" : "post",
+      "cls" : "NSURLRequest",
+      "cellular" : true,
+      "network" : 0,
+      "cache" : 1,
+      "timeout" : 60,
+      "cookies" : true,
+      "headers" : {
+        "Accept" : "*\/*",
+        "Content-Length" : "94",
+        "Connection" : "keep-alive",
+        "Accept-Encoding" : "gzip,deflate",
+        "Content-Type" : "application\/json;charset=UTF-8"
+      },
+      "body" : {
+        "cls" : "NSData",
+        "base64" : "eyJnbG9iYWwiOiJjaGF0LWVuZ2luZSIsImF1dGhLZXkiOiJpYW4iLCJ1dWlkIjoiaWFuIn0="
+      },
+      "pipeline" : false,
+      "url" : "https:\/\/pubsub.pubnub.com\/v1\/blocks\/sub-key\/demo-36\/chat-engine-server?route=group"
+    },
+    "type" : 0
+  },
+  {
+    "id" : "863375A9-BAD5-4F3A-9A97-E4C16A77DAD8",
+    "data" : {
+      "status" : 200,
+      "cls" : "NSHTTPURLResponse",
+      "url" : "https:\/\/pubsub.pubnub.com\/v1\/blocks\/sub-key\/demo-36\/chat-engine-server?route=group",
+      "headers" : {
+        "Access-Control-Allow-Credentials" : "true",
+        "Content-Type" : "text\/plain; charset=utf-8",
+        "Access-Control-Expose-Headers" : "Access-Control-Allow-Origin, Access-Control-Allow-Headers, Access-Control-Allow-Methods",
+        "Access-Control-Allow-Methods" : "GET, POST, OPTIONS, PUT, DELETE",
+        "Date" : "Sun, 10 Feb 2019 22:16:37 GMT",
+        "Access-Control-Allow-Headers" : "Origin, X-Requested-With, Content-Type, Accept",
+        "Content-Length" : "0",
+        "Connection" : "keep-alive"
+      }
+    },
+    "type" : 1
+  },
+  {
+    "id" : "863375A9-BAD5-4F3A-9A97-E4C16A77DAD8",
+    "data" : {
+      "cls" : "NSData",
+      "base64" : ""
+    },
+    "type" : 2
+  },
+  {
+    "id" : "863375A9-BAD5-4F3A-9A97-E4C16A77DAD8",
+    "type" : 4
+  },
+  {
+    "id" : "7668A387-56CA-4807-9694-6C9423A2218D",
+    "data" : {
+      "method" : "post",
+      "cls" : "NSURLRequest",
+      "cellular" : true,
+      "network" : 0,
+      "cache" : 1,
+      "timeout" : 60,
+      "cookies" : true,
+      "headers" : {
+        "Accept" : "*\/*",
+        "Content-Length" : "177",
+        "Connection" : "keep-alive",
+        "Accept-Encoding" : "gzip,deflate",
+        "Content-Type" : "application\/json;charset=UTF-8"
+      },
+      "body" : {
+        "cls" : "NSData",
+        "base64" : "eyJnbG9iYWwiOiJjaGF0LWVuZ2luZSIsImNoYXQiOnsiZ3JvdXAiOiJzeXN0ZW0iLCJwcml2YXRlIjpmYWxzZSwibWV0YSI6e30sImNoYW5uZWwiOiJjaGF0LWVuZ2luZSJ9LCJhdXRoS2V5IjoiaWFuIiwidXVpZCI6ImlhbiJ9"
+      },
+      "pipeline" : false,
+      "url" : "https:\/\/pubsub.pubnub.com\/v1\/blocks\/sub-key\/demo-36\/chat-engine-server?route=grant"
+    },
+    "type" : 0
+  },
+  {
+    "id" : "7668A387-56CA-4807-9694-6C9423A2218D",
+    "data" : {
+      "status" : 200,
+      "cls" : "NSHTTPURLResponse",
+      "url" : "https:\/\/pubsub.pubnub.com\/v1\/blocks\/sub-key\/demo-36\/chat-engine-server?route=grant",
+      "headers" : {
+        "Access-Control-Allow-Credentials" : "true",
+        "Content-Type" : "text\/plain; charset=utf-8",
+        "Access-Control-Expose-Headers" : "Access-Control-Allow-Origin, Access-Control-Allow-Headers, Access-Control-Allow-Methods",
+        "Access-Control-Allow-Methods" : "GET, POST, OPTIONS, PUT, DELETE",
+        "Date" : "Sun, 10 Feb 2019 22:16:37 GMT",
+        "Access-Control-Allow-Headers" : "Origin, X-Requested-With, Content-Type, Accept",
+        "Content-Length" : "0",
+        "Connection" : "keep-alive"
+      }
+    },
+    "type" : 1
+  },
+  {
+    "id" : "7668A387-56CA-4807-9694-6C9423A2218D",
+    "data" : {
+      "cls" : "NSData",
+      "base64" : ""
+    },
+    "type" : 2
+  },
+  {
+    "id" : "7668A387-56CA-4807-9694-6C9423A2218D",
+    "type" : 4
+  },
+  {
+    "id" : "4D6B0395-E407-499D-BE28-6C6FB1136467",
+    "data" : {
+      "method" : "post",
+      "cls" : "NSURLRequest",
+      "cellular" : true,
+      "network" : 0,
+      "cache" : 1,
+      "timeout" : 60,
+      "cookies" : true,
+      "headers" : {
+        "Accept" : "*\/*",
+        "Content-Length" : "177",
+        "Connection" : "keep-alive",
+        "Accept-Encoding" : "gzip,deflate",
+        "Content-Type" : "application\/json;charset=UTF-8"
+      },
+      "body" : {
+        "cls" : "NSData",
+        "base64" : "eyJnbG9iYWwiOiJjaGF0LWVuZ2luZSIsImNoYXQiOnsiZ3JvdXAiOiJzeXN0ZW0iLCJwcml2YXRlIjpmYWxzZSwibWV0YSI6e30sImNoYW5uZWwiOiJjaGF0LWVuZ2luZSJ9LCJhdXRoS2V5IjoiaWFuIiwidXVpZCI6ImlhbiJ9"
+      },
+      "pipeline" : false,
+      "url" : "https:\/\/pubsub.pubnub.com\/v1\/blocks\/sub-key\/demo-36\/chat-engine-server?route=join"
+    },
+    "type" : 0
+  },
+  {
+    "id" : "4D6B0395-E407-499D-BE28-6C6FB1136467",
+    "data" : {
+      "status" : 200,
+      "cls" : "NSHTTPURLResponse",
+      "url" : "https:\/\/pubsub.pubnub.com\/v1\/blocks\/sub-key\/demo-36\/chat-engine-server?route=join",
+      "headers" : {
+        "Access-Control-Allow-Credentials" : "true",
+        "Content-Type" : "text\/plain; charset=utf-8",
+        "Access-Control-Expose-Headers" : "Access-Control-Allow-Origin, Access-Control-Allow-Headers, Access-Control-Allow-Methods",
+        "Access-Control-Allow-Methods" : "GET, POST, OPTIONS, PUT, DELETE",
+        "Date" : "Sun, 10 Feb 2019 22:16:38 GMT",
+        "Access-Control-Allow-Headers" : "Origin, X-Requested-With, Content-Type, Accept",
+        "Content-Length" : "0",
+        "Connection" : "keep-alive"
+      }
+    },
+    "type" : 1
+  },
+  {
+    "id" : "4D6B0395-E407-499D-BE28-6C6FB1136467",
+    "data" : {
+      "cls" : "NSData",
+      "base64" : ""
+    },
+    "type" : 2
+  },
+  {
+    "id" : "4D6B0395-E407-499D-BE28-6C6FB1136467",
+    "type" : 4
+  },
+  {
+    "id" : "1B046497-8B57-4154-9593-FD732CA42E99",
+    "data" : {
+      "method" : "post",
+      "cls" : "NSURLRequest",
+      "cellular" : true,
+      "network" : 0,
+      "cache" : 1,
+      "timeout" : 60,
+      "cookies" : true,
+      "headers" : {
+        "Accept" : "*\/*",
+        "Content-Length" : "217",
+        "Connection" : "keep-alive",
+        "Accept-Encoding" : "gzip,deflate",
+        "Content-Type" : "application\/json;charset=UTF-8"
+      },
+      "body" : {
+        "cls" : "NSData",
+        "base64" : "eyJnbG9iYWwiOiJjaGF0LWVuZ2luZSIsImNoYXQiOnsiZ3JvdXAiOiJzeXN0ZW0iLCJwcml2YXRlIjpmYWxzZSwibWV0YSI6e30sImNoYW5uZWwiOiJjaGF0LWVuZ2luZSN1c2VyI2lhbiN3cml0ZS4jZGlyZWN0In0sImF1dGhLZXkiOiJpYW4iLCJ1dWlkIjoiaWFuIn0="
+      },
+      "pipeline" : false,
+      "url" : "https:\/\/pubsub.pubnub.com\/v1\/blocks\/sub-key\/demo-36\/chat-engine-server?route=grant"
+    },
+    "type" : 0
+  },
+  {
+    "id" : "1B046497-8B57-4154-9593-FD732CA42E99",
+    "data" : {
+      "status" : 200,
+      "cls" : "NSHTTPURLResponse",
+      "url" : "https:\/\/pubsub.pubnub.com\/v1\/blocks\/sub-key\/demo-36\/chat-engine-server?route=grant",
+      "headers" : {
+        "Access-Control-Allow-Credentials" : "true",
+        "Content-Type" : "text\/plain; charset=utf-8",
+        "Access-Control-Expose-Headers" : "Access-Control-Allow-Origin, Access-Control-Allow-Headers, Access-Control-Allow-Methods",
+        "Access-Control-Allow-Methods" : "GET, POST, OPTIONS, PUT, DELETE",
+        "Date" : "Sun, 10 Feb 2019 22:16:38 GMT",
+        "Access-Control-Allow-Headers" : "Origin, X-Requested-With, Content-Type, Accept",
+        "Content-Length" : "0",
+        "Connection" : "keep-alive"
+      }
+    },
+    "type" : 1
+  },
+  {
+    "id" : "1B046497-8B57-4154-9593-FD732CA42E99",
+    "data" : {
+      "cls" : "NSData",
+      "base64" : ""
+    },
+    "type" : 2
+  },
+  {
+    "id" : "1B046497-8B57-4154-9593-FD732CA42E99",
+    "type" : 4
+  },
+  {
+    "id" : "A90EA428-219D-415B-B944-2406D01AF44F",
+    "data" : {
+      "method" : "post",
+      "cls" : "NSURLRequest",
+      "cellular" : true,
+      "network" : 0,
+      "cache" : 1,
+      "timeout" : 60,
+      "cookies" : true,
+      "headers" : {
+        "Accept" : "*\/*",
+        "Content-Length" : "217",
+        "Connection" : "keep-alive",
+        "Accept-Encoding" : "gzip,deflate",
+        "Content-Type" : "application\/json;charset=UTF-8"
+      },
+      "body" : {
+        "cls" : "NSData",
+        "base64" : "eyJnbG9iYWwiOiJjaGF0LWVuZ2luZSIsImNoYXQiOnsiZ3JvdXAiOiJzeXN0ZW0iLCJwcml2YXRlIjpmYWxzZSwibWV0YSI6e30sImNoYW5uZWwiOiJjaGF0LWVuZ2luZSN1c2VyI2lhbiN3cml0ZS4jZGlyZWN0In0sImF1dGhLZXkiOiJpYW4iLCJ1dWlkIjoiaWFuIn0="
+      },
+      "pipeline" : false,
+      "url" : "https:\/\/pubsub.pubnub.com\/v1\/blocks\/sub-key\/demo-36\/chat-engine-server?route=join"
+    },
+    "type" : 0
+  },
+  {
+    "id" : "A90EA428-219D-415B-B944-2406D01AF44F",
+    "data" : {
+      "status" : 200,
+      "cls" : "NSHTTPURLResponse",
+      "url" : "https:\/\/pubsub.pubnub.com\/v1\/blocks\/sub-key\/demo-36\/chat-engine-server?route=join",
+      "headers" : {
+        "Access-Control-Allow-Credentials" : "true",
+        "Content-Type" : "text\/plain; charset=utf-8",
+        "Access-Control-Expose-Headers" : "Access-Control-Allow-Origin, Access-Control-Allow-Headers, Access-Control-Allow-Methods",
+        "Access-Control-Allow-Methods" : "GET, POST, OPTIONS, PUT, DELETE",
+        "Date" : "Sun, 10 Feb 2019 22:16:38 GMT",
+        "Access-Control-Allow-Headers" : "Origin, X-Requested-With, Content-Type, Accept",
+        "Content-Length" : "0",
+        "Connection" : "keep-alive"
+      }
+    },
+    "type" : 1
+  },
+  {
+    "id" : "A90EA428-219D-415B-B944-2406D01AF44F",
+    "data" : {
+      "cls" : "NSData",
+      "base64" : ""
+    },
+    "type" : 2
+  },
+  {
+    "id" : "A90EA428-219D-415B-B944-2406D01AF44F",
+    "type" : 4
+  },
+  {
+    "id" : "0482C3EA-E8DE-42A7-A983-A4F97A380DDB",
+    "data" : {
+      "method" : "post",
+      "cls" : "NSURLRequest",
+      "cellular" : true,
+      "network" : 0,
+      "cache" : 1,
+      "timeout" : 60,
+      "cookies" : true,
+      "headers" : {
+        "Accept" : "*\/*",
+        "Content-Length" : "214",
+        "Connection" : "keep-alive",
+        "Accept-Encoding" : "gzip,deflate",
+        "Content-Type" : "application\/json;charset=UTF-8"
+      },
+      "body" : {
+        "cls" : "NSData",
+        "base64" : "eyJnbG9iYWwiOiJjaGF0LWVuZ2luZSIsImNoYXQiOnsiZ3JvdXAiOiJzeXN0ZW0iLCJwcml2YXRlIjpmYWxzZSwibWV0YSI6e30sImNoYW5uZWwiOiJjaGF0LWVuZ2luZSN1c2VyI2lhbiNyZWFkLiNmZWVkIn0sImF1dGhLZXkiOiJpYW4iLCJ1dWlkIjoiaWFuIn0="
+      },
+      "pipeline" : false,
+      "url" : "https:\/\/pubsub.pubnub.com\/v1\/blocks\/sub-key\/demo-36\/chat-engine-server?route=grant"
+    },
+    "type" : 0
+  },
+  {
+    "id" : "0482C3EA-E8DE-42A7-A983-A4F97A380DDB",
+    "data" : {
+      "status" : 200,
+      "cls" : "NSHTTPURLResponse",
+      "url" : "https:\/\/pubsub.pubnub.com\/v1\/blocks\/sub-key\/demo-36\/chat-engine-server?route=grant",
+      "headers" : {
+        "Access-Control-Allow-Credentials" : "true",
+        "Content-Type" : "text\/plain; charset=utf-8",
+        "Access-Control-Expose-Headers" : "Access-Control-Allow-Origin, Access-Control-Allow-Headers, Access-Control-Allow-Methods",
+        "Access-Control-Allow-Methods" : "GET, POST, OPTIONS, PUT, DELETE",
+        "Date" : "Sun, 10 Feb 2019 22:16:38 GMT",
+        "Access-Control-Allow-Headers" : "Origin, X-Requested-With, Content-Type, Accept",
+        "Content-Length" : "0",
+        "Connection" : "keep-alive"
+      }
+    },
+    "type" : 1
+  },
+  {
+    "id" : "0482C3EA-E8DE-42A7-A983-A4F97A380DDB",
+    "data" : {
+      "cls" : "NSData",
+      "base64" : ""
+    },
+    "type" : 2
+  },
+  {
+    "id" : "0482C3EA-E8DE-42A7-A983-A4F97A380DDB",
+    "type" : 4
+  },
+  {
+    "id" : "F0A4876C-E819-47FF-8954-88E2C2AA9868",
+    "data" : {
+      "method" : "post",
+      "cls" : "NSURLRequest",
+      "cellular" : true,
+      "network" : 0,
+      "cache" : 1,
+      "timeout" : 60,
+      "cookies" : true,
+      "headers" : {
+        "Accept" : "*\/*",
+        "Content-Length" : "214",
+        "Connection" : "keep-alive",
+        "Accept-Encoding" : "gzip,deflate",
+        "Content-Type" : "application\/json;charset=UTF-8"
+      },
+      "body" : {
+        "cls" : "NSData",
+        "base64" : "eyJnbG9iYWwiOiJjaGF0LWVuZ2luZSIsImNoYXQiOnsiZ3JvdXAiOiJzeXN0ZW0iLCJwcml2YXRlIjpmYWxzZSwibWV0YSI6e30sImNoYW5uZWwiOiJjaGF0LWVuZ2luZSN1c2VyI2lhbiNyZWFkLiNmZWVkIn0sImF1dGhLZXkiOiJpYW4iLCJ1dWlkIjoiaWFuIn0="
+      },
+      "pipeline" : false,
+      "url" : "https:\/\/pubsub.pubnub.com\/v1\/blocks\/sub-key\/demo-36\/chat-engine-server?route=join"
+    },
+    "type" : 0
+  },
+  {
+    "id" : "F0A4876C-E819-47FF-8954-88E2C2AA9868",
+    "data" : {
+      "status" : 200,
+      "cls" : "NSHTTPURLResponse",
+      "url" : "https:\/\/pubsub.pubnub.com\/v1\/blocks\/sub-key\/demo-36\/chat-engine-server?route=join",
+      "headers" : {
+        "Access-Control-Allow-Credentials" : "true",
+        "Content-Type" : "text\/plain; charset=utf-8",
+        "Access-Control-Expose-Headers" : "Access-Control-Allow-Origin, Access-Control-Allow-Headers, Access-Control-Allow-Methods",
+        "Access-Control-Allow-Methods" : "GET, POST, OPTIONS, PUT, DELETE",
+        "Date" : "Sun, 10 Feb 2019 22:16:39 GMT",
+        "Access-Control-Allow-Headers" : "Origin, X-Requested-With, Content-Type, Accept",
+        "Content-Length" : "0",
+        "Connection" : "keep-alive"
+      }
+    },
+    "type" : 1
+  },
+  {
+    "id" : "F0A4876C-E819-47FF-8954-88E2C2AA9868",
+    "data" : {
+      "cls" : "NSData",
+      "base64" : ""
+    },
+    "type" : 2
+  },
+  {
+    "id" : "F0A4876C-E819-47FF-8954-88E2C2AA9868",
+    "type" : 4
+  },
+  {
+    "id" : "893ACBD0-D19C-451E-9AAF-F60B9F00AB55",
+    "data" : {
+      "method" : "get",
+      "cls" : "NSURLRequest",
+      "cellular" : true,
+      "cache" : 1,
+      "timeout" : 60,
+      "cookies" : true,
+      "headers" : {
+        "User-Agent" : "iPhone; CPU iPhone OS 12.1.0 Version",
+        "Accept" : "*\/*",
+        "Connection" : "keep-alive",
+        "Accept-Encoding" : "gzip,deflate"
+      },
+      "pipeline" : false,
+      "network" : 0,
+      "url" : "https:\/\/ps.pndsn.com\/v2\/subscribe\/demo-36\/,\/0?uuid=ian&channel-group=chat-engine%23ian%23custom,chat-engine%23ian%23custom-pnpres,chat-engine%23ian%23system,chat-engine%23ian%23system-pnpres&pnsdk=PubNub-ObjC-iOS\/4.x.x&tt=0&auth=ian"
+    },
+    "type" : 0
+  },
+  {
+    "id" : "E6F331AB-1B1C-4931-8A5D-FC632E434B0D",
+    "data" : {
+      "method" : "get",
+      "cls" : "NSURLRequest",
+      "cellular" : true,
+      "cache" : 1,
+      "timeout" : 60,
+      "cookies" : true,
+      "headers" : {
+        "User-Agent" : "iPhone; CPU iPhone OS 12.1.0 Version",
+        "Accept" : "*\/*",
+        "Connection" : "keep-alive",
+        "Accept-Encoding" : "gzip,deflate"
+      },
+      "pipeline" : false,
+      "network" : 0,
+      "url" : "https:\/\/ps.pndsn.com\/v2\/presence\/sub-key\/demo-36\/channel\/,\/heartbeat?uuid=ian&channel-group=chat-engine%23ian%23custom,chat-engine%23ian%23system&pnsdk=PubNub-ObjC-iOS\/4.x.x&auth=ian&heartbeat=300"
+    },
+    "type" : 0
+  },
+  {
+    "id" : "093B2C6A-D0F0-41DB-B637-320166A51119",
+    "data" : {
+      "method" : "get",
+      "cls" : "NSURLRequest",
+      "cellular" : true,
+      "cache" : 1,
+      "timeout" : 60,
+      "cookies" : true,
+      "headers" : {
+        "User-Agent" : "iPhone; CPU iPhone OS 12.1.0 Version",
+        "Accept" : "*\/*",
+        "Connection" : "keep-alive",
+        "Accept-Encoding" : "gzip,deflate"
+      },
+      "pipeline" : false,
+      "network" : 0,
+      "url" : "https:\/\/ps.pndsn.com\/v2\/presence\/sub-key\/demo-36\/channel\/chat-engine?disable_uuids=0&uuid=ian&pnsdk=PubNub-ObjC-iOS\/4.x.x&auth=ian&state=1"
+    },
+    "type" : 0
+  },
+  {
+    "id" : "893ACBD0-D19C-451E-9AAF-F60B9F00AB55",
+    "data" : {
+      "status" : 200,
+      "cls" : "NSHTTPURLResponse",
+      "url" : "https:\/\/ps.pndsn.com\/v2\/subscribe\/demo-36\/,\/0?uuid=ian&channel-group=chat-engine%23ian%23custom,chat-engine%23ian%23custom-pnpres,chat-engine%23ian%23system,chat-engine%23ian%23system-pnpres&pnsdk=PubNub-ObjC-iOS\/4.x.x&tt=0&auth=ian",
+      "headers" : {
+        "Access-Control-Allow-Methods" : "GET",
+        "Content-Type" : "text\/javascript; charset=\"UTF-8\"",
+        "Access-Control-Allow-Origin" : "*",
+        "Date" : "Sun, 10 Feb 2019 22:16:39 GMT",
+        "Content-Length" : "45",
+        "Cache-Control" : "no-cache",
+        "Connection" : "keep-alive"
+      }
+    },
+    "type" : 1
+  },
+  {
+    "id" : "893ACBD0-D19C-451E-9AAF-F60B9F00AB55",
+    "data" : {
+      "cls" : "NSData",
+      "base64" : "eyJ0Ijp7InQiOiIxNTQ5ODM2OTk5NDg0ODM2MyIsInIiOjEyfSwibSI6W119"
+    },
+    "type" : 2
+  },
+  {
+    "id" : "893ACBD0-D19C-451E-9AAF-F60B9F00AB55",
+    "type" : 4
+  },
+  {
+    "id" : "D074E5EE-2239-4317-BCD8-E63B072EFBB5",
+    "data" : {
+      "method" : "get",
+      "cls" : "NSURLRequest",
+      "cellular" : true,
+      "cache" : 1,
+      "timeout" : 60,
+      "cookies" : true,
+      "headers" : {
+        "User-Agent" : "iPhone; CPU iPhone OS 12.1.0 Version",
+        "Accept" : "*\/*",
+        "Connection" : "keep-alive",
+        "Accept-Encoding" : "gzip,deflate"
+      },
+      "pipeline" : false,
+      "network" : 0,
+      "url" : "https:\/\/ps.pndsn.com\/v2\/subscribe\/demo-36\/,\/0?uuid=ian&channel-group=chat-engine%23ian%23custom,chat-engine%23ian%23custom-pnpres,chat-engine%23ian%23system,chat-engine%23ian%23system-pnpres&pnsdk=PubNub-ObjC-iOS\/4.x.x&tt=15498369994848363&auth=ian&tr=12"
+    },
+    "type" : 0
+  },
+  {
+    "id" : "D074E5EE-2239-4317-BCD8-E63B072EFBB5",
+    "data" : {
+      "status" : 200,
+      "cls" : "NSHTTPURLResponse",
+      "url" : "https:\/\/ps.pndsn.com\/v2\/subscribe\/demo-36\/,\/0?uuid=ian&channel-group=chat-engine%23ian%23custom,chat-engine%23ian%23custom-pnpres,chat-engine%23ian%23system,chat-engine%23ian%23system-pnpres&pnsdk=PubNub-ObjC-iOS\/4.x.x&tt=15498369994848363&auth=ian&tr=12",
+      "headers" : {
+        "Access-Control-Allow-Methods" : "GET",
+        "Content-Type" : "text\/javascript; charset=\"UTF-8\"",
+        "Access-Control-Allow-Origin" : "*",
+        "Date" : "Sun, 10 Feb 2019 22:16:39 GMT",
+        "Content-Length" : "326",
+        "Cache-Control" : "no-cache",
+        "Connection" : "keep-alive"
+      }
+    },
+    "type" : 1
+  },
+  {
+    "id" : "D074E5EE-2239-4317-BCD8-E63B072EFBB5",
+    "data" : {
+      "cls" : "NSData",
+      "base64" : "eyJ0Ijp7InQiOiIxNTQ5ODM2OTk5ODU2NDUyMiIsInIiOjEyfSwibSI6W3siayI6ImRlbW8tMzYiLCJwIjp7InQiOiIxNTQ5ODM2OTk5ODExMDI5MiIsInIiOjJ9LCJjIjoiY2hhdC1lbmdpbmUtcG5wcmVzIiwiZCI6eyJ1dWlkIjoiaWFuIiwidGltZXN0YW1wIjoxNTQ5ODM2OTk5LCJvY2N1cGFuY3kiOjEsImFjdGlvbiI6ImpvaW4ifSwiYSI6IjIiLCJmIjowLCJiIjoiY2hhdC1lbmdpbmUjaWFuI3N5c3RlbS1wbnByZXMifV19"
+    },
+    "type" : 2
+  },
+  {
+    "id" : "D074E5EE-2239-4317-BCD8-E63B072EFBB5",
+    "type" : 4
+  },
+  {
+    "id" : "DE046DEF-BBFE-491D-AB4E-3AD0814305EF",
+    "data" : {
+      "method" : "get",
+      "cls" : "NSURLRequest",
+      "cellular" : true,
+      "cache" : 1,
+      "timeout" : 60,
+      "cookies" : true,
+      "headers" : {
+        "User-Agent" : "iPhone; CPU iPhone OS 12.1.0 Version",
+        "Accept" : "*\/*",
+        "Connection" : "keep-alive",
+        "Accept-Encoding" : "gzip,deflate"
+      },
+      "pipeline" : false,
+      "network" : 0,
+      "url" : "https:\/\/ps.pndsn.com\/v2\/subscribe\/demo-36\/,\/0?uuid=ian&channel-group=chat-engine%23ian%23custom,chat-engine%23ian%23custom-pnpres,chat-engine%23ian%23system,chat-engine%23ian%23system-pnpres&pnsdk=PubNub-ObjC-iOS\/4.x.x&tt=15498369998564522&auth=ian&tr=12"
+    },
+    "type" : 0
+  },
+  {
+    "id" : "09929033-4357-436B-9633-6CC3C7CACF99",
+    "data" : {
+      "method" : "get",
+      "cls" : "NSURLRequest",
+      "cellular" : true,
+      "cache" : 1,
+      "timeout" : 60,
+      "cookies" : true,
+      "headers" : {
+        "Accept-Encoding" : "gzip,deflate",
+        "Connection" : "keep-alive",
+        "Accept" : "*\/*"
+      },
+      "pipeline" : false,
+      "network" : 0,
+      "url" : "https:\/\/pubsub.pubnub.com\/v1\/blocks\/sub-key\/demo-36\/chat-engine-server?global=chat-engine&user=ian&channel=chat-engine&route=user_state&authKey=ian&uuid=ian"
+    },
+    "type" : 0
+  },
+  {
+    "id" : "E6F331AB-1B1C-4931-8A5D-FC632E434B0D",
+    "data" : {
+      "status" : 200,
+      "cls" : "NSHTTPURLResponse",
+      "url" : "https:\/\/ps.pndsn.com\/v2\/presence\/sub-key\/demo-36\/channel\/,\/heartbeat?uuid=ian&channel-group=chat-engine%23ian%23custom,chat-engine%23ian%23system&pnsdk=PubNub-ObjC-iOS\/4.x.x&auth=ian&heartbeat=300",
+      "headers" : {
+        "Access-Control-Allow-Methods" : "OPTIONS, GET, POST",
+        "Content-Type" : "text\/javascript; charset=\"UTF-8\"",
+        "Server" : "Pubnub Presence",
+        "Access-Control-Allow-Origin" : "*",
+        "Age" : "0",
+        "Date" : "Sun, 10 Feb 2019 22:16:39 GMT",
+        "Accept-Ranges" : "bytes",
+        "Content-Length" : "55",
+        "Cache-Control" : "no-cache",
+        "Connection" : "keep-alive"
+      }
+    },
+    "type" : 1
+  },
+  {
+    "id" : "E6F331AB-1B1C-4931-8A5D-FC632E434B0D",
+    "data" : {
+      "cls" : "NSData",
+      "base64" : "eyJzdGF0dXMiOjIwMCwibWVzc2FnZSI6Ik9LIiwic2VydmljZSI6IlByZXNlbmNlIn0="
+    },
+    "type" : 2
+  },
+  {
+    "id" : "E6F331AB-1B1C-4931-8A5D-FC632E434B0D",
+    "type" : 4
+  },
+  {
+    "id" : "DE046DEF-BBFE-491D-AB4E-3AD0814305EF",
+    "data" : {
+      "status" : 200,
+      "cls" : "NSHTTPURLResponse",
+      "url" : "https:\/\/ps.pndsn.com\/v2\/subscribe\/demo-36\/,\/0?uuid=ian&channel-group=chat-engine%23ian%23custom,chat-engine%23ian%23custom-pnpres,chat-engine%23ian%23system,chat-engine%23ian%23system-pnpres&pnsdk=PubNub-ObjC-iOS\/4.x.x&tt=15498369998564522&auth=ian&tr=12",
+      "headers" : {
+        "Access-Control-Allow-Methods" : "GET",
+        "Content-Type" : "text\/javascript; charset=\"UTF-8\"",
+        "Access-Control-Allow-Origin" : "*",
+        "Date" : "Sun, 10 Feb 2019 22:16:39 GMT",
+        "Content-Length" : "685",
+        "Cache-Control" : "no-cache",
+        "Connection" : "keep-alive"
+      }
+    },
+    "type" : 1
+  },
+  {
+    "id" : "DE046DEF-BBFE-491D-AB4E-3AD0814305EF",
+    "data" : {
+      "cls" : "NSData",
+      "base64" : "eyJ0Ijp7InQiOiIxNTQ5ODM2OTk5ODU4NjIyNyIsInIiOjEyfSwibSI6W3siayI6ImRlbW8tMzYiLCJwIjp7InQiOiIxNTQ5ODM2OTk5ODEyNTYzOCIsInIiOjJ9LCJjIjoiY2hhdC1lbmdpbmUjdXNlciNpYW4jd3JpdGUuI2RpcmVjdC1wbnByZXMiLCJkIjp7InV1aWQiOiJpYW4iLCJ0aW1lc3RhbXAiOjE1NDk4MzY5OTksIm9jY3VwYW5jeSI6MSwiYWN0aW9uIjoiam9pbiJ9LCJhIjoiMiIsImYiOjAsImIiOiJjaGF0LWVuZ2luZSNpYW4jc3lzdGVtLXBucHJlcyJ9LHsiayI6ImRlbW8tMzYiLCJwIjp7InQiOiIxNTQ5ODM2OTk5ODEyOTQ5MSIsInIiOjJ9LCJjIjoiY2hhdC1lbmdpbmUjdXNlciNpYW4jcmVhZC4jZmVlZC1wbnByZXMiLCJkIjp7InV1aWQiOiJpYW4iLCJ0aW1lc3RhbXAiOjE1NDk4MzY5OTksIm9jY3VwYW5jeSI6MSwiYWN0aW9uIjoiam9pbiJ9LCJhIjoiMiIsImYiOjAsImIiOiJjaGF0LWVuZ2luZSNpYW4jc3lzdGVtLXBucHJlcyJ9XX0="
+    },
+    "type" : 2
+  },
+  {
+    "id" : "DE046DEF-BBFE-491D-AB4E-3AD0814305EF",
+    "type" : 4
+  },
+  {
+    "id" : "8F7B78FF-0E41-4F62-9232-D0FA5A346B3E",
+    "data" : {
+      "method" : "get",
+      "cls" : "NSURLRequest",
+      "cellular" : true,
+      "cache" : 1,
+      "timeout" : 60,
+      "cookies" : true,
+      "headers" : {
+        "User-Agent" : "iPhone; CPU iPhone OS 12.1.0 Version",
+        "Accept" : "*\/*",
+        "Connection" : "keep-alive",
+        "Accept-Encoding" : "gzip,deflate"
+      },
+      "pipeline" : false,
+      "network" : 0,
+      "url" : "https:\/\/ps.pndsn.com\/v2\/subscribe\/demo-36\/,\/0?uuid=ian&channel-group=chat-engine%23ian%23custom,chat-engine%23ian%23custom-pnpres,chat-engine%23ian%23system,chat-engine%23ian%23system-pnpres&pnsdk=PubNub-ObjC-iOS\/4.x.x&tt=15498369998586227&auth=ian&tr=12"
+    },
+    "type" : 0
+  },
+  {
+    "id" : "09929033-4357-436B-9633-6CC3C7CACF99",
+    "data" : {
+      "status" : 200,
+      "cls" : "NSHTTPURLResponse",
+      "url" : "https:\/\/pubsub.pubnub.com\/v1\/blocks\/sub-key\/demo-36\/chat-engine-server?global=chat-engine&user=ian&channel=chat-engine&route=user_state&authKey=ian&uuid=ian",
+      "headers" : {
+        "Access-Control-Allow-Credentials" : "true",
+        "Content-Type" : "application\/json; charset=utf-8",
+        "Access-Control-Expose-Headers" : "Access-Control-Allow-Origin, Access-Control-Allow-Headers, Access-Control-Allow-Methods",
+        "Access-Control-Allow-Methods" : "GET, POST, OPTIONS, PUT, DELETE",
+        "Date" : "Sun, 10 Feb 2019 22:16:39 GMT",
+        "Access-Control-Allow-Headers" : "Origin, X-Requested-With, Content-Type, Accept",
+        "Content-Length" : "2",
+        "Connection" : "keep-alive"
+      }
+    },
+    "type" : 1
+  },
+  {
+    "id" : "09929033-4357-436B-9633-6CC3C7CACF99",
+    "data" : {
+      "cls" : "NSData",
+      "base64" : "e30="
+    },
+    "type" : 2
+  },
+  {
+    "id" : "09929033-4357-436B-9633-6CC3C7CACF99",
+    "type" : 4
+  },
+  {
+    "id" : "093B2C6A-D0F0-41DB-B637-320166A51119",
+    "data" : {
+      "status" : 200,
+      "cls" : "NSHTTPURLResponse",
+      "url" : "https:\/\/ps.pndsn.com\/v2\/presence\/sub-key\/demo-36\/channel\/chat-engine?disable_uuids=0&uuid=ian&pnsdk=PubNub-ObjC-iOS\/4.x.x&auth=ian&state=1",
+      "headers" : {
+        "Access-Control-Allow-Methods" : "OPTIONS, GET, POST",
+        "Content-Type" : "text\/javascript; charset=\"UTF-8\"",
+        "Server" : "Pubnub Presence",
+        "Access-Control-Allow-Origin" : "*",
+        "Age" : "0",
+        "Date" : "Sun, 10 Feb 2019 22:16:40 GMT",
+        "Accept-Ranges" : "bytes",
+        "Content-Length" : "116",
+        "Cache-Control" : "no-cache",
+        "Connection" : "keep-alive"
+      }
+    },
+    "type" : 1
+  },
+  {
+    "id" : "093B2C6A-D0F0-41DB-B637-320166A51119",
+    "data" : {
+      "cls" : "NSData",
+      "base64" : "eyJzdGF0dXMiOjIwMCwibWVzc2FnZSI6Ik9LIiwib2NjdXBhbmN5IjoxLCJ1dWlkcyI6W3sidXVpZCI6ImlhbiJ9XSwic2VydmljZSI6IlByZXNlbmNlIn0="
+    },
+    "type" : 2
+  },
+  {
+    "id" : "093B2C6A-D0F0-41DB-B637-320166A51119",
+    "type" : 4
+  },
+  {
+    "id" : "382942B2-E069-4EA3-816A-469BE9D1583F",
+    "data" : {
+      "method" : "post",
+      "cls" : "NSURLRequest",
+      "cellular" : true,
+      "network" : 0,
+      "cache" : 1,
+      "timeout" : 60,
+      "cookies" : true,
+      "headers" : {
+        "Accept" : "*\/*",
+        "Content-Length" : "94",
+        "Connection" : "keep-alive",
+        "Accept-Encoding" : "gzip,deflate",
+        "Content-Type" : "application\/json;charset=UTF-8"
+      },
+      "body" : {
+        "cls" : "NSData",
+        "base64" : "eyJnbG9iYWwiOiJjaGF0LWVuZ2luZSIsImF1dGhLZXkiOiJpYW4iLCJ1dWlkIjoiaWFuIn0="
+      },
+      "pipeline" : false,
+      "url" : "https:\/\/pubsub.pubnub.com\/v1\/blocks\/sub-key\/demo-36\/chat-engine-server?route=bootstrap"
+    },
+    "type" : 0
+  },
+  {
+    "id" : "382942B2-E069-4EA3-816A-469BE9D1583F",
+    "data" : {
+      "status" : 200,
+      "cls" : "NSHTTPURLResponse",
+      "url" : "https:\/\/pubsub.pubnub.com\/v1\/blocks\/sub-key\/demo-36\/chat-engine-server?route=bootstrap",
+      "headers" : {
+        "Access-Control-Allow-Credentials" : "true",
+        "Content-Type" : "text\/plain; charset=utf-8",
+        "Access-Control-Expose-Headers" : "Access-Control-Allow-Origin, Access-Control-Allow-Headers, Access-Control-Allow-Methods",
+        "Access-Control-Allow-Methods" : "GET, POST, OPTIONS, PUT, DELETE",
+        "Date" : "Sun, 10 Feb 2019 22:16:42 GMT",
+        "Access-Control-Allow-Headers" : "Origin, X-Requested-With, Content-Type, Accept",
+        "Content-Length" : "0",
+        "Connection" : "keep-alive"
+      }
+    },
+    "type" : 1
+  },
+  {
+    "id" : "382942B2-E069-4EA3-816A-469BE9D1583F",
+    "data" : {
+      "cls" : "NSData",
+      "base64" : ""
+    },
+    "type" : 2
+  },
+  {
+    "id" : "382942B2-E069-4EA3-816A-469BE9D1583F",
+    "type" : 4
+  },
+  {
+    "id" : "FCE18B96-47C1-46C6-BEDE-361870D5D750",
+    "data" : {
+      "method" : "post",
+      "cls" : "NSURLRequest",
+      "cellular" : true,
+      "network" : 0,
+      "cache" : 1,
+      "timeout" : 60,
+      "cookies" : true,
+      "headers" : {
+        "Accept" : "*\/*",
+        "Content-Length" : "94",
+        "Connection" : "keep-alive",
+        "Accept-Encoding" : "gzip,deflate",
+        "Content-Type" : "application\/json;charset=UTF-8"
+      },
+      "body" : {
+        "cls" : "NSData",
+        "base64" : "eyJnbG9iYWwiOiJjaGF0LWVuZ2luZSIsImF1dGhLZXkiOiJpYW4iLCJ1dWlkIjoiaWFuIn0="
+      },
+      "pipeline" : false,
+      "url" : "https:\/\/pubsub.pubnub.com\/v1\/blocks\/sub-key\/demo-36\/chat-engine-server?route=user_read"
+    },
+    "type" : 0
+  },
+  {
+    "id" : "FCE18B96-47C1-46C6-BEDE-361870D5D750",
+    "data" : {
+      "status" : 200,
+      "cls" : "NSHTTPURLResponse",
+      "url" : "https:\/\/pubsub.pubnub.com\/v1\/blocks\/sub-key\/demo-36\/chat-engine-server?route=user_read",
+      "headers" : {
+        "Access-Control-Allow-Credentials" : "true",
+        "Content-Type" : "text\/plain; charset=utf-8",
+        "Access-Control-Expose-Headers" : "Access-Control-Allow-Origin, Access-Control-Allow-Headers, Access-Control-Allow-Methods",
+        "Access-Control-Allow-Methods" : "GET, POST, OPTIONS, PUT, DELETE",
+        "Date" : "Sun, 10 Feb 2019 22:16:42 GMT",
+        "Access-Control-Allow-Headers" : "Origin, X-Requested-With, Content-Type, Accept",
+        "Content-Length" : "0",
+        "Connection" : "keep-alive"
+      }
+    },
+    "type" : 1
+  },
+  {
+    "id" : "FCE18B96-47C1-46C6-BEDE-361870D5D750",
+    "data" : {
+      "cls" : "NSData",
+      "base64" : ""
+    },
+    "type" : 2
+  },
+  {
+    "id" : "FCE18B96-47C1-46C6-BEDE-361870D5D750",
+    "type" : 4
+  },
+  {
+    "id" : "DD46C992-DFD3-4D83-830F-D93323D73011",
+    "data" : {
+      "method" : "post",
+      "cls" : "NSURLRequest",
+      "cellular" : true,
+      "network" : 0,
+      "cache" : 1,
+      "timeout" : 60,
+      "cookies" : true,
+      "headers" : {
+        "Accept" : "*\/*",
+        "Content-Length" : "94",
+        "Connection" : "keep-alive",
+        "Accept-Encoding" : "gzip,deflate",
+        "Content-Type" : "application\/json;charset=UTF-8"
+      },
+      "body" : {
+        "cls" : "NSData",
+        "base64" : "eyJnbG9iYWwiOiJjaGF0LWVuZ2luZSIsImF1dGhLZXkiOiJpYW4iLCJ1dWlkIjoiaWFuIn0="
+      },
+      "pipeline" : false,
+      "url" : "https:\/\/pubsub.pubnub.com\/v1\/blocks\/sub-key\/demo-36\/chat-engine-server?route=user_write"
+    },
+    "type" : 0
+  },
+  {
+    "id" : "DD46C992-DFD3-4D83-830F-D93323D73011",
+    "data" : {
+      "status" : 200,
+      "cls" : "NSHTTPURLResponse",
+      "url" : "https:\/\/pubsub.pubnub.com\/v1\/blocks\/sub-key\/demo-36\/chat-engine-server?route=user_write",
+      "headers" : {
+        "Access-Control-Allow-Credentials" : "true",
+        "Content-Type" : "text\/plain; charset=utf-8",
+        "Access-Control-Expose-Headers" : "Access-Control-Allow-Origin, Access-Control-Allow-Headers, Access-Control-Allow-Methods",
+        "Access-Control-Allow-Methods" : "GET, POST, OPTIONS, PUT, DELETE",
+        "Date" : "Sun, 10 Feb 2019 22:16:42 GMT",
+        "Access-Control-Allow-Headers" : "Origin, X-Requested-With, Content-Type, Accept",
+        "Content-Length" : "0",
+        "Connection" : "keep-alive"
+      }
+    },
+    "type" : 1
+  },
+  {
+    "id" : "DD46C992-DFD3-4D83-830F-D93323D73011",
+    "data" : {
+      "cls" : "NSData",
+      "base64" : ""
+    },
+    "type" : 2
+  },
+  {
+    "id" : "DD46C992-DFD3-4D83-830F-D93323D73011",
+    "type" : 4
+  },
+  {
+    "id" : "A20A5242-CEEF-41E4-A200-B59055E7BA1C",
+    "data" : {
+      "method" : "post",
+      "cls" : "NSURLRequest",
+      "cellular" : true,
+      "network" : 0,
+      "cache" : 1,
+      "timeout" : 60,
+      "cookies" : true,
+      "headers" : {
+        "Accept" : "*\/*",
+        "Content-Length" : "94",
+        "Connection" : "keep-alive",
+        "Accept-Encoding" : "gzip,deflate",
+        "Content-Type" : "application\/json;charset=UTF-8"
+      },
+      "body" : {
+        "cls" : "NSData",
+        "base64" : "eyJnbG9iYWwiOiJjaGF0LWVuZ2luZSIsImF1dGhLZXkiOiJpYW4iLCJ1dWlkIjoiaWFuIn0="
+      },
+      "pipeline" : false,
+      "url" : "https:\/\/pubsub.pubnub.com\/v1\/blocks\/sub-key\/demo-36\/chat-engine-server?route=group"
+    },
+    "type" : 0
+  },
+  {
+    "id" : "A20A5242-CEEF-41E4-A200-B59055E7BA1C",
+    "data" : {
+      "status" : 200,
+      "cls" : "NSHTTPURLResponse",
+      "url" : "https:\/\/pubsub.pubnub.com\/v1\/blocks\/sub-key\/demo-36\/chat-engine-server?route=group",
+      "headers" : {
+        "Access-Control-Allow-Credentials" : "true",
+        "Content-Type" : "text\/plain; charset=utf-8",
+        "Access-Control-Expose-Headers" : "Access-Control-Allow-Origin, Access-Control-Allow-Headers, Access-Control-Allow-Methods",
+        "Access-Control-Allow-Methods" : "GET, POST, OPTIONS, PUT, DELETE",
+        "Date" : "Sun, 10 Feb 2019 22:16:42 GMT",
+        "Access-Control-Allow-Headers" : "Origin, X-Requested-With, Content-Type, Accept",
+        "Content-Length" : "0",
+        "Connection" : "keep-alive"
+      }
+    },
+    "type" : 1
+  },
+  {
+    "id" : "A20A5242-CEEF-41E4-A200-B59055E7BA1C",
+    "data" : {
+      "cls" : "NSData",
+      "base64" : ""
+    },
+    "type" : 2
+  },
+  {
+    "id" : "A20A5242-CEEF-41E4-A200-B59055E7BA1C",
+    "type" : 4
+  },
+  {
+    "id" : "EB0F53A3-F09E-4DCD-9485-32A7FBEAB077",
+    "data" : {
+      "method" : "post",
+      "cls" : "NSURLRequest",
+      "cellular" : true,
+      "network" : 0,
+      "cache" : 1,
+      "timeout" : 60,
+      "cookies" : true,
+      "headers" : {
+        "Accept" : "*\/*",
+        "Content-Length" : "177",
+        "Connection" : "keep-alive",
+        "Accept-Encoding" : "gzip,deflate",
+        "Content-Type" : "application\/json;charset=UTF-8"
+      },
+      "body" : {
+        "cls" : "NSData",
+        "base64" : "eyJnbG9iYWwiOiJjaGF0LWVuZ2luZSIsImNoYXQiOnsiZ3JvdXAiOiJzeXN0ZW0iLCJwcml2YXRlIjpmYWxzZSwibWV0YSI6e30sImNoYW5uZWwiOiJjaGF0LWVuZ2luZSJ9LCJhdXRoS2V5IjoiaWFuIiwidXVpZCI6ImlhbiJ9"
+      },
+      "pipeline" : false,
+      "url" : "https:\/\/pubsub.pubnub.com\/v1\/blocks\/sub-key\/demo-36\/chat-engine-server?route=grant"
+    },
+    "type" : 0
+  },
+  {
+    "id" : "EB0F53A3-F09E-4DCD-9485-32A7FBEAB077",
+    "data" : {
+      "status" : 200,
+      "cls" : "NSHTTPURLResponse",
+      "url" : "https:\/\/pubsub.pubnub.com\/v1\/blocks\/sub-key\/demo-36\/chat-engine-server?route=grant",
+      "headers" : {
+        "Access-Control-Allow-Credentials" : "true",
+        "Content-Type" : "text\/plain; charset=utf-8",
+        "Access-Control-Expose-Headers" : "Access-Control-Allow-Origin, Access-Control-Allow-Headers, Access-Control-Allow-Methods",
+        "Access-Control-Allow-Methods" : "GET, POST, OPTIONS, PUT, DELETE",
+        "Date" : "Sun, 10 Feb 2019 22:16:42 GMT",
+        "Access-Control-Allow-Headers" : "Origin, X-Requested-With, Content-Type, Accept",
+        "Content-Length" : "0",
+        "Connection" : "keep-alive"
+      }
+    },
+    "type" : 1
+  },
+  {
+    "id" : "EB0F53A3-F09E-4DCD-9485-32A7FBEAB077",
+    "data" : {
+      "cls" : "NSData",
+      "base64" : ""
+    },
+    "type" : 2
+  },
+  {
+    "id" : "EB0F53A3-F09E-4DCD-9485-32A7FBEAB077",
+    "type" : 4
+  },
+  {
+    "id" : "4E76115B-FDF3-42D6-BAAC-3354C7BBF653",
+    "data" : {
+      "method" : "post",
+      "cls" : "NSURLRequest",
+      "cellular" : true,
+      "network" : 0,
+      "cache" : 1,
+      "timeout" : 60,
+      "cookies" : true,
+      "headers" : {
+        "Accept" : "*\/*",
+        "Content-Length" : "177",
+        "Connection" : "keep-alive",
+        "Accept-Encoding" : "gzip,deflate",
+        "Content-Type" : "application\/json;charset=UTF-8"
+      },
+      "body" : {
+        "cls" : "NSData",
+        "base64" : "eyJnbG9iYWwiOiJjaGF0LWVuZ2luZSIsImNoYXQiOnsiZ3JvdXAiOiJzeXN0ZW0iLCJwcml2YXRlIjpmYWxzZSwibWV0YSI6e30sImNoYW5uZWwiOiJjaGF0LWVuZ2luZSJ9LCJhdXRoS2V5IjoiaWFuIiwidXVpZCI6ImlhbiJ9"
+      },
+      "pipeline" : false,
+      "url" : "https:\/\/pubsub.pubnub.com\/v1\/blocks\/sub-key\/demo-36\/chat-engine-server?route=join"
+    },
+    "type" : 0
+  },
+  {
+    "id" : "4E76115B-FDF3-42D6-BAAC-3354C7BBF653",
+    "data" : {
+      "status" : 200,
+      "cls" : "NSHTTPURLResponse",
+      "url" : "https:\/\/pubsub.pubnub.com\/v1\/blocks\/sub-key\/demo-36\/chat-engine-server?route=join",
+      "headers" : {
+        "Access-Control-Allow-Credentials" : "true",
+        "Content-Type" : "text\/plain; charset=utf-8",
+        "Access-Control-Expose-Headers" : "Access-Control-Allow-Origin, Access-Control-Allow-Headers, Access-Control-Allow-Methods",
+        "Access-Control-Allow-Methods" : "GET, POST, OPTIONS, PUT, DELETE",
+        "Date" : "Sun, 10 Feb 2019 22:16:43 GMT",
+        "Access-Control-Allow-Headers" : "Origin, X-Requested-With, Content-Type, Accept",
+        "Content-Length" : "0",
+        "Connection" : "keep-alive"
+      }
+    },
+    "type" : 1
+  },
+  {
+    "id" : "4E76115B-FDF3-42D6-BAAC-3354C7BBF653",
+    "data" : {
+      "cls" : "NSData",
+      "base64" : ""
+    },
+    "type" : 2
+  },
+  {
+    "id" : "4E76115B-FDF3-42D6-BAAC-3354C7BBF653",
+    "type" : 4
+  },
+  {
+    "id" : "8EC894BD-60C5-4A63-A106-8A28BD85BAB6",
+    "data" : {
+      "method" : "post",
+      "cls" : "NSURLRequest",
+      "cellular" : true,
+      "network" : 0,
+      "cache" : 1,
+      "timeout" : 60,
+      "cookies" : true,
+      "headers" : {
+        "Accept" : "*\/*",
+        "Content-Length" : "217",
+        "Connection" : "keep-alive",
+        "Accept-Encoding" : "gzip,deflate",
+        "Content-Type" : "application\/json;charset=UTF-8"
+      },
+      "body" : {
+        "cls" : "NSData",
+        "base64" : "eyJnbG9iYWwiOiJjaGF0LWVuZ2luZSIsImNoYXQiOnsiZ3JvdXAiOiJzeXN0ZW0iLCJwcml2YXRlIjpmYWxzZSwibWV0YSI6e30sImNoYW5uZWwiOiJjaGF0LWVuZ2luZSN1c2VyI2lhbiN3cml0ZS4jZGlyZWN0In0sImF1dGhLZXkiOiJpYW4iLCJ1dWlkIjoiaWFuIn0="
+      },
+      "pipeline" : false,
+      "url" : "https:\/\/pubsub.pubnub.com\/v1\/blocks\/sub-key\/demo-36\/chat-engine-server?route=grant"
+    },
+    "type" : 0
+  },
+  {
+    "id" : "8EC894BD-60C5-4A63-A106-8A28BD85BAB6",
+    "data" : {
+      "status" : 200,
+      "cls" : "NSHTTPURLResponse",
+      "url" : "https:\/\/pubsub.pubnub.com\/v1\/blocks\/sub-key\/demo-36\/chat-engine-server?route=grant",
+      "headers" : {
+        "Access-Control-Allow-Credentials" : "true",
+        "Content-Type" : "text\/plain; charset=utf-8",
+        "Access-Control-Expose-Headers" : "Access-Control-Allow-Origin, Access-Control-Allow-Headers, Access-Control-Allow-Methods",
+        "Access-Control-Allow-Methods" : "GET, POST, OPTIONS, PUT, DELETE",
+        "Date" : "Sun, 10 Feb 2019 22:16:43 GMT",
+        "Access-Control-Allow-Headers" : "Origin, X-Requested-With, Content-Type, Accept",
+        "Content-Length" : "0",
+        "Connection" : "keep-alive"
+      }
+    },
+    "type" : 1
+  },
+  {
+    "id" : "8EC894BD-60C5-4A63-A106-8A28BD85BAB6",
+    "data" : {
+      "cls" : "NSData",
+      "base64" : ""
+    },
+    "type" : 2
+  },
+  {
+    "id" : "8EC894BD-60C5-4A63-A106-8A28BD85BAB6",
+    "type" : 4
+  },
+  {
+    "id" : "24EE4F49-DAD2-4DC4-AC75-8E1ECCFD9F7B",
+    "data" : {
+      "method" : "post",
+      "cls" : "NSURLRequest",
+      "cellular" : true,
+      "network" : 0,
+      "cache" : 1,
+      "timeout" : 60,
+      "cookies" : true,
+      "headers" : {
+        "Accept" : "*\/*",
+        "Content-Length" : "217",
+        "Connection" : "keep-alive",
+        "Accept-Encoding" : "gzip,deflate",
+        "Content-Type" : "application\/json;charset=UTF-8"
+      },
+      "body" : {
+        "cls" : "NSData",
+        "base64" : "eyJnbG9iYWwiOiJjaGF0LWVuZ2luZSIsImNoYXQiOnsiZ3JvdXAiOiJzeXN0ZW0iLCJwcml2YXRlIjpmYWxzZSwibWV0YSI6e30sImNoYW5uZWwiOiJjaGF0LWVuZ2luZSN1c2VyI2lhbiN3cml0ZS4jZGlyZWN0In0sImF1dGhLZXkiOiJpYW4iLCJ1dWlkIjoiaWFuIn0="
+      },
+      "pipeline" : false,
+      "url" : "https:\/\/pubsub.pubnub.com\/v1\/blocks\/sub-key\/demo-36\/chat-engine-server?route=join"
+    },
+    "type" : 0
+  },
+  {
+    "id" : "24EE4F49-DAD2-4DC4-AC75-8E1ECCFD9F7B",
+    "data" : {
+      "status" : 200,
+      "cls" : "NSHTTPURLResponse",
+      "url" : "https:\/\/pubsub.pubnub.com\/v1\/blocks\/sub-key\/demo-36\/chat-engine-server?route=join",
+      "headers" : {
+        "Access-Control-Allow-Credentials" : "true",
+        "Content-Type" : "text\/plain; charset=utf-8",
+        "Access-Control-Expose-Headers" : "Access-Control-Allow-Origin, Access-Control-Allow-Headers, Access-Control-Allow-Methods",
+        "Access-Control-Allow-Methods" : "GET, POST, OPTIONS, PUT, DELETE",
+        "Date" : "Sun, 10 Feb 2019 22:16:43 GMT",
+        "Access-Control-Allow-Headers" : "Origin, X-Requested-With, Content-Type, Accept",
+        "Content-Length" : "0",
+        "Connection" : "keep-alive"
+      }
+    },
+    "type" : 1
+  },
+  {
+    "id" : "24EE4F49-DAD2-4DC4-AC75-8E1ECCFD9F7B",
+    "data" : {
+      "cls" : "NSData",
+      "base64" : ""
+    },
+    "type" : 2
+  },
+  {
+    "id" : "24EE4F49-DAD2-4DC4-AC75-8E1ECCFD9F7B",
+    "type" : 4
+  },
+  {
+    "id" : "BAC8F83A-1D4F-41F1-A1D2-5C63D5BDECC7",
+    "data" : {
+      "method" : "post",
+      "cls" : "NSURLRequest",
+      "cellular" : true,
+      "network" : 0,
+      "cache" : 1,
+      "timeout" : 60,
+      "cookies" : true,
+      "headers" : {
+        "Accept" : "*\/*",
+        "Content-Length" : "214",
+        "Connection" : "keep-alive",
+        "Accept-Encoding" : "gzip,deflate",
+        "Content-Type" : "application\/json;charset=UTF-8"
+      },
+      "body" : {
+        "cls" : "NSData",
+        "base64" : "eyJnbG9iYWwiOiJjaGF0LWVuZ2luZSIsImNoYXQiOnsiZ3JvdXAiOiJzeXN0ZW0iLCJwcml2YXRlIjpmYWxzZSwibWV0YSI6e30sImNoYW5uZWwiOiJjaGF0LWVuZ2luZSN1c2VyI2lhbiNyZWFkLiNmZWVkIn0sImF1dGhLZXkiOiJpYW4iLCJ1dWlkIjoiaWFuIn0="
+      },
+      "pipeline" : false,
+      "url" : "https:\/\/pubsub.pubnub.com\/v1\/blocks\/sub-key\/demo-36\/chat-engine-server?route=grant"
+    },
+    "type" : 0
+  },
+  {
+    "id" : "BAC8F83A-1D4F-41F1-A1D2-5C63D5BDECC7",
+    "data" : {
+      "status" : 200,
+      "cls" : "NSHTTPURLResponse",
+      "url" : "https:\/\/pubsub.pubnub.com\/v1\/blocks\/sub-key\/demo-36\/chat-engine-server?route=grant",
+      "headers" : {
+        "Access-Control-Allow-Credentials" : "true",
+        "Content-Type" : "text\/plain; charset=utf-8",
+        "Access-Control-Expose-Headers" : "Access-Control-Allow-Origin, Access-Control-Allow-Headers, Access-Control-Allow-Methods",
+        "Access-Control-Allow-Methods" : "GET, POST, OPTIONS, PUT, DELETE",
+        "Date" : "Sun, 10 Feb 2019 22:16:43 GMT",
+        "Access-Control-Allow-Headers" : "Origin, X-Requested-With, Content-Type, Accept",
+        "Content-Length" : "0",
+        "Connection" : "keep-alive"
+      }
+    },
+    "type" : 1
+  },
+  {
+    "id" : "BAC8F83A-1D4F-41F1-A1D2-5C63D5BDECC7",
+    "data" : {
+      "cls" : "NSData",
+      "base64" : ""
+    },
+    "type" : 2
+  },
+  {
+    "id" : "BAC8F83A-1D4F-41F1-A1D2-5C63D5BDECC7",
+    "type" : 4
+  },
+  {
+    "id" : "C9D48A57-B61B-4B90-A3F6-56ABEB5BFB8D",
+    "data" : {
+      "method" : "post",
+      "cls" : "NSURLRequest",
+      "cellular" : true,
+      "network" : 0,
+      "cache" : 1,
+      "timeout" : 60,
+      "cookies" : true,
+      "headers" : {
+        "Accept" : "*\/*",
+        "Content-Length" : "214",
+        "Connection" : "keep-alive",
+        "Accept-Encoding" : "gzip,deflate",
+        "Content-Type" : "application\/json;charset=UTF-8"
+      },
+      "body" : {
+        "cls" : "NSData",
+        "base64" : "eyJnbG9iYWwiOiJjaGF0LWVuZ2luZSIsImNoYXQiOnsiZ3JvdXAiOiJzeXN0ZW0iLCJwcml2YXRlIjpmYWxzZSwibWV0YSI6e30sImNoYW5uZWwiOiJjaGF0LWVuZ2luZSN1c2VyI2lhbiNyZWFkLiNmZWVkIn0sImF1dGhLZXkiOiJpYW4iLCJ1dWlkIjoiaWFuIn0="
+      },
+      "pipeline" : false,
+      "url" : "https:\/\/pubsub.pubnub.com\/v1\/blocks\/sub-key\/demo-36\/chat-engine-server?route=join"
+    },
+    "type" : 0
+  },
+  {
+    "id" : "C9D48A57-B61B-4B90-A3F6-56ABEB5BFB8D",
+    "data" : {
+      "status" : 200,
+      "cls" : "NSHTTPURLResponse",
+      "url" : "https:\/\/pubsub.pubnub.com\/v1\/blocks\/sub-key\/demo-36\/chat-engine-server?route=join",
+      "headers" : {
+        "Access-Control-Allow-Credentials" : "true",
+        "Content-Type" : "text\/plain; charset=utf-8",
+        "Access-Control-Expose-Headers" : "Access-Control-Allow-Origin, Access-Control-Allow-Headers, Access-Control-Allow-Methods",
+        "Access-Control-Allow-Methods" : "GET, POST, OPTIONS, PUT, DELETE",
+        "Date" : "Sun, 10 Feb 2019 22:16:43 GMT",
+        "Access-Control-Allow-Headers" : "Origin, X-Requested-With, Content-Type, Accept",
+        "Content-Length" : "0",
+        "Connection" : "keep-alive"
+      }
+    },
+    "type" : 1
+  },
+  {
+    "id" : "C9D48A57-B61B-4B90-A3F6-56ABEB5BFB8D",
+    "data" : {
+      "cls" : "NSData",
+      "base64" : ""
+    },
+    "type" : 2
+  },
+  {
+    "id" : "C9D48A57-B61B-4B90-A3F6-56ABEB5BFB8D",
+    "type" : 4
+  },
+  {
+    "id" : "5F315E09-3B25-4800-A4D3-786288C8E5CD",
+    "data" : {
+      "method" : "get",
+      "cls" : "NSURLRequest",
+      "cellular" : true,
+      "cache" : 1,
+      "timeout" : 60,
+      "cookies" : true,
+      "headers" : {
+        "User-Agent" : "iPhone; CPU iPhone OS 12.1.0 Version",
+        "Accept" : "*\/*",
+        "Connection" : "keep-alive",
+        "Accept-Encoding" : "gzip,deflate"
+      },
+      "pipeline" : false,
+      "network" : 0,
+      "url" : "https:\/\/ps.pndsn.com\/v2\/subscribe\/demo-36\/,\/0?uuid=ian&channel-group=chat-engine%23ian%23custom,chat-engine%23ian%23custom-pnpres,chat-engine%23ian%23system,chat-engine%23ian%23system-pnpres&pnsdk=PubNub-ObjC-iOS\/4.x.x&tt=0&auth=ian"
+    },
+    "type" : 0
+  },
+  {
+    "id" : "8D4CEB4E-5D11-412E-8A4D-2E0CD3026946",
+    "data" : {
+      "method" : "get",
+      "cls" : "NSURLRequest",
+      "cellular" : true,
+      "cache" : 1,
+      "timeout" : 60,
+      "cookies" : true,
+      "headers" : {
+        "User-Agent" : "iPhone; CPU iPhone OS 12.1.0 Version",
+        "Accept" : "*\/*",
+        "Connection" : "keep-alive",
+        "Accept-Encoding" : "gzip,deflate"
+      },
+      "pipeline" : false,
+      "network" : 0,
+      "url" : "https:\/\/ps.pndsn.com\/v2\/presence\/sub-key\/demo-36\/channel\/,\/heartbeat?uuid=ian&channel-group=chat-engine%23ian%23custom,chat-engine%23ian%23system&pnsdk=PubNub-ObjC-iOS\/4.x.x&auth=ian&heartbeat=300"
+    },
+    "type" : 0
+  },
+  {
+    "id" : "5F315E09-3B25-4800-A4D3-786288C8E5CD",
+    "data" : {
+      "status" : 200,
+      "cls" : "NSHTTPURLResponse",
+      "url" : "https:\/\/ps.pndsn.com\/v2\/subscribe\/demo-36\/,\/0?uuid=ian&channel-group=chat-engine%23ian%23custom,chat-engine%23ian%23custom-pnpres,chat-engine%23ian%23system,chat-engine%23ian%23system-pnpres&pnsdk=PubNub-ObjC-iOS\/4.x.x&tt=0&auth=ian",
+      "headers" : {
+        "Access-Control-Allow-Methods" : "GET",
+        "Content-Type" : "text\/javascript; charset=\"UTF-8\"",
+        "Access-Control-Allow-Origin" : "*",
+        "Date" : "Sun, 10 Feb 2019 22:16:44 GMT",
+        "Content-Length" : "45",
+        "Cache-Control" : "no-cache",
+        "Connection" : "keep-alive"
+      }
+    },
+    "type" : 1
+  },
+  {
+    "id" : "5F315E09-3B25-4800-A4D3-786288C8E5CD",
+    "data" : {
+      "cls" : "NSData",
+      "base64" : "eyJ0Ijp7InQiOiIxNTQ5ODM2OTk5ODU4NjIyNyIsInIiOjEyfSwibSI6W119"
+    },
+    "type" : 2
+  },
+  {
+    "id" : "32062592-C3D7-4CD8-B430-D29043A79328",
+    "data" : {
+      "method" : "get",
+      "cls" : "NSURLRequest",
+      "cellular" : true,
+      "cache" : 1,
+      "timeout" : 60,
+      "cookies" : true,
+      "headers" : {
+        "User-Agent" : "iPhone; CPU iPhone OS 12.1.0 Version",
+        "Accept" : "*\/*",
+        "Connection" : "keep-alive",
+        "Accept-Encoding" : "gzip,deflate"
+      },
+      "pipeline" : false,
+      "network" : 0,
+      "url" : "https:\/\/ps.pndsn.com\/v2\/presence\/sub-key\/demo-36\/channel\/chat-engine?disable_uuids=0&uuid=ian&pnsdk=PubNub-ObjC-iOS\/4.x.x&auth=ian&state=1"
+    },
+    "type" : 0
+  },
+  {
+    "id" : "5F315E09-3B25-4800-A4D3-786288C8E5CD",
+    "type" : 4
+  },
+  {
+    "id" : "D2DCC127-4426-41DB-8F98-72E6C049A6B9",
+    "data" : {
+      "method" : "get",
+      "cls" : "NSURLRequest",
+      "cellular" : true,
+      "cache" : 1,
+      "timeout" : 60,
+      "cookies" : true,
+      "headers" : {
+        "User-Agent" : "iPhone; CPU iPhone OS 12.1.0 Version",
+        "Accept" : "*\/*",
+        "Connection" : "keep-alive",
+        "Accept-Encoding" : "gzip,deflate"
+      },
+      "pipeline" : false,
+      "network" : 0,
+      "url" : "https:\/\/ps.pndsn.com\/v2\/subscribe\/demo-36\/,\/0?uuid=ian&channel-group=chat-engine%23ian%23custom,chat-engine%23ian%23custom-pnpres,chat-engine%23ian%23system,chat-engine%23ian%23system-pnpres&pnsdk=PubNub-ObjC-iOS\/4.x.x&tt=15498369998586227&auth=ian&tr=12"
+    },
+    "type" : 0
+  },
+  {
+    "id" : "8D4CEB4E-5D11-412E-8A4D-2E0CD3026946",
+    "data" : {
+      "status" : 200,
+      "cls" : "NSHTTPURLResponse",
+      "url" : "https:\/\/ps.pndsn.com\/v2\/presence\/sub-key\/demo-36\/channel\/,\/heartbeat?uuid=ian&channel-group=chat-engine%23ian%23custom,chat-engine%23ian%23system&pnsdk=PubNub-ObjC-iOS\/4.x.x&auth=ian&heartbeat=300",
+      "headers" : {
+        "Access-Control-Allow-Methods" : "OPTIONS, GET, POST",
+        "Content-Type" : "text\/javascript; charset=\"UTF-8\"",
+        "Server" : "Pubnub Presence",
+        "Access-Control-Allow-Origin" : "*",
+        "Age" : "0",
+        "Date" : "Sun, 10 Feb 2019 22:16:44 GMT",
+        "Accept-Ranges" : "bytes",
+        "Content-Length" : "55",
+        "Cache-Control" : "no-cache",
+        "Connection" : "keep-alive"
+      }
+    },
+    "type" : 1
+  },
+  {
+    "id" : "8D4CEB4E-5D11-412E-8A4D-2E0CD3026946",
+    "data" : {
+      "cls" : "NSData",
+      "base64" : "eyJzdGF0dXMiOjIwMCwibWVzc2FnZSI6Ik9LIiwic2VydmljZSI6IlByZXNlbmNlIn0="
+    },
+    "type" : 2
+  },
+  {
+    "id" : "8D4CEB4E-5D11-412E-8A4D-2E0CD3026946",
+    "type" : 4
+  },
+  {
+    "id" : "32062592-C3D7-4CD8-B430-D29043A79328",
+    "data" : {
+      "status" : 200,
+      "cls" : "NSHTTPURLResponse",
+      "url" : "https:\/\/ps.pndsn.com\/v2\/presence\/sub-key\/demo-36\/channel\/chat-engine?disable_uuids=0&uuid=ian&pnsdk=PubNub-ObjC-iOS\/4.x.x&auth=ian&state=1",
+      "headers" : {
+        "Access-Control-Allow-Methods" : "OPTIONS, GET, POST",
+        "Content-Type" : "text\/javascript; charset=\"UTF-8\"",
+        "Server" : "Pubnub Presence",
+        "Access-Control-Allow-Origin" : "*",
+        "Age" : "0",
+        "Date" : "Sun, 10 Feb 2019 22:16:45 GMT",
+        "Accept-Ranges" : "bytes",
+        "Content-Length" : "116",
+        "Cache-Control" : "no-cache",
+        "Connection" : "keep-alive"
+      }
+    },
+    "type" : 1
+  },
+  {
+    "id" : "32062592-C3D7-4CD8-B430-D29043A79328",
+    "data" : {
+      "cls" : "NSData",
+      "base64" : "eyJzdGF0dXMiOjIwMCwibWVzc2FnZSI6Ik9LIiwib2NjdXBhbmN5IjoxLCJ1dWlkcyI6W3sidXVpZCI6ImlhbiJ9XSwic2VydmljZSI6IlByZXNlbmNlIn0="
+    },
+    "type" : 2
+  },
+  {
+    "id" : "32062592-C3D7-4CD8-B430-D29043A79328",
+    "type" : 4
+  },
+  {
+    "id" : "3B599D52-9108-4863-814C-B213C1C20D9E",
+    "data" : {
+      "method" : "get",
+      "cls" : "NSURLRequest",
+      "cellular" : true,
+      "cache" : 1,
+      "timeout" : 60,
+      "cookies" : true,
+      "headers" : {
+        "Accept-Encoding" : "gzip,deflate",
+        "Connection" : "keep-alive",
+        "Accept" : "*\/*"
+      },
+      "pipeline" : false,
+      "network" : 0,
+      "url" : "https:\/\/pubsub.pubnub.com\/v1\/blocks\/sub-key\/demo-36\/chat-engine-server?global=chat-engine&user=ian&channel=chat-engine&route=user_state&authKey=ian&uuid=ian"
+    },
+    "type" : 0
+  },
+  {
+    "id" : "3B599D52-9108-4863-814C-B213C1C20D9E",
+    "data" : {
+      "status" : 200,
+      "cls" : "NSHTTPURLResponse",
+      "url" : "https:\/\/pubsub.pubnub.com\/v1\/blocks\/sub-key\/demo-36\/chat-engine-server?global=chat-engine&user=ian&channel=chat-engine&route=user_state&authKey=ian&uuid=ian",
+      "headers" : {
+        "Access-Control-Allow-Credentials" : "true",
+        "Content-Type" : "application\/json; charset=utf-8",
+        "Access-Control-Expose-Headers" : "Access-Control-Allow-Origin, Access-Control-Allow-Headers, Access-Control-Allow-Methods",
+        "Access-Control-Allow-Methods" : "GET, POST, OPTIONS, PUT, DELETE",
+        "Date" : "Sun, 10 Feb 2019 22:16:45 GMT",
+        "Access-Control-Allow-Headers" : "Origin, X-Requested-With, Content-Type, Accept",
+        "Content-Length" : "2",
+        "Connection" : "keep-alive"
+      }
+    },
+    "type" : 1
+  },
+  {
+    "id" : "3B599D52-9108-4863-814C-B213C1C20D9E",
+    "data" : {
+      "cls" : "NSData",
+      "base64" : "e30="
+    },
+    "type" : 2
+  },
+  {
+    "id" : "3B599D52-9108-4863-814C-B213C1C20D9E",
+    "type" : 4
+  },
+  {
+    "id" : "3260AD56-3CE4-4AA6-87F8-00617219F0D6",
+    "data" : {
+      "method" : "get",
+      "cls" : "NSURLRequest",
+      "cellular" : true,
+      "cache" : 1,
+      "timeout" : 60,
+      "cookies" : true,
+      "headers" : {
+        "User-Agent" : "iPhone; CPU iPhone OS 12.1.0 Version",
+        "Accept" : "*\/*",
+        "Connection" : "keep-alive",
+        "Accept-Encoding" : "gzip,deflate"
+      },
+      "pipeline" : false,
+      "network" : 0,
+      "url" : "https:\/\/ps.pndsn.com\/v1\/push\/sub-key\/demo-36\/devices\/3030303030303030303030303030303030303030303030303030303030303030?uuid=ian&pnsdk=PubNub-ObjC-iOS\/4.x.x&auth=ian&add=chat-engine%23user%23ian%23write.%23direct"
+    },
+    "type" : 0
+  },
+  {
+    "id" : "3260AD56-3CE4-4AA6-87F8-00617219F0D6",
+    "data" : {
+      "status" : 200,
+      "cls" : "NSHTTPURLResponse",
+      "url" : "https:\/\/ps.pndsn.com\/v1\/push\/sub-key\/demo-36\/devices\/3030303030303030303030303030303030303030303030303030303030303030?uuid=ian&pnsdk=PubNub-ObjC-iOS\/4.x.x&auth=ian&add=chat-engine%23user%23ian%23write.%23direct",
+      "headers" : {
+        "Access-Control-Allow-Methods" : "GET, DELETE, OPTIONS",
+        "Content-Type" : "text\/javascript; charset=\"UTF-8\"",
+        "Server" : "Pubnub",
+        "Access-Control-Allow-Origin" : "*",
+        "Age" : "0",
+        "Date" : "Sun, 10 Feb 2019 22:16:46 GMT",
+        "Accept-Ranges" : "bytes",
+        "Content-Length" : "24",
+        "Cache-Control" : "no-cache",
+        "Connection" : "keep-alive"
+      }
+    },
+    "type" : 1
+  },
+  {
+    "id" : "3260AD56-3CE4-4AA6-87F8-00617219F0D6",
+    "data" : {
+      "cls" : "NSData",
+      "base64" : "WzEsICJNb2RpZmllZCBDaGFubmVscyJd"
+    },
+    "type" : 2
+  },
+  {
+    "id" : "3260AD56-3CE4-4AA6-87F8-00617219F0D6",
+    "type" : 4
+  },
+  {
+    "id" : "6D7A54E0-3E7C-4155-8E8D-596828181770",
+    "data" : {
+      "method" : "get",
+      "cls" : "NSURLRequest",
+      "cellular" : true,
+      "cache" : 1,
+      "timeout" : 60,
+      "cookies" : true,
+      "headers" : {
+        "User-Agent" : "iPhone; CPU iPhone OS 12.1.0 Version",
+        "Accept" : "*\/*",
+        "Connection" : "keep-alive",
+        "Accept-Encoding" : "gzip,deflate"
+      },
+      "pipeline" : false,
+      "network" : 0,
+      "url" : "https:\/\/ps.pndsn.com\/publish\/demo-36\/demo-36\/0\/chat-engine%23user%23ian%23write.%23direct\/0\/%7B%22sender%22:%22ian%22,%22pn_gcm%22:%7B%22data%22:%7B%22cepayload%22:%7B%22sender%22:%22ian%22,%22category%22:%22com.pubnub.chat-engine.notifications.seen%22,%22data%22:%7B%22eid%22:%22all%22%7D,%22chat%22:%22chat-engine%23user%23ian%23write.%23direct%22,%22eid%22:%22unique-event-id%22,%22event%22:%22$notifications.seen%22,%22chatengineSDK%22:%22objc%22%7D,%22category%22:%22com.pubnub.chat-engine.notifications.seen%22%7D%7D,%22data%22:%7B%22eid%22:%22all%22%7D,%22event%22:%22$notifications.seen%22,%22eid%22:%22unique-event-id%22,%22pn_apns%22:%7B%22aps%22:%7B%22sound%22:%22%22,%22category%22:%22com.pubnub.chat-engine.notifications.seen%22,%22content-available%22:1%7D,%22cepayload%22:%7B%22sender%22:%22ian%22,%22category%22:%22com.pubnub.chat-engine.notifications.seen%22,%22data%22:%7B%22eid%22:%22all%22%7D,%22chat%22:%22chat-engine%23user%23ian%23write.%23direct%22,%22eid%22:%22unique-event-id%22,%22event%22:%22$notifications.seen%22,%22chatengineSDK%22:%22objc%22%7D%7D,%22chatengineSDK%22:%22objc%22%7D?uuid=ian&pnsdk=PubNub-ObjC-iOS\/4.x.x&seqn=1&auth=ian"
+    },
+    "type" : 0
+  },
+  {
+    "id" : "6D7A54E0-3E7C-4155-8E8D-596828181770",
+    "data" : {
+      "status" : 200,
+      "cls" : "NSHTTPURLResponse",
+      "url" : "https:\/\/ps.pndsn.com\/publish\/demo-36\/demo-36\/0\/chat-engine%23user%23ian%23write.%23direct\/0\/%7B%22sender%22:%22ian%22,%22pn_gcm%22:%7B%22data%22:%7B%22cepayload%22:%7B%22sender%22:%22ian%22,%22category%22:%22com.pubnub.chat-engine.notifications.seen%22,%22data%22:%7B%22eid%22:%22all%22%7D,%22chat%22:%22chat-engine%23user%23ian%23write.%23direct%22,%22eid%22:%22unique-event-id%22,%22event%22:%22$notifications.seen%22,%22chatengineSDK%22:%22objc%22%7D,%22category%22:%22com.pubnub.chat-engine.notifications.seen%22%7D%7D,%22data%22:%7B%22eid%22:%22all%22%7D,%22event%22:%22$notifications.seen%22,%22eid%22:%22unique-event-id%22,%22pn_apns%22:%7B%22aps%22:%7B%22sound%22:%22%22,%22category%22:%22com.pubnub.chat-engine.notifications.seen%22,%22content-available%22:1%7D,%22cepayload%22:%7B%22sender%22:%22ian%22,%22category%22:%22com.pubnub.chat-engine.notifications.seen%22,%22data%22:%7B%22eid%22:%22all%22%7D,%22chat%22:%22chat-engine%23user%23ian%23write.%23direct%22,%22eid%22:%22unique-event-id%22,%22event%22:%22$notifications.seen%22,%22chatengineSDK%22:%22objc%22%7D%7D,%22chatengineSDK%22:%22objc%22%7D?uuid=ian&auth=ian&seqn=1&pnsdk=PubNub-ObjC-iOS\/4.x.x",
+      "headers" : {
+        "Access-Control-Allow-Methods" : "GET",
+        "Content-Type" : "text\/javascript; charset=\"UTF-8\"",
+        "Access-Control-Allow-Origin" : "*",
+        "Date" : "Sun, 10 Feb 2019 22:16:46 GMT",
+        "Content-Length" : "30",
+        "Cache-Control" : "no-cache",
+        "Connection" : "keep-alive"
+      }
+    },
+    "type" : 1
+  },
+  {
+    "id" : "6D7A54E0-3E7C-4155-8E8D-596828181770",
+    "data" : {
+      "cls" : "NSData",
+      "base64" : "WzEsIlNlbnQiLCIxNTQ5ODM3MDA2OTM2NjY0NiJd"
+    },
+    "type" : 2
+  },
+  {
+    "id" : "6D7A54E0-3E7C-4155-8E8D-596828181770",
+    "type" : 4
+  },
+  {
+    "id" : "8F7B78FF-0E41-4F62-9232-D0FA5A346B3E",
+    "data" : {
+      "status" : 200,
+      "cls" : "NSHTTPURLResponse",
+      "url" : "https:\/\/ps.pndsn.com\/v2\/subscribe\/demo-36\/,\/0?uuid=ian&channel-group=chat-engine%23ian%23custom,chat-engine%23ian%23custom-pnpres,chat-engine%23ian%23system,chat-engine%23ian%23system-pnpres&pnsdk=PubNub-ObjC-iOS\/4.x.x&tt=15498369998586227&auth=ian&tr=12",
+      "headers" : {
+        "Access-Control-Allow-Methods" : "GET",
+        "Content-Type" : "text\/javascript; charset=\"UTF-8\"",
+        "Access-Control-Allow-Origin" : "*",
+        "Connection" : "keep-alive",
+        "Date" : "Sun, 10 Feb 2019 22:16:46 GMT",
+        "Content-Encoding" : "gzip",
+        "Cache-Control" : "no-cache",
+        "Transfer-Encoding" : "Identity"
+      }
+    },
+    "type" : 1
+  },
+  {
+    "id" : "D2DCC127-4426-41DB-8F98-72E6C049A6B9",
+    "data" : {
+      "status" : 200,
+      "cls" : "NSHTTPURLResponse",
+      "url" : "https:\/\/ps.pndsn.com\/v2\/subscribe\/demo-36\/,\/0?uuid=ian&channel-group=chat-engine%23ian%23custom,chat-engine%23ian%23custom-pnpres,chat-engine%23ian%23system,chat-engine%23ian%23system-pnpres&pnsdk=PubNub-ObjC-iOS\/4.x.x&tt=15498369998586227&auth=ian&tr=12",
+      "headers" : {
+        "Access-Control-Allow-Methods" : "GET",
+        "Content-Type" : "text\/javascript; charset=\"UTF-8\"",
+        "Access-Control-Allow-Origin" : "*",
+        "Connection" : "keep-alive",
+        "Date" : "Sun, 10 Feb 2019 22:16:46 GMT",
+        "Content-Encoding" : "gzip",
+        "Cache-Control" : "no-cache",
+        "Transfer-Encoding" : "Identity"
+      }
+    },
+    "type" : 1
+  },
+  {
+    "id" : "8F7B78FF-0E41-4F62-9232-D0FA5A346B3E",
+    "data" : {
+      "cls" : "NSData",
+      "base64" : "eyJ0Ijp7InQiOiIxNTQ5ODM3MDA2OTM2ODY0MiIsInIiOjEyfSwibSI6W3siayI6ImRlbW8tMzYiLCJiIjoiY2hhdC1lbmdpbmUjaWFuI3N5c3RlbSIsInAiOnsidCI6IjE1NDk4MzcwMDY5MzY2NjQ2IiwiciI6MTJ9LCJjIjoiY2hhdC1lbmdpbmUjdXNlciNpYW4jd3JpdGUuI2RpcmVjdCIsImQiOnsic2VuZGVyIjoiaWFuIiwicG5fZ2NtIjp7ImRhdGEiOnsiY2VwYXlsb2FkIjp7InNlbmRlciI6ImlhbiIsImNhdGVnb3J5IjoiY29tLnB1Ym51Yi5jaGF0LWVuZ2luZS5ub3RpZmljYXRpb25zLnNlZW4iLCJkYXRhIjp7ImVpZCI6ImFsbCJ9LCJjaGF0IjoiY2hhdC1lbmdpbmUjdXNlciNpYW4jd3JpdGUuI2RpcmVjdCIsImVpZCI6IkFCQkU1Qjg3LTFGQUYtNDMxRi1CN0E0LTEwNjE1RDBGMUMwNCIsImV2ZW50IjoiJG5vdGlmaWNhdGlvbnMuc2VlbiIsImNoYXRlbmdpbmVTREsiOiJvYmpjXC8wLjkuMiJ9LCJjYXRlZ29yeSI6ImNvbS5wdWJudWIuY2hhdC1lbmdpbmUubm90aWZpY2F0aW9ucy5zZWVuIn19LCJkYXRhIjp7ImVpZCI6ImFsbCJ9LCJldmVudCI6IiRub3RpZmljYXRpb25zLnNlZW4iLCJlaWQiOiJBQkJFNUI4Ny0xRkFGLTQzMUYtQjdBNC0xMDYxNUQwRjFDMDQiLCJwbl9hcG5zIjp7ImFwcyI6eyJzb3VuZCI6IiIsImNhdGVnb3J5IjoiY29tLnB1Ym51Yi5jaGF0LWVuZ2luZS5ub3RpZmljYXRpb25zLnNlZW4iLCJjb250ZW50LWF2YWlsYWJsZSI6MX0sImNlcGF5bG9hZCI6eyJzZW5kZXIiOiJpYW4iLCJjYXRlZ29yeSI6ImNvbS5wdWJudWIuY2hhdC1lbmdpbmUubm90aWZpY2F0aW9ucy5zZWVuIiwiZGF0YSI6eyJlaWQiOiJhbGwifSwiY2hhdCI6ImNoYXQtZW5naW5lI3VzZXIjaWFuI3dyaXRlLiNkaXJlY3QiLCJlaWQiOiJBQkJFNUI4Ny0xRkFGLTQzMUYtQjdBNC0xMDYxNUQwRjFDMDQiLCJldmVudCI6IiRub3RpZmljYXRpb25zLnNlZW4iLCJjaGF0ZW5naW5lU0RLIjoib2JqY1wvMC45LjIifX0sImNoYXRlbmdpbmVTREsiOiJvYmpjXC8wLjkuMiJ9LCJpIjoiaWFuIiwiYSI6IjIiLCJmIjowLCJzIjoxfV19"
+    },
+    "type" : 2
+  },
+  {
+    "id" : "8F7B78FF-0E41-4F62-9232-D0FA5A346B3E",
+    "type" : 4
+  },
+  {
+    "id" : "D2DCC127-4426-41DB-8F98-72E6C049A6B9",
+    "data" : {
+      "cls" : "NSData",
+      "base64" : "eyJ0Ijp7InQiOiIxNTQ5ODM3MDA2OTM2ODY0MiIsInIiOjEyfSwibSI6W3siayI6ImRlbW8tMzYiLCJiIjoiY2hhdC1lbmdpbmUjaWFuI3N5c3RlbSIsInAiOnsidCI6IjE1NDk4MzcwMDY5MzY2NjQ2IiwiciI6MTJ9LCJjIjoiY2hhdC1lbmdpbmUjdXNlciNpYW4jd3JpdGUuI2RpcmVjdCIsImQiOnsic2VuZGVyIjoiaWFuIiwicG5fZ2NtIjp7ImRhdGEiOnsiY2VwYXlsb2FkIjp7InNlbmRlciI6ImlhbiIsImNhdGVnb3J5IjoiY29tLnB1Ym51Yi5jaGF0LWVuZ2luZS5ub3RpZmljYXRpb25zLnNlZW4iLCJkYXRhIjp7ImVpZCI6ImFsbCJ9LCJjaGF0IjoiY2hhdC1lbmdpbmUjdXNlciNpYW4jd3JpdGUuI2RpcmVjdCIsImVpZCI6IkFCQkU1Qjg3LTFGQUYtNDMxRi1CN0E0LTEwNjE1RDBGMUMwNCIsImV2ZW50IjoiJG5vdGlmaWNhdGlvbnMuc2VlbiIsImNoYXRlbmdpbmVTREsiOiJvYmpjXC8wLjkuMiJ9LCJjYXRlZ29yeSI6ImNvbS5wdWJudWIuY2hhdC1lbmdpbmUubm90aWZpY2F0aW9ucy5zZWVuIn19LCJkYXRhIjp7ImVpZCI6ImFsbCJ9LCJldmVudCI6IiRub3RpZmljYXRpb25zLnNlZW4iLCJlaWQiOiJBQkJFNUI4Ny0xRkFGLTQzMUYtQjdBNC0xMDYxNUQwRjFDMDQiLCJwbl9hcG5zIjp7ImFwcyI6eyJzb3VuZCI6IiIsImNhdGVnb3J5IjoiY29tLnB1Ym51Yi5jaGF0LWVuZ2luZS5ub3RpZmljYXRpb25zLnNlZW4iLCJjb250ZW50LWF2YWlsYWJsZSI6MX0sImNlcGF5bG9hZCI6eyJzZW5kZXIiOiJpYW4iLCJjYXRlZ29yeSI6ImNvbS5wdWJudWIuY2hhdC1lbmdpbmUubm90aWZpY2F0aW9ucy5zZWVuIiwiZGF0YSI6eyJlaWQiOiJhbGwifSwiY2hhdCI6ImNoYXQtZW5naW5lI3VzZXIjaWFuI3dyaXRlLiNkaXJlY3QiLCJlaWQiOiJBQkJFNUI4Ny0xRkFGLTQzMUYtQjdBNC0xMDYxNUQwRjFDMDQiLCJldmVudCI6IiRub3RpZmljYXRpb25zLnNlZW4iLCJjaGF0ZW5naW5lU0RLIjoib2JqY1wvMC45LjIifX0sImNoYXRlbmdpbmVTREsiOiJvYmpjXC8wLjkuMiJ9LCJpIjoiaWFuIiwiYSI6IjIiLCJmIjowLCJzIjoxfV19"
+    },
+    "type" : 2
+  },
+  {
+    "id" : "D2DCC127-4426-41DB-8F98-72E6C049A6B9",
+    "type" : 4
+  },
+  {
+    "id" : "9BBFED37-C2DC-4588-81AB-2CC8E012D3EF",
+    "data" : {
+      "method" : "get",
+      "cls" : "NSURLRequest",
+      "cellular" : true,
+      "cache" : 1,
+      "timeout" : 60,
+      "cookies" : true,
+      "headers" : {
+        "User-Agent" : "iPhone; CPU iPhone OS 12.1.0 Version",
+        "Accept" : "*\/*",
+        "Connection" : "keep-alive",
+        "Accept-Encoding" : "gzip,deflate"
+      },
+      "pipeline" : false,
+      "network" : 0,
+      "url" : "https:\/\/ps.pndsn.com\/v2\/subscribe\/demo-36\/,\/0?uuid=ian&channel-group=chat-engine%23ian%23custom,chat-engine%23ian%23custom-pnpres,chat-engine%23ian%23system,chat-engine%23ian%23system-pnpres&pnsdk=PubNub-ObjC-iOS\/4.x.x&auth=ian&tt=15498370069368642&tr=12"
+    },
+    "type" : 0
+  },
+  {
+    "id" : "2F0D657E-2E57-4A5F-81E8-C3D3534380EF",
+    "data" : {
+      "method" : "get",
+      "cls" : "NSURLRequest",
+      "cellular" : true,
+      "cache" : 1,
+      "timeout" : 60,
+      "cookies" : true,
+      "headers" : {
+        "User-Agent" : "iPhone; CPU iPhone OS 12.1.0 Version",
+        "Accept" : "*\/*",
+        "Connection" : "keep-alive",
+        "Accept-Encoding" : "gzip,deflate"
+      },
+      "pipeline" : false,
+      "network" : 0,
+      "url" : "https:\/\/ps.pndsn.com\/v2\/subscribe\/demo-36\/,\/0?uuid=ian&channel-group=chat-engine%23ian%23custom,chat-engine%23ian%23custom-pnpres,chat-engine%23ian%23system,chat-engine%23ian%23system-pnpres&pnsdk=PubNub-ObjC-iOS\/4.x.x&tt=15498370069368642&auth=ian&tr=12"
+    },
+    "type" : 0
+  },
+  {
+    "id" : "2F0D657E-2E57-4A5F-81E8-C3D3534380EF",
+    "data" : {
+      "code" : -999,
+      "info" : {
+        "NSErrorFailingURLStringKey" : "https:\/\/ps.pndsn.com\/v2\/subscribe\/demo-36\/,\/0?uuid=ian&channel-group=chat-engine%23ian%23custom,chat-engine%23ian%23custom-pnpres,chat-engine%23ian%23system,chat-engine%23ian%23system-pnpres&pnsdk=PubNub-ObjC-iOS\/4.x.x&tt=15498370069368642&auth=ian&tr=12",
+        "NSLocalizedDescription" : "cancelled",
+        "NSErrorFailingURLKey" : "https:\/\/ps.pndsn.com\/v2\/subscribe\/demo-36\/,\/0?uuid=ian&channel-group=chat-engine%23ian%23custom,chat-engine%23ian%23custom-pnpres,chat-engine%23ian%23system,chat-engine%23ian%23system-pnpres&pnsdk=PubNub-ObjC-iOS\/4.x.x&tt=15498370069368642&auth=ian&tr=12"
+      },
+      "cls" : "NSError",
+      "domain" : "NSURLErrorDomain"
+    },
+    "type" : 3
+  },
+  {
+    "id" : "19250675-403B-4386-9503-9317601A5694",
+    "data" : {
+      "method" : "get",
+      "cls" : "NSURLRequest",
+      "cellular" : true,
+      "cache" : 1,
+      "timeout" : 60,
+      "cookies" : true,
+      "headers" : {
+        "User-Agent" : "iPhone; CPU iPhone OS 12.1.0 Version",
+        "Accept" : "*\/*",
+        "Connection" : "keep-alive",
+        "Accept-Encoding" : "gzip,deflate"
+      },
+      "pipeline" : false,
+      "network" : 0,
+      "url" : "https:\/\/ps.pndsn.com\/v2\/presence\/sub_key\/demo-36\/channel\/,\/leave?uuid=ian&channel-group=chat-engine%23ian%23custom,chat-engine%23ian%23system&pnsdk=PubNub-ObjC-iOS\/4.x.x&auth=ian"
+    },
+    "type" : 0
+  },
+  {
+    "id" : "19250675-403B-4386-9503-9317601A5694",
+    "data" : {
+      "status" : 200,
+      "cls" : "NSHTTPURLResponse",
+      "url" : "https:\/\/ps.pndsn.com\/v2\/presence\/sub_key\/demo-36\/channel\/,\/leave?uuid=ian&channel-group=chat-engine%23ian%23custom,chat-engine%23ian%23system&pnsdk=PubNub-ObjC-iOS\/4.x.x&auth=ian",
+      "headers" : {
+        "Access-Control-Allow-Methods" : "OPTIONS, GET, POST",
+        "Content-Type" : "text\/javascript; charset=\"UTF-8\"",
+        "Server" : "Pubnub Presence",
+        "Access-Control-Allow-Origin" : "*",
+        "Age" : "0",
+        "Date" : "Sun, 10 Feb 2019 22:16:51 GMT",
+        "Accept-Ranges" : "bytes",
+        "Content-Length" : "74",
+        "Cache-Control" : "no-cache",
+        "Connection" : "keep-alive"
+      }
+    },
+    "type" : 1
+  },
+  {
+    "id" : "19250675-403B-4386-9503-9317601A5694",
+    "data" : {
+      "cls" : "NSData",
+      "base64" : "eyJzdGF0dXMiOjIwMCwibWVzc2FnZSI6Ik9LIiwic2VydmljZSI6IlByZXNlbmNlIiwiYWN0aW9uIjoibGVhdmUifQ=="
+    },
+    "type" : 2
+  },
+  {
+    "id" : "19250675-403B-4386-9503-9317601A5694",
+    "type" : 4
+  },
+  {
+    "id" : "9BBFED37-C2DC-4588-81AB-2CC8E012D3EF",
+    "data" : {
+      "status" : 200,
+      "cls" : "NSHTTPURLResponse",
+      "url" : "https:\/\/ps.pndsn.com\/v2\/subscribe\/demo-36\/,\/0?uuid=ian&channel-group=chat-engine%23ian%23custom,chat-engine%23ian%23custom-pnpres,chat-engine%23ian%23system,chat-engine%23ian%23system-pnpres&pnsdk=PubNub-ObjC-iOS\/4.x.x&auth=ian&tt=15498370069368642&tr=12",
+      "headers" : {
+        "Access-Control-Allow-Methods" : "GET",
+        "Content-Type" : "text\/javascript; charset=\"UTF-8\"",
+        "Access-Control-Allow-Origin" : "*",
+        "Date" : "Sun, 10 Feb 2019 22:16:51 GMT",
+        "Content-Length" : "367",
+        "Cache-Control" : "no-cache",
+        "Connection" : "keep-alive"
+      }
+    },
+    "type" : 1
+  },
+  {
+    "id" : "9BBFED37-C2DC-4588-81AB-2CC8E012D3EF",
+    "data" : {
+      "cls" : "NSData",
+      "base64" : "eyJ0Ijp7InQiOiIxNTQ5ODM3MDExNzQ4MDQwNSIsInIiOjEyfSwibSI6W3siayI6ImRlbW8tMzYiLCJwIjp7InQiOiIxNTQ5ODM3MDExNjc2NzEzNCIsInIiOjF9LCJjIjoiY2hhdC1lbmdpbmUjdXNlciNpYW4jd3JpdGUuI2RpcmVjdC1wbnByZXMiLCJkIjp7InV1aWQiOiJpYW4iLCJ0aW1lc3RhbXAiOjE1NDk4MzcwMTEsIm9jY3VwYW5jeSI6MCwiYWN0aW9uIjoibGVhdmUifSwiYSI6IjIiLCJmIjowLCJiIjoiY2hhdC1lbmdpbmUjaWFuI3N5c3RlbS1wbnByZXMifV19"
+    },
+    "type" : 2
+  },
+  {
+    "id" : "9BBFED37-C2DC-4588-81AB-2CC8E012D3EF",
+    "type" : 4
+  },
+  {
+    "id" : "C6D9B58E-B1A5-4C76-AD08-850B109457AB",
+    "data" : {
+      "method" : "get",
+      "cls" : "NSURLRequest",
+      "cellular" : true,
+      "cache" : 1,
+      "timeout" : 60,
+      "cookies" : true,
+      "headers" : {
+        "User-Agent" : "iPhone; CPU iPhone OS 12.1.0 Version",
+        "Accept" : "*\/*",
+        "Connection" : "keep-alive",
+        "Accept-Encoding" : "gzip,deflate"
+      },
+      "pipeline" : false,
+      "network" : 0,
+      "url" : "https:\/\/ps.pndsn.com\/v2\/subscribe\/demo-36\/,\/0?uuid=ian&channel-group=chat-engine%23ian%23custom,chat-engine%23ian%23custom-pnpres,chat-engine%23ian%23system,chat-engine%23ian%23system-pnpres&pnsdk=PubNub-ObjC-iOS\/4.x.x&auth=ian&tt=15498370117480405&tr=12"
+    },
+    "type" : 0
+  },
+  {
+    "id" : "C6D9B58E-B1A5-4C76-AD08-850B109457AB",
+    "data" : {
+      "status" : 200,
+      "cls" : "NSHTTPURLResponse",
+      "url" : "https:\/\/ps.pndsn.com\/v2\/subscribe\/demo-36\/,\/0?uuid=ian&channel-group=chat-engine%23ian%23custom,chat-engine%23ian%23custom-pnpres,chat-engine%23ian%23system,chat-engine%23ian%23system-pnpres&pnsdk=PubNub-ObjC-iOS\/4.x.x&auth=ian&tt=15498370117480405&tr=12",
+      "headers" : {
+        "Access-Control-Allow-Methods" : "GET",
+        "Content-Type" : "text\/javascript; charset=\"UTF-8\"",
+        "Access-Control-Allow-Origin" : "*",
+        "Date" : "Sun, 10 Feb 2019 22:16:51 GMT",
+        "Content-Length" : "647",
+        "Cache-Control" : "no-cache",
+        "Connection" : "keep-alive"
+      }
+    },
+    "type" : 1
+  },
+  {
+    "id" : "C6D9B58E-B1A5-4C76-AD08-850B109457AB",
+    "data" : {
+      "cls" : "NSData",
+      "base64" : "eyJ0Ijp7InQiOiIxNTQ5ODM3MDExNzY2MDQ0NiIsInIiOjEyfSwibSI6W3siayI6ImRlbW8tMzYiLCJwIjp7InQiOiIxNTQ5ODM3MDExNjc1ODU5OCIsInIiOjF9LCJjIjoiY2hhdC1lbmdpbmUtcG5wcmVzIiwiZCI6eyJ1dWlkIjoiaWFuIiwidGltZXN0YW1wIjoxNTQ5ODM3MDExLCJvY2N1cGFuY3kiOjAsImFjdGlvbiI6ImxlYXZlIn0sImEiOiIyIiwiZiI6MCwiYiI6ImNoYXQtZW5naW5lI2lhbiNzeXN0ZW0tcG5wcmVzIn0seyJrIjoiZGVtby0zNiIsInAiOnsidCI6IjE1NDk4MzcwMTE2OTE5Nzg1IiwiciI6MX0sImMiOiJjaGF0LWVuZ2luZSN1c2VyI2lhbiNyZWFkLiNmZWVkLXBucHJlcyIsImQiOnsidXVpZCI6ImlhbiIsInRpbWVzdGFtcCI6MTU0OTgzNzAxMSwib2NjdXBhbmN5IjowLCJhY3Rpb24iOiJsZWF2ZSJ9LCJhIjoiMiIsImYiOjAsImIiOiJjaGF0LWVuZ2luZSNpYW4jc3lzdGVtLXBucHJlcyJ9XX0="
+    },
+    "type" : 2
+  },
+  {
+    "id" : "C6D9B58E-B1A5-4C76-AD08-850B109457AB",
+    "type" : 4
+  },
+  {
+    "id" : "41217339-1301-4BCB-872A-36EBC0B2C206",
+    "data" : {
+      "method" : "get",
+      "cls" : "NSURLRequest",
+      "cellular" : true,
+      "cache" : 1,
+      "timeout" : 60,
+      "cookies" : true,
+      "headers" : {
+        "User-Agent" : "iPhone; CPU iPhone OS 12.1.0 Version",
+        "Accept" : "*\/*",
+        "Connection" : "keep-alive",
+        "Accept-Encoding" : "gzip,deflate"
+      },
+      "pipeline" : false,
+      "network" : 0,
+      "url" : "https:\/\/ps.pndsn.com\/v2\/subscribe\/demo-36\/,\/0?uuid=ian&channel-group=chat-engine%23ian%23custom,chat-engine%23ian%23custom-pnpres,chat-engine%23ian%23system,chat-engine%23ian%23system-pnpres&pnsdk=PubNub-ObjC-iOS\/4.x.x&auth=ian&tt=15498370117660446&tr=12"
+    },
+    "type" : 0
+  },
+  {
+    "id" : "41217339-1301-4BCB-872A-36EBC0B2C206",
+    "data" : {
+      "code" : -999,
+      "info" : {
+        "NSErrorFailingURLStringKey" : "https:\/\/ps.pndsn.com\/v2\/subscribe\/demo-36\/,\/0?uuid=ian&channel-group=chat-engine%23ian%23custom,chat-engine%23ian%23custom-pnpres,chat-engine%23ian%23system,chat-engine%23ian%23system-pnpres&pnsdk=PubNub-ObjC-iOS\/4.x.x&auth=ian&tt=15498370117660446&tr=12",
+        "NSLocalizedDescription" : "cancelled",
+        "NSErrorFailingURLKey" : "https:\/\/ps.pndsn.com\/v2\/subscribe\/demo-36\/,\/0?uuid=ian&channel-group=chat-engine%23ian%23custom,chat-engine%23ian%23custom-pnpres,chat-engine%23ian%23system,chat-engine%23ian%23system-pnpres&pnsdk=PubNub-ObjC-iOS\/4.x.x&auth=ian&tt=15498370117660446&tr=12"
+      },
+      "cls" : "NSError",
+      "domain" : "NSURLErrorDomain"
+    },
+    "type" : 3
+  },
+  {
+    "id" : "9EA611A3-7A71-4FE1-9100-CE2F45080649",
+    "data" : {
+      "method" : "get",
+      "cls" : "NSURLRequest",
+      "cellular" : true,
+      "cache" : 1,
+      "timeout" : 60,
+      "cookies" : true,
+      "headers" : {
+        "User-Agent" : "iPhone; CPU iPhone OS 12.1.0 Version",
+        "Accept" : "*\/*",
+        "Connection" : "keep-alive",
+        "Accept-Encoding" : "gzip,deflate"
+      },
+      "pipeline" : false,
+      "network" : 0,
+      "url" : "https:\/\/ps.pndsn.com\/v2\/presence\/sub_key\/demo-36\/channel\/,\/leave?uuid=ian&channel-group=chat-engine%23ian%23custom,chat-engine%23ian%23system&pnsdk=PubNub-ObjC-iOS\/4.x.x&auth=ian"
+    },
+    "type" : 0
+  },
+  {
+    "id" : "9EA611A3-7A71-4FE1-9100-CE2F45080649",
+    "data" : {
+      "status" : 200,
+      "cls" : "NSHTTPURLResponse",
+      "url" : "https:\/\/ps.pndsn.com\/v2\/presence\/sub_key\/demo-36\/channel\/,\/leave?uuid=ian&channel-group=chat-engine%23ian%23custom,chat-engine%23ian%23system&pnsdk=PubNub-ObjC-iOS\/4.x.x&auth=ian",
+      "headers" : {
+        "Access-Control-Allow-Methods" : "OPTIONS, GET, POST",
+        "Content-Type" : "text\/javascript; charset=\"UTF-8\"",
+        "Server" : "Pubnub Presence",
+        "Access-Control-Allow-Origin" : "*",
+        "Age" : "0",
+        "Date" : "Sun, 10 Feb 2019 22:16:55 GMT",
+        "Accept-Ranges" : "bytes",
+        "Content-Length" : "74",
+        "Cache-Control" : "no-cache",
+        "Connection" : "keep-alive"
+      }
+    },
+    "type" : 1
+  },
+  {
+    "id" : "9EA611A3-7A71-4FE1-9100-CE2F45080649",
+    "data" : {
+      "cls" : "NSData",
+      "base64" : "eyJzdGF0dXMiOjIwMCwibWVzc2FnZSI6Ik9LIiwic2VydmljZSI6IlByZXNlbmNlIiwiYWN0aW9uIjoibGVhdmUifQ=="
+    },
+    "type" : 2
+  },
+  {
+    "id" : "9EA611A3-7A71-4FE1-9100-CE2F45080649",
+    "type" : 4
+  }
+]

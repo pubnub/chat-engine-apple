@@ -1,20 +1,18 @@
 /**
  * @author Serhii Mamontov
- * @version 0.9.0
- * @copyright © 2009-2018 PubNub, Inc.
+ * @version 0.9.2
+ * @copyright © 2010-2019 PubNub, Inc.
  */
 #import "CENChatEngine+Session.h"
-#import "CENChatEngine+ChatInterface.h"
 #import "CENChatEngine+PubNubPrivate.h"
 #import "CENChatEngine+EventEmitter.h"
+#import "CENChatEngine+ChatPrivate.h"
 #import "CENChatEngine+Private.h"
 #import "CENChatEngine+User.h"
 #import "CENSession+Private.h"
 #import "CENObject+Private.h"
-#import "CENErrorCodes.h"
-#import "CENStructures.h"
+#import "CENChat+Private.h"
 #import "CENError.h"
-#import "CENChat.h"
 #import "CENMe.h"
 
 
@@ -36,24 +34,31 @@
     [self.synchronizationSession restore];
 }
 
-- (void)synchronizeSessionChatsWithCompletion:(void(^)(NSString *group, NSArray<NSString *> *chats))block {
+- (void)synchronizeSessionWithCompletion:(void(^)(NSString *group,
+                                                  NSArray<NSString *> *chats))block {
     
-    NSString *chatsNamespace = self.configuration.globalChannel;
+    NSString *nSpace = self.configuration.globalChannel;
     
-    for (NSString *group in @[CENChatGroup.custom, CENChatGroup.system]) {
-        NSString *channelGroup = [@[chatsNamespace, self.me.uuid, group] componentsJoinedByString:@"#"];
+    for (NSString *group in @[CENChatGroup.custom]) {
+        NSString *groupName = [@[nSpace, self.me.uuid, group] componentsJoinedByString:@"#"];
         
-        [self channelsForGroup:channelGroup withCompletion:^(NSArray<NSString *> *chats, PNErrorStatus *errorStatus) {
+        [self channelsForGroup:groupName
+                withCompletion:^(NSArray<NSString *> *chats, PNErrorStatus *errorStatus) {
+                    
             if (!errorStatus) {
                 block(group, chats);
                 
                 return;
             }
             
-            NSString *description = @"There was a problem restoring your session from PubNub servers.";
-            NSError *error = [CENError errorFromPubNubStatus:errorStatus withDescription:description];
+            NSString *description = @"There was a problem restoring your session from PubNub "
+                                     "servers.";
+            NSError *error = [CENError errorFromPubNubStatus:errorStatus
+                                             withDescription:description];
             
-            [self throwError:error forScope:@"sync" from:self propagateFlow:CEExceptionPropagationFlow.direct];
+            [self throwError:error forScope:@"sync"
+                        from:self.synchronizationSession
+               propagateFlow:CEExceptionPropagationFlow.direct];
         }];
     }
 }
@@ -63,10 +68,18 @@
 
 - (void)synchronizeSessionChatJoin:(CENChat *)chat {
     
+    if (![chat.group isEqualToString:CENChatGroup.custom] || [chat isEqual:self.global]) {
+        return;
+    }
+    
     [self.synchronizationSession joinChat:chat];
 }
 
 - (void)synchronizeSessionChatLeave:(CENChat *)chat {
+    
+    if (![chat.group isEqualToString:CENChatGroup.custom] || [chat isEqual:self.global]) {
+        return;
+    }
     
     [self.synchronizationSession leaveChat:chat];
 }
@@ -85,10 +98,14 @@
 
 - (CENChat *)synchronizationChat {
     
-    NSString *chatsNamespace = self.configuration.globalChannel;
-    NSString *syncChatName = [@[chatsNamespace, @"user", self.me.uuid, @"me.", @"sync"] componentsJoinedByString:@"#"];
+    NSString *nspace = self.configuration.globalChannel;
+    NSString *name = [@[nspace, @"user", self.me.uuid, @"me.#sync"] componentsJoinedByString:@"#"];
     
-    return [self createChatWithName:syncChatName group:CENChatGroup.system private:NO autoConnect:YES metaData:@{ }];
+    return [self createChatWithName:name
+                              group:CENChatGroup.system
+                            private:NO
+                        autoConnect:YES
+                           metaData:@{ }];
 }
 
 #pragma mark -

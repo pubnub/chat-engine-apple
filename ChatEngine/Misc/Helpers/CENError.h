@@ -9,11 +9,11 @@
 NS_ASSUME_NONNULL_BEGIN
 
 /**
- * @brief  Useful NSError additions collection.
+ * @brief \a NSError interface extension.
  *
  * @author Serhii Mamontov
- * @version 0.9.0
- * @copyright © 2009-2018 PubNub, Inc.
+ * @version 0.9.2
+ * @copyright © 2010-2019 PubNub, Inc.
  */
 @interface CENError : NSObject
 
@@ -21,44 +21,46 @@ NS_ASSUME_NONNULL_BEGIN
 #pragma mark - PubNub
 
 /**
- * @brief  Construct \a NSError instance from \b PubNub error status object.
+ * @brief Create \a NSError from \b PubNub error status object.
  *
- * @param status Reference on \b PubNub error status.
+ * @param status \b PubNub error status.
  *
- * @return Reference on initialized error.
+ * @return Error based on \b PubNub error status.
  */
 + (NSError *)errorFromPubNubStatus:(PNErrorStatus *)status;
 
 /**
- * @brief  Construct \a NSError instance from \b PubNub error status object.
+ * @brief Create \a NSError from \b PubNub error status object.
  *
- * @param status      Reference on \b PubNub error status.
- * @param description Reference on custom error status description.
+ * @param status \b PubNub error status.
+ * @param description Custom error status description.
  *
- * @return Reference on initialized error.
+ * @return Error based on \b PubNub error status.
  */
 + (NSError *)errorFromPubNubStatus:(PNErrorStatus *)status withDescription:(NSString *)description;
 
 /**
- * @brief  Construct \a NSError instance from \b PubNub error status object.
+ * @brief Create \a NSError from \b PubNub error status object.
  *
- * @param status   Reference on \b PubNub error status.
- * @param userInfo Reference on dictionary which will be merged with data which has been received from \b PubNub error status object.
+ * @param status \b PubNub error status.
+ * @param userInfo \a NSDictionary which will be merged with data which has been received from
+ *     \b PubNub error status object.
  *
- * @return Reference on initialized error.
+ * @return Error based on \b PubNub error status.
  */
 + (NSError *)errorFromPubNubStatus:(PNErrorStatus *)status withUserInfo:(NSDictionary *)userInfo;
 
 /**
- * @brief  Construct \a NSError instance from \b PubNub error status object.
+ * @brief Create \a NSError from \b PubNub Function call results.
  *
- * @param functionResponses Reference on set of responses where one of them should be \c error instance which has been created using \b PubNub
- *                          Function response.
- * @param description       Reference on string which will be used as localized error description.
+ * @param responses \a NSArray where one of them should be \c error which has been created using
+ *     \b PubNub Function response.
+ * @param description String which will be used as localized error description.
  *
- * @return Reference on initialized error.
+ * @return Error based on \b PubNub Function response.
  */
-+ (NSError *)errorFromPubNubFunctionError:(nullable id)functionResponses withDescription:(NSString *)description;
++ (NSError *)errorFromPubNubFunctionError:(nullable NSArray *)responses
+                          withDescription:(NSString *)description;
 
 #pragma mark -
 

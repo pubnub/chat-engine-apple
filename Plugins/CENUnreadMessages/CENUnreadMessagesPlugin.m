@@ -1,7 +1,7 @@
 /**
  * @author Serhii Mamontov
- * @version 1.0.0
- * @copyright © 2009-2018 PubNub, Inc.
+ * @version 0.0.2
+ * @copyright © 2010-2019 PubNub, Inc.
  */
 #import "CENUnreadMessagesPlugin.h"
 #import <CENChatEngine/CEPPlugin+Developer.h>
@@ -11,8 +11,24 @@
 
 #pragma mark Externs
 
-CENUnreadMessagesEventKeys CENUnreadMessagesEvent = { .chat = @"c", .sender = @"uuid", .event = @"e", .count = @"count" };
-CENUnreadMessagesConfigurationKeys CENUnreadMessagesConfiguration = { .events = @"e" };
+/**
+ * @brief Unread messages event payload data structure values assignment.
+ */
+CENUnreadMessagesEventKeys CENUnreadMessagesEvent = {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+    .sender = @"id",
+#pragma GCC diagnostic pop
+    .event = @"e",
+    .count = @"c"
+};
+
+/**
+ * @brief Configuration keys structure values assignment.
+ */
+CENUnreadMessagesConfigurationKeys CENUnreadMessagesConfiguration = {
+    .events = @"e"
+};
 
 
 #pragma mark - Interface implementation
@@ -42,21 +58,33 @@ CENUnreadMessagesConfigurationKeys CENUnreadMessagesConfiguration = { .events = 
 }
 
 + (void)setChat:(CENChat *)chat active:(BOOL)isActive {
-    
-    [chat extensionWithIdentifier:[self identifier] context:^(CENUnreadMessagesExtension *extension) {
-        if (isActive) {
-            [extension active];
-        } else {
-            [extension inactive];
-        }
-    }];
+
+    CENUnreadMessagesExtension *extension = [chat extensionWithIdentifier:[self identifier]];
+
+    if (isActive) {
+        [extension active];
+    } else {
+        [extension inactive];
+    }
+}
+
++ (BOOL)isChatActive:(CENChat *)chat {
+
+    CENUnreadMessagesExtension *extension = [chat extensionWithIdentifier:[self identifier]];
+
+    return extension.isActive;
+}
+
++ (NSUInteger)unreadCountForChat:(CENChat *)chat {
+
+    CENUnreadMessagesExtension *extension = [chat extensionWithIdentifier:[self identifier]];
+
+    return extension.unreadCount;
 }
 
 + (void)fetchUnreadCountForChat:(CENChat *)chat withCompletion:(void(^)(NSUInteger count))block {
-    
-    [chat extensionWithIdentifier:[self identifier] context:^(CENUnreadMessagesExtension *extension) {
-        block(extension.unreadCount);
-    }];
+
+    block([self unreadCountForChat:chat]);
 }
 
 
@@ -64,7 +92,7 @@ CENUnreadMessagesConfigurationKeys CENUnreadMessagesConfiguration = { .events = 
 
 - (void)onCreate {
     
-    NSMutableDictionary *configuration = [NSMutableDictionary dictionaryWithDictionary:self.configuration];
+    NSMutableDictionary *configuration = [(self.configuration ?: @{}) mutableCopy];
     
     if (!((NSArray<NSString *> *)configuration[CENUnreadMessagesConfiguration.events]).count) {
         configuration[CENUnreadMessagesConfiguration.events] = @[@"message"];

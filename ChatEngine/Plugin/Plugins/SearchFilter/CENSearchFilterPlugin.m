@@ -1,11 +1,12 @@
 /**
  * @author Serhii Mamontov
- * @copyright © 2009-2018 PubNub, Inc.
+ * @version 0.9.2
+ * @copyright © 2010-2019 PubNub, Inc.
  */
 #import "CENSearchFilterPlugin.h"
 #import "CENSearchFilterMiddleware.h"
 #import "CEPPlugin+Developer.h"
-#import "CEPStructures.h"
+#import "CENSearch.h"
 
 
 #pragma mark Interface implementation
@@ -23,9 +24,16 @@
 
 #pragma mark - Middleware
 
-- (Class)middlewareClassForLocation:(NSString *)location object:(CENObject *)__unused object {
+- (Class)middlewareClassForLocation:(NSString *)location object:(CENObject *)object {
     
-    return [location isEqualToString:CEPMiddlewareLocation.on] ? [CENSearchFilterMiddleware class] : nil;
+    BOOL isOnLocation = [location isEqualToString:CEPMiddlewareLocation.on];
+    Class cls = nil;
+    
+    if (isOnLocation && [object isKindOfClass:[CENSearch class]]) {
+        cls = [CENSearchFilterMiddleware class];
+    }
+    
+    return cls;
 }
 
 #pragma mark -

@@ -2,15 +2,17 @@
 #define ChatEngine_h
 
 
-#pragma mark - Core
+#pragma mark Core
 
 #import "CENChatEngine.h"
 #import "CENChatEngine+Connection.h"
 #import "CENChatEngine+PubNub.h"
 #import "CENChatEngine+Chat.h"
 #import "CENChatEngine+User.h"
+#import "CENEmittedEvent.h"
 
 #if CHATENGINE_USE_BUILDER_INTERFACE
+    #import "CENChatEngine+BuilderInterface.h"
 
     #import "CENChatEngine+ChatBuilderInterface.h"
     #import "CENChatBuilderInterface.h"
@@ -58,6 +60,7 @@
     #import "CENUser+BuilderInterface.h"
 
     #import "CENMe+BuilderInterface.h"
+    #import "CENSession+BuilderInterface.h"
 #else
     #import "CENEventEmitter+Interface.h"
 
@@ -67,7 +70,6 @@
 
     #import "CENObject+Plugins.h"
     #import "CENMe+Interface.h"
-
 #endif // CHATENGINE_USE_BUILDER_INTERFACE
 
 #import "CENErrorCodes.h"
