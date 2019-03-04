@@ -1,7 +1,7 @@
 /**
  * @author Serhii Mamontov
- * @version 0.9.0
- * @copyright © 2009-2018 PubNub, Inc.
+ * @version 0.9.2
+ * @copyright © 2010-2019 PubNub, Inc.
  */
 #import "CENChatEngine+AuthorizationBuilderInterface.h"
 #import "CENChatEngine+AuthorizationPrivate.h"
@@ -11,117 +11,222 @@
 #import "CENChatEngine+ChatPrivate.h"
 #import "CENEventEmitter+Interface.h"
 #import "CENChatEngine+Private.h"
+#import "CENChat+Interface.h"
+#import "CENChat+Private.h"
 #import "CENErrorCodes.h"
-#import "CENStructures.h"
 #import "CENLogMacro.h"
+#import "CENDefines.h"
 #import "CENError.h"
-#import "CENChat.h"
 
 
-#pragma mark Interface implementation
+NS_ASSUME_NONNULL_BEGIN
+
+#pragma mark Protected interface declaration
+
+@interface CENChatEngine (AuthorizationProtected)
+
+
+#pragma mark - Misc
+
+/**
+ * @brief Prepare and throw exception because PubNub client not ready yet.
+ *
+ * @param chat \b {Chat CENChat} for which user tried to grant access rights for connection.
+ *
+ * @since 0.9.3
+ */
+- (void)throwPubNubNotReadyConnectToChat:(CENChat *)chat;
+
+/**
+ * @brief Prepare and throw exception because of troubles in communication with \b PubNub Function.
+ *
+ * @param responses Responses from \b PubNub Function which contain error description.
+ * @param chat \b {Chat CENChat} for which \b PubNub Function has been used.
+ *
+ * @since 0.9.3
+ */
+- (void)throwPubNubFunctionHandshakeError:(NSArray *)responses forChat:(CENChat *)chat;
+
+#pragma mark -
+
+
+@end
+
+NS_ASSUME_NONNULL_END
+
+
+#pragma mark - Interface implementation
 
 @implementation CENChatEngine (Authorization)
 
 
-#pragma mark - Confgiuration
+#pragma mark - Access management
 
 #if CHATENGINE_USE_BUILDER_INTERFACE
+- (CENChatEngine * (^)(id authKey))reauthorize {
 
-- (CENChatEngine * (^)(NSString * authKey))reauthorize {
-    
-    return ^CENChatEngine * (NSString *authKey){
+    return ^CENChatEngine * (id authKey){
         [self reauthorizeUserWithKey:authKey];
-        
         return self;
     };
 }
-
 #endif // CHATENGINE_USE_BUILDER_INTERFACE
 
-- (void)reauthorizeUserWithKey:(NSString *)authKey {
+- (void)reauthorizeUserWithKey:(id)authKey {
     
+    authKey = authKey ?: [[NSUUID UUID] UUIDString];
+    
+    if ([authKey isKindOfClass:[NSNumber class]]) {
+        authKey = ((NSNumber *)authKey).stringValue;
+    }
+
     CELogAPICall(self.logger, @"<ChatEngine::API> Re-authorize with key: %@", authKey);
-    
-    [self.global handleEventOnce:@"$.disconnected" withHandlerBlock:^{
+
+    CENWeakify(self)
+    dispatch_block_t disconnectionHandler = ^{
+        CENStrongify(self)
+
         [self changePubNubAuthorizationKey:authKey withCompletion:^{
-            NSString *globalChat = self.currentConfiguration.globalChannel;
+            NSString *namespace = self.currentConfiguration.globalChannel;
+            NSString *uuid = [self pubNubUUID];
             
-            [self.functionsClient setDefaultDataWithGlobalChat:globalChat userUUID:[self pubNubUUID] userAuth:authKey];
+            [self.functionClient setWithNamespace:namespace userUUID:uuid userAuth:authKey];
             [self reconnectUser];
         }];
+    };
+    
+    [self.global handleEventOnce:@"$.disconnected"
+                withHandlerBlock:^(CENEmittedEvent * __unused event) {
+                    
+        disconnectionHandler();
     }];
     
     [self disconnectUser];
+    [self resetChatsConnection];
 }
 
 
 #pragma mark - Access management
 
 - (void)authorizeLocalUserWithCompletion:(dispatch_block_t)block {
-    
-    [self authorizeLocalUserWithUUID:[self pubNubUUID] authorizationKey:[self pubNubAuthKey] completion:block];
+
+    [self authorizeLocalUserWithUUID:[self pubNubUUID]
+                    authorizationKey:[self pubNubAuthKey]
+                          completion:block];
 }
 
-- (void)authorizeLocalUserWithUUID:(NSString *)uuid authorizationKey:(NSString *)authorizationKey completion:(dispatch_block_t)block {
-    
-    NSString *globalChat = self.currentConfiguration.globalChannel;
-     NSArray<NSDictionary *> *routes = @[
+- (void)authorizeLocalUserWithUUID:(NSString *)uuid
+                  authorizationKey:(NSString *)authKey
+                        completion:(dispatch_block_t)block {
+
+    NSString *namespace = self.currentConfiguration.globalChannel;
+    NSArray<NSDictionary *> *routes = @[
         @{ @"route": @"bootstrap", @"method": @"post" },
         @{ @"route": @"user_read", @"method": @"post" },
         @{ @"route": @"user_write", @"method": @"post" },
         @{ @"route": @"group", @"method": @"post" }
     ];
-    
-    __weak __typeof(self) weakSelf = self;
-    [self.functionsClient setDefaultDataWithGlobalChat:globalChat userUUID:uuid userAuth:authorizationKey];
-    [self.functionsClient callRouteSeries:routes withCompletion:^(BOOL success, NSArray *responses) {
-        __strong __typeof(weakSelf) strongSelf = weakSelf;
-        
+
+    [self.functionClient setWithNamespace:namespace userUUID:uuid userAuth:authKey];
+
+    CENWeakify(self)
+    [self.functionClient callRouteSeries:routes withCompletion:^(BOOL success, NSArray *responses) {
+        CENStrongify(self)
+
         if (success) {
             block();
-            
             return;
         }
-        
-        NSString *description = [NSString stringWithFormat:@"There was a problem logging into the auth server (%@).",
-                                 strongSelf.currentConfiguration.functionEndpoint];
-        NSError *error = [CENError errorFromPubNubFunctionError:responses withDescription:description];
-        
-        [strongSelf throwError:error forScope:@"auth" from:strongSelf propagateFlow:CEExceptionPropagationFlow.direct];
+
+        NSString *functionEndpoint = self.currentConfiguration.functionEndpoint;
+        NSString *description = [NSString stringWithFormat:@"There was a problem logging into the "
+                                 "auth server (%@).", functionEndpoint];
+        NSError *error = [CENError errorFromPubNubFunctionError:responses
+                                                withDescription:description];
+
+        [self throwError:error
+                forScope:@"auth"
+                    from:self
+           propagateFlow:CEExceptionPropagationFlow.direct];
     }];
 }
 
-- (void)handshakeChatAccess:(CENChat *)chat withCompletion:(void (^)(BOOL, NSDictionary *))block {
-    
-    if (self.pubnub) {
-        NSDictionary *dictionaryRepresentation = [chat dictionaryRepresentation];
-        __block NSArray<NSDictionary *> *routes = @[
-            @{ @"route": @"grant", @"method": @"post",  @"body": @{ @"chat": dictionaryRepresentation } },
-            @{ @"route": @"join", @"method": @"post",  @"body": @{ @"chat": dictionaryRepresentation } },
-        ];
-        __weak __typeof(self) weakSelf = self;
-        
-        [self.functionsClient callRouteSeries:routes withCompletion:^(BOOL success, __unused NSArray *responses) {
-            routes = @[@{ @"route": @"chat", @"method": @"get", @"query": @{ @"channel": chat.channel } }];
-            __strong __typeof(weakSelf) strongSelf = weakSelf;
-            
-            if (!strongSelf.configuration.enableMeta || !success) {
-                block(!success, nil);
-                
-                return;
-            }
-            
-            [strongSelf fetchRemoteStateForChat:chat withCompletion:block];
-        }];
-        
+- (void)handshakeChatAccess:(CENChat *)chat withCompletion:(dispatch_block_t)block {
+
+    if (!self.pubnub) {
+        [self throwPubNubNotReadyConnectToChat:chat];
         return;
     }
-    
-    NSString *description = @"You must call -[chatEngine connect] and wait for the $.ready event before creating new Chats.";
+
+    NSDictionary *chatRepresentation = [chat dictionaryRepresentation];
+    __block NSArray<NSDictionary *> *routes = @[
+        @{ @"route": @"grant", @"method": @"post", @"body": @{ @"chat": chatRepresentation } },
+        @{ @"route": @"join", @"method": @"post", @"body": @{ @"chat": chatRepresentation } },
+    ];
+    void (^errorHandlerBlock)(NSArray *) = ^(NSArray *responses) {
+        [self throwPubNubFunctionHandshakeError:responses forChat:chat];
+    };
+    void (^handleMetaFetch)(BOOL, NSArray *) = ^(BOOL success, NSArray *responses) {
+        if (!success) {
+            errorHandlerBlock(responses);
+            return;
+        }
+        
+        block();
+    };
+
+    CENWeakify(self)
+    [self.functionClient callRouteSeries:routes withCompletion:^(BOOL success, NSArray *responses) {
+        CENStrongify(self)
+        
+        if (!self.configuration.enableMeta || !success) {
+            if (!success) {
+                errorHandlerBlock(responses);
+            } else {
+                block();
+            }
+
+            return;
+        }
+        
+        if (![chat.group isEqualToString:CENChatGroup.system] && ![chat isEqual:self.global]) {
+            [self fetchMetaForChat:chat withCompletion:handleMetaFetch];
+        } else {
+            block();
+        }
+        
+    }];
+}
+
+
+#pragma mark - Misc
+
+- (void)throwPubNubNotReadyConnectToChat:(CENChat *)chat {
+
+    NSString *description = @"You must call chatEngine.connect() and wait for the $.ready event "
+                            "before creating new Chats.";
     NSDictionary *errorInformation = @{ NSLocalizedDescriptionKey: description };
-    NSError *error = [NSError errorWithDomain:kCENErrorDomain code:kCENClientNotConnectedError userInfo:errorInformation];
-    
-    [self throwError:error forScope:@"auth" from:chat propagateFlow:CEExceptionPropagationFlow.middleware];
+    NSError *error = [NSError errorWithDomain:kCENErrorDomain
+                                         code:kCENClientNotConnectedError
+                                     userInfo:errorInformation];
+
+    [self throwError:error
+            forScope:@"auth"
+                from:chat
+       propagateFlow:CEExceptionPropagationFlow.direct];
+}
+
+- (void)throwPubNubFunctionHandshakeError:(NSArray *)responses forChat:(CENChat *)chat {
+
+    NSString *functionEndpoint = self.currentConfiguration.functionEndpoint;
+    NSString *description = [NSString stringWithFormat:@"There was a problem logging into the auth "
+                                                       "server (%@).", functionEndpoint];
+    NSError *error = [CENError errorFromPubNubFunctionError:responses withDescription:description];
+
+    [self throwError:error
+            forScope:@"auth"
+                from:chat
+       propagateFlow:CEExceptionPropagationFlow.direct];
 }
 
 #pragma mark -

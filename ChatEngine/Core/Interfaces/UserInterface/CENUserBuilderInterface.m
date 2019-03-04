@@ -1,7 +1,7 @@
 /**
- * author Serhii Mamontov
- * @version 0.9.0
- * @copyright © 2009-2017 PubNub, Inc.
+ * @author Serhii Mamontov
+ * @version 0.9.2
+ * @copyright © 2010-2019 PubNub, Inc.
  */
 #import "CENUserBuilderInterface.h"
 #import "CENInterfaceBuilder+Private.h"

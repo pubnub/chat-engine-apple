@@ -1,3 +1,8 @@
+/**
+ * @author Serhii Mamontov
+ * @version 0.9.2
+ * @copyright © 2010-2019 PubNub, Inc.
+ */
 #import "CENChat.h"
 #import "CENEventEmitter+Interface.h"
 
@@ -9,38 +14,33 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-/**
- * @brief      \b ChatEngine chat room representation model.
- * @discussion This instance can be used to invite new user(s), send messages and receive updates.
- * @discussion This interface used when builder interface usage not configured.
- *
- * @author Serhii Mamontov
- * @version 0.9.0
- * @copyright © 2009-2018 PubNub, Inc.
- */
+#pragma mark - Standard interface declaration
+
 @interface CENChat (Interface)
 
 
 #pragma mark - Connection
 
 /**
- * @brief      Connect \c local user to \b PubNub real-time network to receive updates from other \c chat users.
- * @discussion During connection process, \b ChatEngine will perform handshake to get recent user's metadata for \c chat and
- *             ensure what there is no issues with access rights.
+ * @brief Connect \b {local user CENMe} to \b PubNub real-time network to receive updates from other
+ * \b {chat CENChat} participants.
  *
- * @discussion Connect to chat with random name:
+ * @throws \b CENErrorDomain exception in following cases:
+ * - if chat already connected.
+ *
+ * @discussion Authenticate \b {local user CENMe} for \b {chat CENChat} and subscribe with \b PubNub
  * @code
- * CENConfiguration *configuration = [CENConfiguration configurationWithPublishKey:@"demo-36" subscribeKey:@"demo-36"];
- * self.client = [CENChatEngine clientWithConfiguration:configuration];
- * [self.client handleEventOnce:@"$.ready" withHandlerBlock:^(CENMe *me) {
- *     // .....
- *     // at moment when chat created, ChatEngine client should be connected (at least once).
- *     // .....
- *     CENChat *chat = [self.client createChatWithName:nil group:nil private:NO autoConnect:NO metaData:nil];
- *     [chat connectChat];
- * }];
- * [self.client connectUser:@"ChatEngine"];
+ * // objc f3f3b69d-25ec-493b-87ee-512ad2027a46
+ *
+ * // Create new chat room, but don't connect to it automatically.
+ * CENChat *chat = [self.client createChatWithName:@"some-chat" private:NO autoConnect:NO
+ *                                        metaData:nil];
+ *
+ * // Connect to the chat when we feel like it.
+ * [chat connectChat];
  * @endcode
+ *
+ * @ref e5bf86e5-f05f-4ed1-8303-37a82479f28c
  */
 - (void)connectChat;
 
@@ -48,27 +48,23 @@ NS_ASSUME_NONNULL_BEGIN
 #pragma mark - Meta
 
 /**
- * @brief Update \c chat meta information in \b ChatEngine network.
+ * @brief Update \b {chat CENChat} meta information on server.
  *
- * @discussion Change chat title on connection:
+ * @discussion Update \b {chat's CENChat} metadata
  * @code
- * CENConfiguration *configuration = [CENConfiguration configurationWithPublishKey:@"demo-36" subscribeKey:@"demo-36"];
- * self.client = [CENChatEngine clientWithConfiguration:configuration];
- * [self.client handleEventOnce:@"$.ready" withHandlerBlock:^(CENMe *me) {
- *     // .....
- *     // at moment when chat created, ChatEngine client should be connected (at least once).
- *     // .....
- *     CENChat *chat = [self.client createChatWithName:nil group:nil private:NO autoConnect:YES metaData:@{ @"title": @"Test" }];
+ * // objc e4a1350a-80bf-4e03-abda-0aec62655f15
  *
- *     [chat handleEvent:@"$.connected" withHandlerBlock:^{
- *         [chat updateMeta:@{ @"title": @"Updated test" }];
- *     }];
- *     [chat connectChat];
- * }];
- * [self.client connectUser:@"ChatEngine"];
+ * // Create new chat room, with initial meta information.
+ * CENChat *chat = [self.client createChatWithName:nil private:NO autoConnect:YES
+ *                                        metaData:@{ @"title": @"Test" }];
+ *
+ * // Change chat's meta when it will be required.
+ * [chat updateMeta:@{ @"title": @"Updated Test" }];
  * @endcode
  *
- * @param meta Reference on metadata which should be bound to chat.
+ * @param meta \a NSDictionary with metadata which should be bound to \b {chat CENChat}.
+ *
+ * @ref e8edd46b-1d65-462b-8ce8-b0bd4676e816
  */
 - (void)updateMeta:(nullable NSDictionary *)meta;
 
@@ -76,41 +72,52 @@ NS_ASSUME_NONNULL_BEGIN
 #pragma mark - Participating
 
 /**
- * @brief      Invite remote \c user to join conversation.
- * @discussion Remote \c user will be granted with required rights to read and write messages to
- *             \c chat.
+ * @brief Invite a \b {user CENUser} to this \b {chat CENChat}.
  *
- * @discussion Inivte user to chat with name:
+ * @discussion Authorizes the invited user in the \b {chat CENChat} and sends them an invite via
+ * \b {CENUser.direct} chat.
+ *
+ * @discussion Invite another user to \b {chat CENChat}
  * @code
- * CENConfiguration *configuration = [CENConfiguration configurationWithPublishKey:@"demo-36" subscribeKey:@"demo-36"];
- * self.client = [CENChatEngine clientWithConfiguration:configuration];
- * [self.client handleEvent:@"$.ready" withHandlerBlock:^(CENMe *me) {
- *     // .....
- *     // at moment when chat created, ChatEngine client should be connected (at least once).
- *     // .....
- *     CENChat *chat = [self.client chatWithName:@"test-chat" private:NO];
+ * // objc 9124b306-3108-4c5a-a2ce-e2dd3aca2a50
  *
- *     [chat inviteUser:[self.client createUserWithUUID:@"PubNub" state:nil]];
- * };
- * [self.client connectUser:@"ChatEngine"];
+ * // One of user running ChatEngine.
+ * CENChat *secretChat = [self.client createChatWithName:@"secret-chat" private:YES autoConnect:YES
+ *                                              metaData:nil];
+ * [chat inviteUser:anotherUser];
+ *
+ * // Another user listens for invitations.
+ * [self.client handleEvent:@"$.invite" withHandlerBlock:^(CENEmittedEvent *event) {
+ *     NSDictionary *payload = ((NSDictionary *)event.data)[CENEventData.data];
+ *
+ *     CENChat *secretChat = [self.client createChatWithName:payload[@"channel"] private:YES
+ *                                               autoConnect:YES metaData:nil];
+ * }];
  * @endcode
  *
- * @param user Reference on \b CENUser instante which represent remote user.
+ * @param user \b {User CENUser} which should be invited.
+ *
+ * @ref c3608222-f64b-4598-90b9-ec1d4fe65efd
  */
 - (void)inviteUser:(CENUser *)user;
 
 /**
- * @brief      Leave \c chat on \c local user behalf.
- * @discussion After user will leave, he won't receive any real-time updates anymore.
+ * @brief Leave from the \b {chat CENChat} on behalf of \b {local user CENMe} and stop receiving
+ * events.
  *
- * @discussion Leave previously connected chat:
+ * @discussion Leave specific chat
  * @code
- * CENConfiguration *configuration = [CENConfiguration configurationWithPublishKey:@"demo-36" subscribeKey:@"demo-36"];
- * self.client = [CENChatEngine clientWithConfiguration:configuration];
- * // .....
- * CENChat *chat = [self.client chatWithName:@"test-chat" private:NO];
+ * // objc 56aac5cd-e129-4241-8e6e-3a18c9035cc3
+ *
+ * // Create new chat for local user to participate in.
+ * CENChat *chat = [self.client createChatWithName:@"test-chat" private:NO autoConnect:YES
+ *                                        metaData:nil];
+ *
+ * // Leave chat when there is no more any need to be participant of it.
  * [chat leave];
  * @endcode
+ *
+ * @ref 48a1986e-9f54-4e83-a392-b9a21000f516
  */
 - (void)leaveChat;
 
@@ -118,29 +125,33 @@ NS_ASSUME_NONNULL_BEGIN
 #pragma mark - Events emitting
 
 /**
- * @brief      Emit event for remote chat listeners.
- * @discussion Emit named event for all remote users connected to this chat.
- * @note       If returned \b CENEvent instance will be user longer than 10 minutes, make sure to save reference on it or it
- *             will be deallocated.
+ * @brief Send events to other clients in this \c {chat CENChat}.
  *
- * @discussion Emit simple event to 'global' chat:
+ * @discussion Events are trigger over the network and all events are made on behalf of
+ * \b {local user CENMe}.
+ *
+ * @discussion Emit event with data
  * @code
- * CENConfiguration *configuration = [CENConfiguration configurationWithPublishKey:@"demo-36" subscribeKey:@"demo-36"];
- * self.client = [CENChatEngine clientWithConfiguration:configuration];
- * [self.client handleEvent:@"$.ready" withHandlerBlock:^(CENMe *me) {
- *     [self.client.global emitEvent:@"$.test-event" withData:@{ @"message": @"Hello world" }];
+ * // objc 26856530-b1e4-453d-8a8d-ab9b2627e890
+ *
+ * // Emit event by one user.
+ * [chat emitEvent:@"custom-event" withData:@{ @"value": @YES }];
+ *
+ * // Handle event on another side.
+ * [chat handleEventOnce:@"custom-event" withHandlerBlock:^(CENEmittedEvent *event) {
+ *     NSDictionary *payload = event.data;
+ *     CENUser *sender = payload[CENEventData.sender];
+ *
+ *     NSLog(@"%@ emitted the value: %@", sender.uuid, payload[CENEventData.data][@"message"]);
  * }];
- * [self.client.global handleEventOnce:@"$.test-event" withHandlerBlock:^(NSDictionary *payload) {
- *     NSLog("Pyaload: %@", payload); // Payload: { "message": "Hello world" }
- * }];
- * [self.client connect:@"ChatEngine"];
  * @endcode
  *
- * @param event Reference on name of emitted event.
- * @param data  Reference on data which should be sent along with event.
+ * @param event Name of emitted event.
+ * @param data \a NSDictionary with data which should be sent along with event.
  *
- * @return Reference on object which allow to track emitting progress (it is possible to subscribe on events for it with
- *         '-[CENEvent handleEvent:withHandlerBlock:]' and '-[CENEvent handleEventOnce:withHandlerBlock:]' methods).
+ * @return \b {Event CENEvent} which allow to track emitting progress.
+ *
+ * @ref 01b1735e-06a5-4c11-9510-cccaded934fd
  */
 - (CENEvent *)emitEvent:(NSString *)event withData:(nullable NSDictionary *)data;
 
@@ -148,59 +159,102 @@ NS_ASSUME_NONNULL_BEGIN
 #pragma mark - Events search
 
 /**
- * @brief      Search through previously emitted events.
- * @discussion Created \b CENSearch instance will allow to iterate through history of found \c events. Depending from
- *             configuration, search instance can search for particular event type and/or sent from specific \c user. It is
- *             possible to limit in time and count of sent events.
- * @note       If returned \b CENSearch instance will be user longer than 10 minutes, make sure to save reference on it or it
- *             will be deallocated.
+ * @brief Search through previously emitted events.
  *
- * @discussion Search for 10 'ping' events sent by 'PubNub':
+ * @throws \b CENErrorDomain exception in following cases:
+ * - if chat not connected yet.
+ *
+ * @discussion Search for specific event from \b {local user CENMe}
  * @code
- * CENConfiguration *configuration = [CENConfiguration configurationWithPublishKey:@"demo-36" subscribeKey:@"demo-36"];
- * self.client = [CENChatEngine clientWithConfiguration:configuration];
- * [self.client handleEvent:@"$.ready" withHandlerBlock:^(CENMe *me) {
- *     CENUser *user = [self.client userWithUUID:@"PubNub"];
- *     CENSearch *search = [self.client.global searchEvent:@"ping"
- *                                               fromUser:user
- *                                              withLimit:10
- *                                                  pages:0
- *                                                  count:100
- *                                                  start:nil
- *                                                    end:nil];
+ * // objc 643490dc-1019-4830-bf87-950e46493f9f
  *
- *     [search handleEvent:@"ping" withHandlerBlock:^(NSDictionary *eventData) {
- *         // Handle 'ping' event from chat's history.
- *     }];
+ * CENSearch *search = [chat searchEvent:@"my-custom-event" fromUser:self.client.me withLimit:20
+ *                                 pages:0 count:100 start:nil end:nil];
  *
- *     [search searchEvents];
+ * [search handleEvent:@"my-custom-event" withHandlerBlock:^(CENEmittedEvent *event) {
+ *     NSDictionary *eventData = event.data;
+ *
+ *     NSLog(@"This is an old event!: %@", eventData);
  * }];
- * [self.client connect:@"ChatEngine"];
+ *
+ * [search handleEvent:@"$.search.finish" withHandlerBlock:^(CENEmittedEvent *event) {
+ *     NSLog(@"We have all our results!");
+ * }];
+ *
+ * [search searchEvents];
  * @endcode
  *
- * @param event  Reference on name of event to search for. All events will be returned in case if \c nil has been passed.
- * @param sender Reference on \b CENUser instance who sent the message. Events from any sender will be returned in case if
- *               \c nil has been passed.
- * @param limit  Reference on maximum number of results to return that match search criteria.
- *               Search will continue operating until it returns this number of results or it reached the end of history.
- *               Specify \b 0 or below to search all events.
- *               Limit will be ignored in case if both \c start and \c end timetokens has been passed to search configuration.
- *               By default set to: \b 20.
- * @param pages  Reference on maximum number of search request which can be performed to reach specified search end
- *               criteria: limit.
- *               By default set to: \b 10.
- * @param count  Reference on maximum number of events which can be fetched with single search request.
- *               By default set to: maximum \b 100.
- * @param start  Reference on timetoken to begin searching between.
- * @param end    Reference on timetoken to end searching between.
+ * @discussion Search for all events
+ * @code
+ * // objc eba2b098-1b22-450f-951f-f7869ab32137
+ *
+ * CENSearch *search = [chat searchEvent:nil fromUser:nil withLimit:0 pages:0 count:100 start:nil
+ *                                   end:nil];
+ *
+ * [search handleEvent:@"my-custom-event" withHandlerBlock:^(CENEmittedEvent *event) {
+ *     NSDictionary *eventData = event.data;
+ *
+ *     NSLog(@"This is an old event!: %@", eventData);
+ * }];
+ *
+ * [search handleEvent:@"$.search.finish" withHandlerBlock:^(CENEmittedEvent *event) {
+ *     NSLog(@"We have all our results!");
+ * }];
+ *
+ * [search searchEvents];
+ * @endcode
+ *
+ * @param event Name of event to search for.
+ * @param sender \b {User CENUser} who sent the message.
+ * @param limit The maximum number of results to return that match search criteria. Search will
+ *     continue operating until it returns this number of results or it reached the end of history.
+ *     Limit will be ignored in case if both 'start' and 'end' timetokens has been passed in search
+ *     configuration.
+ *     Pass \c 0 or below to use default value.
+ *     \b Default: \c 20
+ * @param pages The maximum number of history requests which \b {CENChatEngine} will do
+ *     automatically to fulfill \c limit requirement.
+ *     Pass \c 0 or below to use default value.
+ *     \b Default: \c 10
+ * @param count The maximum number of messages which can be fetched with single history request.
+ *     Pass \c 0 or below to use default value.
+ *     \b Default: \c 100
+ * @param start The timetoken to begin searching between.
+ * @param end The timetoken to end searching between.
+ *
+ * @return \b {Chat CENChat} events \b {searcher CENSearch}.
+ *
+ * @ref 8638be94-e114-4beb-9eb8-1b25c80d8c42
  */
 - (CENSearch *)searchEvent:(nullable NSString *)event
-                 fromUser:(nullable CENUser *)sender
-                withLimit:(NSInteger)limit
-                    pages:(NSInteger)pages
-                    count:(NSInteger)count
-                    start:(nullable NSNumber *)start
-                      end:(nullable NSNumber *)end;
+                  fromUser:(nullable CENUser *)sender
+                 withLimit:(NSInteger)limit
+                     pages:(NSInteger)pages
+                     count:(NSInteger)count
+                     start:(nullable NSNumber *)start
+                       end:(nullable NSNumber *)end;
+
+
+#pragma mark - Misc
+
+/**
+ * @brief Serialize \c chat instance into dictionary.
+ *
+ * @discussion Serialize \b {chat CENChat} information into dictionary
+ * @code
+ * // objc 23b3c6dd-5ed1-46dc-a45e-4bca9fffa154
+ *
+ * CENChat *secretChat = [self.client createChatWithName:@"secret-chat" private:YES autoConnect:NO
+ *                                              metaData:nil];
+ *
+ * NSLog(@"Chat dictionary representation: %@", [chat dictionaryRepresentation]);
+ * @endcode
+ *
+ * @return \a NSDictionary with publicly visible chat data.
+ *
+ * @ref 84bf40d4-6226-45e2-b3c0-cad9fedc1c62
+ */
+- (NSDictionary *)dictionaryRepresentation;
 
 #pragma mark -
 

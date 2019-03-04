@@ -1,20 +1,17 @@
 /**
  * @author Serhii Mamontov
- * @copyright © 2009-2018 PubNub, Inc.
+ * @copyright © 2010-2018 PubNub, Inc.
  */
-#import <XCTest/XCTest.h>
-#import <OCMock/OCMock.h>
 #import <CENChatEngine/CENChatEngine+PubNubPrivate.h>
 #import <CENChatEngine/CENChatEngine+ChatPrivate.h>
-#import <CENChatEngine/CENEventEmitter+Interface.h>
 #import <CENChatEngine/CENChatEngine+UserPrivate.h>
 #import <CENChatEngine/CENChatEngine+Private.h>
-#import <CENChatEngine/CENChatEngine+Session.h>
 #import <CENChatEngine/CENObject+Private.h>
+#import <CENChatEngine/CENChat+Interface.h>
 #import <CENChatEngine/CENChat+Private.h>
 #import <CENChatEngine/CENUser+Private.h>
-#import <CENChatEngine/CENMe+Private.h>
 #import <CENChatEngine/ChatEngine.h>
+#import <OCMock/OCMock.h>
 #import "CENTestCase.h"
 
 
@@ -23,11 +20,13 @@
 
 #pragma mark - Information
 
-@property (nonatomic, nullable, weak) CENChatEngine *client;
-@property (nonatomic, nullable, weak) CENChatEngine *clientMock;
-@property (nonatomic, nullable, strong) CENMe *meWithOutState;
-@property (nonatomic, nullable, strong) CENMe *meWithState;
-@property (nonatomic, nullable, strong) CENChat *global;
+@property (nonatomic, nullable, strong) CENChat *direct;
+@property (nonatomic, nullable, strong) CENChat *feed;
+
+
+#pragma mark - Misc
+
+- (CENMe *)userWithUUID:(NSString *)uuid state:(nullable NSDictionary *)state chatEngine:(CENChatEngine *)chatEngine;
 
 #pragma mark -
 
@@ -42,130 +41,126 @@
 
 #pragma mark - Setup / Tear down
 
+- (BOOL)hasMockedObjectsInTestCaseWithName:(NSString *)name {
+
+    return YES;
+}
+
 - (BOOL)shouldSetupVCR {
-    
+
     return NO;
+}
+
+- (BOOL)shouldThrowExceptionForTestCaseWithName:(NSString *)name {
+    
+    return [name rangeOfString:@"ShouldThrow"].location != NSNotFound;
+}
+
+- (BOOL)shouldEnableGlobalChatForTestCaseWithName:(NSString *)name {
+    
+    return [name rangeOfString:@"WhenGlobalConfigured"].location != NSNotFound;
 }
 
 - (void)setUp {
     
     [super setUp];
     
-    self.client = [self chatEngineWithConfiguration:[CENConfiguration configurationWithPublishKey:@"test-36" subscribeKey:@"test-36"]];
-    self.clientMock = [self partialMockForObject:self.client];
     
-    self.global = [self partialMockForObject:self.client.Chat().name(@"global").autoConnect(NO).create()];
-    
-    OCMStub([self.clientMock global]).andReturn(self.global);
-    OCMStub([self.clientMock fetchParticipantsForChat:[OCMArg any]]).andDo(nil);
-    OCMStub([self.clientMock createDirectChatForUser:[OCMArg any]])
-        .andReturn(self.clientMock.Chat().name(@"chat-engine#user#tester#write.#direct").autoConnect(NO).create());
-    OCMStub([self.clientMock createFeedChatForUser:[OCMArg any]])
-        .andReturn(self.clientMock.Chat().name(@"chat-engine#user#tester#read.#feed").autoConnect(NO).create());
-    
-    self.meWithState = [CENMe userWithUUID:@"tester1" state:@{ @"test": @"state" } chatEngine:self.client];
-    self.meWithOutState = [CENMe userWithUUID:@"tester2" state:@{} chatEngine:self.client];
-    
-    OCMStub([self.clientMock me]).andReturn(self.meWithOutState);
+    if ([self hasMockedObjectsInTestCaseWithName:self.name]) {
+        [self completeChatEngineConfiguration:self.client];
+    }
 }
 
 - (void)tearDown {
-
-    [self.meWithOutState destruct];
-    [self.meWithState destruct];
-    self.meWithOutState = nil;
-    self.meWithState = nil;
+    
+    [self.direct destruct];
+    [self.feed destruct];
     
     [super tearDown];
 }
 
 
+#pragma mark - Tests :: Constructor
+
+- (void)testConstructor_ShouldCreateInstance {
+    
+    CENMe *me = [self userWithUUID:@"tester" state:@{ @"test": @"state" } chatEngine:self.client];
+    
+    
+    XCTAssertNotNil(me);
+}
+
+- (void)testConstructor_ShouldNotSetState {
+    
+    CENChat *chat = [self publicChatWithChatEngine:self.client];
+    
+    
+    OCMStub([self.client global]).andReturn(chat);
+    
+    CENMe *me = [self userWithUUID:@"tester" state:@{ @"test": @"state" } chatEngine:self.client];
+    
+    XCTAssertEqualObjects(me.state, @{});
+}
+
 #pragma mark - Tests :: session
 
 - (void)testSession_ShouldRetrieveReferenceFromChatEngine {
     
+    CENMe *me = [self userWithUUID:@"tester" state:@{ @"test": @"state" } chatEngine:self.client];
     id expected = @{};
-    OCMExpect([self.clientMock synchronizationSession]).andReturn(expected);
     
-    XCTAssertEqualObjects(self.clientMock.me.session, expected);
     
-    OCMVerifyAll((id)self.clientMock);
-}
-
-
-#pragma mark - Tests :: assignState
-
-- (void)testAssignTest_ShouldChangeStateLocally {
+    OCMExpect([self.client synchronizationSession]).andReturn(expected);
+    OCMStub([self.client me]).andReturn(me);
     
-    NSDictionary *expectedState = @{ @"test": @"state", @"success": @YES };
-    id mePartialMock = [self partialMockForObject:self.meWithState];
-    NSDictionary *state = @{ @"success": @YES };
+    XCTAssertEqualObjects(self.client.me.session, expected);
     
-    OCMExpect([[mePartialMock reject] fetchStoredStateWithCompletion:[OCMArg any]]);
-    
-    [self.meWithState assignState:state];
-    
-    OCMVerifyAll(mePartialMock);
-    XCTAssertEqualObjects(self.meWithState.state, expectedState);
+    OCMVerifyAll((id)self.client);
 }
 
 
 #pragma mark - Tests :: updateState
 
-- (void)testUpdateState_ShouldChangeState {
+- (void)testUpdateState_ShouldChangeStateForGlobal {
     
+    CENChat *chat = [self publicChatWithChatEngine:self.client];
     NSDictionary *expectedState = @{ @"fromRemote": @YES, @"success": @YES };
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    NSDictionary *state = @{ @"success": @YES };
-    CENMe *expectedUser = self.meWithOutState;
-    __block BOOL handlerCalled = NO;
     
-    OCMStub([self.clientMock fetchUserState:self.meWithOutState withCompletion:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
-        void(^handlerBlock)(NSDictionary *) = nil;
-        
-        [invocation getArgument:&handlerBlock atIndex:3];
-        handlerBlock(@{ @"fromRemote": @YES });
-    });
     
-    [self.clientMock handleEvent:@"$.state" withHandlerBlock:^(CENMe *me) {
-        handlerCalled = YES;
-        
-        XCTAssertEqual(me, expectedUser);
-        dispatch_semaphore_signal(semaphore);
+    OCMStub([self.client global]).andReturn(chat);
+    
+    CENMe *me = [self userWithUUID:@"tester" state:@{} chatEngine:self.client];
+    
+    id globalMock = [self mockForObject:chat];
+    id recorded = OCMExpect([(CENChat *)globalMock setState:expectedState]);
+    [self waitForObject:globalMock recordedInvocationCall:recorded afterBlock:^{
+        me.update(expectedState);
     }];
     
-    self.meWithOutState.update(state);
-    
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
-    XCTAssertTrue(handlerCalled);
-    XCTAssertEqualObjects(self.meWithOutState.state, expectedState);
+    XCTAssertEqualObjects(me.state, expectedState);
 }
 
-- (void)testUpdateState_ShouldPropagateStateToRemoteUsers {
+- (void)testUpdateState_ShouldThrow_WhenCalledWithNilAndNoGlobalConfigured {
     
-    NSDictionary *expectedState = @{ @"fromRemote": @YES, @"success": @YES };
-    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
-    NSDictionary *state = @{ @"success": @YES };
-    __block BOOL handlerCalled = NO;
+    CENMe *me = [self userWithUUID:@"tester" state:@{} chatEngine:self.client];
+    NSDictionary *state = @{ @"fromRemote": @YES, @"success": @YES };
     
-    OCMStub([self.clientMock fetchUserState:self.meWithOutState withCompletion:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
-        void(^handlerBlock)(NSDictionary *) = nil;
-        
-        [invocation getArgument:&handlerBlock atIndex:3];
-        handlerBlock(@{ @"fromRemote": @YES });
-    });
     
-    OCMExpect([self.global setState:expectedState withCompletion:[OCMArg any]]).andDo(^(NSInvocation *invocation) {
-        handlerCalled = YES;
-        
-        dispatch_semaphore_signal(semaphore);
-    });
+    XCTAssertThrowsSpecificNamed(me.update(state), NSException, kCENErrorDomain);
+}
+
+
+#pragma mark - Tests :: destruct
+
+- (void)testDestruct_ShouldUnregisterObjectByClient {
     
-    self.meWithOutState.update(state);
+    CENMe *me = [self userWithUUID:@"tester" state:@{} chatEngine:self.client];
     
-    dispatch_semaphore_wait(semaphore, dispatch_time(DISPATCH_TIME_NOW, (int64_t)(self.testCompletionDelay * NSEC_PER_SEC)));
-    OCMVerifyAll((id)self.global);
-    XCTAssertTrue(handlerCalled);
+    
+    id recorded = OCMExpect([self.client unregisterAllFromObjects:me]);
+    [self waitForObject:self.client recordedInvocationCall:recorded afterBlock:^{
+        [me destruct];
+    }];
 }
 
 
@@ -173,12 +168,29 @@
 
 - (void)testDescription_ShouldProvideInstanceDescription {
     
-    NSString *description = [self.meWithState description];
+    CENMe *me = [self userWithUUID:@"tester" state:@{} chatEngine:self.client];
+    NSString *description = [me description];
+    
     
     XCTAssertNotNil(description);
     XCTAssertGreaterThan(description.length, 0);
 }
 
+
+#pragma mark - Misc
+
+- (CENMe *)userWithUUID:(NSString *)uuid state:(nullable NSDictionary *)state chatEngine:(CENChatEngine *)chatEngine {
+
+    XCTAssertTrue([self isObjectMocked:self.client]);
+
+    self.direct = [self directChatForUser:uuid connectable:NO withChatEngine:chatEngine];
+    self.feed = [self feedChatForUser:uuid connectable:NO withChatEngine:chatEngine];
+    
+    OCMStub([chatEngine createDirectChatForUser:[OCMArg any]]).andReturn(self.direct);
+    OCMStub([chatEngine createFeedChatForUser:[OCMArg any]]).andReturn(self.feed);
+    
+    return [CENMe userWithUUID:uuid state:state chatEngine:chatEngine];
+}
 
 #pragma mark -
 

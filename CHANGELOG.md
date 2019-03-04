@@ -1,4 +1,27 @@
-## [0.9.2](https://github.com/pubnub/chat-engine-apple/releases/tag/v0.9.1)
+## [0.9.3](https://github.com/pubnub/chat-engine-apple/releases/tag/v0.9.3)
+March 1 2019
+
+#### Added
+- Added plugins: Event Status, Emoji, Mute, OpenGraph, Uploadcare.
+  - Added by [parfeon](https://github.com/parfeon) in Pull Request [#24](https://github.com/pubnub/chat-engine-apple/pull/24).
+
+#### Updated
+- Improved event handler to make it easy to use with Swift.
+  - Updated by [parfeon](https://github.com/parfeon) in Pull Request [#24](https://github.com/pubnub/chat-engine-apple/pull/24).
+- Updated search filters to work via plugin structure.
+  - Updated by [parfeon](https://github.com/parfeon) in Pull Request [#24](https://github.com/pubnub/chat-engine-apple/pull/24).
+- Typing indicator plugin will reset 'typing' state as soon as user emit message to chat.
+  - Updated by [parfeon](https://github.com/parfeon) in Pull Request [#24](https://github.com/pubnub/chat-engine-apple/pull/24).
+
+#### Removed
+- Deprecated 'group' parameter during CENChat instance creation in favor of usage simplicity since all user-made chats should be part of 'custom' group.
+  - Removed by [parfeon](https://github.com/parfeon) in Pull Request [#24](https://github.com/pubnub/chat-engine-apple/pull/24).
+
+#### Fixed
+- Fixed middleware execution queue.
+  - Fixed by [parfeon](https://github.com/parfeon) in Pull Request [#24](https://github.com/pubnub/chat-engine-apple/pull/24).
+
+## [0.9.2](https://github.com/pubnub/chat-engine-apple/releases/tag/v0.9.2)
 August 23 2018
 
 #### Added

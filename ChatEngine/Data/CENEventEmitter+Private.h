@@ -1,13 +1,12 @@
 /**
  * @author Serhii Mamontov
- * @version 0.9.0
- * @copyright © 2009-2018 PubNub, Inc.
+ * @version 0.9.2
+ * @copyright © 2010-2019 PubNub, Inc.
  */
 #import "CENEventEmitter.h"
 
 
 NS_ASSUME_NONNULL_BEGIN
-
 
 #pragma mark Private interface declaration
 
@@ -17,25 +16,28 @@ NS_ASSUME_NONNULL_BEGIN
 #pragma mark - Events emitting
 
 /**
- * @brief      Emit specified \c event with passed variadic list of arguments.
- * @discussion This method is able to handle up to \b 5 parameters forwarding to handling \c block.
+ * @brief Emit specific \c event locally to all listeners.
  *
- * @param event Reference on name of event which should be emitted.
+ * @param event Name of event for which listeners should be notified.
+ * @param ... Dynamic list of arguments which should be passed along with emitted event (maximum can
+ *     be passed one value terminated by \c nil).
  */
 - (void)emitEventLocally:(NSString *)event, ... NS_REQUIRES_NIL_TERMINATION;
 
 /**
- * @brief      Emit specified \c event with passed list of \c parameters.
- * @discussion This method is able to handle up to \b 5 parameters forwarding to handling \c block.
+ * @brief Emit specific \c event locally to all listeners.
  *
- * @param event      Reference on name of event which should be emitted.
- * @param parameters Reference on list of parameters which should be passed to handling block.
+ * @param event Name of event for which listeners should be notified.
+ * @param parameters List of arguments which should be passed along with emitted event.
  */
 - (void)emitEventLocally:(NSString *)event withParameters:(NSArray *)parameters;
 
 
 #pragma mark - Clean up
 
+/**
+ * @brief Clean up any resources allocated for events emitting and handling support.
+ */
 - (void)destruct;
 
 #pragma mark -

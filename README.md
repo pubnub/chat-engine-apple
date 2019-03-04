@@ -36,13 +36,37 @@ You can find the full docs on [the full documentation website](https://github.co
 
 # Plugins
 
+## [Image Uploads](https://github.com/pubnub/chat-engine-apple/wiki/plugins-uploadcare)
+
+Uses [UploadCare](https://uploadcare.com) service to upload images and render them in chats.
+
 ## [Markdown Support](https://github.com/pubnub/chat-engine-apple/wiki/plugins-markdown)
+
+Render Markdown in [NSAttributedString](https://developer.apple.com/documentation/foundation/nsattributedstring?language=objc) when receiving messages.
+
+## [Mute Users](https://github.com/pubnub/chat-engine-apple/wiki/plugins-muter)
+
+Allows the current user to stop receiving events from other users.
 
 ## [Online User Search](https://github.com/pubnub/chat-engine-apple/wiki/plugins-online-user-search)
 
+A simple way to search through the list of users online in the chat.
+
 ## [Typing Indicator](https://github.com/pubnub/chat-engine-apple/wiki/plugins-typing-indicator)
 
+Provides convenience methods that fire when a user starts or stops typing.
+
 ## [Unread Messages](https://github.com/pubnub/chat-engine-apple/wiki/plugins-unread-messages)
+
+Allows you to mark a chat as being in the background and increments a counter as events are sent to it.
+
+## [Emoji Support](https://github.com/pubnub/chat-engine-apple/wiki/plugins-emoji)
+
+Uses images as fallback for devices that might not yet support 💩.
+
+## [Event Status and Read Receipts](https://github.com/pubnub/chat-engine-apple/wiki/plugins-event-status)
+
+Emits additional events when someone reads a receives and/or reads a message.
 
 ## [Push Notifications](https://github.com/pubnub/chat-engine-apple/wiki/plugins-push-notifications)
 
@@ -53,6 +77,71 @@ Uses Gravatar service to create an avatar based on user state information.
 ## [Random Usernames](https://github.com/pubnub/chat-engine-apple/wiki/plugins-random-username)
 
 A plugin that gives every use a random username combining a color and an animal.
+
+
+# Development
+
+## Setting up environment
+
+It is required to install Xcode and CocoaPods on machine which will be used for application development. 
+Perform following steps to complete environment preparation:  
+1. Install Xcode from [AppStore](https://itunes.apple.com/ua/app/xcode/id497799835?mt=12),
+2. After installation will be completed, launch Xcode and follow instruction to install command-line utilities,
+3. Install [CocoaPods](https://cocoapods.org) by running following command from _Terminal_:  
+   ```text
+   sudo gem install cocoapods
+   ```
+
+After completion of these steps you can start building your application.
+
+## Running Tests
+
+You should complete [environment setup](#setting-up-environment) before trying to build and run tests.
+At this moment there is **1198** tests in total (**80** integration and **1118** unit tests). To run whole
+tests suite it will require **~11 minutes**.  
+
+Xcode project for tests contains various build configurations, where particular type of tests can be chosen:
+_unit_, _integration_, _unit with code coverage_, _integration with code coverage_ and all tests with code coverage.
+
+To be able to run tests, follow next instruction:  
+1. Clone repository:
+   ```text
+   git clone git@github.com:pubnub/chat-engine-apple.git
+   ```
+2. Navigate to _Tests_ project directory:
+   ```text
+   cd <path to clone location>/chat-engine-apple/Tests
+   ```
+3. Install required dependencies (list of dependencies can be seen in [Podfile](https://github.com/pubnub/chat-engine-apple/blob/develop/Tests/Podfile)):
+   ```text
+   pod install
+   ```
+4. After dependencies will be installed you should open project using `ChatEngine Tests.xcworkspace` file.
+5. At top left of opened window you should be able to find drop down list with following targets:  
+   * `[Test] Code Coverage (Full)`
+   * `[Test] Code Coverage (Integration)`
+   * `[Test] Code Coverage (Unit)`
+   * `[Test] iOS Integration`
+   * `[Test] iOS Unit`
+6. After desired target has been chosen, ensure what iPhone simulator (with blue background) is chosen for 
+   tests deployment.
+7. Hit shortcut `Cmd+U` to launch test suite.
+
+
+# Migration from 0.9.2 to 0.9.3
+
+Events handler signature has been changed for better Swift support. From now on all events handler will 
+receive only instance of [CENEmittedEvent](https://github.com/pubnub/chat-engine-apple/wiki/reference-emitted-event) type. 
+
+Here is how handler looks like now:  
+```objc
+self.client.me.direct.on(@"$.invite", ^(CENEmittedEvent *event) {
+    NSDictionary *payload = ((NSDictionary *)event.data)[CENEventData.data];
+    CENUser *sender = payload[CENEventData.sender];
+    
+    CENChat *secretChat = self.client.Chat().name(payload[@"channel"]).create();
+});
+```
 
 ## Support
 

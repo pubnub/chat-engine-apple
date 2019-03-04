@@ -1,10 +1,11 @@
 /**
  * @author Serhii Mamontov
- * @version 1.0.0
- * @copyright © 2009-2018 PubNub, Inc.
+ * @version 0.0.2
+ * @copyright © 2010-2019 PubNub, Inc.
  */
 #import "CENUnreadMessagesExtension.h"
 #import <CENChatEngine/CEPExtension+Developer.h>
+#import <CENChatEngine/ChatEngine.h>
 #import "CENUnreadMessagesPlugin.h"
 #import <CENChatEngine/CENChat.h>
 #import <CENChatEngine/CENUser.h>
@@ -21,29 +22,30 @@ NS_ASSUME_NONNULL_BEGIN
 #pragma mark - Information
 
 /**
- * @brief  Stores reference on currently unread messages/events count.
+ * @brief Currently unread messages / events count.
  */
 @property (nonatomic, assign) NSUInteger unreadCount;
 
 /**
- * @brief  Stores whether chat currently active or not.
+ * @brief Whether chat currently active or not.
  */
 @property (nonatomic, assign, getter = isActive) BOOL active;
 
 /**
- * @brief  Stores reference on events handling block.
- * @note   Reference on block required to make it possible to remove it from event listeners.
+ * @brief Events handling block.
  */
-@property (nonatomic, copy, nullable) void(^eventHandlerBlock)(NSDictionary *event);
+@property (nonatomic, copy, nullable) CENEventHandlerBlock eventHandlerBlock;
 
 
 #pragma mark - Handler
 
 /**
- * @brief      Process handled event payload.
+ * @brief Process handled event payload.
+ *
  * @discussion Use handler call to increment current values of unread messages / events.
  *
- * @param payload Reference on payload which contain information about event sender and chat.
+ * @param payload \a NSDictionary which contain information about event \b {sender CENUser} and
+ *     \b {chat CENChat}.
  */
 - (void)handleEvent:(NSDictionary *)payload;
 
@@ -64,32 +66,26 @@ NS_ASSUME_NONNULL_END
 
 - (void)active {
     
-    self.active = YES;
+    self->_active = YES;
     self.unreadCount = 0;
 }
 
 - (void)inactive {
-    
-    if (!self.isActive) {
-        return;
-    }
-    
-    self.active = NO;
+
+    self->_active = NO;
 }
 
 
 #pragma mark - Handlers
 
 - (void)onCreate {
-    
-    NSString *identifier = self.identifier;
-    
-    self.eventHandlerBlock = ^(NSDictionary *event) {
-        CENChat *chat = event[CENEventData.chat];
+
+    __weak __typeof(self) weakSelf = self;
+    self.eventHandlerBlock = ^(CENEmittedEvent *localEvent) {
+        __strong __typeof(weakSelf) strongSelf = weakSelf;
+        NSDictionary *event = localEvent.data;
         
-        [chat extensionWithIdentifier:identifier context:^(CENUnreadMessagesExtension *extension) {
-            [extension handleEvent:event];
-        }];
+        [strongSelf handleEvent:event];
     };
     
     for (NSString *event in self.configuration[CENUnreadMessagesConfiguration.events]) {
@@ -110,21 +106,15 @@ NS_ASSUME_NONNULL_END
         return;
     }
     
-    CENChat *chat = payload[CENEventData.chat];
-    CENUser *user = payload[CENEventData.sender];
-    
     self.unreadCount++;
     
     NSDictionary *unreadMessagesEvent = @{
-        CENUnreadMessagesEvent.chat: chat,
-        CENUnreadMessagesEvent.sender: user.uuid,
         CENUnreadMessagesEvent.event: payload,
         CENUnreadMessagesEvent.count: @(self.unreadCount)
     };
     
-    [chat emitEventLocally:@"$unread", unreadMessagesEvent, nil];
+    [self.object emitEventLocally:@"$unread", unreadMessagesEvent, nil];
 }
-
 
 #pragma mark -
 

@@ -1,37 +1,38 @@
+/**
+ * @author Serhii Mamontov
+ * @version 0.9.2
+ * @copyright © 2010-2019 PubNub, Inc.
+ */
 #import "CENMe.h"
 
 
 NS_ASSUME_NONNULL_BEGIN
 
-/**
- * @brief      Local \b ChatEngine user representation model.
- * @discussion This model represent user for which \b ChatEngine has been configured.
- * @discussion This is extended Objective-C interface to provide builder pattern for methods invocation.
- *
- * @author Serhii Mamontov
- * @version 0.9.0
- * @copyright © 2009-2018 PubNub, Inc.
- */
+#pragma mark Standard interface declaration
+
 @interface CENMe (Interface)
 
 
 #pragma mark - State
 
 /**
- * @brief      Update local user state.
- * @discussion Changes will be propagated to \b ChatEngine and \b PubNub network.
+ * @brief Update \b {local user CENMe} state in a \b {CENChatEngine.global} chat.
  *
- * @discussion Update local user information:
+ * @discussion All other \b {users CENUser} will be notified of this change via \b {$.state}.
+ * Retrieve state at any time with \b {CENUser.state}.
+ *
+ * @discussion Update state
  * @code
- * CENConfiguration *configuration = [CENConfiguration configurationWithPublishKey:@"demo-36" subscribeKey:@"demo-36"];
- * self.client = [CENChatEngine clientWithConfiguration:configuration];
- * [self.client handleEventOnce:@"$.ready" withHandlerBlock:^(CENMe *me) {
- *     [me updateState:@{ @"state": @"working" }];
- * }];
- * [self.client connectUser:@"ChatEngine"];
+ * // objc a78cd174-e6cc-4b02-bc81-3b6177c82b27
+ *
+ * // Update local user state when it will be required.
+ * [self.client.me updateState:@{ @"state": @"working" }];
  * @endcode
  *
- * @param state Reference on dictionary which contain target local user state.
+ * @param state \a NSDictionary which contain updated state for \b {local user CENMe}.
+ *     \b Default: \c @{}
+ *
+ * @ref fd42194b-4626-452d-8393-a9602283947b
  */
 - (void)updateState:(nullable NSDictionary *)state;
 

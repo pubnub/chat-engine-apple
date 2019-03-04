@@ -1,7 +1,7 @@
 /**
  * @author Serhii Mamontov
- * @version 0.9.0
- * @copyright © 2009-2018 PubNub, Inc.
+ * @version 0.9.2
+ * @copyright © 2010-2019 PubNub, Inc.
  */
 #import "CENChatEngine+ChatPrivate.h"
 #import "CENChatEngine+ChatInterface.h"
@@ -19,20 +19,25 @@
 #import "CENEventEmitter+Interface.h"
 #import "CENChatEngine+Session.h"
 #import "CENChatEngine+Private.h"
-#import "CENSession+Private.h"
 #import "CENChat+Interface.h"
 #import "CENChat+Private.h"
 #import "CENUser+Private.h"
-#import "CENStructures.h"
-#import "CENErrorCodes.h"
+#import "CENEmittedEvent.h"
 #import "CENLogMacro.h"
+#import "CENDefines.h"
 #import "CENError.h"
 #import "CENMe.h"
 
 
 #pragma mark Externs
 
-CENChatGroups CENChatGroup = { .system = @"system", .custom = @"custom" };
+/**
+ * @brief Typedef structure fields assignment.
+ */
+CENChatGroups CENChatGroup = {
+    .system = @"system",
+    .custom = @"custom"
+};
 
 
 #pragma mark - Interface implementation
@@ -56,49 +61,65 @@ CENChatGroups CENChatGroup = { .system = @"system", .custom = @"custom" };
 #pragma mark - Chat
 
 #if CHATENGINE_USE_BUILDER_INTERFACE
-
 - (CENChatBuilderInterface * (^)(void))Chat {
-    
-    CENChatBuilderInterface *builder = [CENChatBuilderInterface builderWithExecutionBlock:^id(NSArray<NSString *> *flags,
-                                                                                            NSDictionary *arguments) {
+
+    CENInterfaceCallCompletionBlock block = ^id (NSArray<NSString *> *flags, NSDictionary *args) {
+        NSNumber *isPrivate = args[NSStringFromSelector(@selector(private))];
+        NSNumber *shouldAutoConnect = args[NSStringFromSelector(@selector(autoConnect))];
+        NSDictionary *meta = args[NSStringFromSelector(@selector(meta))];
         CENChat *chat = nil;
-        NSNumber *isPrivate = arguments[NSStringFromSelector(@selector(private))];
-        NSNumber *shouldAutoConnect = arguments[NSStringFromSelector(@selector(autoConnect))];
-        NSDictionary *meta = arguments[NSStringFromSelector(@selector(meta))];
-        NSString *group = arguments[NSStringFromSelector(@selector(group))];
-        
+
         if ([flags containsObject:NSStringFromSelector(@selector(create))]) {
-            chat = [self createChatWithName:arguments[@"name"]
-                                      group:group
+            chat = [self createChatWithName:args[@"name"]
+                                      group:nil
                                     private:(isPrivate ? isPrivate.boolValue : NO)
                                 autoConnect:(shouldAutoConnect ? shouldAutoConnect.boolValue : YES)
                                    metaData:meta];
         } else {
-            chat = [self chatWithName:arguments[@"name"] private:(isPrivate ? isPrivate.boolValue : NO)];
+            chat = [self chatWithName:args[@"name"] private:(isPrivate ? isPrivate.boolValue : NO)];
         }
-        
+
         return chat;
-    }];
-    
+    };
+
+    CENChatBuilderInterface *builder = [CENChatBuilderInterface builderWithExecutionBlock:block];
+
     return ^CENChatBuilderInterface * {
         return builder;
     };
 }
-
 #endif // CHATENGINE_USE_BUILDER_INTERFACE
 
 - (CENChat *)createChatWithName:(NSString *)name
-                         group:(NSString *)group
-                       private:(BOOL)isPrivate
-                   autoConnect:(BOOL)shouldAutoConnect
-                      metaData:(NSDictionary *)meta {
+                        private:(BOOL)isPrivate
+                    autoConnect:(BOOL)autoConnect
+                       metaData:(NSDictionary *)meta {
+    
+    return [self createChatWithName:name
+                              group:nil
+                            private:isPrivate
+                        autoConnect:autoConnect
+                           metaData:meta];
+}
 
-    return [self.chatsManager createChatWithName:name group:group private:isPrivate autoConnect:shouldAutoConnect metaData:meta];
+- (CENChat *)createChatWithName:(NSString *)name
+                          group:(NSString *)group
+                        private:(BOOL)isPrivate
+                    autoConnect:(BOOL)autoConnect
+                       metaData:(NSDictionary *)meta {
+
+    return [self.chatsManager createGlobalChat:NO
+                                      withName:name
+                                         group:group
+                                       private:isPrivate
+                                   autoConnect:autoConnect
+                                      metaData:meta];
 }
 
 - (CENChat *)chatWithName:(NSString *)name private:(BOOL)isPrivate {
     
-    CELogAPICall(self.logger, @"<ChatEngine::API> Get '%@' %@ chat.", name, isPrivate ? @"private" : @"public");
+    CELogAPICall(self.logger, @"<ChatEngine::API> Get '%@' %@ chat.", name,
+        isPrivate ? @"private" : @"public");
     
     return [self.chatsManager chatWithName:name private:isPrivate];
 }
@@ -106,25 +127,40 @@ CENChatGroups CENChatGroup = { .system = @"system", .custom = @"custom" };
 
 #pragma mark -  Chats management
 
-- (void)createGlobalChat {
+- (void)createGlobalChatWithChannel:(NSString *)channel {
+
+    NSString *namespace = self.configuration.globalChannel;
     
-    [self.chatsManager createChatWithName:self.configuration.globalChannel group:CENChatGroup.system private:NO autoConnect:YES metaData:nil];
+    [self.chatsManager createGlobalChat:YES
+                               withName:(channel ?: namespace)
+                                  group:CENChatGroup.system
+                                private:NO
+                            autoConnect:YES
+                               metaData:nil];
 }
 
 - (CENChat *)createDirectChatForUser:(CENUser *)user {
+
+    NSString *namespace = self.configuration.globalChannel;
+    NSArray<NSString *> *nameComponents = @[namespace, @"user", user.uuid, @"write.", @"direct"];
     
-    NSString *globalChannel = self.configuration.globalChannel;
-    NSString *chatName = [@[globalChannel, @"user", user.uuid, @"write.", @"direct"] componentsJoinedByString:@"#"];
-    
-    return [self createChatWithName:chatName group:CENChatGroup.system private:NO autoConnect:NO metaData:nil];
+    return [self createChatWithName:[nameComponents componentsJoinedByString:@"#"]
+                              group:CENChatGroup.system
+                            private:NO
+                        autoConnect:NO
+                           metaData:nil];
 }
 
 - (CENChat *)createFeedChatForUser:(CENUser *)user {
+
+    NSString *namespace = self.configuration.globalChannel;
+    NSArray<NSString *> *nameComponents = @[namespace, @"user", user.uuid, @"read.", @"feed"];
     
-    NSString *globalChannel = self.configuration.globalChannel;
-    NSString *chatName = [@[globalChannel, @"user", user.uuid, @"read.", @"feed"] componentsJoinedByString:@"#"];
-    
-    return [self createChatWithName:chatName group:CENChatGroup.system private:NO autoConnect:NO metaData:nil];
+    return [self createChatWithName:[nameComponents componentsJoinedByString:@"#"]
+                              group:CENChatGroup.system
+                            private:NO
+                        autoConnect:NO
+                           metaData:nil];
 }
 
 - (void)removeChat:(CENChat *)chat {
@@ -133,51 +169,60 @@ CENChatGroups CENChatGroup = { .system = @"system", .custom = @"custom" };
 }
 
 
-#pragma mark - Chats state
+#pragma mark - Chat meta
 
-- (void)fetchRemoteStateForChat:(CENChat *)chat withCompletion:(void(^)(BOOL success, NSDictionary *meta))block {
+- (void)fetchMetaForChat:(CENChat *)chat
+          withCompletion:(void(^)(BOOL success, NSArray *responses))block {
     
-    NSArray<NSDictionary *> *routes = @[@{ @"route": @"chat", @"method": @"get", @"query": @{ @"channel": chat.channel } }];
+    NSArray<NSDictionary *> *routes = @[
+        @{ @"route": @"chat", @"method": @"get", @"query": @{ @"channel": chat.channel } }
+    ];
     
-    [self.functionsClient callRouteSeries:routes withCompletion:^(BOOL success, NSArray *responses) {
+    [self.functionClient callRouteSeries:routes withCompletion:^(BOOL success, NSArray *responses) {
         NSDictionary *information = (NSDictionary *)responses.lastObject;
-        NSDictionary *meta = information[CENEventData.chat][@"meta"];
+        NSDictionary *meta = success ? information : nil;
         
         if (success) {
-            [self handleFetchedMeta:meta forChat:chat];
+            [chat updateMetaWithFetchedData:meta];
         }
         
-        block(!success, meta);
-    }];
-}
-
-- (void)handleFetchedMeta:(NSDictionary *)meta forChat:(CENChat *)chat {
-    
-    [chat updateMetaWithFetchedData:meta];
-}
-
-- (void)updateChatState:(CENChat *)__unused chat withData:(NSDictionary *)data completion:(nullable dispatch_block_t)block {
-    
-    [self setClientState:data forChannel:self.configuration.globalChannel withCompletion:^(__unused PNClientStateUpdateStatus *status) {
-        if (block) {
-            block();
-        }
+        block(success, responses);
     }];
 }
 
 - (void)pushUpdatedChatMeta:(CENChat *)chat withRepresentation:(NSDictionary *)representation {
     
-    NSArray<NSDictionary *> *routes = @[@{ @"route": @"chat", @"method": @"post", @"body": @{ @"chat": representation } }];
-    
-    __weak __typeof__(self) weakSelf = self;
-    [self.functionsClient callRouteSeries:routes withCompletion:^(BOOL success, NSArray *responses) {
-        __strong __typeof(weakSelf) strongSelf = weakSelf;
-        
+    NSArray<NSDictionary *> *routes = @[
+        @{ @"route": @"chat", @"method": @"post", @"body": @{ @"chat": representation } }
+    ];
+
+    [self.functionClient callRouteSeries:routes withCompletion:^(BOOL success, NSArray *responses) {
         if (!success) {
-            NSString *description = @"Something went wrong while making a request to authentication server.";
-            NSError *error = [CENError errorFromPubNubFunctionError:responses withDescription:description];
+            NSString *description = @"Something went wrong while trying to update metadata.";
+            NSError *error = [CENError errorFromPubNubFunctionError:responses
+                                                    withDescription:description];
             
-            [strongSelf throwError:error forScope:@"chat" from:chat propagateFlow:CEExceptionPropagationFlow.middleware];
+            [self throwError:error
+                    forScope:@"chat"
+                        from:chat
+               propagateFlow:CEExceptionPropagationFlow.direct];
+        }
+    }];
+}
+
+
+#pragma mark - Chat state
+
+- (void)updateChatState:(CENChat *)chat
+               withData:(NSDictionary *)data
+             completion:(void(^)(NSError *error))block {
+    
+    [self setClientState:data
+              forChannel:chat.channel
+          withCompletion:^(PNClientStateUpdateStatus *status) {
+
+        if (block) {
+            block(status.isError ? [CENError errorFromPubNubStatus:status] : nil);
         }
     }];
 }
@@ -185,42 +230,22 @@ CENChatGroups CENChatGroup = { .system = @"system", .custom = @"custom" };
 
 #pragma mark - Chat connection
 
-- (void)connectToChat:(CENChat *)chat withCompletion:(void(^)(NSDictionary *meta))block {
+- (void)connectToChat:(CENChat *)chat withCompletion:(dispatch_block_t)block {
     
-    [self handshakeChatAccess:chat withCompletion:^(BOOL isError, NSDictionary *meta) {
-        if (isError) {
-            return;
-        }
-        
-        block(meta);
-        
-        void (^handshakeCompletionOnConnect)(CENMe *) = ^(CENMe *me){
-            [chat handleRemoteUsersJoin:@[me]];
-            
-            BOOL isSynchronizationChat = [self.synchronizationSession isSynchronizationChat:chat];
-            if (![chat isEqual:self.global] && ![chat isEqual:me.direct] && ![chat isEqual:me.feed] && !isSynchronizationChat) {
-                [self synchronizeSessionChatJoin:chat];
-            }
-            
-            if ([chat isEqual:me.direct] || [chat isEqual:me.feed] || isSynchronizationChat) {
-                return;
-            }
-            
-            if ([chat.group isEqualToString:CENChatGroup.custom]) {
-                dispatch_queue_t delayQueue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
-                dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.f * NSEC_PER_SEC)), delayQueue, ^{
-                    if (self.chats.count) {
-                        [chat fetchParticipants];
-                    }
-                });
-            }
+    [self handshakeChatAccess:chat withCompletion:^{
+        block();
+
+        CENWeakify(self)
+        void (^handshakeCompletionOnConnect)(CENMe *) = ^(__unused CENMe *me) {
+            CENStrongify(self)
+            [self synchronizeSessionChatJoin:chat];
         };
         
         if(self.isReady && self.me) {
             handshakeCompletionOnConnect(self.me);
         } else {
-            [self handleEventOnce:@"$.ready" withHandlerBlock:^(CENMe *me) {
-                handshakeCompletionOnConnect(me);
+            [self handleEventOnce:@"$.ready" withHandlerBlock:^(CENEmittedEvent *event) {
+                handshakeCompletionOnConnect(event.data);
             }];
         }
     }];
@@ -229,6 +254,11 @@ CENChatGroups CENChatGroup = { .system = @"system", .custom = @"custom" };
 - (void)connectChats {
     
     [self.chatsManager connectChats];
+}
+
+- (void)resetChatsConnection {
+    
+    [self.chatsManager resetChatsConnection];
 }
 
 - (void)disconnectChats {
@@ -241,89 +271,102 @@ CENChatGroups CENChatGroup = { .system = @"system", .custom = @"custom" };
 
 - (void)inviteToChat:(CENChat *)chat user:(CENUser *)user {
     
+    NSDictionary *representation = [chat dictionaryRepresentation];
     NSArray<NSDictionary *> *routes = @[@{
         @"route": @"invite",
         @"method": @"post",
-        @"body": @{ @"to": user.uuid, @"chat": [chat dictionaryRepresentation] }
+        @"body": @{ @"to": user.uuid, @"chat": representation }
     }];
-    
-    __weak __typeof__(self) weakSelf = self;
-    [self.functionsClient callRouteSeries:routes withCompletion:^(BOOL success, NSArray *responses) {
-        __strong __typeof(weakSelf) strongSelf = weakSelf;
-        
+
+    [self.functionClient callRouteSeries:routes withCompletion:^(BOOL success, NSArray *responses) {
         if (success) {
             [user.direct emitEvent:@"$.invite" withData:@{ @"channel": chat.channel }];
-            
             return;
         }
         
-        NSString *description = @"Something went wrong while making a request to authentication server.";
-        NSError *error = [CENError errorFromPubNubFunctionError:responses withDescription:description];
+        NSString *description = @"Something went wrong while making a request to authentication "
+                                "server.";
+        NSError *error = [CENError errorFromPubNubFunctionError:responses
+                                                withDescription:description];
         
-        [strongSelf throwError:error forScope:@"auth" from:chat propagateFlow:CEExceptionPropagationFlow.middleware];
+        [self throwError:error
+                forScope:@"auth"
+                    from:chat
+           propagateFlow:CEExceptionPropagationFlow.middleware];
     }];
 }
 
 - (void)leaveChat:(CENChat *)chat {
     
-    [self unsubscribeFromChannels:@[chat.channel]];
-    
+    if (![chat.group isEqualToString:CENChatGroup.custom] || [chat isEqual:self.global]) {
+        return;
+    }
+
     NSDictionary *dictionaryRepresentation = [chat dictionaryRepresentation];
     NSArray<NSDictionary *> *routes = @[@{
         @"route": @"leave",
         @"method": @"post",
         @"body": @{ @"chat": dictionaryRepresentation }
     }];
-    
-    __weak __typeof__(self) weakSelf = self;
-    [self.functionsClient callRouteSeries:routes withCompletion:^(BOOL success, NSArray *responses) {
-        __strong __typeof(weakSelf) strongSelf = weakSelf;
-        
+
+    [self.functionClient callRouteSeries:routes withCompletion:^(BOOL success, NSArray *responses) {
         if (success) {
             [chat handleLeave];
             [chat emitEvent:@"$.system.leave" withData:@{ @"subject": dictionaryRepresentation }];
             
             [self synchronizeSessionChatLeave:chat];
-            
             return;
         }
         
         NSString *description = @"Something went wrong while making a request to chat server.";
-        NSError *error = [CENError errorFromPubNubFunctionError:responses withDescription:description];
+        NSError *error = [CENError errorFromPubNubFunctionError:responses
+                withDescription:description];
         
-        [strongSelf throwError:error forScope:@"chat" from:chat propagateFlow:CEExceptionPropagationFlow.middleware];
+        [self throwError:error
+                forScope:@"leave"
+                    from:chat
+           propagateFlow:CEExceptionPropagationFlow.direct];
     }];
 }
 
 - (void)fetchParticipantsForChat:(CENChat *)chat {
-    
-    BOOL shouldFetchState = [chat.channel isEqualToString:self.configuration.globalChannel];
-    __weak __typeof__(self) weakSelf = self;
-    
+
     [self fetchParticipantsForChannel:chat.channel
-                            withState:shouldFetchState
-                           completion:^(PNPresenceChannelHereNowResult *result, PNErrorStatus *status) {
-                               
-        __strong __typeof(weakSelf) strongSelf = weakSelf;
+                           completion:^(PNPresenceChannelHereNowResult *result,
+                                        PNErrorStatus *status) {
         
         if (!status) {
             NSMutableArray<CENUser *> *participants = [NSMutableArray new];
+            NSMutableDictionary *states = [NSMutableDictionary new];
             
             for (id presenceData in result.data.uuids) {
-                NSString *uuid = [presenceData isKindOfClass:[NSDictionary class]] ? presenceData[@"uuid"] : presenceData;
-                NSDictionary *state = [presenceData isKindOfClass:[NSDictionary class]] ? presenceData[@"state"] : nil;
+                NSString *uuid = presenceData;
+                NSDictionary *state = @{};
+
+                if ([presenceData isKindOfClass:[NSDictionary class]]) {
+                    uuid = presenceData[@"uuid"];
+                    state = presenceData[@"state"];
+                }
                 
-                [participants addObject:[strongSelf createUserWithUUID:uuid state:state]];
+                CENUser *user = [self createUserWithUUID:uuid state:nil];
+                [user assignState:state forChat:chat];
+                states[user.uuid] = state;
+                
+                [participants addObject:user];
             }
             
-            [chat handleRemoteUsersStateChange:participants];
-            
+            [chat handleRemoteUsersRefresh:participants withStates:states];
             return;
         }
         
-        NSError *error = [CENError errorFromPubNubStatus:status];
+        NSString *description = @"Getting presence of this Chat. Make sure PubNub presence is "
+                                "enabled for this key";
+        NSError *error = [CENError errorFromPubNubStatus:status withDescription:description];
         
-        [strongSelf throwError:error forScope:@"presence" from:chat propagateFlow:CEExceptionPropagationFlow.middleware];
+        [self throwError:error
+                forScope:@"presence"
+                    from:chat
+           propagateFlow:CEExceptionPropagationFlow.middleware];
     }];
 }
 

@@ -1,13 +1,16 @@
 #import "CEPPlugin.h"
 
 
+NS_ASSUME_NONNULL_BEGIN
+
 /**
- * @brief      \b CENSearch output filter plugin.
- * @discussion Depending from configuration allow to filter up events by sender and/or event type.
+ * @brief \b {Search CENSearch} results filter plugin.
+ *
+ * @discussion Depending from configuration allow to filter up events by sender and / or event type.
  *
  * @author Serhii Mamontov
- * @version 0.9.0
- * @copyright © 2009-2018 PubNub, Inc.
+ * @version 0.9.2
+ * @copyright © 2010-2019 PubNub, Inc.
  */
 @interface CENSearchFilterPlugin : CEPPlugin
 
@@ -16,3 +19,5 @@
 
 
 @end
+
+NS_ASSUME_NONNULL_END

@@ -4,25 +4,23 @@
 NS_ASSUME_NONNULL_BEGIN
 
 /**
- * @brief  Useful NSDictionary additions collection.
+ * @brief \a NSDictionary interface extension
  *
  * @author Serhii Mamontov
- * @version 0.9.0
- * @copyright © 2009-2018 PubNub, Inc.
+ * @version 0.9.2
+ * @copyright © 2010-2019 PubNub, Inc.
  */
 @interface CENDictionary : NSObject
 
 
-///------------------------------------------------
-/// @name URL helper
-///------------------------------------------------
+#pragma mark URL helper
 
 /**
- * @brief  Encode provided \c dictionary to string which can be used with reuests.
+ * @brief Encode provided \c dictionary to query string.
  *
- * @param dictionary Dictionary which should be encoded.
+ * @param dictionary \a NSDictionary which should be encoded.
  *
- * @return Joined string with percent-escaped kevy values.
+ * @return Joined string with percent-escaped values.
  */
 + (nullable NSString *)queryStringFrom:(NSDictionary *)dictionary;
 

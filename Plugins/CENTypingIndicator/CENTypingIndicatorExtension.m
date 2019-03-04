@@ -1,24 +1,16 @@
 /**
  * @author Serhii Mamontov
- * @version 1.0.0
- * @copyright © 2009-2018 PubNub, Inc.
+ * @version 0.0.2
+ * @copyright © 2010-2019 PubNub, Inc.
  */
 #import "CENTypingIndicatorExtension.h"
 #import <CENChatEngine/CEPExtension+Developer.h>
 #import <CENChatEngine/CENChat+Interface.h>
+#import <CENChatEngine/CENEmittedEvent.h>
 #import "CENTypingIndicatorPlugin.h"
 
 
-#pragma mark Static
-
-/**
- * @brief  Reference on key under which timer instance store reference on object for which it has been created.
- */
-static NSString * const kCENTIObjectKey = @"CENTIObject";
-
-
 NS_ASSUME_NONNULL_BEGIN
-
 
 #pragma mark Protected interface declaration
 
@@ -28,12 +20,17 @@ NS_ASSUME_NONNULL_BEGIN
 #pragma mark - Information
 
 /**
- * @brief  Stores whether user currently typing or not.
+ * @brief Events handling block.
+ */
+@property (nonatomic, copy, nullable) CENEventHandlerBlock eventHandlerBlock;
+
+/**
+ * @brief Whether user currently typing or not.
  */
 @property (nonatomic, assign, getter = isTyping) BOOL typing;
 
 /**
- * @brief  Stores reference on typing indicator idle timer.
+ * @brief Typing indicator idle timer.
  */
 @property (nonatomic, nullable, strong) NSTimer *idleTimer;
 
@@ -41,11 +38,9 @@ NS_ASSUME_NONNULL_BEGIN
 #pragma mark - Handler
 
 /**
- * @brief      Handle idle timer.
- * @discussion If timer fired, it mean what user didn't called \c startTyping in time (for long writting) and remote users
- *             should be notified about typing \b stop.
+ * @brief Handle idle timer.
  *
- * @param timer Reference on timer which triggered this callback.
+ * @param timer Timer which triggered this callback.
  */
 - (void)handleTypingIdleTimer:(NSTimer *)timer;
 
@@ -53,13 +48,12 @@ NS_ASSUME_NONNULL_BEGIN
 #pragma mark - Misc
 
 /**
- * @brief      Create and configure typing idle timer.
- * @discussion Timer instance should include reference on \c object in it's \c userInfo dictionary.
+ * @brief Create and configure typing idle timer.
  */
 - (void)startIdleTimer;
 
 /**
- * @brief  Invalidate any active typing idle timers.
+ * @brief Invalidate any active typing idle timers.
  */
 - (void)stopIdleTimer;
 
@@ -103,13 +97,9 @@ NS_ASSUME_NONNULL_END
 
 #pragma mark - Handlers
 
-- (void)handleTypingIdleTimer:(NSTimer *)timer {
+- (void)handleTypingIdleTimer:(NSTimer *)__unused timer {
     
-    CENChat *chat = timer.userInfo[kCENTIObjectKey];
-    
-    [chat extensionWithIdentifier:self.identifier context:^(CENTypingIndicatorExtension *extension) {
-        [extension stopTyping];
-    }];
+    [self stopTyping];
 }
 
 
@@ -123,8 +113,9 @@ NS_ASSUME_NONNULL_END
     self.idleTimer = [NSTimer scheduledTimerWithTimeInterval:timeout.doubleValue
                                                       target:self
                                                     selector:@selector(handleTypingIdleTimer:)
-                                                    userInfo:@{ kCENTIObjectKey: self.object }
+                                                    userInfo:nil
                                                      repeats:NO];
+    
     [[NSRunLoop currentRunLoop] addTimer:self.idleTimer forMode:NSRunLoopCommonModes];
 }
 

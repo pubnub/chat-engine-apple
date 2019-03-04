@@ -1,14 +1,19 @@
 /**
  * @author Serhii Mamontov
- * @copyright © 2009-2018 PubNub, Inc.
+ * @copyright © 2010-2018 PubNub, Inc.
  */
-#import <XCTest/XCTest.h>
 #import <CENChatEngine/CENInterfaceBuilder+Private.h>
 #import <CENChatEngine/CENChatBuilderInterface.h>
+#import <OCMock/OCMock.h>
+#import "CENTestCase.h"
 
 
-@interface CENChatBuilderInterfaceTest : XCTestCase
+@interface CENChatBuilderInterfaceTest : CENTestCase
 
+
+#pragma mark - Misc
+
+- (CENChatBuilderInterface *)builder;
 
 #pragma mark -
 
@@ -21,56 +26,51 @@
 @implementation CENChatBuilderInterfaceTest
 
 
+#pragma mark - Setup / Tear down
+
+- (BOOL)shouldSetupVCR {
+
+    return NO;
+}
+
+
 #pragma mark - Tests :: name
 
 - (void)testName_ShouldReturnReferenceOnBuilder_WhenCalled {
     
-    CEInterfaceCallCompletionBlock block = ^id (NSArray<NSString *> *flags, NSDictionary *arguments) {
-        return nil;
-    };
+    CENChatBuilderInterface *builder = [self builder];
     
-    CENChatBuilderInterface *builder = [CENChatBuilderInterface builderWithExecutionBlock:block];
+    
     XCTAssertEqualObjects(builder.name(@"PubNub"), builder);
 }
 
 - (void)testName_ShouldSetChatName_WhenNSStringPassed {
     
-    __block BOOL blockCalled = NO;
+    CENChatBuilderInterface *builder = [self builder];
+    NSString *parameter = @"name";
+    NSString *mockedParameter = [@[@"ocmock_replaced", parameter] componentsJoinedByString:@"_"];
     NSString *expected = @"PubNub";
-    CEInterfaceCallCompletionBlock block = ^id (NSArray<NSString *> *flags, NSDictionary *arguments) {
-        blockCalled = YES;
-        
-        XCTAssertGreaterThan(arguments.count, 0);
-        XCTAssertEqualObjects(arguments[@"name"], expected);
-        
-        return nil;
-    };
     
-    CENChatBuilderInterface *builder = [CENChatBuilderInterface builderWithExecutionBlock:block];
-    builder.name(expected);
-    [builder performWithReturnValue];
     
-    XCTAssertTrue(blockCalled);
+    id builderMock = [self mockForObject:builder];
+    id recorded = OCMExpect([builderMock setArgument:expected forParameter:mockedParameter]);
+    [self waitForObject:builderMock recordedInvocationCall:recorded afterBlock:^{
+        builder.name(expected);
+    }];
 }
 
 - (void)testName_ShouldNotSetChatName_WhenNonNSStringPassed {
-    
-    __block BOOL blockCalled = NO;
+
+    NSString *mockedParameter = @"ocmock_replaced_name";
+    CENChatBuilderInterface *builder = [self builder];
     NSString *expected = (id)@2010;
-    CEInterfaceCallCompletionBlock block = ^id (NSArray<NSString *> *flags, NSDictionary *arguments) {
-        blockCalled = YES;
-        
-        XCTAssertEqual(arguments.count, 0);
-        XCTAssertNil(arguments[@"name"]);
-        
-        return nil;
-    };
     
-    CENChatBuilderInterface *builder = [CENChatBuilderInterface builderWithExecutionBlock:block];
-    builder.name(expected);
-    [builder performWithReturnValue];
     
-    XCTAssertTrue(blockCalled);
+    id builderMock = [self mockForObject:builder];
+    id recorded = OCMExpect([[builderMock reject] setArgument:expected forParameter:mockedParameter]);
+    [self waitForObject:builderMock recordedInvocationNotCall:recorded afterBlock:^{
+        builder.name(expected);
+    }];
 }
 
 
@@ -78,32 +78,24 @@
 
 - (void)testPrivate_ShouldReturnReferenceOnBuilder_WhenCalled {
     
-    CEInterfaceCallCompletionBlock block = ^id (NSArray<NSString *> *flags, NSDictionary *arguments) {
-        return nil;
-    };
+    CENChatBuilderInterface *builder = [self builder];
     
-    CENChatBuilderInterface *builder = [CENChatBuilderInterface builderWithExecutionBlock:block];
+    
     XCTAssertEqualObjects(builder.private(YES), builder);
 }
 
 - (void)testPrivate_ShouldSetChatAsPrivate_WhenCalled {
-    
-    __block BOOL blockCalled = NO;
+
+    NSString *mockedParameter = @"ocmock_replaced_private";
+    CENChatBuilderInterface *builder = [self builder];
     BOOL expected = YES;
-    CEInterfaceCallCompletionBlock block = ^id (NSArray<NSString *> *flags, NSDictionary *arguments) {
-        blockCalled = YES;
-        
-        XCTAssertGreaterThan(arguments.count, 0);
-        XCTAssertEqualObjects(arguments[@"private"], @(expected));
-        
-        return nil;
-    };
     
-    CENChatBuilderInterface *builder = [CENChatBuilderInterface builderWithExecutionBlock:block];
-    builder.private(expected);
-    [builder performWithReturnValue];
     
-    XCTAssertTrue(blockCalled);
+    id builderMock = [self mockForObject:builder];
+    id recorded = OCMExpect([builderMock setArgument:@(expected) forParameter:mockedParameter]);
+    [self waitForObject:builderMock recordedInvocationCall:recorded afterBlock:^{
+        builder.private(expected);
+    }];
 }
 
 
@@ -111,32 +103,24 @@
 
 - (void)testAutoConnect_ShouldReturnReferenceOnBuilder_WhenCalled {
     
-    CEInterfaceCallCompletionBlock block = ^id (NSArray<NSString *> *flags, NSDictionary *arguments) {
-        return nil;
-    };
+    CENChatBuilderInterface *builder = [self builder];
     
-    CENChatBuilderInterface *builder = [CENChatBuilderInterface builderWithExecutionBlock:block];
+    
     XCTAssertEqualObjects(builder.autoConnect(YES), builder);
 }
 
 - (void)testAutoConnect_ShouldSetChatAutoConnection_WhenCalled {
-    
-    __block BOOL blockCalled = NO;
+
+    NSString *mockedParameter = @"ocmock_replaced_autoConnect";
+    CENChatBuilderInterface *builder = [self builder];
     BOOL expected = NO;
-    CEInterfaceCallCompletionBlock block = ^id (NSArray<NSString *> *flags, NSDictionary *arguments) {
-        blockCalled = YES;
-        
-        XCTAssertGreaterThan(arguments.count, 0);
-        XCTAssertEqualObjects(arguments[@"autoConnect"], @(expected));
-        
-        return nil;
-    };
     
-    CENChatBuilderInterface *builder = [CENChatBuilderInterface builderWithExecutionBlock:block];
-    builder.autoConnect(expected);
-    [builder performWithReturnValue];
     
-    XCTAssertTrue(blockCalled);
+    id builderMock = [self mockForObject:builder];
+    id recorded = OCMExpect([builderMock setArgument:@(expected) forParameter:mockedParameter]);
+    [self waitForObject:builderMock recordedInvocationCall:recorded afterBlock:^{
+        builder.autoConnect(expected);
+    }];
 }
 
 
@@ -144,52 +128,38 @@
 
 - (void)testMeta_ShouldReturnReferenceOnBuilder_WhenCalled {
     
-    CEInterfaceCallCompletionBlock block = ^id (NSArray<NSString *> *flags, NSDictionary *arguments) {
-        return nil;
-    };
+    CENChatBuilderInterface *builder = [self builder];
     
-    CENChatBuilderInterface *builder = [CENChatBuilderInterface builderWithExecutionBlock:block];
+    
     XCTAssertEqualObjects(builder.meta(@{ }), builder);
 }
 
 - (void)testMeta_ShouldSetChatMeta_WhenNSDictionaryPassed {
-    
-    __block BOOL blockCalled = NO;
+
+    NSString *mockedParameter = @"ocmock_replaced_meta";
+    CENChatBuilderInterface *builder = [self builder];
     NSDictionary *expected = @{ @"PubNub": @2010 };
-    CEInterfaceCallCompletionBlock block = ^id (NSArray<NSString *> *flags, NSDictionary *arguments) {
-        blockCalled = YES;
-        
-        XCTAssertGreaterThan(arguments.count, 0);
-        XCTAssertEqualObjects(arguments[@"meta"], expected);
-        
-        return nil;
-    };
     
-    CENChatBuilderInterface *builder = [CENChatBuilderInterface builderWithExecutionBlock:block];
-    builder.meta(expected);
-    [builder performWithReturnValue];
     
-    XCTAssertTrue(blockCalled);
+    id builderMock = [self mockForObject:builder];
+    id recorded = OCMExpect([builderMock setArgument:expected forParameter:mockedParameter]);
+    [self waitForObject:builderMock recordedInvocationCall:recorded afterBlock:^{
+        builder.meta(expected);
+    }];
 }
 
 - (void)testMeta_ShouldNotSetChatMeta_WhenNonNSDictionaryPassed {
-    
-    __block BOOL blockCalled = NO;
+
+    NSString *mockedParameter = @"ocmock_replaced_meta";
+    CENChatBuilderInterface *builder = [self builder];
     NSDictionary *expected = (id)@2010;
-    CEInterfaceCallCompletionBlock block = ^id (NSArray<NSString *> *flags, NSDictionary *arguments) {
-        blockCalled = YES;
-        
-        XCTAssertEqual(arguments.count, 0);
-        XCTAssertNil(arguments[@"meta"]);
-        
-        return nil;
-    };
     
-    CENChatBuilderInterface *builder = [CENChatBuilderInterface builderWithExecutionBlock:block];
-    builder.meta(expected);
-    [builder performWithReturnValue];
     
-    XCTAssertTrue(blockCalled);
+    id builderMock = [self mockForObject:builder];
+    id recorded = OCMExpect([[builderMock reject] setArgument:expected forParameter:mockedParameter]);
+    [self waitForObject:builderMock recordedInvocationNotCall:recorded afterBlock:^{
+        builder.meta(expected);
+    }];
 }
 
 
@@ -197,96 +167,73 @@
 
 - (void)testGroup_ShouldReturnReferenceOnBuilder_WhenCalled {
     
-    CEInterfaceCallCompletionBlock block = ^id (NSArray<NSString *> *flags, NSDictionary *arguments) {
-        return nil;
-    };
+    CENChatBuilderInterface *builder = [self builder];
     
-    CENChatBuilderInterface *builder = [CENChatBuilderInterface builderWithExecutionBlock:block];
-    XCTAssertEqualObjects(builder.group(@"PubNub"), builder);
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+    XCTAssertEqualObjects(builder.group(@"testGroup"), builder);
+#pragma clang diagnostic pop
 }
 
-- (void)testGroup_ShouldSetChatGroup_WhenNSStringPassed {
-    
-    __block BOOL blockCalled = NO;
-    NSString *expected = @"PubNub";
-    CEInterfaceCallCompletionBlock block = ^id (NSArray<NSString *> *flags, NSDictionary *arguments) {
-        blockCalled = YES;
-        
-        XCTAssertGreaterThan(arguments.count, 0);
-        XCTAssertEqualObjects(arguments[@"group"], expected);
-        
-        return nil;
-    };
-    
-    CENChatBuilderInterface *builder = [CENChatBuilderInterface builderWithExecutionBlock:block];
-    builder.group(expected);
-    [builder performWithReturnValue];
-    
-    XCTAssertTrue(blockCalled);
-}
+- (void)testGroup_ShouldNotSetState_WhenNSDictionaryPassed {
 
-- (void)testGroup_ShouldNotSetChatGroup_WhenNonNSStringPassed {
+    NSString *mockedParameter = @"ocmock_replaced_group";
+    CENChatBuilderInterface *builder = [self builder];
+    NSString *expected = @"testGroup";
     
-    __block BOOL blockCalled = NO;
-    NSString *expected = (id)@2010;
-    CEInterfaceCallCompletionBlock block = ^id (NSArray<NSString *> *flags, NSDictionary *arguments) {
-        blockCalled = YES;
-        
-        XCTAssertEqual(arguments.count, 0);
-        XCTAssertNil(arguments[@"group"]);
-        
-        return nil;
-    };
     
-    CENChatBuilderInterface *builder = [CENChatBuilderInterface builderWithExecutionBlock:block];
-    builder.group(expected);
-    [builder performWithReturnValue];
-    
-    XCTAssertTrue(blockCalled);
+    id builderMock = [self mockForObject:builder];
+    id recorded = OCMExpect([[builderMock reject] setArgument:expected forParameter:mockedParameter]);
+    [self waitForObject:builderMock recordedInvocationNotCall:recorded afterBlock:^{
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+        builder.group(expected);
+#pragma clang diagnostic pop
+    }];
 }
 
 
 #pragma mark - Tests :: create
 
 - (void)testCreate_ShouldSetCreateFlag_WhenCalled {
+
+    NSString *mockedParameter = @"ocmock_replaced_create";
+    CENChatBuilderInterface *builder = [self builder];
     
-    __block BOOL blockCalled = NO;
-    CEInterfaceCallCompletionBlock block = ^id (NSArray<NSString *> *flags, NSDictionary *arguments) {
-        blockCalled = YES;
-        
-        XCTAssertGreaterThan(flags.count, 0);
-        XCTAssertTrue([flags containsObject:@"create"]);
-        
-        return nil;
-    };
     
-    CENChatBuilderInterface *builder = [CENChatBuilderInterface builderWithExecutionBlock:block];
-    builder.create();
-    [builder performWithReturnValue];
-    
-    XCTAssertTrue(blockCalled);
+    id builderMock = [self mockForObject:builder];
+    id recorded = OCMExpect([builderMock setFlag:mockedParameter]);
+    [self waitForObject:builderMock recordedInvocationCall:recorded afterBlock:^{
+        builder.create();
+    }];
 }
 
 
 #pragma mark - Tests :: get
 
 - (void)testGet_ShouldSetGetFlag_WhenCalled {
+
+    NSString *mockedParameter = @"ocmock_replaced_get";
+    CENChatBuilderInterface *builder = [self builder];
     
-    __block BOOL blockCalled = NO;
-    CEInterfaceCallCompletionBlock block = ^id (NSArray<NSString *> *flags, NSDictionary *arguments) {
-        blockCalled = YES;
-        
-        XCTAssertGreaterThan(flags.count, 0);
-        XCTAssertTrue([flags containsObject:@"get"]);
-        
+    
+    id builderMock = [self mockForObject:builder];
+    id recorded = OCMExpect([builderMock setFlag:mockedParameter]);
+    [self waitForObject:builderMock recordedInvocationCall:recorded afterBlock:^{
+        builder.get();
+    }];
+}
+
+
+#pragma mark - Misc
+
+- (CENChatBuilderInterface *)builder {
+    
+    CENInterfaceCallCompletionBlock block = ^id (NSArray<NSString *> *flags, NSDictionary *arguments) {
         return nil;
     };
     
-    CENChatBuilderInterface *builder = [CENChatBuilderInterface builderWithExecutionBlock:block];
-    builder.get();
-    [builder performWithReturnValue];
-    
-    XCTAssertTrue(blockCalled);
+    return [CENChatBuilderInterface builderWithExecutionBlock:block];
 }
 
 #pragma mark -

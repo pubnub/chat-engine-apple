@@ -1,6 +1,6 @@
 Pod::Spec.new do |spec|
     spec.name     = 'CENChatEngine'
-    spec.version  = '0.9.2'
+    spec.version  = '0.9.3'
     spec.summary  = 'Framework for building chat applications.'
     spec.homepage = 'https://github.com/pubnub/chat-engine-apple'
 
@@ -24,7 +24,7 @@ Pod::Spec.new do |spec|
             'ChatEngine/Core/{Emitter,Publish,Search,Session}/*.h',
             'ChatEngine/Data/Managers/*.h',
             'ChatEngine/**/*Private.h',
-            'ChatEngine/Misc/{CENConstants,CENPrivateStructures}.h',
+            'ChatEngine/Misc/{CENDefines,CENConstants,CENPrivateStructures}.h',
             'ChatEngine/Misc/Helpers/{CENDictionary}.h',
             'ChatEngine/Network/**/*.h',
             'ChatEngine/Plugin/CEPPrivateStructures.h'
@@ -41,7 +41,6 @@ Pod::Spec.new do |spec|
         }
     end
 
-
     spec.subspec 'BuilderInterfaceOff' do |bulderInterface|
         bulderInterface.dependency 'CENChatEngine/Core'
         bulderInterface.xcconfig = { 'GCC_PREPROCESSOR_DEFINITIONS' => 'CHATENGINE_USE_BUILDER_INTERFACE=0' }
@@ -52,6 +51,37 @@ Pod::Spec.new do |spec|
     end
 
     spec.subspec 'Plugin' do |plugin|
+        plugin.subspec 'EventStatus' do |eventStatus|
+            eventStatus.dependency 'CENChatEngine/Core'
+            eventStatus.source_files = 'Plugins/CENEventStatus/**/*'
+        end
+        
+        plugin.subspec 'Uploadcare' do |uploadcare|
+            uploadcare.dependency 'CENChatEngine/Core'
+            uploadcare.source_files = 'Plugins/CENUploadcare/**/*'
+            uploadcare.private_header_files = [
+                'Plugins/CENUploadcare/CENUploadcareMiddleware+Private.h'
+            ]
+        end
+
+        plugin.subspec 'OpenGraph' do |openGraph|
+            openGraph.dependency 'CENChatEngine/Core'
+            openGraph.source_files = 'Plugins/CENOpenGraph/**/*'
+        end
+
+        plugin.subspec 'Muter' do |muter|
+            muter.dependency 'CENChatEngine/Core'
+            muter.source_files = 'Plugins/CENMuter/**/*'
+        end
+
+        plugin.subspec 'Emoji' do |emoji|
+            emoji.dependency 'CENChatEngine/Core'
+            emoji.source_files = 'Plugins/CENEmoji/**/*'
+            emoji.private_header_files = [
+                'Plugins/CENEmoji/CENEmojiMiddleware+Private.h'
+            ]
+        end
+
         plugin.subspec 'TypingIndicator' do |typingIndicator|
             typingIndicator.dependency 'CENChatEngine/Core'
             typingIndicator.source_files = 'Plugins/CENTypingIndicator/**/*'

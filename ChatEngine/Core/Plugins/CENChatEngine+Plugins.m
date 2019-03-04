@@ -1,7 +1,7 @@
 /**
  * @author Serhii Mamontov
- * @version 0.9.0
- * @copyright © 2009-2018 PubNub, Inc.
+ * @version 0.9.2
+ * @copyright © 2010-2019 PubNub, Inc.
  */
 #import "CENChatEngine+PluginsPrivate.h"
 
@@ -12,7 +12,6 @@
 #endif // CHATENGINE_USE_BUILDER_INTERFACE
 
 #import "CENChatEngine+Private.h"
-#import "CENPrivateStructures.h"
 #import "CEPPlugin+Private.h"
 #import "CENObject+Private.h"
 #import "CENLogMacro.h"
@@ -26,41 +25,44 @@
 #pragma mark - Plugins
 
 #if CHATENGINE_USE_BUILDER_INTERFACE
-
 - (CENPluginsBuilderInterface * (^)(NSString *object, id plugin))proto {
-    
-    CENPluginsBuilderInterface *builder;
-    builder = [CENPluginsBuilderInterface builderWithExecutionBlock:^id(NSArray<NSString *> *flags, NSDictionary *arguments) {
+
+    CENInterfaceCallCompletionBlock block = ^id(NSArray<NSString *> *flags, NSDictionary *args) {
         id result = nil;
-        NSString *object = arguments[@"object"];
-        id plugin = arguments[@"plugin"];
-        NSString *identifier = arguments[NSStringFromSelector(@selector(identifier))];
-        NSDictionary *configuration = arguments[NSStringFromSelector(@selector(configuration))];
+        NSString *object = args[@"object"];
+        id plugin = args[@"plugin"];
+        NSString *identifier = args[NSStringFromSelector(@selector(identifier))];
+        NSDictionary *configuration = args[NSStringFromSelector(@selector(configuration))];
+        
         if ([CEPPlugin isPluginClass:plugin]) {
             identifier = identifier ?: [plugin identifier];
         } else if (!identifier) {
             identifier = plugin;
         }
-        
+
         if ([flags containsObject:NSStringFromSelector(@selector(store))]) {
-            [self registerProtoPlugin:plugin withIdentifier:identifier configuration:configuration forObjectType:object];
+            [self registerProtoPlugin:plugin
+                       withIdentifier:identifier
+                        configuration:configuration
+                        forObjectType:object];
         } else if ([flags containsObject:NSStringFromSelector(@selector(remove))]) {
             [self unregisterProtoPluginWithIdentifier:identifier forObjectType:object];
         } else if ([flags containsObject:NSStringFromSelector(@selector(exists))]) {
             result = @([self hasProtoPluginWithIdentifier:identifier forObjectType:object]);
         }
-        
+
         return result;
-    }];
+    };
+
+    CENPluginsBuilderInterface *builder;
+    builder = [CENPluginsBuilderInterface builderWithExecutionBlock:block];
     
     return ^CENPluginsBuilderInterface * (NSString *object, id plugin) {
         [builder setArgument:object forParameter:@"object"];
         [builder setArgument:plugin forParameter:@"plugin"];
-        
         return builder;
     };
 }
-
 #endif // CHATENGINE_USE_BUILDER_INTERFACE
 
 
@@ -75,23 +77,25 @@
     return [self.pluginsManager hasPluginWithIdentifier:identifier forObject:object];
 }
 
-- (BOOL)registerPlugin:(Class)cls
+- (void)registerPlugin:(Class)cls
         withIdentifier:(NSString *)identifier
          configuration:(NSDictionary *)configuration
              forObject:(CENObject *)object
            firstInList:(BOOL)shouldBeFirstInList
             completion:(dispatch_block_t)block {
     
-    if (![CEPPlugin isPluginClass:cls] || ![CEPPlugin isValidIdentifier:identifier] || ![object isKindOfClass:[CENObject class]]) {
-        return NO;
+    if (![CEPPlugin isPluginClass:cls] || ![CEPPlugin isValidIdentifier:identifier] ||
+        ![object isKindOfClass:[CENObject class]]) {
+
+        return;
     }
     
-    return [self.pluginsManager registerPlugin:cls
-                                withIdentifier:identifier
-                                 configuration:configuration
-                                     forObject:object
-                                   firstInList:shouldBeFirstInList
-                                    completion:block];
+    [self.pluginsManager registerPlugin:cls
+                         withIdentifier:identifier
+                          configuration:configuration
+                              forObject:object
+                            firstInList:shouldBeFirstInList
+                             completion:block];
 }
 
 - (void)unregisterObjects:(CENObject *)object pluginWithIdentifier:(NSString *)identifier {
@@ -130,7 +134,8 @@
         return NO;
     }
     
-    CELogAPICall(self.logger, @"<ChatEngine::API> Check has '%@' proto plugin for %@.", identifier, type);
+    CELogAPICall(self.logger, @"<ChatEngine::API> Check has '%@' proto plugin for %@.",
+        identifier, type);
     
     return [self.pluginsManager hasProtoPluginWithIdentifier:identifier forObjectType:type];
 }
@@ -140,28 +145,40 @@
     [self.pluginsManager setupProtoPluginsForObject:object withCompletion:block];
 }
 
-- (void)registerProtoPlugin:(Class)cls withConfiguration:(NSDictionary *)configuration forObjectType:(NSString *)type {
+- (void)registerProtoPlugin:(Class)cls
+          withConfiguration:(NSDictionary *)configuration
+              forObjectType:(NSString *)type {
     
     if (![CEPPlugin isPluginClass:cls] || ![CEPPlugin isValidObjectType:type]) {
         return;
     }
     
-    [self registerProtoPlugin:cls withIdentifier:[cls identifier] configuration:configuration forObjectType:type];
+    [self registerProtoPlugin:cls
+               withIdentifier:[cls identifier]
+                configuration:configuration
+                forObjectType:type];
 }
 
 - (void)registerProtoPlugin:(Class)cls
              withIdentifier:(NSString *)identifier
               configuration:(NSDictionary *)configuration
               forObjectType:(NSString *)type {
-    
-    if (![CEPPlugin isPluginClass:cls] || ![CEPPlugin isValidIdentifier:identifier] || ![CEPPlugin isValidObjectType:type]) {
+
+    if (![CEPPlugin isPluginClass:cls] || ![CEPPlugin isValidIdentifier:identifier] ||
+        ![CEPPlugin isValidObjectType:type]) {
+
         return;
     }
+
+    CELogAPICall(self.logger, @"<ChatEngine::API> Register '%@' proto plugin with '%@' identifier "
+        "for %@.%@", NSStringFromClass(cls), identifier, type,
+        configuration.count ? [@[@" Configuration: ", configuration] componentsJoinedByString:@""]
+                            : @"");
     
-    CELogAPICall(self.logger, @"<ChatEngine::API> Register '%@' proto plugin with '%@' identifier for %@.%@", NSStringFromClass(cls), identifier,
-                 type, configuration.count ? [@[@" Configuration: ", configuration] componentsJoinedByString:@""] : @"");
-    
-    [self.pluginsManager registerProtoPlugin:cls withIdentifier:identifier configuration:configuration forObjectType:type];
+    [self.pluginsManager registerProtoPlugin:cls
+                              withIdentifier:identifier
+                               configuration:configuration
+                               forObjectType:type];
 }
 
 - (void)unregisterProtoPlugin:(Class)cls forObjectType:(NSString *)type {
@@ -179,7 +196,8 @@
         return;
     }
     
-    CELogAPICall(self.logger, @"<ChatEngine::API> Un-register proto plugin with '%@' identifier for %@.", identifier, type);
+    CELogAPICall(self.logger, @"<ChatEngine::API> Un-register proto plugin with '%@' identifier "
+        "for %@.", identifier, type);
     
     [self.pluginsManager unregisterProtoPluginWithIdentifier:identifier forObjectType:type];
 }
@@ -187,13 +205,13 @@
 
 #pragma mark - Extension
 
-- (void)extensionForObject:(CENObject *)object withIdentifier:(NSString *)identifier context:(void(^)(id extension))block {
-    
-    if (![CEPPlugin isValidIdentifier:identifier] || ![object isKindOfClass:[CENObject class]] || !block) {
-        return;
+- (id)extensionForObject:(CENObject *)object withIdentifier:(NSString *)identifier {
+
+    if (![CEPPlugin isValidIdentifier:identifier] || ![object isKindOfClass:[CENObject class]]) {
+        return nil;
     }
     
-    [self.pluginsManager extensionForObject:object withIdentifier:identifier context:block];
+    return [self.pluginsManager extensionForObject:object withIdentifier:identifier];
 }
 
 
@@ -206,7 +224,11 @@
                       completion:(void(^)(BOOL rejected, NSMutableDictionary *data))block {
     
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
-        [self.pluginsManager runMiddlewaresAtLocation:location forEvent:event object:object withPayload:payload completion:block];
+        [self.pluginsManager runMiddlewaresAtLocation:location
+                                             forEvent:event
+                                               object:object
+                                          withPayload:payload
+                                           completion:block];
     });
 }
 
