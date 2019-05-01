@@ -332,7 +332,7 @@ NS_ASSUME_NONNULL_BEGIN
  * // objc dd68aad3-24e9-4696-8aef-37a88f7f819b
  *
  * [CENPushNotificationsPlugin markAsSeen:pushNotification forUser:self.client.me
- *                          withCompletion:^(NSError *error) {
+ *                         withCompletion:^(NSError *error) {
  *         if (error) {
  *             NSLog(@"Request did fail with error: %@", error);
  *         }
@@ -379,7 +379,7 @@ NS_ASSUME_NONNULL_BEGIN
  * // objc 0e2d8dff-ff81-47d1-8728-b0a895a2722b
  *
  * [CENPushNotificationsPlugin markAllAsSeenForUser:self.client.me
- *                                    withCompletion:^(NSError *error) {
+ *                                   withCompletion:^(NSError *error) {
  *         if (error) {
  *             NSLog(@"Request did fail with error: %@", error);
  *         }
