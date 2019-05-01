@@ -333,7 +333,6 @@ NS_ASSUME_NONNULL_BEGIN
  *
  * [CENPushNotificationsPlugin markAsSeen:pushNotification forUser:self.client.me
  *                         withCompletion:^(NSError *error) {
- 
  *         if (error) {
  *             NSLog(@"Request did fail with error: %@", error);
  *         }
@@ -381,7 +380,6 @@ NS_ASSUME_NONNULL_BEGIN
  *
  * [CENPushNotificationsPlugin markAllAsSeenForUser:self.client.me
  *                                   withCompletion:^(NSError *error) {
- 
  *         if (error) {
  *             NSLog(@"Request did fail with error: %@", error);
  *         }
