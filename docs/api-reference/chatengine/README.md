@@ -92,8 +92,8 @@ Configured and ready to use [CENChatEngine](../chatengine) client.
 ### Example
 
 ```objc
-CENConfiguration *configuration = [CENConfiguration configurationWithPublishKey:@"demo-36"
-                                                                   subscribeKey:@"demo-36"];
+CENConfiguration *configuration = [CENConfiguration configurationWithPublishKey:@"demo"
+                                                                   subscribeKey:@"demo"];
 self.client = [CENChatEngine clientWithConfiguration:configuration];
 ```
 

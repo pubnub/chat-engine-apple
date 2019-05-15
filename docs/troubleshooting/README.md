@@ -11,7 +11,7 @@ You can turn on debug mode by setting [CENConfiguration.debugevents](../api-refe
 ### Example
 
 ```objc
-CENConfiguration *configuration = [CENConfiguration configurationWithPublishKey:@"demo-36" subscribeKey:@"demo-36"];
+CENConfiguration *configuration = [CENConfiguration configurationWithPublishKey:@"demo" subscribeKey:@"demo"];
 configuration.debugevents = YES;
 self.client = [CENChatEngine clientWithConfiguration:configuration];
 ```
