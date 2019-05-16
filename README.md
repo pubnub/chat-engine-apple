@@ -1,3 +1,7 @@
+This repository is a part of the [ChatEngine Framework](https://github.com/pubnub/chat-engine).
+For more information on building chat applications with PubNub, see our
+[Chat Resource Center](http://www.pubnub.com/developers/chat-resource-center/).
+
 ![](https://raw.githubusercontent.com/pubnub/chat-engine/master/images/logo.png)
 
 [![Build Status](https://travis-ci.org/pubnub/chat-engine-apple.svg?branch=master)](https://travis-ci.com/pubnub/chat-engine-apple)
@@ -145,4 +149,4 @@ self.client.me.direct.on(@"$.invite", ^(CENEmittedEvent *event) {
 
 ## Support
 
-- If you **need help**, have a **general question** a **feature request** or to file a **bug**, contact <support@pubnub.com>
+- If you **need help**, have a **general question**, have a **feature request** or to file a **bug**, contact <support@pubnub.com>.
