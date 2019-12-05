@@ -175,7 +175,7 @@ NS_ASSUME_NONNULL_END
     configuration.presenceHeartbeatInterval = self.presenceHeartbeatInterval;
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
-    configuration.stripMobilePayload = NO;
+//    configuration.stripMobilePayload = NO;
 #pragma clang diagnostic pop
     
     return configuration;
