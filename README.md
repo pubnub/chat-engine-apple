@@ -1,3 +1,8 @@
+# Deprecation Notice
+
+ChatEngine has been deprecated with no plans for additional releases. Support for the ChatEngine SDK will end on July 16, 2021. If you have questions about ChatEngine, please contact us at support@pubnub.com.
+Please visit our newer chat product, [PubNub Chat](https://www.pubnub.com/products/pubnub-chat/). 
+
 This repository is a part of the [ChatEngine Framework](https://github.com/pubnub/chat-engine).
 For more information on building chat applications with PubNub, see our
 [Chat Resource Center](http://www.pubnub.com/developers/chat-resource-center/).
@@ -7,11 +12,6 @@ For more information on building chat applications with PubNub, see our
 [![Build Status](https://travis-ci.org/pubnub/chat-engine-apple.svg?branch=master)](https://travis-ci.com/pubnub/chat-engine-apple)
 
 [Documentation](https://www.pubnub.com/docs/chat-engine)
-
-# Deprecation Notice
-
-ChatEngine has been deprecated with no plans for additional releases. Support for the ChatEngine SDK will end on July 16, 2021. If you have questions about ChatEngine, please contact us at support@pubnub.com.
-Please visit our newer chat product, [PubNub Chat](https://www.pubnub.com/products/pubnub-chat/). 
 
 PubNub ChatEngine is an object oriented event emitter based framework for building chat applications in Objective-C. It reduces the time to build chat applications drastically and provides essential components like typing indicators, online presence monitoring and message history out of the box.
 
